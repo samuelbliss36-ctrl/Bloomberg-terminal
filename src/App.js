@@ -17,6 +17,545 @@ const clr = (v) => (v >= 0 ? "#00d084" : "#ff4757");
 const bg = (v) => (v >= 0 ? "rgba(0,208,132,0.1)" : "rgba(255,71,87,0.1)");
 const WATCHLIST = ["SPY", "QQQ", "MSFT", "NVDA", "TSLA", "GOOGL", "AMZN", "META"];
 
+
+function GlobalStyles() {
+  return (
+    <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+      
+      * { box-sizing: border-box; }
+      
+      body {
+        background: #000;
+        color: #00ff41;
+        font-family: 'Share Tech Mono', monospace;
+      }
+
+      ::-webkit-scrollbar { width: 4px; height: 4px; }
+      ::-webkit-scrollbar-track { background: #0a0a0a; }
+      ::-webkit-scrollbar-thumb { background: #00ff4133; border-radius: 2px; }
+      ::-webkit-scrollbar-thumb:hover { background: #00ff4166; }
+
+      .terminal-glow {
+        box-shadow: 0 0 10px rgba(0,255,65,0.1), inset 0 0 10px rgba(0,255,65,0.02);
+      }
+
+      .terminal-panel {
+        background: #050505 !important;
+        border: 1px solid #0f2f0f !important;
+        border-radius: 2px !important;
+        position: relative;
+      }
+
+      .terminal-panel::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #00ff4133, transparent);
+        pointer-events: none;
+      }
+
+      .terminal-header {
+        color: #00ff41 !important;
+        font-family: 'Share Tech Mono', monospace !important;
+        letter-spacing: 0.15em !important;
+        font-size: 10px !important;
+        text-transform: uppercase !important;
+      }
+
+      .terminal-value {
+        color: #e0ffe8 !important;
+        font-family: 'Share Tech Mono', monospace !important;
+      }
+
+      .terminal-muted {
+        color: #2a5f2a !important;
+        font-family: 'Share Tech Mono', monospace !important;
+      }
+
+      .terminal-nav {
+        background: #020802 !important;
+        border-bottom: 1px solid #0f2f0f !important;
+      }
+
+      .terminal-nav button {
+        font-family: 'Share Tech Mono', monospace !important;
+        letter-spacing: 0.1em !important;
+      }
+
+      .terminal-nav button:hover {
+        color: #00ff41 !important;
+        background: #001a00 !important;
+      }
+
+      .terminal-active {
+        color: #00ff41 !important;
+        border-bottom-color: #00ff41 !important;
+        text-shadow: 0 0 8px #00ff4188 !important;
+      }
+
+      .ticker-tape {
+        background: #020802 !important;
+        border-bottom: 1px solid #0f2f0f !important;
+      }
+
+      .top-nav {
+        background: #020802 !important;
+        border-bottom: 1px solid #0f2f0f !important;
+      }
+
+      .search-box {
+        background: #0a0a0a !important;
+        border: 1px solid #0f2f0f !important;
+        border-radius: 2px !important;
+      }
+
+      .search-box:focus-within {
+        border-color: #00ff4144 !important;
+        box-shadow: 0 0 8px #00ff4122 !important;
+      }
+
+      input {
+        font-family: 'Share Tech Mono', monospace !important;
+        color: #00ff41 !important;
+      }
+
+      input::placeholder {
+        color: #1a3f1a !important;
+      }
+
+      button {
+        font-family: 'Share Tech Mono', monospace !important;
+        cursor: pointer;
+      }
+
+      .status-bar {
+        background: #020802 !important;
+        border-top: 1px solid #0f2f0f !important;
+        color: #1a4f1a !important;
+      }
+
+      .metric-row {
+        border-bottom: 1px solid #0a1a0a !important;
+      }
+
+      .crypto-card {
+        background: #020802 !important;
+        border: 1px solid #0f2f0f !important;
+        border-radius: 2px !important;
+        transition: all 0.2s !important;
+      }
+
+      .crypto-card:hover {
+        border-color: #00ff4133 !important;
+        box-shadow: 0 0 8px #00ff4111 !important;
+      }
+
+      .crypto-card.active {
+        border-color: #00ff4166 !important;
+        box-shadow: 0 0 12px #00ff4122 !important;
+      }
+
+      .tf-button {
+        font-family: 'Share Tech Mono', monospace !important;
+        font-size: 10px !important;
+      }
+
+      .tf-button.active {
+        background: #001a00 !important;
+        color: #00ff41 !important;
+      }
+
+      .news-card {
+        border: 1px solid #0a1a0a !important;
+        border-radius: 2px !important;
+        transition: border-color 0.2s !important;
+      }
+
+      .news-card:hover {
+        border-color: #00ff4133 !important;
+      }
+
+      .watchlist-row:hover {
+        background: #020802 !important;
+      }
+
+      .eye-card {
+        background: #020802 !important;
+        border: 1px solid #0f2f0f !important;
+        border-radius: 2px !important;
+        transition: all 0.2s !important;
+      }
+
+      .eye-card:hover {
+        border-color: #00ff4133 !important;
+        box-shadow: 0 0 12px #00ff4111 !important;
+      }
+
+      .logo-text {
+        font-family: 'Orbitron', monospace !important;
+        font-weight: 900 !important;
+        color: #00ff41 !important;
+        text-shadow: 0 0 10px #00ff4188 !important;
+        letter-spacing: 0.2em !important;
+      }
+
+      .live-dot {
+        background: #00ff41 !important;
+        box-shadow: 0 0 6px #00ff41 !important;
+      }
+
+      .positive { color: #00ff41 !important; }
+      .negative { color: #ff4444 !important; }
+
+      .coming-soon-badge {
+        border-color: #1a4f1a !important;
+        color: #00ff4188 !important;
+      }
+
+      .feature-badge {
+        border-color: #0f2f0f !important;
+        color: #1a4f1a !important;
+      }
+    `}</style>
+  );
+}
+
+
+function CommoditiesDashboard() {
+  const COMMODITIES = [
+    { ticker: "GC=F", label: "Gold", symbol: "XAU", unit: "$/oz", category: "Metals" },
+    { ticker: "SI=F", label: "Silver", symbol: "XAG", unit: "$/oz", category: "Metals" },
+    { ticker: "HG=F", label: "Copper", symbol: "XCU", unit: "$/lb", category: "Metals" },
+    { ticker: "PL=F", label: "Platinum", symbol: "XPT", unit: "$/oz", category: "Metals" },
+    { ticker: "CL=F", label: "WTI Crude", symbol: "WTI", unit: "$/bbl", category: "Energy" },
+    { ticker: "BZ=F", label: "Brent Crude", symbol: "BRT", unit: "$/bbl", category: "Energy" },
+    { ticker: "NG=F", label: "Natural Gas", symbol: "NG", unit: "$/MMBtu", category: "Energy" },
+    { ticker: "RB=F", label: "Gasoline", symbol: "RB", unit: "$/gal", category: "Energy" },
+    { ticker: "ZW=F", label: "Wheat", symbol: "ZW", unit: "$/bu", category: "Agriculture" },
+    { ticker: "ZC=F", label: "Corn", symbol: "ZC", unit: "$/bu", category: "Agriculture" },
+    { ticker: "ZS=F", label: "Soybeans", symbol: "ZS", unit: "$/bu", category: "Agriculture" },
+    { ticker: "KC=F", label: "Coffee", symbol: "KC", unit: "$/lb", category: "Agriculture" },
+  ];
+
+  const [prices, setPrices] = useState({});
+  const [active, setActive] = useState("GC=F");
+  const [chartData, setChartData] = useState([]);
+  const [tf, setTf] = useState("3M");
+  const [loading, setLoading] = useState(true);
+  const [category, setCategory] = useState("Metals");
+  const TF_RANGE = { "1W": "5d", "1M": "1mo", "3M": "3mo", "1Y": "1y" };
+
+  useEffect(() => {
+    Promise.all(
+      COMMODITIES.map(c =>
+        fetch("https://corsproxy.io/?url=" + encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + c.ticker + "?range=1d&interval=1m"))
+          .then(r => r.json())
+          .then(d => {
+            const meta = d?.chart?.result?.[0]?.meta;
+            const price = meta?.regularMarketPrice;
+            const prev = meta?.previousClose;
+            const change = price - prev;
+            const changePct = (change / prev) * 100;
+            return [c.ticker, { price, change, changePct }];
+          })
+          .catch(() => [c.ticker, null])
+      )
+    ).then(results => setPrices(Object.fromEntries(results)));
+  }, []); // eslint-disable-line
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("https://corsproxy.io/?url=" + encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + active + "?range=" + TF_RANGE[tf] + "&interval=1d"))
+      .then(r => r.json())
+      .then(d => {
+        const result = d?.chart?.result?.[0];
+        if (result) {
+          const mapped = result.timestamp.map((t, i) => ({
+            date: new Date(t * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+            price: result.indicators.quote[0].close[i] ? +result.indicators.quote[0].close[i].toFixed(2) : null,
+          })).filter(d => d.price !== null);
+          setChartData(mapped);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [active, tf]); // eslint-disable-line
+
+  const startP = chartData[0]?.price || 0;
+  const endP = chartData[chartData.length - 1]?.price || 0;
+  const chg = endP - startP;
+  const lc = chg >= 0 ? "#00ff41" : "#ff4444";
+  const minP = chartData.length ? Math.min(...chartData.map(d => d.price)) * 0.995 : 0;
+  const maxP = chartData.length ? Math.max(...chartData.map(d => d.price)) * 1.005 : 0;
+  const activeCommodity = COMMODITIES.find(c => c.ticker === active);
+  const categories = ["Metals", "Energy", "Agriculture"];
+  const filtered = COMMODITIES.filter(c => c.category === category);
+
+  return (
+    <div className="flex-1 p-3 grid gap-3" style={{ gridTemplateColumns: "340px 1fr", gridTemplateRows: "auto 1fr" }}>
+      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/2", gridRow: "1/3", overflowY: "auto" }}>
+        <div className="terminal-header mb-3">🛢 Commodities Futures</div>
+        <div className="flex gap-2 mb-3">
+          {categories.map(cat => (
+            <button key={cat} onClick={() => setCategory(cat)}
+              className="px-3 py-1 text-xs font-mono border rounded transition-colors"
+              style={{ borderColor: category === cat ? "#00ff41" : "#0f2f0f", color: category === cat ? "#00ff41" : "#1a4f1a", background: category === cat ? "#001a00" : "transparent" }}>
+              {cat}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-col gap-1">
+          {filtered.map(c => {
+            const d = prices[c.ticker];
+            const isActive = active === c.ticker;
+            return (
+              <div key={c.ticker} onClick={() => setActive(c.ticker)}
+                className="flex items-center justify-between p-2 rounded cursor-pointer transition-colors"
+                style={{ background: isActive ? "#001a00" : "transparent", border: "1px solid", borderColor: isActive ? "#00ff4144" : "#0a1a0a" }}>
+                <div>
+                  <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#00ff41" : "#a0ffa0" }}>{c.label}</div>
+                  <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{c.symbol} · {c.unit}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-mono font-bold" style={{ color: "#e0ffe8" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
+                  {d && (
+                    <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#00ff41" : "#ff4444" }}>
+                      {d.changePct >= 0 ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "2/3", gridRow: "1/2" }}>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="terminal-header">{activeCommodity?.label} — {activeCommodity?.unit}</div>
+            {prices[active] && (
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-lg font-mono font-bold" style={{ color: "#e0ffe8" }}>${fmt.price(prices[active]?.price)}</span>
+                <span className="text-xs font-mono" style={{ color: clr(prices[active]?.changePct) }}>
+                  {prices[active]?.changePct >= 0 ? "▲" : "▼"} {Math.abs(prices[active]?.change).toFixed(2)} ({Math.abs(prices[active]?.changePct).toFixed(2)}%)
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="flex border rounded overflow-hidden" style={{ borderColor: "#0f2f0f" }}>
+            {["1W","1M","3M","1Y"].map(t => (
+              <button key={t} onClick={() => setTf(t)} className="px-3 py-1 text-xs font-mono transition-colors"
+                style={{ background: tf === t ? "#001a00" : "transparent", color: tf === t ? "#00ff41" : "#1a4f1a", borderRight: "1px solid #0f2f0f" }}>{t}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{ height: 260 }}>
+          {loading ? (
+            <div className="flex items-center justify-center h-full text-xs font-mono animate-pulse" style={{ color: "#1a4f1a" }}>Loading chart...</div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="commGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={lc} stopOpacity={0.2} />
+                    <stop offset="95%" stopColor={lc} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#0a1a0a" vertical={false} />
+                <XAxis dataKey="date" tick={{ fill: "#1a4f1a", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(chartData.length / 6))} />
+                <YAxis domain={[minP, maxP]} tick={{ fill: "#1a4f1a", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} tickFormatter={v => "$" + v.toFixed(0)} width={52} />
+                <Tooltip contentStyle={{ background: "#020802", border: "1px solid #0f2f0f", borderRadius: 2, fontSize: 10, fontFamily: "monospace" }} labelStyle={{ color: "#1a4f1a" }} itemStyle={{ color: "#00ff41" }} formatter={v => ["$" + fmt.price(v), "Price"]} />
+                <Area type="monotone" dataKey="price" stroke={lc} strokeWidth={1.5} fill="url(#commGrad)" dot={false} activeDot={{ r: 3, fill: lc }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "2/3", gridRow: "2/3" }}>
+        <div className="terminal-header mb-3">Market Summary</div>
+        <div className="grid grid-cols-3 gap-2">
+          {COMMODITIES.map(c => {
+            const d = prices[c.ticker];
+            return (
+              <div key={c.ticker} onClick={() => { setActive(c.ticker); setCategory(c.category); }}
+                className="p-2 rounded cursor-pointer transition-colors"
+                style={{ background: "#020802", border: "1px solid #0a1a0a" }}>
+                <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{c.symbol}</div>
+                <div className="text-xs font-mono font-bold" style={{ color: "#e0ffe8" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
+                {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#00ff41" : "#ff4444" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+function CryptoDashboard() {
+  const COINS = [
+    { ticker: "BTC-USD", label: "Bitcoin", symbol: "BTC" },
+    { ticker: "ETH-USD", label: "Ethereum", symbol: "ETH" },
+    { ticker: "SOL-USD", label: "Solana", symbol: "SOL" },
+    { ticker: "BNB-USD", label: "BNB", symbol: "BNB" },
+    { ticker: "XRP-USD", label: "XRP", symbol: "XRP" },
+    { ticker: "DOGE-USD", label: "Dogecoin", symbol: "DOGE" },
+    { ticker: "ADA-USD", label: "Cardano", symbol: "ADA" },
+    { ticker: "AVAX-USD", label: "Avalanche", symbol: "AVAX" },
+    { ticker: "LINK-USD", label: "Chainlink", symbol: "LINK" },
+    { ticker: "DOT-USD", label: "Polkadot", symbol: "DOT" },
+    { ticker: "MATIC-USD", label: "Polygon", symbol: "MATIC" },
+    { ticker: "UNI7083-USD", label: "Uniswap", symbol: "UNI" },
+  ];
+
+  const [prices, setPrices] = useState({});
+  const [active, setActive] = useState("BTC-USD");
+  const [chartData, setChartData] = useState([]);
+  const [tf, setTf] = useState("1M");
+  const [loading, setLoading] = useState(true);
+  const TF_RANGE = { "1W": "5d", "1M": "1mo", "3M": "3mo", "1Y": "1y" };
+
+  useEffect(() => {
+    Promise.all(
+      COINS.map(c =>
+        fetch("https://corsproxy.io/?url=" + encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + c.ticker + "?range=1d&interval=1m"))
+          .then(r => r.json())
+          .then(d => {
+            const meta = d?.chart?.result?.[0]?.meta;
+            const price = meta?.regularMarketPrice;
+            const prev = meta?.previousClose;
+            const change = price - prev;
+            const changePct = (change / prev) * 100;
+            return [c.ticker, { price, change, changePct }];
+          })
+          .catch(() => [c.ticker, null])
+      )
+    ).then(results => setPrices(Object.fromEntries(results)));
+  }, []); // eslint-disable-line
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("https://corsproxy.io/?url=" + encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + active + "?range=" + TF_RANGE[tf] + "&interval=1d"))
+      .then(r => r.json())
+      .then(d => {
+        const result = d?.chart?.result?.[0];
+        if (result) {
+          const mapped = result.timestamp.map((t, i) => ({
+            date: new Date(t * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+            price: result.indicators.quote[0].close[i] ? +result.indicators.quote[0].close[i].toFixed(2) : null,
+          })).filter(d => d.price !== null);
+          setChartData(mapped);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [active, tf]); // eslint-disable-line
+
+  const startP = chartData[0]?.price || 0;
+  const endP = chartData[chartData.length - 1]?.price || 0;
+  const chg = endP - startP;
+  const lc = chg >= 0 ? "#00ff41" : "#ff4444";
+  const minP = chartData.length ? Math.min(...chartData.map(d => d.price)) * 0.995 : 0;
+  const maxP = chartData.length ? Math.max(...chartData.map(d => d.price)) * 1.005 : 0;
+  const activeCoin = COINS.find(c => c.ticker === active);
+
+  return (
+    <div className="flex-1 p-3 grid gap-3" style={{ gridTemplateColumns: "300px 1fr", gridTemplateRows: "1fr auto" }}>
+      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/2", gridRow: "1/3", overflowY: "auto" }}>
+        <div className="terminal-header mb-3">₿ Crypto Markets</div>
+        <div className="flex flex-col gap-1">
+          {COINS.map(c => {
+            const d = prices[c.ticker];
+            const isActive = active === c.ticker;
+            return (
+              <div key={c.ticker} onClick={() => setActive(c.ticker)}
+                className="flex items-center justify-between p-2 rounded cursor-pointer transition-colors"
+                style={{ background: isActive ? "#001a00" : "transparent", border: "1px solid", borderColor: isActive ? "#00ff4144" : "#0a1a0a" }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded flex items-center justify-center text-xs font-mono font-bold"
+                    style={{ background: "#0a1a0a", color: isActive ? "#00ff41" : "#1a4f1a" }}>{c.symbol.slice(0,1)}</div>
+                  <div>
+                    <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#00ff41" : "#a0ffa0" }}>{c.label}</div>
+                    <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{c.symbol}</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-mono font-bold" style={{ color: "#e0ffe8" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
+                  {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#00ff41" : "#ff4444" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "2/3", gridRow: "1/2" }}>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="terminal-header">{activeCoin?.label} ({activeCoin?.symbol})</div>
+            {prices[active] && (
+              <div className="flex items-center gap-3 mt-1">
+                <span className="font-mono font-bold" style={{ color: "#e0ffe8", fontSize: 22 }}>${fmt.price(prices[active]?.price)}</span>
+                <span className="text-xs font-mono" style={{ color: clr(prices[active]?.changePct) }}>
+                  {prices[active]?.changePct >= 0 ? "▲" : "▼"} {Math.abs(prices[active]?.change || 0).toFixed(2)} ({Math.abs(prices[active]?.changePct || 0).toFixed(2)}%)
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="flex border rounded overflow-hidden" style={{ borderColor: "#0f2f0f" }}>
+            {["1W","1M","3M","1Y"].map(t => (
+              <button key={t} onClick={() => setTf(t)} className="px-3 py-1 text-xs font-mono transition-colors"
+                style={{ background: tf === t ? "#001a00" : "transparent", color: tf === t ? "#00ff41" : "#1a4f1a", borderRight: "1px solid #0f2f0f" }}>{t}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{ height: 280 }}>
+          {loading ? (
+            <div className="flex items-center justify-center h-full text-xs font-mono animate-pulse" style={{ color: "#1a4f1a" }}>Loading chart...</div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="cryptoDashGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={lc} stopOpacity={0.2} />
+                    <stop offset="95%" stopColor={lc} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#0a1a0a" vertical={false} />
+                <XAxis dataKey="date" tick={{ fill: "#1a4f1a", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(chartData.length / 6))} />
+                <YAxis domain={[minP, maxP]} tick={{ fill: "#1a4f1a", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} tickFormatter={v => "$" + (v >= 1000 ? (v/1000).toFixed(1) + "k" : v.toFixed(2))} width={55} />
+                <Tooltip contentStyle={{ background: "#020802", border: "1px solid #0f2f0f", borderRadius: 2, fontSize: 10, fontFamily: "monospace" }} labelStyle={{ color: "#1a4f1a" }} itemStyle={{ color: "#00ff41" }} formatter={v => ["$" + fmt.price(v), "Price"]} />
+                <Area type="monotone" dataKey="price" stroke={lc} strokeWidth={1.5} fill="url(#cryptoDashGrad)" dot={false} activeDot={{ r: 3, fill: lc }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "2/3", gridRow: "2/3" }}>
+        <div className="terminal-header mb-3">24h Market Overview</div>
+        <div className="grid grid-cols-4 gap-2">
+          {COINS.slice(0, 8).map(c => {
+            const d = prices[c.ticker];
+            return (
+              <div key={c.ticker} onClick={() => setActive(c.ticker)}
+                className="p-2 rounded cursor-pointer"
+                style={{ background: "#020802", border: "1px solid #0a1a0a" }}>
+                <div className="text-xs font-mono font-bold" style={{ color: "#1a4f1a" }}>{c.symbol}</div>
+                <div className="text-xs font-mono font-bold" style={{ color: "#e0ffe8" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
+                {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#00ff41" : "#ff4444" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TickerTape({ tapeData }) {
   const ref = useRef(null);
   useEffect(() => {
@@ -34,7 +573,7 @@ function TickerTape({ tapeData }) {
   }, []);
   const items = [...tapeData, ...tapeData];
   return (
-    <div className="overflow-hidden border-b border-gray-800 bg-gray-950" style={{ height: 28 }}>
+    <div className="ticker-tape overflow-hidden" style={{ height: 28 }}>
       <div ref={ref} className="flex items-center gap-6 whitespace-nowrap" style={{ paddingTop: 5 }}>
         {items.map((t, i) => (
           <span key={i} className="flex items-center gap-1.5 text-xs font-mono">
@@ -54,8 +593,8 @@ function TopNav({ ticker, setTicker, quote, loading }) {
   return (
     <div className="flex items-center gap-4 px-4 py-2.5 border-b border-gray-800 bg-gray-950">
       <div className="flex items-center gap-2">
-        <Zap size={16} className="text-yellow-400" />
-        <span className="text-yellow-400 font-bold text-sm tracking-widest font-mono">TERMINAL</span>
+        <Zap size={16} style={{ color: "#00ff41" }} />
+        <span className="logo-text" style={{ fontSize: 13 }}>TERMINAL</span>
       </div>
       <div className="flex items-center bg-gray-900 border border-gray-700 rounded px-2 py-1 gap-2 max-w-xs w-full">
         <Search size={12} className="text-gray-500" />
@@ -79,7 +618,7 @@ function TopNav({ ticker, setTicker, quote, loading }) {
         <Settings size={14} />
         <div className="h-4 w-px bg-gray-700" />
         <span className="text-xs font-mono text-gray-600">LIVE</span>
-        <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+        <span className="live-dot animate-pulse" style={{ width: 8, height: 8, borderRadius: "50%", display: "inline-block" }} />
       </div>
     </div>
   );
@@ -99,7 +638,7 @@ function PriceChart({ ticker }) {
     // const from = to - TF_DAYS[tf] * 24 * 3600;
     const range = TF_DAYS[tf] <= 7 ? "5d" : TF_DAYS[tf] <= 30 ? "1mo" : TF_DAYS[tf] <= 90 ? "3mo" : "1y";
     const interval = TF_DAYS[tf] <= 7 ? "1h" : "1d";
-    fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + ticker + "?range=" + range + "&interval=" + interval))
+    fetch("https://corsproxy.io/?url=" + encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + ticker + "?range=" + range + "&interval=" + interval))
       .then(r => r.json())
       .then(d => {
         const result = d?.chart?.result?.[0];
@@ -185,10 +724,10 @@ function KeyMetrics({ quote, metrics }) {
   const rows2 = [["Trailing P/E", m.peBasicExclExtraTTM ? m.peBasicExclExtraTTM.toFixed(1) : "N/A"], ["Forward P/E", m.peExclExtraAnnual ? m.peExclExtraAnnual.toFixed(1) : "N/A"], ["EPS (TTM)", m.epsBasicExclExtraItemsTTM ? "$" + m.epsBasicExclExtraItemsTTM.toFixed(2) : "N/A"], ["Beta", m.beta ? m.beta.toFixed(2) : "N/A"], ["Div Yield", m.dividendYieldIndicatedAnnual ? m.dividendYieldIndicatedAnnual.toFixed(2) + "%" : "N/A"], ["Price/Book", m.pbAnnual ? m.pbAnnual.toFixed(1) : "N/A"]];
   return (
     <div>
-      <div className="flex items-center gap-1.5 mb-2"><span className="text-blue-400"><BarChart2 size={12} /></span><span className="text-xs font-mono font-semibold tracking-wider uppercase text-blue-400">Key Metrics</span></div>
+      <div className="flex items-center gap-1.5 mb-2"><span className="terminal-header"><BarChart2 size={12} /></span><span className="terminal-header">Key Metrics</span></div>
       <div className="grid grid-cols-2 gap-x-6 mt-2">
-        <div>{rows1.map(([l, v]) => <div key={l} className="flex justify-between items-center py-1.5 border-b border-gray-800"><span className="text-gray-500 text-xs font-mono">{l}</span><span className="text-gray-200 text-xs font-mono font-semibold">{v}</span></div>)}</div>
-        <div>{rows2.map(([l, v]) => <div key={l} className="flex justify-between items-center py-1.5 border-b border-gray-800"><span className="text-gray-500 text-xs font-mono">{l}</span><span className="text-gray-200 text-xs font-mono font-semibold">{v}</span></div>)}</div>
+        <div>{rows1.map(([l, v]) => <div key={l} className="metric-row flex justify-between items-center py-1.5"><span className="text-gray-500 text-xs font-mono">{l}</span><span className="text-gray-200 text-xs font-mono font-semibold">{v}</span></div>)}</div>
+        <div>{rows2.map(([l, v]) => <div key={l} className="metric-row flex justify-between items-center py-1.5"><span className="text-gray-500 text-xs font-mono">{l}</span><span className="text-gray-200 text-xs font-mono font-semibold">{v}</span></div>)}</div>
       </div>
       <div className="mt-3">
         <div className="text-xs font-mono text-gray-500 mb-1">52-Week Range</div>
@@ -206,10 +745,10 @@ function CompanyProfile({ profile }) {
   if (!profile) return <div className="text-gray-600 text-xs font-mono animate-pulse">Loading profile...</div>;
   return (
     <div>
-      <div className="flex items-center gap-1.5 mb-2"><span className="text-blue-400"><Building2 size={12} /></span><span className="text-xs font-mono font-semibold tracking-wider uppercase text-blue-400">Company Profile</span></div>
+      <div className="flex items-center gap-1.5 mb-2"><span className="terminal-header"><Building2 size={12} /></span><span className="terminal-header">Company Profile</span></div>
       <div className="grid grid-cols-3 gap-2 mt-2 mb-3">
         {[["Sector", profile.finnhubIndustry], ["Country", profile.country], ["Employees", profile.employeeTotal?.toLocaleString()], ["Founded", profile.ipo?.split("-")[0]], ["Exchange", profile.exchange], ["Currency", profile.currency]].map(([k, v]) => (
-          <div key={k} className="bg-gray-900 rounded p-1.5"><div className="text-gray-600 text-xs font-mono">{k}</div><div className="text-gray-200 text-xs font-mono font-semibold truncate">{v || "N/A"}</div></div>
+          <div key={k} className="terminal-panel p-1.5"><div className="text-gray-600 text-xs font-mono">{k}</div><div className="text-gray-200 text-xs font-mono font-semibold truncate">{v || "N/A"}</div></div>
         ))}
       </div>
       <div className="flex items-center gap-3 bg-gray-900 rounded p-2">
@@ -240,7 +779,7 @@ function NewsFeed({ news }) {
       {news.slice(0, 6).map((n, i) => {
         const s = sentimentStyle[getSentiment(n.headline)];
         return (
-          <a key={i} href={n.url} target="_blank" rel="noreferrer" className="block border border-gray-800 rounded p-2.5 hover:border-gray-700 transition-colors">
+          <a key={i} href={n.url} target="_blank" rel="noreferrer" className="news-card block p-2.5">
             <div className="flex items-start justify-between gap-2 mb-1">
               <span className="text-xs font-mono text-gray-200 leading-snug">{n.headline}</span>
               <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded flex-shrink-0" style={{ color: s.color, background: s.bg }}>{s.label}</span>
@@ -320,7 +859,7 @@ function QuickStats({ quote, metrics }) {
   const rows = [["Open","$"+fmt.price(quote.o)],["Day High","$"+fmt.price(quote.h)],["Day Low","$"+fmt.price(quote.l)],["Prev Close","$"+fmt.price(quote.pc)],["EPS (TTM)",m.epsBasicExclExtraItemsTTM?"$"+m.epsBasicExclExtraItemsTTM.toFixed(2):"N/A"],["P/E",m.peBasicExclExtraTTM?m.peBasicExclExtraTTM.toFixed(1):"N/A"],["Fwd P/E",m.peExclExtraAnnual?m.peExclExtraAnnual.toFixed(1):"N/A"],["Beta",m.beta?m.beta.toFixed(2):"N/A"],["Mkt Cap",m.marketCapitalization?fmt.large(m.marketCapitalization*1e6):"N/A"],["Div Yield",m.dividendYieldIndicatedAnnual?m.dividendYieldIndicatedAnnual.toFixed(2)+"%":"N/A"],["Price/Book",m.pbAnnual?m.pbAnnual.toFixed(1):"N/A"],["ROE",m.roeTTM?m.roeTTM.toFixed(1)+"%":"N/A"]];
   return (
     <div>
-      <div className="flex items-center gap-1.5 mb-2"><span className="text-blue-400"><Activity size={12} /></span><span className="text-xs font-mono font-semibold tracking-wider uppercase text-blue-400">Quick Stats</span></div>
+      <div className="flex items-center gap-1.5 mb-2"><span className="terminal-header"><Activity size={12} /></span><span className="terminal-header">Quick Stats</span></div>
       <div className="mt-2">{rows.map(([k,v])=><div key={k} className="flex justify-between text-xs font-mono border-b border-gray-800 py-1.5"><span className="text-gray-600">{k}</span><span className="text-gray-200 font-semibold">{v}</span></div>)}</div>
     </div>
   );
@@ -337,7 +876,7 @@ function OilPrices() {
 
   useEffect(() => {
     const fetchQuote = (ticker) =>
-      fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + ticker + "?range=1d&interval=1m"))
+      fetch("https://corsproxy.io/?url=" + encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + ticker + "?range=1d&interval=1m"))
         .then(r => r.json())
         .then(d => {
           const result = d?.chart?.result?.[0];
@@ -357,7 +896,7 @@ function OilPrices() {
     setLoading(true);
     const ticker = active === "WTI" ? "CL=F" : "BZ=F";
     const range = TF_RANGE[tf];
-    fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + ticker + "?range=" + range + "&interval=1d"))
+    fetch("https://corsproxy.io/?url=" + encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + ticker + "?range=" + range + "&interval=1d"))
       .then(r => r.json())
       .then(d => {
         const result = d?.chart?.result?.[0];
@@ -383,8 +922,8 @@ function OilPrices() {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-1.5 mb-3">
-        <span className="text-blue-400"><Activity size={12} /></span>
-        <span className="text-xs font-mono font-semibold tracking-wider uppercase text-blue-400">Oil Futures</span>
+        <span className="terminal-header"><Activity size={12} /></span>
+        <span className="terminal-header">Oil Futures</span>
       </div>
       <div className="grid grid-cols-2 gap-3 mb-3">
         {[["WTI", "CL=F", data.wti], ["Brent", "BZ=F", data.brent]].map(([label, ticker, d]) => (
@@ -436,9 +975,127 @@ function OilPrices() {
   );
 }
 
-const Panel = ({ children, className = "" }) => <div className={"bg-gray-950 border border-gray-800 rounded p-3 flex flex-col " + className}>{children}</div>;
+
+function CryptoPrices() {
+  const [prices, setPrices] = useState({});
+  const [chartData, setChartData] = useState([]);
+  const [active, setActive] = useState("BTC-USD");
+  const [tf, setTf] = useState("1M");
+  const [loading, setLoading] = useState(true);
+
+  const COINS = [
+    { ticker: "BTC-USD", label: "Bitcoin", symbol: "BTC" },
+    { ticker: "ETH-USD", label: "Ethereum", symbol: "ETH" },
+    { ticker: "SOL-USD", label: "Solana", symbol: "SOL" },
+    { ticker: "BNB-USD", label: "BNB", symbol: "BNB" },
+    { ticker: "XRP-USD", label: "XRP", symbol: "XRP" },
+    { ticker: "DOGE-USD", label: "Dogecoin", symbol: "DOGE" },
+  ];
+
+  const TF_RANGE = { "1W": "5d", "1M": "1mo", "3M": "3mo", "1Y": "1y" };
+
+  useEffect(() => {
+    Promise.all(
+      COINS.map(c =>
+        fetch("https://corsproxy.io/?url=" + encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + c.ticker + "?range=1d&interval=1m"))
+          .then(r => r.json())
+          .then(d => {
+            const meta = d?.chart?.result?.[0]?.meta;
+            const price = meta?.regularMarketPrice;
+            const prev = meta?.previousClose;
+            const change = price - prev;
+            const changePct = (change / prev) * 100;
+            return [c.ticker, { price, change, changePct }];
+          })
+          .catch(() => [c.ticker, null])
+      )
+    ).then(results => setPrices(Object.fromEntries(results)));
+  }, []); // eslint-disable-line
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("https://corsproxy.io/?url=" + encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + active + "?range=" + TF_RANGE[tf] + "&interval=1d"))
+      .then(r => r.json())
+      .then(d => {
+        const result = d?.chart?.result?.[0];
+        if (result) {
+          const mapped = result.timestamp.map((t, i) => ({
+            date: new Date(t * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+            price: result.indicators.quote[0].close[i] ? +result.indicators.quote[0].close[i].toFixed(2) : null,
+          })).filter(d => d.price !== null);
+          setChartData(mapped);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [active, tf]); // eslint-disable-line
+
+  const startP = chartData[0]?.price || 0;
+  const endP = chartData[chartData.length - 1]?.price || 0;
+  const chg = endP - startP;
+  const lc = chg >= 0 ? "#00d084" : "#ff4757";
+  const minP = chartData.length ? Math.min(...chartData.map(d => d.price)) * 0.995 : 0;
+  const maxP = chartData.length ? Math.max(...chartData.map(d => d.price)) * 1.005 : 0;
+  const activeCoin = COINS.find(c => c.ticker === active);
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center gap-1.5 mb-3">
+        <span className="terminal-header"><Activity size={12} /></span>
+        <span className="terminal-header">Crypto Prices</span>
+      </div>
+      <div className="grid grid-cols-3 gap-2 mb-3">
+        {COINS.map(c => {
+          const d = prices[c.ticker];
+          return (
+            <div key={c.ticker} onClick={() => setActive(c.ticker)}
+              className={"crypto-card p-2 cursor-pointer " + (active === c.ticker ? "active" : "")}
+              style={{ borderColor: active === c.ticker ? "#60a5fa" : "#1f2937" }}>
+              <div className="text-gray-500 text-xs font-mono">{c.symbol}</div>
+              <div className="text-white text-xs font-mono font-bold mt-0.5">{d ? "$" + fmt.price(d.price) : "..."}</div>
+              {d && <div className="text-xs font-mono" style={{ color: clr(d.changePct) }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-gray-500 text-xs font-mono">{activeCoin?.label} Chart</span>
+        <div className="flex border border-gray-800 rounded overflow-hidden">
+          {["1W","1M","3M","1Y"].map(t => (
+            <button key={t} onClick={() => setTf(t)} className="px-2 py-0.5 text-xs font-mono transition-colors"
+              style={{ background: tf === t ? "#1a2744" : "transparent", color: tf === t ? "#60a5fa" : "#6b7280", borderRight: "1px solid #1f2937" }}>{t}</button>
+          ))}
+        </div>
+      </div>
+      <div style={{ height: 160 }}>
+        {loading ? (
+          <div className="flex items-center justify-center h-full text-gray-600 text-xs font-mono animate-pulse">Loading chart...</div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="cryptoGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={lc} stopOpacity={0.15} />
+                  <stop offset="95%" stopColor={lc} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
+              <XAxis dataKey="date" tick={{ fill: "#4b5563", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(chartData.length / 5))} />
+              <YAxis domain={[minP, maxP]} tick={{ fill: "#4b5563", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} tickFormatter={v => "$" + (v >= 1000 ? (v/1000).toFixed(1) + "k" : v.toFixed(0))} width={45} />
+              <Tooltip contentStyle={{ background: "#111827", border: "1px solid #374151", borderRadius: 4, fontSize: 10, fontFamily: "monospace" }} labelStyle={{ color: "#9ca3af" }} itemStyle={{ color: "#e5e7eb" }} formatter={v => ["$" + fmt.price(v), "Price"]} />
+              <Area type="monotone" dataKey="price" stroke={lc} strokeWidth={1.5} fill="url(#cryptoGrad)" dot={false} activeDot={{ r: 3, fill: lc }} />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const Panel = ({ children, className = "", style = {} }) => <div className={"terminal-panel terminal-glow p-3 flex flex-col " + className} style={style}>{children}</div>;
 
 export default function App() {
+  const [activePage, setActivePage] = useState("financial");
   const [ticker, setTicker] = useState("AAPL");
   const [quote, setQuote] = useState(null);
   const [metrics, setMetrics] = useState(null);
@@ -473,48 +1130,114 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black text-gray-100 flex flex-col" style={{ fontFamily: "'Courier New', monospace" }}>
+    <div className="min-h-screen bg-black text-gray-100 flex flex-col" style={{ fontFamily: "'Share Tech Mono', monospace", background: "#000" }}>
+      <GlobalStyles />
       <TickerTape tapeData={tapeData} />
+      <div className="terminal-nav flex items-center gap-0 px-4">
+        {[
+          { key: "financial", label: "📈 Financial" },
+          { key: "commodities", label: "🛢 Commodities" },
+          { key: "crypto", label: "₿ Crypto" },
+          { key: "technical", label: "📊 Technical" },
+          { key: "eye", label: "👁 The Eye" },
+        ].map(p => (
+          <button key={p.key} onClick={() => setActivePage(p.key)}
+            className="px-5 py-2.5 text-xs font-mono font-semibold tracking-wider uppercase transition-colors border-b-2"
+            style={{ borderBottomColor: activePage === p.key ? "#60a5fa" : "transparent", color: activePage === p.key ? "#60a5fa" : "#6b7280", background: "transparent" }}>
+            {p.label}
+          </button>
+        ))}
+      </div>
       <TopNav ticker={ticker} setTicker={setTicker} quote={quote} loading={loading} />
-      <div className="flex-1 p-3 grid gap-3" style={{ gridTemplateColumns: "1fr 310px 260px", gridTemplateRows: "380px auto auto" }}>
+      {activePage === "commodities" && <CommoditiesDashboard />}
+      {activePage === "crypto" && <CryptoDashboard />}
+      {activePage === "technical" && (
+        <div className="flex-1 flex items-center justify-center flex-col gap-4 text-center p-12">
+          <span style={{ fontSize: 48 }}>📊</span>
+          <div className="text-white font-mono font-bold text-2xl">Technical Analysis</div>
+          <div className="text-gray-500 font-mono text-sm max-w-md">Advanced charting with RSI, MACD, Bollinger Bands, volume profile and more. Coming soon.</div>
+          <div className="flex gap-3 mt-4 flex-wrap justify-center">
+            {["RSI", "MACD", "Bollinger Bands", "Volume Profile", "Fibonacci", "Support & Resistance"].map(f => (
+              <span key={f} className="text-xs font-mono px-3 py-1.5 rounded border border-gray-700 text-gray-400">{f}</span>
+            ))}
+          </div>
+        </div>
+      )}
+      {activePage === "eye" && (
+        <div className="flex-1 p-4 grid gap-4" style={{ gridTemplateColumns: "1fr 1fr 1fr", gridTemplateRows: "auto auto" }}>
+          {[
+            { icon: "🛢", title: "Oil Tanker Tracker", desc: "Live AIS vessel tracking for crude oil tankers and LNG carriers worldwide.", tag: "Coming Soon" },
+            { icon: "✈️", title: "Flight Tracker", desc: "Real-time global flight tracking with cargo and commercial aircraft.", tag: "Coming Soon" },
+            { icon: "🌦", title: "Weather & Climate", desc: "Global weather patterns, storm tracking, and climate data affecting commodity prices.", tag: "Coming Soon" },
+            { icon: "🚢", title: "Shipping Routes", desc: "Major shipping lane congestion, port wait times, and freight rates.", tag: "Coming Soon" },
+            { icon: "🌍", title: "Geopolitical Events", desc: "Live news feed filtered for geopolitical events affecting global markets.", tag: "Coming Soon" },
+            { icon: "⚡", title: "Energy Grid", desc: "Live electricity grid data, renewable energy output, and power demand.", tag: "Coming Soon" },
+          ].map(item => (
+            <div key={item.title} className="eye-card p-4">
+              <div style={{ fontSize: 32 }} className="mb-3">{item.icon}</div>
+              <div className="text-white font-mono font-bold text-sm mb-2">{item.title}</div>
+              <div className="text-gray-500 font-mono text-xs leading-relaxed mb-3">{item.desc}</div>
+              <span className="text-xs font-mono px-2 py-1 rounded border border-yellow-800 text-yellow-500">{item.tag}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {activePage !== "financial" && activePage !== "technical" && activePage !== "eye" && null}
+      {activePage === "financial" && <div className="flex-1 p-3 grid gap-3" style={{ gridTemplateColumns: "1fr 280px 240px", gridTemplateRows: "340px auto auto" }}>
+
+        {/* Row 1 */}
         <Panel style={{ gridColumn: "1/2", gridRow: "1/2" }}>
-          <div className="flex items-center gap-1.5 mb-2"><span className="text-blue-400"><Activity size={12} /></span><span className="text-xs font-mono font-semibold tracking-wider uppercase text-blue-400">{ticker} Price Chart</span></div>
+          <div className="flex items-center gap-1.5 mb-2"><span className="terminal-header"><Activity size={12} /></span><span className="terminal-header">{ticker} Price Chart</span></div>
           <div style={{ height: 280, minHeight: 280 }}><PriceChart ticker={ticker} /></div>
         </Panel>
-        <Panel style={{ gridColumn: "2/3", gridRow: "1/2" }}><KeyMetrics quote={quote} metrics={metrics} /></Panel>
-        <Panel style={{ gridColumn: "3/4", gridRow: "1/3" }}>
-          <div className="flex items-center gap-1.5 mb-2"><span className="text-blue-400"><Calendar size={12} /></span><span className="text-xs font-mono font-semibold tracking-wider uppercase text-blue-400">Upcoming Events</span></div>
-          <div className="mt-2 overflow-y-auto flex-1"><EventsCalendar earnings={earnings} /></div>
+
+        <Panel style={{ gridColumn: "2/3", gridRow: "1/2" }}>
+          <KeyMetrics quote={quote} metrics={metrics} />
         </Panel>
-        <Panel style={{ gridColumn: "1/2", gridRow: "2/3", minHeight: 240 }}>
-          <div className="flex items-center gap-1.5 mb-2"><span className="text-blue-400"><DollarSign size={12} /></span><span className="text-xs font-mono font-semibold tracking-wider uppercase text-blue-400">Financial Statements</span></div>
-          <div style={{ height: 200, minHeight: 200, overflowY: "auto" }}><FinancialStatements ticker={ticker} /></div>
-        </Panel>
-        <Panel style={{ gridColumn: "2/3", gridRow: "2/3" }}><QuickStats quote={quote} metrics={metrics} /></Panel>
-        <Panel style={{ gridColumn: "1/2", gridRow: "3/4" }}><CompanyProfile profile={profile} /></Panel>
-        <Panel style={{ gridColumn: "2/3", gridRow: "3/4" }}>
-          <div className="flex items-center gap-1.5 mb-2"><span className="text-blue-400"><Newspaper size={12} /></span><span className="text-xs font-mono font-semibold tracking-wider uppercase text-blue-400">News & Sentiment</span></div>
-          <div className="mt-2 overflow-y-auto flex-1"><NewsFeed news={news} /></div>
-        </Panel>
-        <Panel style={{ gridColumn: "3/4", gridRow: "2/4" }}>
-          <OilPrices />
-        </Panel>
-        <Panel style={{ gridColumn: "3/4", gridRow: "4/5" }}>
-          <div className="flex items-center gap-1.5 mb-2"><span className="text-blue-400"><Star size={12} /></span><span className="text-xs font-mono font-semibold tracking-wider uppercase text-blue-400">Watchlist</span></div>
-          <div className="mt-2">
+
+        <Panel style={{ gridColumn: "3/4", gridRow: "1/2" }}>
+          <div className="flex items-center gap-1.5 mb-2"><span className="terminal-header"><Star size={12} /></span><span className="terminal-header">Watchlist</span></div>
+          <div className="mt-1">
             {tapeData.map(t => (
-              <div key={t.symbol} className="flex justify-between items-center py-1.5 border-b border-gray-800 cursor-pointer hover:bg-gray-900 px-1 rounded transition-colors" onClick={()=>setTicker(t.symbol)}>
-                <span className="text-gray-300 text-xs font-mono font-bold">{t.symbol}</span>
+              <div key={t.symbol} className="watchlist-row flex justify-between items-center py-1.5 border-b border-gray-800 cursor-pointer px-1 rounded transition-colors" onClick={()=>setTicker(t.symbol)}>
+                <span className="text-xs font-mono font-bold" style={{ color: "#a0ffa0" }}>{t.symbol}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-200 text-xs font-mono">${fmt.price(t.price)}</span>
+                  <span className="text-xs font-mono" style={{ color: "#e0ffe8" }}>${fmt.price(t.price)}</span>
                   <span className="text-xs font-mono font-bold" style={{color:clr(t.changePct)}}>{t.changePct>=0?"▲":"▼"}{Math.abs(t.changePct||0).toFixed(2)}%</span>
                 </div>
               </div>
             ))}
           </div>
         </Panel>
+
+        {/* Row 2 */}
+        <Panel style={{ gridColumn: "1/2", gridRow: "2/3" }}>
+          <div className="flex items-center gap-1.5 mb-2"><span className="terminal-header"><DollarSign size={12} /></span><span className="terminal-header">Financial Statements</span></div>
+          <div style={{ height: 200, minHeight: 200, overflowY: "auto" }}><FinancialStatements ticker={ticker} /></div>
+        </Panel>
+
+        <Panel style={{ gridColumn: "2/3", gridRow: "2/3" }}>
+          <QuickStats quote={quote} metrics={metrics} />
+        </Panel>
+
+        <Panel style={{ gridColumn: "3/4", gridRow: "2/3" }}>
+          <div className="flex items-center gap-1.5 mb-2"><span className="terminal-header"><Calendar size={12} /></span><span className="terminal-header">Upcoming Events</span></div>
+          <div className="mt-1 overflow-y-auto flex-1"><EventsCalendar earnings={earnings} /></div>
+        </Panel>
+
+        {/* Row 3 */}
+        <Panel style={{ gridColumn: "1/2", gridRow: "3/4" }}>
+          <CompanyProfile profile={profile} />
+        </Panel>
+
+        <Panel style={{ gridColumn: "2/4", gridRow: "3/4" }}>
+          <div className="flex items-center gap-1.5 mb-2"><span className="terminal-header"><Newspaper size={12} /></span><span className="terminal-header">News & Sentiment</span></div>
+          <div className="mt-1 overflow-y-auto flex-1"><NewsFeed news={news} /></div>
+        </Panel>
+
       </div>
-      <div className="flex items-center gap-4 px-4 py-1.5 border-t border-gray-800 bg-gray-950 text-xs font-mono text-gray-600">
+      }
+      <div className="status-bar flex items-center gap-4 px-4 py-1.5 text-xs font-mono">
         <span>LIVE DATA · FINNHUB.IO</span>
         <span className="text-gray-800">|</span>
         <span>Type a ticker and press Enter to search</span>
