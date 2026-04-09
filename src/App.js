@@ -642,7 +642,7 @@ function WeatherDashboard() {
   }, [active]); // eslint-disable-line
 
   const activeCity = CITIES.find(c => c.name === active);
-  const activeWeather = weather[active];
+  // const activeWeather = weather[active];
   const wmo = (code) => WMO[code] || { label: "Unknown", icon: "🌡" };
 
   return (
