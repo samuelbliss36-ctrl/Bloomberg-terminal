@@ -593,6 +593,24 @@ function FlightTracker() {
   );
 }
 
+
+function EnergyGrid() {
+  return (
+    <div className="flex flex-col" style={{ borderTop: "1px solid #0f2f0f" }}>
+      <div className="flex items-center gap-3 px-3 py-2" style={{ borderBottom: "1px solid #0f2f0f" }}>
+        <span className="terminal-header">⚡ Live Energy Grid — Electricity Maps</span>
+        <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "#001a00", color: "#00ff41", border: "1px solid #00ff4133" }}>● LIVE</span>
+        <span className="text-xs font-mono" style={{ color: "#1a4f1a" }}>Carbon intensity & energy mix by country</span>
+      </div>
+      <iframe
+        src="https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48"
+        style={{ width: "100%", height: 450, border: "none" }}
+        title="Live Energy Grid"
+      />
+    </div>
+  );
+}
+
 function WeatherDashboard() {
   const CITIES = [
     { name: "New York", lat: 40.71, lon: -74.01, tz: "America/New_York", flag: "🇺🇸" },
@@ -1174,6 +1192,7 @@ export default function App() {
           <WeatherDashboard />
           <TankerMap />
           <FlightTracker />
+          <EnergyGrid />
           <div className="p-3 grid gap-3" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
             {[
               { icon: "🛢", title: "Oil Tanker Tracker", desc: "Live AIS vessel tracking for crude oil tankers and LNG carriers worldwide." },
