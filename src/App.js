@@ -87,7 +87,7 @@ function TopNav({ ticker, setTicker, quote, loading }) {
 
 const TIMEFRAMES = ["1W", "1M", "3M", "1Y"];
 const TF_DAYS = { "1W": 7, "1M": 30, "3M": 90, "1Y": 365 };
-const TF_RES = { "1W": "D", "1M": "D", "3M": "D", "1Y": "W" };
+// const TF_RES = { "1W": "D", "1M": "D", "3M": "D", "1Y": "W" };
 
 function PriceChart({ ticker }) {
   const [tf, setTf] = useState("3M");
@@ -96,7 +96,7 @@ function PriceChart({ ticker }) {
   useEffect(() => {
     setLoading(true);
     const to = Math.floor(Date.now() / 1000);
-    const from = to - TF_DAYS[tf] * 24 * 3600;
+    // const from = to - TF_DAYS[tf] * 24 * 3600;
     const range = TF_DAYS[tf] <= 7 ? "5d" : TF_DAYS[tf] <= 30 ? "1mo" : TF_DAYS[tf] <= 90 ? "3mo" : "1y";
     const interval = TF_DAYS[tf] <= 7 ? "1h" : "1d";
     fetch("https://corsproxy.io/?url=" + encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + ticker + "?range=" + range + "&interval=" + interval))
