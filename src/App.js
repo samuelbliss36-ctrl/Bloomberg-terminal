@@ -564,12 +564,12 @@ function CryptoDashboard() {
 
 function SupplyChainDashboard() {
   const INDICES = [
-    { ticker: "^BDI", label: "Baltic Dry Index", symbol: "BDI", desc: "Dry bulk shipping cost" },
     { ticker: "ZC=F", label: "Corn Futures", symbol: "ZC", desc: "Agricultural supply proxy" },
     { ticker: "ZW=F", label: "Wheat Futures", symbol: "ZW", desc: "Food supply indicator" },
     { ticker: "HG=F", label: "Copper Futures", symbol: "HG", desc: "Industrial demand proxy" },
-    { ticker: "ALI=F", label: "Aluminum Futures", symbol: "ALI", desc: "Manufacturing indicator" },
     { ticker: "NG=F", label: "Natural Gas", symbol: "NG", desc: "Energy supply cost" },
+    { ticker: "CL=F", label: "WTI Crude Oil", symbol: "WTI", desc: "Energy transport cost" },
+    { ticker: "ZS=F", label: "Soybeans", symbol: "ZS", desc: "Food supply indicator" },
   ];
 
   const SHIPPING = [
