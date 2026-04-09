@@ -1107,7 +1107,7 @@ export default function App() {
           { key: "crypto", label: "₿ Crypto" },
           { key: "technical", label: "📊 Technical" },
           { key: "weather", label: "🌦 Weather" },
-          { key: "eye", label: "👁 The Eye" },
+          { key: "eye", label: "👁 Eye of Sauron" },
         ].map(p => (
           <button key={p.key} onClick={() => setActivePage(p.key)}
             className="px-5 py-2.5 text-xs font-mono font-semibold tracking-wider uppercase transition-colors border-b-2"
