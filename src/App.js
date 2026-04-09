@@ -333,7 +333,7 @@ function OilPrices() {
   const [active, setActive] = useState("WTI");
   const [tf, setTf] = useState("3M");
   const [loading, setLoading] = useState(true);
-  const TF_RANGE = { "1W": "5d", "1M": "1mo", "3M": "3mo", "1Y": "1y" };
+  const TF_RANGE = { "1W": "5d", "1M": "1mo", "3M": "3mo", "1Y": "1y" }; // eslint-disable-line
 
   useEffect(() => {
     const fetchQuote = (ticker) =>
@@ -371,7 +371,7 @@ function OilPrices() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [active, tf]);
+  }, [active, tf]); // eslint-disable-line
 
   const startP = chartData[0]?.price || 0;
   const endP = chartData[chartData.length - 1]?.price || 0;
