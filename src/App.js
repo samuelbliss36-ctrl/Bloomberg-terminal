@@ -769,49 +769,21 @@ function EyeOfSauron() {
   const [active, setActive] = useState(null);
 
   const MODULES = [
-    {
-      id: "weather",
-      icon: "🌦",
-      title: "Global Weather",
-      desc: "Live weather across major financial centers worldwide",
-      component: <WeatherDashboard />,
-    },
-    {
-      id: "vessels",
-      icon: "🛢",
-      title: "Vessel Tracker",
-      desc: "Live oil tankers and cargo ships via MarineTraffic",
-      component: <TankerMap />,
-    },
-    {
-      id: "flights",
-      icon: "✈️",
-      title: "Flight Tracker",
-      desc: "Real-time global flight tracking via ADS-B Exchange",
-      component: <FlightTracker />,
-    },
-    {
-      id: "energy",
-      icon: "⚡",
-      title: "Energy Grid",
-      desc: "Live US electricity grid demand and generation mix",
-      component: <EnergyGrid />,
-    },
-    {
-      id: "tankers",
-      icon: "🚢",
-      title: "Shipping Routes",
-      desc: "Major shipping lane congestion and freight rates",
-      tag: "Coming Soon",
-    },
-    {
-      id: "geo",
-      icon: "🌍",
-      title: "Geopolitical Events",
-      desc: "Live news filtered for events affecting global markets",
-      tag: "Coming Soon",
-    },
+    { id: "weather", icon: "🌦", title: "Global Weather", desc: "Live weather across major financial centers worldwide" },
+    { id: "vessels", icon: "🛢", title: "Vessel Tracker", desc: "Live oil tankers and cargo ships via MarineTraffic" },
+    { id: "flights", icon: "✈️", title: "Flight Tracker", desc: "Real-time global flight tracking via ADS-B Exchange" },
+    { id: "energy", icon: "⚡", title: "Energy Grid", desc: "Live US electricity grid demand and generation mix" },
+    { id: "tankers", icon: "🚢", title: "Shipping Routes", desc: "Major shipping lane congestion and freight rates", tag: "Coming Soon" },
+    { id: "geo", icon: "🌍", title: "Geopolitical Events", desc: "Live news filtered for events affecting global markets", tag: "Coming Soon" },
   ];
+
+  const renderModule = (id) => {
+    if (id === "weather") return <WeatherDashboard />;
+    if (id === "vessels") return <TankerMap />;
+    if (id === "flights") return <FlightTracker />;
+    if (id === "energy") return <EnergyGrid />;
+    return null;
+  };
 
   if (active) {
     const mod = MODULES.find(m => m.id === active);
@@ -827,7 +799,7 @@ function EyeOfSauron() {
           <span className="terminal-header">{mod.title}</span>
         </div>
         <div className="flex-1">
-          {mod.component}
+          {renderModule(active)}
         </div>
       </div>
     );
