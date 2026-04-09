@@ -95,7 +95,7 @@ function PriceChart({ ticker }) {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     setLoading(true);
-    const to = Math.floor(Date.now() / 1000);
+    // const to = Math.floor(Date.now() / 1000);
     // const from = to - TF_DAYS[tf] * 24 * 3600;
     const range = TF_DAYS[tf] <= 7 ? "5d" : TF_DAYS[tf] <= 30 ? "1mo" : TF_DAYS[tf] <= 90 ? "3mo" : "1y";
     const interval = TF_DAYS[tf] <= 7 ? "1h" : "1d";
