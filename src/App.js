@@ -563,17 +563,15 @@ function CryptoDashboard() {
 
 
 function SupplyChainDashboard() {
-  const MACRO = [
-    { label: "Fed Funds Rate", value: "4.25-4.50%", change: "0.00%", note: "FOMC · Last changed Dec 2024", color: "#ffaa00", src: "Federal Reserve" },
-    { label: "US 10Y Treasury", value: "4.31%", change: "+0.02%", note: "Risk-free rate benchmark", color: "#ffaa00", src: "US Treasury" },
-    { label: "US 2Y Treasury", value: "3.97%", change: "-0.01%", note: "Short-term rate expectation", color: "#ffaa00", src: "US Treasury" },
-    { label: "ISM Mfg PMI", value: "48.7", change: "-0.8", note: "Below 50 = contraction", color: "#ff4444", src: "ISM · Monthly" },
-    { label: "ISM Services PMI", value: "53.5", change: "+1.2", note: "Above 50 = expansion", color: "#00ff41", src: "ISM · Monthly" },
-    { label: "NY Fed SC Pressure", value: "-0.42", change: "-0.11", note: "Negative = below avg stress", color: "#00ff41", src: "NY Fed · Monthly" },
-    { label: "US CPI YoY", value: "2.4%", change: "-0.1%", note: "Consumer price inflation", color: "#ffaa00", src: "BLS · Monthly" },
-    { label: "US PPI YoY", value: "2.7%", change: "+0.3%", note: "Producer price inflation", color: "#ffaa00", src: "BLS · Monthly" },
-    { label: "Unemployment Rate", value: "4.2%", change: "0.0%", note: "US labor market health", color: "#00ff41", src: "BLS · Monthly" },
-    { label: "US Trade Balance", value: "-$122B", change: "-$18B", note: "Monthly trade deficit", color: "#ff4444", src: "Census · Monthly" },
+  const FRED_SERIES = [
+    { id: "FEDFUNDS", label: "Fed Funds Rate", note: "FOMC rate decision", src: "Federal Reserve", suffix: "%", freq: "Monthly" },
+    { id: "DGS10", label: "US 10Y Treasury", note: "Risk-free rate benchmark", src: "US Treasury", suffix: "%", freq: "Daily" },
+    { id: "DGS2", label: "US 2Y Treasury", note: "Short-term rate expectation", src: "US Treasury", suffix: "%", freq: "Daily" },
+    { id: "CPIAUCSL", label: "CPI (Urban)", note: "Consumer price inflation", src: "BLS", suffix: "", freq: "Monthly" },
+    { id: "PPIACO", label: "PPI All Commodities", note: "Producer price inflation", src: "BLS", suffix: "", freq: "Monthly" },
+    { id: "UNRATE", label: "Unemployment Rate", note: "US labor market health", src: "BLS", suffix: "%", freq: "Monthly" },
+    { id: "BOPGSTB", label: "US Trade Balance", note: "Monthly trade deficit ($M)", src: "Census", suffix: "M", freq: "Monthly" },
+    { id: "T10YIE", label: "10Y Breakeven Inflation", note: "Market inflation expectation", src: "Fed", suffix: "%", freq: "Daily" },
   ];
 
   const INDICES = [
@@ -593,6 +591,27 @@ function SupplyChainDashboard() {
   const [tf, setTf] = useState("1Y");
   const [loading, setLoading] = useState(true);
   const TF_RANGE = { "1W": "5d", "1M": "1mo", "3M": "3mo", "1Y": "1y", "5Y": "5y" };
+
+  const [fredData, setFredData] = useState({});
+
+  useEffect(() => {
+    Promise.all(
+      FRED_SERIES.map(s =>
+        fetch("/api/fred?series=" + s.id)
+          .then(r => r.json())
+          .then(d => {
+            const obs = d.observations;
+            const latest = obs?.find(o => o.value !== ".");
+            const prev = obs?.find((o, i) => i > 0 && o.value !== ".");
+            const val = parseFloat(latest?.value);
+            const prevVal = parseFloat(prev?.value);
+            const change = val - prevVal;
+            return [s.id, { value: val, change, date: latest?.date }];
+          })
+          .catch(() => [s.id, null])
+      )
+    ).then(results => setFredData(Object.fromEntries(results)));
+  }, []); // eslint-disable-line
 
   useEffect(() => {
     Promise.all(
@@ -645,21 +664,30 @@ function SupplyChainDashboard() {
         <div className="terminal-header mb-1">📊 Macro Indicators</div>
         <div className="text-xs font-mono mb-3" style={{ color: "#1a4f1a" }}>Monthly published figures</div>
         <div className="flex flex-col gap-1">
-          {MACRO.map(m => (
-            <div key={m.label} className="p-2 rounded" style={{ background: "#020802", border: "1px solid #0a1a0a" }}>
-              <div className="flex items-center justify-between mb-0.5">
-                <div>
-                  <div className="text-xs font-mono font-bold" style={{ color: "#a0ffa0" }}>{m.label}</div>
-                  <div className="text-xs font-mono" style={{ color: "#0f2f0f" }}>{m.src}</div>
+          {FRED_SERIES.map(s => {
+            const d = fredData[s.id];
+            const val = d?.value;
+            const chg = d?.change;
+            const display = val ? (s.id === "BOPGSTB" ? "$" + (val/1000).toFixed(1) + "B" : val.toFixed(2) + s.suffix) : "Loading...";
+            const chgDisplay = chg ? (chg >= 0 ? "+" : "") + chg.toFixed(2) + s.suffix : "—";
+            const chgColor = !chg ? "#1a4f1a" : chg >= 0 ? "#00ff41" : "#ff4444";
+            return (
+              <div key={s.id} className="p-2 rounded" style={{ background: "#020802", border: "1px solid #0a1a0a" }}>
+                <div className="flex items-center justify-between mb-0.5">
+                  <div>
+                    <div className="text-xs font-mono font-bold" style={{ color: "#a0ffa0" }}>{s.label}</div>
+                    <div className="text-xs font-mono" style={{ color: "#0f2f0f" }}>{s.src} · {s.freq}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs font-mono font-bold" style={{ color: "#ffaa00" }}>{display}</div>
+                    <div className="text-xs font-mono" style={{ color: chgColor }}>{chgDisplay}</div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-xs font-mono font-bold" style={{ color: m.color }}>{m.value}</div>
-                  <div className="text-xs font-mono" style={{ color: m.change.startsWith("-") ? "#ff4444" : "#00ff41" }}>{m.change}</div>
-                </div>
+                <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{s.note}</div>
+                {d?.date && <div className="text-xs font-mono" style={{ color: "#0f2f0f" }}>As of {d.date}</div>}
               </div>
-              <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{m.note}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="terminal-header mt-4 mb-2">⚡ Live Market Proxies</div>
