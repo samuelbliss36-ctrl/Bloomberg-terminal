@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { AreaChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Search, Bell, Settings, RefreshCw, Zap, ArrowUpRight, ArrowDownRight, Calendar, Newspaper, Building2, DollarSign, BarChart2, Activity, Star } from "lucide-react";
+import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 
 const FINNHUB_KEY = process.env.REACT_APP_FINNHUB_KEY;
 const BASE = "https://finnhub.io/api/v1";
@@ -751,6 +752,154 @@ function WeatherDashboard() {
   );
 }
 
+
+function TankerTracker() {
+  const [vessels, setVessels] = useState({});
+  const [selected, setSelected] = useState(null);
+  const [connected, setConnected] = useState(false);
+  const [region, setRegion] = useState("persian_gulf");
+  const wsRef = useRef(null);
+
+  const REGIONS = {
+    persian_gulf: { name: "Persian Gulf", bbox: [[21.0, 48.0], [30.0, 60.0]], center: [26.0, 54.0], zoom: 6 },
+    strait_hormuz: { name: "Strait of Hormuz", bbox: [[22.0, 55.0], [27.0, 60.0]], center: [26.0, 57.0], zoom: 7 },
+    north_sea: { name: "North Sea", bbox: [[51.0, -4.0], [62.0, 10.0]], center: [56.0, 3.0], zoom: 5 },
+    gulf_mexico: { name: "Gulf of Mexico", bbox: [[18.0, -98.0], [30.0, -80.0]], center: [24.0, -89.0], zoom: 5 },
+    suez_canal: { name: "Suez Canal", bbox: [[29.0, 31.0], [33.0, 35.0]], center: [31.0, 32.5], zoom: 8 },
+  };
+
+  const VESSEL_TYPES = {
+    80: "Tanker", 81: "Tanker", 82: "Tanker", 83: "Tanker",
+    84: "Tanker", 85: "Tanker", 86: "Tanker", 87: "Tanker",
+    88: "Tanker", 89: "Tanker", 70: "Cargo", 71: "Cargo",
+  };
+
+  useEffect(() => {
+    if (wsRef.current) wsRef.current.close();
+    setVessels({});
+    setSelected(null);
+
+    const r = REGIONS[region];
+    const connectTimer = setTimeout(() => {
+      const ws = new WebSocket("wss://stream.aisstream.io/v0/stream");
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        setConnected(true);
+        ws.send(JSON.stringify({
+          APIKey: "3df38d87d2b413ade4bcbebf9150fc8ea96347b3",
+          BoundingBoxes: [[r.bbox[0], r.bbox[1]]],
+          FilterMessageTypes: ["PositionReport"],
+        }));
+      };
+
+    ws.onmessage = (evt) => {
+      try {
+        const data = JSON.parse(evt.data);
+        if (data.MessageType === "PositionReport") {
+          const pos = data.Message?.PositionReport;
+          const meta = data.MetaData;
+          if (!pos || !meta) return;
+          const mmsi = meta.MMSI;
+          setVessels(prev => ({ ...prev, [mmsi]: {
+            mmsi,
+            name: meta.ShipName?.trim() || "Unknown",
+            lat: pos.Latitude,
+            lon: pos.Longitude,
+            speed: pos.Sog?.toFixed(1),
+            heading: pos.Cog?.toFixed(0),
+            type: VESSEL_TYPES[meta.ShipType] || "Other",
+            flag: meta.Flag || "—",
+            destination: meta.Destination?.trim() || "—",
+            updated: new Date().toLocaleTimeString(),
+          }}));
+        }
+      } catch (e) {}
+    };
+
+      ws.onclose = () => setConnected(false);
+      ws.onerror = () => setConnected(false);
+    }, 500);
+
+    return () => {
+      clearTimeout(connectTimer);
+      if (wsRef.current) wsRef.current.close();
+    };
+  }, [region]); // eslint-disable-line
+
+  const vesselList = Object.values(vessels);
+  const tankers = vesselList.filter(v => v.type === "Tanker");
+  const r = REGIONS[region];
+
+  return (
+    <div className="flex flex-col" style={{ height: 500 }}>
+      <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: "1px solid #0f2f0f", borderTop: "1px solid #0f2f0f" }}>
+        <div className="flex items-center gap-3">
+          <span className="terminal-header">🛢 Live Tanker Tracker</span>
+          <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: connected ? "#001a00" : "#1a0000", color: connected ? "#00ff41" : "#ff4444", border: "1px solid " + (connected ? "#00ff4133" : "#ff444433") }}>
+            {connected ? "● LIVE" : "○ CONNECTING"}
+          </span>
+          <span className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{tankers.length} tankers · {vesselList.length} vessels</span>
+        </div>
+        <div className="flex gap-1">
+          {Object.entries(REGIONS).map(([key, reg]) => (
+            <button key={key} onClick={() => setRegion(key)}
+              className="text-xs font-mono px-2 py-1 rounded transition-colors"
+              style={{ background: region === key ? "#001a00" : "transparent", color: region === key ? "#00ff41" : "#1a4f1a", border: "1px solid " + (region === key ? "#00ff4133" : "#0f2f0f") }}>
+              {reg.name}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="flex flex-1" style={{ minHeight: 0 }}>
+        <div style={{ flex: 1 }}>
+          <MapContainer key={region} center={r.center} zoom={r.zoom} style={{ height: "100%", width: "100%", background: "#000" }}>
+            <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" attribution="CartoDB" />
+            {vesselList.map(v => (
+              <CircleMarker key={v.mmsi} center={[v.lat, v.lon]}
+                radius={v.type === "Tanker" ? 5 : 3}
+                pathOptions={{ color: v.type === "Tanker" ? "#00ff41" : "#ffaa00", fillColor: v.type === "Tanker" ? "#00ff41" : "#ffaa00", fillOpacity: 0.8 }}
+                eventHandlers={{ click: () => setSelected(v) }}>
+                <Popup>
+                  <div style={{ fontFamily: "monospace", fontSize: 11, background: "#020802", color: "#a0ffa0", padding: 4 }}>
+                    <div style={{ fontWeight: "bold" }}>{v.name}</div>
+                    <div>{v.type} · {v.flag}</div>
+                    <div>Speed: {v.speed} kn</div>
+                    <div>Dest: {v.destination}</div>
+                  </div>
+                </Popup>
+              </CircleMarker>
+            ))}
+          </MapContainer>
+        </div>
+        <div style={{ width: 240, borderLeft: "1px solid #0f2f0f", overflowY: "auto", background: "#020802" }}>
+          {selected && (
+            <div className="p-2" style={{ borderBottom: "1px solid #0f2f0f" }}>
+              <div className="terminal-header mb-2">Selected</div>
+              {[["Name", selected.name], ["Type", selected.type], ["Flag", selected.flag], ["Speed", selected.speed + " kn"], ["Heading", selected.heading + "°"], ["Dest", selected.destination], ["Updated", selected.updated]].map(([k, v]) => (
+                <div key={k} className="flex justify-between py-0.5">
+                  <span className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{k}</span>
+                  <span className="text-xs font-mono" style={{ color: "#a0ffa0" }}>{v}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="p-2">
+            <div className="terminal-header mb-2">Tankers ({tankers.length})</div>
+            {tankers.slice(0, 15).map(v => (
+              <div key={v.mmsi} onClick={() => setSelected(v)} className="p-1.5 mb-1 rounded cursor-pointer"
+                style={{ background: selected?.mmsi === v.mmsi ? "#001a00" : "#0a0a0a", border: "1px solid #0a1a0a" }}>
+                <div className="text-xs font-mono font-bold" style={{ color: "#a0ffa0" }}>{v.name}</div>
+                <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{v.flag} · {v.speed} kn</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TickerTape({ tapeData }) {
   const ref = useRef(null);
   useEffect(() => {
@@ -1137,6 +1286,8 @@ export default function App() {
       {activePage === "eye" && (
         <div className="flex-1 flex flex-col overflow-y-auto">
           <WeatherDashboard />
+          <TankerTracker />
+          <TankerTracker />
           <div className="p-3 grid gap-3" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
             {[
               { icon: "🛢", title: "Oil Tanker Tracker", desc: "Live AIS vessel tracking for crude oil tankers and LNG carriers worldwide." },
