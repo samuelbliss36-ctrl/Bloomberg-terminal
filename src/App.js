@@ -572,21 +572,9 @@ function SupplyChainDashboard() {
     { ticker: "ZS=F", label: "Soybeans", symbol: "ZS", desc: "Food supply indicator" },
   ];
 
-  const SHIPPING = [
-    { name: "Shanghai to LA", rate: "$1,842", change: "-2.3%", trend: "down" },
-    { name: "Rotterdam to NY", rate: "$2,104", change: "+1.1%", trend: "up" },
-    { name: "Singapore to LA", rate: "$1,677", change: "-0.8%", trend: "down" },
-    { name: "Shanghai to Rotterdam", rate: "$2,891", change: "+3.2%", trend: "up" },
-  ];
 
-  const PORTS = [
-    { name: "Shanghai", country: "🇨🇳", status: "Normal", wait: "0.5 days", color: "#00ff41" },
-    { name: "Singapore", country: "🇸🇬", status: "Normal", wait: "0.3 days", color: "#00ff41" },
-    { name: "Rotterdam", country: "🇳🇱", status: "Moderate", wait: "1.2 days", color: "#ffaa00" },
-    { name: "Los Angeles", country: "🇺🇸", status: "Normal", wait: "0.8 days", color: "#00ff41" },
-    { name: "Dubai", country: "🇦🇪", status: "Normal", wait: "0.4 days", color: "#00ff41" },
-    { name: "Hamburg", country: "🇩🇪", status: "Moderate", wait: "1.5 days", color: "#ffaa00" },
-  ];
+
+
 
   const [prices, setPrices] = useState({});
   const [active, setActive] = useState("^BDI");
@@ -667,19 +655,9 @@ function SupplyChainDashboard() {
           })}
         </div>
 
-        <div className="terminal-header mt-4 mb-3">🚢 Container Rates (40ft)</div>
-        <div className="flex flex-col gap-1">
-          {SHIPPING.map(s => (
-            <div key={s.name} className="flex items-center justify-between p-2 rounded" style={{ background: "#020802", border: "1px solid #0a1a0a" }}>
-              <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{s.name}</div>
-              <div className="text-right">
-                <div className="text-xs font-mono font-bold" style={{ color: "#e0ffe8" }}>{s.rate}</div>
-                <div className="text-xs font-mono" style={{ color: s.trend === "up" ? "#00ff41" : "#ff4444" }}>{s.change}</div>
-              </div>
-            </div>
-          ))}
-          <div className="text-xs font-mono mt-1" style={{ color: "#0f2f0f" }}>* Indicative rates, updated weekly</div>
-        </div>
+        <div className="terminal-header mt-4 mb-2">🚢 Freightos Baltic Index</div>
+        <div className="text-xs font-mono mb-2" style={{ color: "#1a4f1a" }}>Global container rate benchmark</div>
+        <iframe src="https://terminal.freightos.com/freightos-baltic-index-global-container-pricing-index/" style={{ width: "100%", height: 200, border: "none", borderRadius: 4 }} title="Freightos Baltic Index" />
       </div>
 
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "2/3", gridRow: "1/2" }}>
@@ -728,24 +706,11 @@ function SupplyChainDashboard() {
         </div>
       </div>
 
-      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "2/3", gridRow: "2/3" }}>
-        <div className="terminal-header mb-3">🏭 Major Port Status</div>
-        <div className="grid grid-cols-3 gap-2">
-          {PORTS.map(p => (
-            <div key={p.name} className="p-2 rounded" style={{ background: "#020802", border: "1px solid #0a1a0a" }}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-mono font-bold" style={{ color: "#a0ffa0" }}>{p.country} {p.name}</span>
-                <span className="w-2 h-2 rounded-full" style={{ background: p.color, boxShadow: "0 0 4px " + p.color }} />
-              </div>
-              <div className="text-xs font-mono" style={{ color: p.color }}>{p.status}</div>
-              <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>Wait: {p.wait}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+
 
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/3", gridRow: "3/4" }}>
-        <div className="terminal-header mb-2">📋 Supply Chain Intelligence</div>
+        <div className="terminal-header mb-1">📋 Supply Chain Intelligence</div>
+        <div className="text-xs font-mono mb-2" style={{ color: "#1a4f1a" }}>Monthly published figures — not real-time</div>
         <div className="grid grid-cols-4 gap-3">
           {[
             { label: "Global SC Pressure", value: "-0.42", sub: "NY Fed Index · Below avg stress", color: "#00ff41" },
