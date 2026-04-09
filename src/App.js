@@ -576,6 +576,23 @@ function TankerMap() {
   );
 }
 
+
+function FlightTracker() {
+  return (
+    <div className="flex flex-col" style={{ borderTop: "1px solid #0f2f0f" }}>
+      <div className="flex items-center gap-3 px-3 py-2" style={{ borderBottom: "1px solid #0f2f0f" }}>
+        <span className="terminal-header">✈️ Live Flight Tracker — FlightRadar24</span>
+        <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "#001a00", color: "#00ff41", border: "1px solid #00ff4133" }}>● LIVE</span>
+      </div>
+      <iframe
+        src="https://globe.adsbexchange.com/?largeMode=1"
+        style={{ width: "100%", height: 450, border: "none" }}
+        title="Live Flight Tracker"
+      />
+    </div>
+  );
+}
+
 function WeatherDashboard() {
   const CITIES = [
     { name: "New York", lat: 40.71, lon: -74.01, tz: "America/New_York", flag: "🇺🇸" },
@@ -1156,6 +1173,7 @@ export default function App() {
         <div className="flex-1 flex flex-col overflow-y-auto">
           <WeatherDashboard />
           <TankerMap />
+          <FlightTracker />
           <div className="p-3 grid gap-3" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
             {[
               { icon: "🛢", title: "Oil Tanker Tracker", desc: "Live AIS vessel tracking for crude oil tankers and LNG carriers worldwide." },
