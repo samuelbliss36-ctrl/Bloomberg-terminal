@@ -604,22 +604,26 @@ function WeatherDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all(
-      CITIES.map(c =>
-        fetch("https://api.open-meteo.com/v1/forecast?latitude=" + c.lat + "&longitude=" + c.lon + "&current=temperature_2m,weathercode,windspeed_10m,relativehumidity_2m&temperature_unit=celsius&windspeed_unit=mph")
-          .then(r => r.json())
-          .then(d => [c.name, {
-            temp: d.current?.temperature_2m,
-            code: d.current?.weathercode,
-            wind: d.current?.windspeed_10m,
-            humidity: d.current?.relativehumidity_2m,
-          }])
-          .catch(() => [c.name, null])
-      )
-    ).then(results => {
-      setWeather(Object.fromEntries(results));
-      setLoading(false);
-    });
+    const lats = CITIES.map(c => c.lat).join(",");
+    const lons = CITIES.map(c => c.lon).join(",");
+    fetch("https://api.open-meteo.com/v1/forecast?latitude=" + lats + "&longitude=" + lons + "&current=temperature_2m,weathercode,windspeed_10m,relativehumidity_2m&temperature_unit=celsius&windspeed_unit=mph")
+      .then(r => r.json())
+      .then(results => {
+        const arr = Array.isArray(results) ? results : [results];
+        const weatherMap = {};
+        CITIES.forEach((c, i) => {
+          const d = arr[i];
+          weatherMap[c.name] = {
+            temp: d?.current?.temperature_2m,
+            code: d?.current?.weathercode,
+            wind: d?.current?.windspeed_10m,
+            humidity: d?.current?.relativehumidity_2m,
+          };
+        });
+        setWeather(weatherMap);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []); // eslint-disable-line
 
   useEffect(() => {
