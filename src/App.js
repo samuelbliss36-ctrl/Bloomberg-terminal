@@ -99,7 +99,7 @@ function PriceChart({ ticker }) {
     // const from = to - TF_DAYS[tf] * 24 * 3600;
     const range = TF_DAYS[tf] <= 7 ? "5d" : TF_DAYS[tf] <= 30 ? "1mo" : TF_DAYS[tf] <= 90 ? "3mo" : "1y";
     const interval = TF_DAYS[tf] <= 7 ? "1h" : "1d";
-    fetch("https://corsproxy.io/?url=" + encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + ticker + "?range=" + range + "&interval=" + interval))
+    fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://query1.finance.yahoo.com/v8/finance/chart/" + ticker + "?range=" + range + "&interval=" + interval))
       .then(r => r.json())
       .then(d => {
         const result = d?.chart?.result?.[0];
