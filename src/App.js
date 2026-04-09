@@ -560,6 +560,102 @@ function CryptoDashboard() {
 
 
 
+
+function EyeOfSauron() {
+  const [active, setActive] = useState(null);
+
+  const MODULES = [
+    {
+      id: "weather",
+      icon: "🌦",
+      title: "Global Weather",
+      desc: "Live weather across major financial centers worldwide",
+      component: <WeatherDashboard />,
+    },
+    {
+      id: "vessels",
+      icon: "🛢",
+      title: "Vessel Tracker",
+      desc: "Live oil tankers and cargo ships via MarineTraffic",
+      component: <TankerMap />,
+    },
+    {
+      id: "flights",
+      icon: "✈️",
+      title: "Flight Tracker",
+      desc: "Real-time global flight tracking via ADS-B Exchange",
+      component: <FlightTracker />,
+    },
+    {
+      id: "energy",
+      icon: "⚡",
+      title: "Energy Grid",
+      desc: "Live US electricity grid demand and generation mix",
+      component: <EnergyGrid />,
+    },
+    {
+      id: "tankers",
+      icon: "🚢",
+      title: "Shipping Routes",
+      desc: "Major shipping lane congestion and freight rates",
+      tag: "Coming Soon",
+    },
+    {
+      id: "geo",
+      icon: "🌍",
+      title: "Geopolitical Events",
+      desc: "Live news filtered for events affecting global markets",
+      tag: "Coming Soon",
+    },
+  ];
+
+  if (active) {
+    const mod = MODULES.find(m => m.id === active);
+    return (
+      <div className="flex-1 flex flex-col">
+        <div className="flex items-center gap-3 px-4 py-2" style={{ borderBottom: "1px solid #0f2f0f" }}>
+          <button onClick={() => setActive(null)}
+            className="text-xs font-mono px-3 py-1 rounded transition-colors"
+            style={{ background: "#001a00", color: "#00ff41", border: "1px solid #00ff4133" }}>
+            ← Back
+          </button>
+          <span style={{ fontSize: 18 }}>{mod.icon}</span>
+          <span className="terminal-header">{mod.title}</span>
+        </div>
+        <div className="flex-1">
+          {mod.component}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 p-4">
+      <div className="mb-4">
+        <div className="terminal-header text-lg mb-1">👁 Eye of Sauron</div>
+        <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>Global intelligence feeds — click any module to expand</div>
+      </div>
+      <div className="grid gap-3" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+        {MODULES.map(mod => (
+          <div key={mod.id}
+            onClick={() => !mod.tag && setActive(mod.id)}
+            className="eye-card p-4 transition-all"
+            style={{ cursor: mod.tag ? "default" : "pointer", minHeight: 140 }}>
+            <div style={{ fontSize: 36 }} className="mb-3">{mod.icon}</div>
+            <div className="font-mono font-bold text-sm mb-1" style={{ color: mod.tag ? "#1a4f1a" : "#a0ffa0" }}>{mod.title}</div>
+            <div className="font-mono text-xs leading-relaxed mb-3" style={{ color: "#1a4f1a" }}>{mod.desc}</div>
+            {mod.tag ? (
+              <span className="text-xs font-mono px-2 py-1 rounded" style={{ border: "1px solid #1a4f1a", color: "#00ff4144" }}>Coming Soon</span>
+            ) : (
+              <span className="text-xs font-mono px-2 py-1 rounded" style={{ border: "1px solid #00ff4133", color: "#00ff41" }}>● Click to Open</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function TankerMap() {
   return (
     <div className="flex flex-col" style={{ borderTop: "1px solid #0f2f0f" }}>
@@ -1187,31 +1283,8 @@ export default function App() {
           </div>
         </div>
       )}
-      {activePage === "eye" && (
-        <div className="flex-1 flex flex-col overflow-y-auto">
-          <WeatherDashboard />
-          <TankerMap />
-          <FlightTracker />
-          <EnergyGrid />
-          <div className="p-3 grid gap-3" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
-            {[
-              { icon: "🛢", title: "Oil Tanker Tracker", desc: "Live AIS vessel tracking for crude oil tankers and LNG carriers worldwide." },
-              { icon: "✈️", title: "Flight Tracker", desc: "Real-time global flight tracking with cargo and commercial aircraft." },
-              { icon: "🚢", title: "Shipping Routes", desc: "Major shipping lane congestion, port wait times, and freight rates." },
-              { icon: "🌍", title: "Geopolitical Events", desc: "Live news feed filtered for geopolitical events affecting global markets." },
-              { icon: "⚡", title: "Energy Grid", desc: "Live electricity grid data, renewable energy output, and power demand." },
-              { icon: "🛰", title: "Satellite Data", desc: "Commodity tracking via satellite imagery — crop yields, oil storage levels." },
-            ].map(item => (
-              <div key={item.title} className="eye-card p-4">
-                <div style={{ fontSize: 32 }} className="mb-3">{item.icon}</div>
-                <div className="font-mono font-bold text-sm mb-2" style={{ color: "#a0ffa0" }}>{item.title}</div>
-                <div className="font-mono text-xs leading-relaxed mb-3" style={{ color: "#1a4f1a" }}>{item.desc}</div>
-                <span className="text-xs font-mono px-2 py-1 rounded" style={{ border: "1px solid #1a4f1a", color: "#00ff4188" }}>Coming Soon</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {activePage === "eye" && <EyeOfSauron />}
+
       {activePage !== "financial" && activePage !== "technical" && activePage !== "eye" && null}
       {activePage === "financial" && <div className="flex-1 p-3 grid gap-3" style={{ gridTemplateColumns: "1fr 280px 240px", gridTemplateRows: "340px auto auto" }}>
 
