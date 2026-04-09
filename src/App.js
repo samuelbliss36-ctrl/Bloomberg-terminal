@@ -250,7 +250,7 @@ function CommoditiesDashboard() {
   useEffect(() => {
     Promise.all(
       COMMODITIES.map(c =>
-        fetch("/api/chart?ticker=" + c.ticker + "&range=1d&interval=1m"
+        fetch("/api/chart?ticker=" + c.ticker + "&range=1d&interval=1m")
           .then(r => r.json())
           .then(d => {
             const meta = d?.chart?.result?.[0]?.meta;
@@ -267,7 +267,7 @@ function CommoditiesDashboard() {
 
   useEffect(() => {
     setLoading(true);
-    fetch("/api/chart?ticker=" + active + "&range=" + TF_RANGE[tf] + "&interval=1d"
+    fetch("/api/chart?ticker=" + active + "&range=" + TF_RANGE[tf] + "&interval=1d")
       .then(r => r.json())
       .then(d => {
         const result = d?.chart?.result?.[0];
@@ -421,7 +421,7 @@ function CryptoDashboard() {
   useEffect(() => {
     Promise.all(
       COINS.map(c =>
-        fetch("/api/chart?ticker=" + c.ticker + "&range=1d&interval=1m"
+        fetch("/api/chart?ticker=" + c.ticker + "&range=1d&interval=1m")
           .then(r => r.json())
           .then(d => {
             const meta = d?.chart?.result?.[0]?.meta;
@@ -438,7 +438,7 @@ function CryptoDashboard() {
 
   useEffect(() => {
     setLoading(true);
-    fetch("/api/chart?ticker=" + active + "&range=" + TF_RANGE[tf] + "&interval=1d"
+    fetch("/api/chart?ticker=" + active + "&range=" + TF_RANGE[tf] + "&interval=1d")
       .then(r => r.json())
       .then(d => {
         const result = d?.chart?.result?.[0];
@@ -638,7 +638,7 @@ function PriceChart({ ticker }) {
     // const from = to - TF_DAYS[tf] * 24 * 3600;
     const range = TF_DAYS[tf] <= 7 ? "5d" : TF_DAYS[tf] <= 30 ? "1mo" : TF_DAYS[tf] <= 90 ? "3mo" : "1y";
     const interval = TF_DAYS[tf] <= 7 ? "1h" : "1d";
-    fetch("/api/chart?ticker=" + ticker + "&range=" + range + "&interval=" + interval
+    fetch("/api/chart?ticker=" + ticker + "&range=" + range + "&interval=" + interval)
       .then(r => r.json())
       .then(d => {
         const result = d?.chart?.result?.[0];
