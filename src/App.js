@@ -561,6 +561,210 @@ function CryptoDashboard() {
 
 
 
+
+function SupplyChainDashboard() {
+  const INDICES = [
+    { ticker: "^BDI", label: "Baltic Dry Index", symbol: "BDI", desc: "Dry bulk shipping cost" },
+    { ticker: "ZC=F", label: "Corn Futures", symbol: "ZC", desc: "Agricultural supply proxy" },
+    { ticker: "ZW=F", label: "Wheat Futures", symbol: "ZW", desc: "Food supply indicator" },
+    { ticker: "HG=F", label: "Copper Futures", symbol: "HG", desc: "Industrial demand proxy" },
+    { ticker: "ALI=F", label: "Aluminum Futures", symbol: "ALI", desc: "Manufacturing indicator" },
+    { ticker: "NG=F", label: "Natural Gas", symbol: "NG", desc: "Energy supply cost" },
+  ];
+
+  const SHIPPING = [
+    { name: "Shanghai to LA", rate: "$1,842", change: "-2.3%", trend: "down" },
+    { name: "Rotterdam to NY", rate: "$2,104", change: "+1.1%", trend: "up" },
+    { name: "Singapore to LA", rate: "$1,677", change: "-0.8%", trend: "down" },
+    { name: "Shanghai to Rotterdam", rate: "$2,891", change: "+3.2%", trend: "up" },
+  ];
+
+  const PORTS = [
+    { name: "Shanghai", country: "🇨🇳", status: "Normal", wait: "0.5 days", color: "#00ff41" },
+    { name: "Singapore", country: "🇸🇬", status: "Normal", wait: "0.3 days", color: "#00ff41" },
+    { name: "Rotterdam", country: "🇳🇱", status: "Moderate", wait: "1.2 days", color: "#ffaa00" },
+    { name: "Los Angeles", country: "🇺🇸", status: "Normal", wait: "0.8 days", color: "#00ff41" },
+    { name: "Dubai", country: "🇦🇪", status: "Normal", wait: "0.4 days", color: "#00ff41" },
+    { name: "Hamburg", country: "🇩🇪", status: "Moderate", wait: "1.5 days", color: "#ffaa00" },
+  ];
+
+  const [prices, setPrices] = useState({});
+  const [active, setActive] = useState("^BDI");
+  const [chartData, setChartData] = useState([]);
+  const [tf, setTf] = useState("1Y");
+  const [loading, setLoading] = useState(true);
+  const TF_RANGE = { "1W": "5d", "1M": "1mo", "3M": "3mo", "1Y": "1y", "5Y": "5y" };
+
+  useEffect(() => {
+    Promise.all(
+      INDICES.map(c =>
+        fetch("/api/chart?ticker=" + encodeURIComponent(c.ticker) + "&range=1d&interval=1m")
+          .then(r => r.json())
+          .then(d => {
+            const meta = d?.chart?.result?.[0]?.meta;
+            const price = meta?.regularMarketPrice;
+            const prev = meta?.previousClose;
+            const change = price - prev;
+            const changePct = (change / prev) * 100;
+            return [c.ticker, { price, change, changePct }];
+          })
+          .catch(() => [c.ticker, null])
+      )
+    ).then(results => setPrices(Object.fromEntries(results)));
+  }, []); // eslint-disable-line
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("/api/chart?ticker=" + encodeURIComponent(active) + "&range=" + TF_RANGE[tf] + "&interval=1d")
+      .then(r => r.json())
+      .then(d => {
+        const result = d?.chart?.result?.[0];
+        if (result) {
+          const mapped = result.timestamp.map((t, i) => ({
+            date: new Date(t * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+            price: result.indicators.quote[0].close[i] ? +result.indicators.quote[0].close[i].toFixed(2) : null,
+          })).filter(d => d.price !== null);
+          setChartData(mapped);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [active, tf]); // eslint-disable-line
+
+  const startP = chartData[0]?.price || 0;
+  const endP = chartData[chartData.length - 1]?.price || 0;
+  const chg = endP - startP;
+  const lc = chg >= 0 ? "#00ff41" : "#ff4444";
+  const minP = chartData.length ? Math.min(...chartData.map(d => d.price)) * 0.995 : 0;
+  const maxP = chartData.length ? Math.max(...chartData.map(d => d.price)) * 1.005 : 0;
+  const activeIndex = INDICES.find(c => c.ticker === active);
+
+  return (
+    <div className="flex-1 p-3 grid gap-3" style={{ gridTemplateColumns: "280px 1fr", gridTemplateRows: "auto auto auto" }}>
+
+      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/2", gridRow: "1/3", overflowY: "auto" }}>
+        <div className="terminal-header mb-3">📊 Key Indicators</div>
+        <div className="flex flex-col gap-1">
+          {INDICES.map(c => {
+            const d = prices[c.ticker];
+            const isActive = active === c.ticker;
+            return (
+              <div key={c.ticker} onClick={() => setActive(c.ticker)}
+                className="p-2 rounded cursor-pointer transition-colors"
+                style={{ background: isActive ? "#001a00" : "#020802", border: "1px solid", borderColor: isActive ? "#00ff4144" : "#0a1a0a" }}>
+                <div className="flex items-center justify-between mb-0.5">
+                  <div>
+                    <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#00ff41" : "#a0ffa0" }}>{c.label}</div>
+                    <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{c.desc}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs font-mono font-bold" style={{ color: "#e0ffe8" }}>{d ? (d.price > 100 ? d.price.toFixed(0) : d.price.toFixed(2)) : "..."}</div>
+                    {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#00ff41" : "#ff4444" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="terminal-header mt-4 mb-3">🚢 Container Rates (40ft)</div>
+        <div className="flex flex-col gap-1">
+          {SHIPPING.map(s => (
+            <div key={s.name} className="flex items-center justify-between p-2 rounded" style={{ background: "#020802", border: "1px solid #0a1a0a" }}>
+              <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{s.name}</div>
+              <div className="text-right">
+                <div className="text-xs font-mono font-bold" style={{ color: "#e0ffe8" }}>{s.rate}</div>
+                <div className="text-xs font-mono" style={{ color: s.trend === "up" ? "#00ff41" : "#ff4444" }}>{s.change}</div>
+              </div>
+            </div>
+          ))}
+          <div className="text-xs font-mono mt-1" style={{ color: "#0f2f0f" }}>* Indicative rates, updated weekly</div>
+        </div>
+      </div>
+
+      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "2/3", gridRow: "1/2" }}>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="terminal-header">{activeIndex?.label}</div>
+            <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{activeIndex?.desc}</div>
+            {prices[active] && (
+              <div className="flex items-center gap-3 mt-1">
+                <span className="font-mono font-bold" style={{ color: "#e0ffe8", fontSize: 20 }}>
+                  {prices[active]?.price > 100 ? prices[active]?.price?.toFixed(0) : prices[active]?.price?.toFixed(2)}
+                </span>
+                <span className="text-xs font-mono" style={{ color: clr(prices[active]?.changePct) }}>
+                  {prices[active]?.changePct >= 0 ? "▲" : "▼"} {Math.abs(prices[active]?.changePct || 0).toFixed(2)}%
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="flex border rounded overflow-hidden" style={{ borderColor: "#0f2f0f" }}>
+            {["1W","1M","3M","1Y","5Y"].map(t => (
+              <button key={t} onClick={() => setTf(t)} className="px-2 py-1 text-xs font-mono transition-colors"
+                style={{ background: tf === t ? "#001a00" : "transparent", color: tf === t ? "#00ff41" : "#1a4f1a", borderRight: "1px solid #0f2f0f" }}>{t}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{ height: 240 }}>
+          {loading ? (
+            <div className="flex items-center justify-center h-full text-xs font-mono animate-pulse" style={{ color: "#1a4f1a" }}>Loading chart...</div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="scGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={lc} stopOpacity={0.2} />
+                    <stop offset="95%" stopColor={lc} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#0a1a0a" vertical={false} />
+                <XAxis dataKey="date" tick={{ fill: "#1a4f1a", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(chartData.length / 6))} />
+                <YAxis domain={[minP, maxP]} tick={{ fill: "#1a4f1a", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} tickFormatter={v => v > 1000 ? (v/1000).toFixed(1)+"k" : v.toFixed(0)} width={45} />
+                <Tooltip contentStyle={{ background: "#020802", border: "1px solid #0f2f0f", borderRadius: 2, fontSize: 10, fontFamily: "monospace" }} labelStyle={{ color: "#1a4f1a" }} itemStyle={{ color: "#00ff41" }} formatter={v => [v.toFixed(2), activeIndex?.symbol]} />
+                <Area type="monotone" dataKey="price" stroke={lc} strokeWidth={1.5} fill="url(#scGrad)" dot={false} activeDot={{ r: 3, fill: lc }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "2/3", gridRow: "2/3" }}>
+        <div className="terminal-header mb-3">🏭 Major Port Status</div>
+        <div className="grid grid-cols-3 gap-2">
+          {PORTS.map(p => (
+            <div key={p.name} className="p-2 rounded" style={{ background: "#020802", border: "1px solid #0a1a0a" }}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-mono font-bold" style={{ color: "#a0ffa0" }}>{p.country} {p.name}</span>
+                <span className="w-2 h-2 rounded-full" style={{ background: p.color, boxShadow: "0 0 4px " + p.color }} />
+              </div>
+              <div className="text-xs font-mono" style={{ color: p.color }}>{p.status}</div>
+              <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>Wait: {p.wait}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/3", gridRow: "3/4" }}>
+        <div className="terminal-header mb-2">📋 Supply Chain Intelligence</div>
+        <div className="grid grid-cols-4 gap-3">
+          {[
+            { label: "Global SC Pressure", value: "-0.42", sub: "NY Fed Index · Below avg stress", color: "#00ff41" },
+            { label: "Semiconductor Lead Time", value: "14.2 wks", sub: "Down from 26 wks peak", color: "#00ff41" },
+            { label: "ISM Manufacturing PMI", value: "48.7", sub: "Contraction territory (<50)", color: "#ff4444" },
+            { label: "Freight Cost Index", value: "112.4", sub: "Freightos Baltic · Normalized", color: "#ffaa00" },
+          ].map(item => (
+            <div key={item.label} className="p-3 rounded" style={{ background: "#020802", border: "1px solid #0a1a0a" }}>
+              <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{item.label}</div>
+              <div className="text-lg font-mono font-bold mt-1" style={{ color: item.color }}>{item.value}</div>
+              <div className="text-xs font-mono mt-0.5" style={{ color: "#1a4f1a" }}>{item.sub}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EyeOfSauron() {
   const [active, setActive] = useState(null);
 
@@ -1258,6 +1462,7 @@ export default function App() {
           { key: "financial", label: "📈 Financial" },
           { key: "commodities", label: "🛢 Commodities" },
           { key: "crypto", label: "₿ Crypto" },
+          { key: "supplychain", label: "🚢 Supply Chain" },
           { key: "technical", label: "📊 Technical" },
           { key: "eye", label: "👁 Eye of Sauron" },
         ].map(p => (
@@ -1271,6 +1476,7 @@ export default function App() {
       <TopNav ticker={ticker} setTicker={setTicker} quote={quote} loading={loading} />
       {activePage === "commodities" && <CommoditiesDashboard />}
       {activePage === "crypto" && <CryptoDashboard />}
+      {activePage === "supplychain" && <SupplyChainDashboard />}
       {activePage === "technical" && (
         <div className="flex-1 flex items-center justify-center flex-col gap-4 text-center p-12">
           <span style={{ fontSize: 48 }}>📊</span>
