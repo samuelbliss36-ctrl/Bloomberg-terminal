@@ -563,13 +563,24 @@ function CryptoDashboard() {
 
 
 function SupplyChainDashboard() {
+  const MACRO = [
+    { label: "Fed Funds Rate", value: "4.25-4.50%", change: "0.00%", note: "FOMC · Last changed Dec 2024", color: "#ffaa00", src: "Federal Reserve" },
+    { label: "US 10Y Treasury", value: "4.31%", change: "+0.02%", note: "Risk-free rate benchmark", color: "#ffaa00", src: "US Treasury" },
+    { label: "US 2Y Treasury", value: "3.97%", change: "-0.01%", note: "Short-term rate expectation", color: "#ffaa00", src: "US Treasury" },
+    { label: "ISM Mfg PMI", value: "48.7", change: "-0.8", note: "Below 50 = contraction", color: "#ff4444", src: "ISM · Monthly" },
+    { label: "ISM Services PMI", value: "53.5", change: "+1.2", note: "Above 50 = expansion", color: "#00ff41", src: "ISM · Monthly" },
+    { label: "NY Fed SC Pressure", value: "-0.42", change: "-0.11", note: "Negative = below avg stress", color: "#00ff41", src: "NY Fed · Monthly" },
+    { label: "US CPI YoY", value: "2.4%", change: "-0.1%", note: "Consumer price inflation", color: "#ffaa00", src: "BLS · Monthly" },
+    { label: "US PPI YoY", value: "2.7%", change: "+0.3%", note: "Producer price inflation", color: "#ffaa00", src: "BLS · Monthly" },
+    { label: "Unemployment Rate", value: "4.2%", change: "0.0%", note: "US labor market health", color: "#00ff41", src: "BLS · Monthly" },
+    { label: "US Trade Balance", value: "-$122B", change: "-$18B", note: "Monthly trade deficit", color: "#ff4444", src: "Census · Monthly" },
+  ];
+
   const INDICES = [
-    { ticker: "ZC=F", label: "Corn Futures", symbol: "ZC", desc: "Agricultural supply proxy" },
-    { ticker: "ZW=F", label: "Wheat Futures", symbol: "ZW", desc: "Food supply indicator" },
-    { ticker: "HG=F", label: "Copper Futures", symbol: "HG", desc: "Industrial demand proxy" },
-    { ticker: "NG=F", label: "Natural Gas", symbol: "NG", desc: "Energy supply cost" },
-    { ticker: "CL=F", label: "WTI Crude Oil", symbol: "WTI", desc: "Energy transport cost" },
-    { ticker: "ZS=F", label: "Soybeans", symbol: "ZS", desc: "Food supply indicator" },
+    { ticker: "HG=F", label: "Copper (Dr. Copper)", symbol: "HG", desc: "Global economic health proxy" },
+    { ticker: "NG=F", label: "Natural Gas", symbol: "NG", desc: "Energy & heating cost" },
+    { ticker: "CL=F", label: "WTI Crude Oil", symbol: "WTI", desc: "Global transport cost" },
+    { ticker: "ZW=F", label: "Wheat", symbol: "ZW", desc: "Food supply stress indicator" },
   ];
 
 
@@ -631,7 +642,27 @@ function SupplyChainDashboard() {
     <div className="flex-1 p-3 grid gap-3" style={{ gridTemplateColumns: "280px 1fr" }}>
 
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/2", gridRow: "1/3", overflowY: "auto" }}>
-        <div className="terminal-header mb-3">📊 Key Indicators</div>
+        <div className="terminal-header mb-1">📊 Macro Indicators</div>
+        <div className="text-xs font-mono mb-3" style={{ color: "#1a4f1a" }}>Monthly published figures</div>
+        <div className="flex flex-col gap-1">
+          {MACRO.map(m => (
+            <div key={m.label} className="p-2 rounded" style={{ background: "#020802", border: "1px solid #0a1a0a" }}>
+              <div className="flex items-center justify-between mb-0.5">
+                <div>
+                  <div className="text-xs font-mono font-bold" style={{ color: "#a0ffa0" }}>{m.label}</div>
+                  <div className="text-xs font-mono" style={{ color: "#0f2f0f" }}>{m.src}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-mono font-bold" style={{ color: m.color }}>{m.value}</div>
+                  <div className="text-xs font-mono" style={{ color: m.change.startsWith("-") ? "#ff4444" : "#00ff41" }}>{m.change}</div>
+                </div>
+              </div>
+              <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{m.note}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="terminal-header mt-4 mb-2">⚡ Live Market Proxies</div>
         <div className="flex flex-col gap-1">
           {INDICES.map(c => {
             const d = prices[c.ticker];
@@ -640,7 +671,7 @@ function SupplyChainDashboard() {
               <div key={c.ticker} onClick={() => setActive(c.ticker)}
                 className="p-2 rounded cursor-pointer transition-colors"
                 style={{ background: isActive ? "#001a00" : "#020802", border: "1px solid", borderColor: isActive ? "#00ff4144" : "#0a1a0a" }}>
-                <div className="flex items-center justify-between mb-0.5">
+                <div className="flex items-center justify-between">
                   <div>
                     <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#00ff41" : "#a0ffa0" }}>{c.label}</div>
                     <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{c.desc}</div>
@@ -654,10 +685,6 @@ function SupplyChainDashboard() {
             );
           })}
         </div>
-
-        <div className="terminal-header mt-4 mb-2">🚢 Freightos Baltic Index</div>
-        <div className="text-xs font-mono mb-2" style={{ color: "#1a4f1a" }}>Global container rate benchmark</div>
-        <iframe src="https://terminal.freightos.com/freightos-baltic-index-global-container-pricing-index/" style={{ width: "100%", height: 200, border: "none", borderRadius: 4 }} title="Freightos Baltic Index" />
       </div>
 
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "2/3", gridRow: "1/2" }}>
