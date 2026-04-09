@@ -785,7 +785,7 @@ function TopNav({ ticker, setTicker, quote, loading }) {
     <div className="flex items-center gap-4 px-4 py-2.5 border-b border-gray-800 bg-gray-950">
       <div className="flex items-center gap-2">
         <Zap size={16} style={{ color: "#00ff41" }} />
-        <span className="logo-text" style={{ fontSize: 13 }}>TERMINAL</span>
+        <span className="logo-text" style={{ fontSize: 13 }}>OMNES VIDENTES</span>
       </div>
       <div className="flex items-center bg-gray-900 border border-gray-700 rounded px-2 py-1 gap-2 max-w-xs w-full">
         <Search size={12} className="text-gray-500" />
@@ -1207,7 +1207,7 @@ export default function App() {
       </div>
       }
       <div className="status-bar flex items-center gap-4 px-4 py-1.5 text-xs font-mono">
-        <span>LIVE DATA · FINNHUB.IO</span>
+        <span>OMNES VIDENTES · LIVE DATA</span>
         <span className="text-gray-800">|</span>
         <span>Type a ticker and press Enter to search</span>
         <span className="ml-auto">Last Updated: {new Date().toLocaleTimeString()}</span>
