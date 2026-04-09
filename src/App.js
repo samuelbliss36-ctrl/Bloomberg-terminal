@@ -643,7 +643,7 @@ function WeatherDashboard() {
 
   const activeCity = CITIES.find(c => c.name === active);
   // const activeWeather = weather[active];
-  const wmo = (code) => WMO[code] || { label: "Unknown", icon: "🌡" };
+  const wmo = (code) => WMO[code] || WMO[Math.floor(code/10)*10] || { label: "Clear", icon: "🌤" };
 
   return (
     <div className="flex-1 p-3 grid gap-3" style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr", gridTemplateRows: "auto auto" }}>
