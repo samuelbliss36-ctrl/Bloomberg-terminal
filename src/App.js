@@ -15,6 +15,8 @@ const fmt = {
 };
 const clr = (v) => (v >= 0 ? "#00d084" : "#ff4757");
 const bg = (v) => (v >= 0 ? "rgba(0,208,132,0.1)" : "rgba(255,71,87,0.1)");
+const delay = (ms) => new Promise(r => setTimeout(r, ms));
+
 const WATCHLIST = ["SPY", "QQQ", "MSFT", "NVDA", "TSLA", "GOOGL", "AMZN", "META"];
 
 
@@ -556,6 +558,195 @@ function CryptoDashboard() {
   );
 }
 
+
+function WeatherDashboard() {
+  const CITIES = [
+    { name: "New York", lat: 40.71, lon: -74.01, tz: "America/New_York", flag: "🇺🇸" },
+    { name: "London", lat: 51.51, lon: -0.13, tz: "Europe/London", flag: "🇬🇧" },
+    { name: "Tokyo", lat: 35.68, lon: 139.69, tz: "Asia/Tokyo", flag: "🇯🇵" },
+    { name: "Hong Kong", lat: 22.32, lon: 114.17, tz: "Asia/Hong_Kong", flag: "🇭🇰" },
+    { name: "Dubai", lat: 25.20, lon: 55.27, tz: "Asia/Dubai", flag: "🇦🇪" },
+    { name: "Shanghai", lat: 31.23, lon: 121.47, tz: "Asia/Shanghai", flag: "🇨🇳" },
+    { name: "Frankfurt", lat: 50.11, lon: 8.68, tz: "Europe/Berlin", flag: "🇩🇪" },
+    { name: "Singapore", lat: 1.35, lon: 103.82, tz: "Asia/Singapore", flag: "🇸🇬" },
+    { name: "Sydney", lat: -33.87, lon: 151.21, tz: "Australia/Sydney", flag: "🇦🇺" },
+    { name: "Toronto", lat: 43.65, lon: -79.38, tz: "America/Toronto", flag: "🇨🇦" },
+    { name: "Riyadh", lat: 24.69, lon: 46.72, tz: "Asia/Riyadh", flag: "🇸🇦" },
+    { name: "Mumbai", lat: 19.08, lon: 72.88, tz: "Asia/Kolkata", flag: "🇮🇳" },
+  ];
+
+  const WMO = {
+    0: { label: "Clear", icon: "☀️" },
+    1: { label: "Mostly Clear", icon: "🌤" },
+    2: { label: "Partly Cloudy", icon: "⛅️" },
+    3: { label: "Overcast", icon: "☁️" },
+    45: { label: "Foggy", icon: "🌫" },
+    48: { label: "Icy Fog", icon: "🌫" },
+    51: { label: "Light Drizzle", icon: "🌦" },
+    53: { label: "Drizzle", icon: "🌦" },
+    55: { label: "Heavy Drizzle", icon: "🌧" },
+    61: { label: "Light Rain", icon: "🌧" },
+    63: { label: "Rain", icon: "🌧" },
+    65: { label: "Heavy Rain", icon: "🌧" },
+    71: { label: "Light Snow", icon: "🌨" },
+    73: { label: "Snow", icon: "❄️" },
+    75: { label: "Heavy Snow", icon: "❄️" },
+    80: { label: "Showers", icon: "🌦" },
+    81: { label: "Showers", icon: "🌧" },
+    82: { label: "Heavy Showers", icon: "⛈" },
+    95: { label: "Thunderstorm", icon: "⛈" },
+    99: { label: "Hail Storm", icon: "⛈" },
+  };
+
+  const [weather, setWeather] = useState({});
+  const [active, setActive] = useState("New York");
+  const [forecast, setForecast] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all(
+      CITIES.map(c =>
+        fetch("https://api.open-meteo.com/v1/forecast?latitude=" + c.lat + "&longitude=" + c.lon + "&current=temperature_2m,weathercode,windspeed_10m,relativehumidity_2m&temperature_unit=celsius&windspeed_unit=mph")
+          .then(r => r.json())
+          .then(d => [c.name, {
+            temp: d.current?.temperature_2m,
+            code: d.current?.weathercode,
+            wind: d.current?.windspeed_10m,
+            humidity: d.current?.relativehumidity_2m,
+          }])
+          .catch(() => [c.name, null])
+      )
+    ).then(results => {
+      setWeather(Object.fromEntries(results));
+      setLoading(false);
+    });
+  }, []); // eslint-disable-line
+
+  useEffect(() => {
+    const city = CITIES.find(c => c.name === active);
+    if (!city) return;
+    fetch("https://api.open-meteo.com/v1/forecast?latitude=" + city.lat + "&longitude=" + city.lon + "&daily=temperature_2m_max,temperature_2m_min,weathercode&temperature_unit=celsius&timezone=" + city.tz)
+      .then(r => r.json())
+      .then(d => {
+        if (d.daily) {
+          const days = d.daily.time.map((t, i) => ({
+            date: new Date(t).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }),
+            max: d.daily.temperature_2m_max[i],
+            min: d.daily.temperature_2m_min[i],
+            code: d.daily.weathercode[i],
+          }));
+          setForecast(days);
+        }
+      })
+      .catch(() => {});
+  }, [active]); // eslint-disable-line
+
+  const activeCity = CITIES.find(c => c.name === active);
+  const activeWeather = weather[active];
+  const wmo = (code) => WMO[code] || { label: "Unknown", icon: "🌡" };
+
+  return (
+    <div className="flex-1 p-3 grid gap-3" style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr", gridTemplateRows: "auto auto" }}>
+      
+      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/3", gridRow: "1/2" }}>
+        <div className="terminal-header mb-3">🌍 Global Financial Centers — Weather</div>
+        <div className="grid grid-cols-3 gap-2">
+          {CITIES.slice(0, 6).map(c => {
+            const w = weather[c.name];
+            const isActive = active === c.name;
+            return (
+              <div key={c.name} onClick={() => setActive(c.name)}
+                className="p-2 rounded cursor-pointer transition-colors"
+                style={{ background: isActive ? "#001a00" : "#020802", border: "1px solid", borderColor: isActive ? "#00ff4144" : "#0a1a0a" }}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-mono font-bold" style={{ color: isActive ? "#00ff41" : "#a0ffa0" }}>{c.flag} {c.name}</span>
+                  <span style={{ fontSize: 16 }}>{wmo(w?.code).icon}</span>
+                </div>
+                <div className="text-lg font-mono font-bold" style={{ color: "#e0ffe8" }}>{w ? w.temp + "°C" : "..."}</div>
+                <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{wmo(w?.code).label}</div>
+                <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>💨 {w?.wind || "—"} mph</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "3/5", gridRow: "1/2" }}>
+        <div className="terminal-header mb-3">🌍 Asia Pacific & Middle East</div>
+        <div className="grid grid-cols-3 gap-2">
+          {CITIES.slice(6, 12).map(c => {
+            const w = weather[c.name];
+            const isActive = active === c.name;
+            return (
+              <div key={c.name} onClick={() => setActive(c.name)}
+                className="p-2 rounded cursor-pointer transition-colors"
+                style={{ background: isActive ? "#001a00" : "#020802", border: "1px solid", borderColor: isActive ? "#00ff4144" : "#0a1a0a" }}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-mono font-bold" style={{ color: isActive ? "#00ff41" : "#a0ffa0" }}>{c.flag} {c.name}</span>
+                  <span style={{ fontSize: 16 }}>{wmo(w?.code).icon}</span>
+                </div>
+                <div className="text-lg font-mono font-bold" style={{ color: "#e0ffe8" }}>{w ? w.temp + "°C" : "..."}</div>
+                <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{wmo(w?.code).label}</div>
+                <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>💨 {w?.wind || "—"} mph</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/3", gridRow: "2/3" }}>
+        <div className="terminal-header mb-3">{activeCity?.flag} {active} — 7 Day Forecast</div>
+        <div className="grid grid-cols-7 gap-1">
+          {forecast.slice(0, 7).map((f, i) => (
+            <div key={i} className="flex flex-col items-center p-1.5 rounded" style={{ background: "#020802", border: "1px solid #0a1a0a" }}>
+              <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{f.date.split(",")[0]}</div>
+              <div style={{ fontSize: 20, margin: "4px 0" }}>{wmo(f.code).icon}</div>
+              <div className="text-xs font-mono font-bold" style={{ color: "#e0ffe8" }}>{f.max}°</div>
+              <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{f.min}°</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "3/5", gridRow: "2/3" }}>
+        <div className="terminal-header mb-3">⚠️ Market Weather Alerts</div>
+        <div className="flex flex-col gap-2">
+          {loading ? (
+            <div className="text-xs font-mono animate-pulse" style={{ color: "#1a4f1a" }}>Loading weather data...</div>
+          ) : (
+            CITIES.map(c => {
+              const w = weather[c.name];
+              if (!w) return null;
+              const alerts = [];
+              if (w.temp > 38) alerts.push({ msg: "Extreme heat may affect energy demand", color: "#ff4444" });
+              if (w.temp < -10) alerts.push({ msg: "Extreme cold driving heating demand", color: "#4444ff" });
+              if (w.wind > 40) alerts.push({ msg: "High winds may disrupt operations", color: "#ffaa00" });
+              if ([95, 99, 82].includes(w.code)) alerts.push({ msg: "Severe storms reported", color: "#ff4444" });
+              if (alerts.length === 0) return null;
+              return alerts.map((alert, i) => (
+                <div key={c.name + i} className="flex items-start gap-2 p-2 rounded" style={{ background: "#020802", border: "1px solid #1a0a0a" }}>
+                  <span className="text-xs" style={{ color: alert.color }}>⚠</span>
+                  <div>
+                    <div className="text-xs font-mono font-bold" style={{ color: "#a0ffa0" }}>{c.flag} {c.name}</div>
+                    <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{alert.msg}</div>
+                  </div>
+                </div>
+              ));
+            })
+          )}
+          {!loading && CITIES.every(c => {
+            const w = weather[c.name];
+            if (!w) return true;
+            return w.temp <= 38 && w.temp >= -10 && w.wind <= 40 && ![95,99,82].includes(w.code);
+          }) && (
+            <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>✓ No significant weather alerts across major financial centers</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TickerTape({ tapeData }) {
   const ref = useRef(null);
   useEffect(() => {
@@ -887,10 +1078,10 @@ export default function App() {
     const yearAhead = new Date(Date.now()+365*24*3600*1000).toISOString().split("T")[0];
     Promise.all([
       api("/quote?symbol="+ticker),
-      api("/stock/metric?symbol="+ticker+"&metric=all"),
-      api("/stock/profile2?symbol="+ticker),
-      api("/company-news?symbol="+ticker+"&from="+monthAgo+"&to="+today),
-      api("/calendar/earnings?symbol="+ticker+"&from="+today+"&to="+yearAhead),
+      delay(300).then(() => api("/stock/metric?symbol="+ticker+"&metric=all")),
+      delay(600).then(() => api("/stock/profile2?symbol="+ticker)),
+      delay(900).then(() => api("/company-news?symbol="+ticker+"&from="+monthAgo+"&to="+today)),
+      delay(1200).then(() => api("/calendar/earnings?symbol="+ticker+"&from="+today+"&to="+yearAhead)),
     ]).then(([q,m,p,n,e]) => {
       setQuote(q); setMetrics(m); setProfile(p);
       setNews(Array.isArray(n)?n:[]);
@@ -900,7 +1091,9 @@ export default function App() {
   }, [ticker]);
 
   useEffect(() => {
-    Promise.all(WATCHLIST.map(s=>api("/quote?symbol="+s).then(q=>({symbol:s,price:q.c,changePct:q.dp})))).then(setTapeData);
+    Promise.all(WATCHLIST.map((s, i) => 
+      delay(i * 200).then(() => api("/quote?symbol="+s).then(q=>({symbol:s,price:q.c,changePct:q.dp})))
+    )).then(setTapeData);
   }, []);
 
   return (
@@ -913,6 +1106,7 @@ export default function App() {
           { key: "commodities", label: "🛢 Commodities" },
           { key: "crypto", label: "₿ Crypto" },
           { key: "technical", label: "📊 Technical" },
+          { key: "weather", label: "🌦 Weather" },
           { key: "eye", label: "👁 The Eye" },
         ].map(p => (
           <button key={p.key} onClick={() => setActivePage(p.key)}
@@ -937,6 +1131,7 @@ export default function App() {
           </div>
         </div>
       )}
+      {activePage === "weather" && <WeatherDashboard />}
       {activePage === "eye" && (
         <div className="flex-1 p-4 grid gap-4" style={{ gridTemplateColumns: "1fr 1fr 1fr", gridTemplateRows: "auto auto" }}>
           {[
@@ -962,7 +1157,7 @@ export default function App() {
         {/* Row 1 */}
         <Panel style={{ gridColumn: "1/2", gridRow: "1/2" }}>
           <div className="flex items-center gap-1.5 mb-2"><span className="terminal-header"><Activity size={12} /></span><span className="terminal-header">{ticker} Price Chart</span></div>
-          <div style={{ height: 280, minHeight: 280 }}><PriceChart ticker={ticker} /></div>
+          <div style={{ height: 280, minHeight: 280, width: "100%" }}><PriceChart ticker={ticker} /></div>
         </Panel>
 
         <Panel style={{ gridColumn: "2/3", gridRow: "1/2" }}>
