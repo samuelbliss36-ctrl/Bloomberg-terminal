@@ -1,7 +1,8 @@
 export default async function handler(req, res) {
   const { ticker, range, interval } = req.query;
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?range=${range}&interval=${interval}`;
+    const safeTicker = encodeURIComponent(ticker);
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${safeTicker}?range=${range}&interval=${interval}`;
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0',
