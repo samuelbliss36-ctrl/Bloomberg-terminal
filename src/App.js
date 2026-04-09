@@ -640,7 +640,7 @@ function SupplyChainDashboard() {
   const activeIndex = INDICES.find(c => c.ticker === active);
 
   return (
-    <div className="flex-1 p-3 grid gap-3" style={{ gridTemplateColumns: "280px 1fr", gridTemplateRows: "auto auto auto" }}>
+    <div className="flex-1 p-3 grid gap-3" style={{ gridTemplateColumns: "280px 1fr" }}>
 
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/2", gridRow: "1/3", overflowY: "auto" }}>
         <div className="terminal-header mb-3">📊 Key Indicators</div>
