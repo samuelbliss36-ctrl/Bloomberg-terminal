@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { AreaChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Search, Bell, Settings, RefreshCw, Zap, ArrowUpRight, ArrowDownRight, Calendar, Newspaper, Building2, DollarSign, BarChart2, Activity, Star } from "lucide-react";
-import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 
 const FINNHUB_KEY = process.env.REACT_APP_FINNHUB_KEY;
 const BASE = "https://finnhub.io/api/v1";
@@ -560,6 +559,23 @@ function CryptoDashboard() {
 }
 
 
+
+function TankerMap() {
+  return (
+    <div className="flex flex-col" style={{ borderTop: "1px solid #0f2f0f" }}>
+      <div className="flex items-center gap-3 px-3 py-2" style={{ borderBottom: "1px solid #0f2f0f" }}>
+        <span className="terminal-header">🛢 Live Vessel Tracker — MarineTraffic</span>
+        <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "#001a00", color: "#00ff41", border: "1px solid #00ff4133" }}>● LIVE</span>
+      </div>
+      <iframe
+        src="https://www.marinetraffic.com/en/ais/embed/maptype:0/mmsi:0/vesseltype:80/zoom:4/shownames:true/bgcolor:000000"
+        style={{ width: "100%", height: 450, border: "none" }}
+        title="Live Vessel Tracker"
+      />
+    </div>
+  );
+}
+
 function WeatherDashboard() {
   const CITIES = [
     { name: "New York", lat: 40.71, lon: -74.01, tz: "America/New_York", flag: "🇺🇸" },
@@ -761,11 +777,11 @@ function TankerTracker() {
   const wsRef = useRef(null);
 
   const REGIONS = {
-    persian_gulf: { name: "Persian Gulf", bbox: [[21.0, 48.0], [30.0, 60.0]], center: [26.0, 54.0], zoom: 6 },
-    strait_hormuz: { name: "Strait of Hormuz", bbox: [[22.0, 55.0], [27.0, 60.0]], center: [26.0, 57.0], zoom: 7 },
-    north_sea: { name: "North Sea", bbox: [[51.0, -4.0], [62.0, 10.0]], center: [56.0, 3.0], zoom: 5 },
-    gulf_mexico: { name: "Gulf of Mexico", bbox: [[18.0, -98.0], [30.0, -80.0]], center: [24.0, -89.0], zoom: 5 },
-    suez_canal: { name: "Suez Canal", bbox: [[29.0, 31.0], [33.0, 35.0]], center: [31.0, 32.5], zoom: 8 },
+    persian_gulf: { name: "Persian Gulf", bbox: [[30.0, 48.0], [21.0, 60.0]], center: [26.0, 54.0], zoom: 6 },
+    strait_hormuz: { name: "Strait of Hormuz", bbox: [[27.0, 55.0], [22.0, 60.0]], center: [26.0, 57.0], zoom: 7 },
+    north_sea: { name: "North Sea", bbox: [[62.0, -4.0], [51.0, 10.0]], center: [56.0, 3.0], zoom: 5 },
+    gulf_mexico: { name: "Gulf of Mexico", bbox: [[30.0, -98.0], [18.0, -80.0]], center: [24.0, -89.0], zoom: 5 },
+    suez_canal: { name: "Suez Canal", bbox: [[33.0, 31.0], [29.0, 35.0]], center: [31.0, 32.5], zoom: 8 },
   };
 
   const VESSEL_TYPES = {
@@ -789,7 +805,7 @@ function TankerTracker() {
         ws.send(JSON.stringify({
           APIKey: "3df38d87d2b413ade4bcbebf9150fc8ea96347b3",
           BoundingBoxes: [[r.bbox[0], r.bbox[1]]],
-          FilterMessageTypes: ["PositionReport"],
+          FilterMessageTypes: ["PositionReport", "ShipStaticData"],
         }));
       };
 
@@ -1286,8 +1302,7 @@ export default function App() {
       {activePage === "eye" && (
         <div className="flex-1 flex flex-col overflow-y-auto">
           <WeatherDashboard />
-          <TankerTracker />
-          <TankerTracker />
+          <TankerMap />
           <div className="p-3 grid gap-3" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
             {[
               { icon: "🛢", title: "Oil Tanker Tracker", desc: "Live AIS vessel tracking for crude oil tankers and LNG carriers worldwide." },
