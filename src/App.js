@@ -1110,7 +1110,6 @@ export default function App() {
           { key: "commodities", label: "🛢 Commodities" },
           { key: "crypto", label: "₿ Crypto" },
           { key: "technical", label: "📊 Technical" },
-          { key: "weather", label: "🌦 Weather" },
           { key: "eye", label: "👁 Eye of Sauron" },
         ].map(p => (
           <button key={p.key} onClick={() => setActivePage(p.key)}
@@ -1135,24 +1134,26 @@ export default function App() {
           </div>
         </div>
       )}
-      {activePage === "weather" && <WeatherDashboard />}
       {activePage === "eye" && (
-        <div className="flex-1 p-4 grid gap-4" style={{ gridTemplateColumns: "1fr 1fr 1fr", gridTemplateRows: "auto auto" }}>
-          {[
-            { icon: "🛢", title: "Oil Tanker Tracker", desc: "Live AIS vessel tracking for crude oil tankers and LNG carriers worldwide.", tag: "Coming Soon" },
-            { icon: "✈️", title: "Flight Tracker", desc: "Real-time global flight tracking with cargo and commercial aircraft.", tag: "Coming Soon" },
-            { icon: "🌦", title: "Weather & Climate", desc: "Global weather patterns, storm tracking, and climate data affecting commodity prices.", tag: "Coming Soon" },
-            { icon: "🚢", title: "Shipping Routes", desc: "Major shipping lane congestion, port wait times, and freight rates.", tag: "Coming Soon" },
-            { icon: "🌍", title: "Geopolitical Events", desc: "Live news feed filtered for geopolitical events affecting global markets.", tag: "Coming Soon" },
-            { icon: "⚡", title: "Energy Grid", desc: "Live electricity grid data, renewable energy output, and power demand.", tag: "Coming Soon" },
-          ].map(item => (
-            <div key={item.title} className="eye-card p-4">
-              <div style={{ fontSize: 32 }} className="mb-3">{item.icon}</div>
-              <div className="text-white font-mono font-bold text-sm mb-2">{item.title}</div>
-              <div className="text-gray-500 font-mono text-xs leading-relaxed mb-3">{item.desc}</div>
-              <span className="text-xs font-mono px-2 py-1 rounded border border-yellow-800 text-yellow-500">{item.tag}</span>
-            </div>
-          ))}
+        <div className="flex-1 flex flex-col overflow-y-auto">
+          <WeatherDashboard />
+          <div className="p-3 grid gap-3" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+            {[
+              { icon: "🛢", title: "Oil Tanker Tracker", desc: "Live AIS vessel tracking for crude oil tankers and LNG carriers worldwide." },
+              { icon: "✈️", title: "Flight Tracker", desc: "Real-time global flight tracking with cargo and commercial aircraft." },
+              { icon: "🚢", title: "Shipping Routes", desc: "Major shipping lane congestion, port wait times, and freight rates." },
+              { icon: "🌍", title: "Geopolitical Events", desc: "Live news feed filtered for geopolitical events affecting global markets." },
+              { icon: "⚡", title: "Energy Grid", desc: "Live electricity grid data, renewable energy output, and power demand." },
+              { icon: "🛰", title: "Satellite Data", desc: "Commodity tracking via satellite imagery — crop yields, oil storage levels." },
+            ].map(item => (
+              <div key={item.title} className="eye-card p-4">
+                <div style={{ fontSize: 32 }} className="mb-3">{item.icon}</div>
+                <div className="font-mono font-bold text-sm mb-2" style={{ color: "#a0ffa0" }}>{item.title}</div>
+                <div className="font-mono text-xs leading-relaxed mb-3" style={{ color: "#1a4f1a" }}>{item.desc}</div>
+                <span className="text-xs font-mono px-2 py-1 rounded" style={{ border: "1px solid #1a4f1a", color: "#00ff4188" }}>Coming Soon</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
       {activePage !== "financial" && activePage !== "technical" && activePage !== "eye" && null}
