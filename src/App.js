@@ -13,8 +13,8 @@ const fmt = {
   large: (v) => { if (!v) return "N/A"; if (v >= 1e12) return "$" + (v/1e12).toFixed(2) + "T"; if (v >= 1e9) return "$" + (v/1e9).toFixed(2) + "B"; if (v >= 1e6) return "$" + (v/1e6).toFixed(2) + "M"; return "$" + v?.toLocaleString(); },
   volume: (v) => { if (!v) return "N/A"; if (v >= 1e6) return (v/1e6).toFixed(2) + "M"; if (v >= 1e3) return (v/1e3).toFixed(1) + "K"; return v?.toString(); },
 };
-const clr = (v) => (v >= 0 ? "#00d084" : "#ff4757");
-const bg = (v) => (v >= 0 ? "rgba(0,208,132,0.1)" : "rgba(255,71,87,0.1)");
+const clr = (v) => (v >= 0 ? "#3fb950" : "#f85149");
+const bg = (v) => (v >= 0 ? "rgba(63,185,80,0.1)" : "rgba(248,81,73,0.1)");
 const delay = (ms) => new Promise(r => setTimeout(r, ms));
 
 const WATCHLIST = ["SPY", "QQQ", "MSFT", "NVDA", "TSLA", "GOOGL", "AMZN", "META"];
@@ -23,202 +23,191 @@ const WATCHLIST = ["SPY", "QQQ", "MSFT", "NVDA", "TSLA", "GOOGL", "AMZN", "META"
 function GlobalStyles() {
   return (
     <style>{`
-      @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
       
       * { box-sizing: border-box; }
       
       body {
-        background: #000;
-        color: #00ff41;
-        font-family: 'Share Tech Mono', monospace;
+        background: #0d1117;
+        color: #cdd6f4;
+        font-family: 'IBM Plex Mono', monospace;
       }
 
       ::-webkit-scrollbar { width: 4px; height: 4px; }
-      ::-webkit-scrollbar-track { background: #0a0a0a; }
-      ::-webkit-scrollbar-thumb { background: #00ff4133; border-radius: 2px; }
-      ::-webkit-scrollbar-thumb:hover { background: #00ff4166; }
+      ::-webkit-scrollbar-track { background: #0d1117; }
+      ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
+      ::-webkit-scrollbar-thumb:hover { background: #484f58; }
 
       .terminal-glow {
-        box-shadow: 0 0 10px rgba(0,255,65,0.1), inset 0 0 10px rgba(0,255,65,0.02);
+        box-shadow: none;
       }
 
       .terminal-panel {
-        background: #050505 !important;
-        border: 1px solid #0f2f0f !important;
-        border-radius: 2px !important;
+        background: #161b22 !important;
+        border: 1px solid #21262d !important;
+        border-radius: 4px !important;
         position: relative;
       }
 
-      .terminal-panel::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, #00ff4133, transparent);
-        pointer-events: none;
-      }
-
       .terminal-header {
-        color: #00ff41 !important;
-        font-family: 'Share Tech Mono', monospace !important;
-        letter-spacing: 0.15em !important;
+        color: #7d8590 !important;
+        font-family: 'IBM Plex Mono', monospace !important;
+        letter-spacing: 0.08em !important;
         font-size: 10px !important;
         text-transform: uppercase !important;
+        font-weight: 500 !important;
       }
 
       .terminal-value {
-        color: #e0ffe8 !important;
-        font-family: 'Share Tech Mono', monospace !important;
+        color: #e6edf3 !important;
+        font-family: 'IBM Plex Mono', monospace !important;
       }
 
       .terminal-muted {
-        color: #2a5f2a !important;
-        font-family: 'Share Tech Mono', monospace !important;
+        color: #484f58 !important;
+        font-family: 'IBM Plex Mono', monospace !important;
       }
 
       .terminal-nav {
-        background: #020802 !important;
-        border-bottom: 1px solid #0f2f0f !important;
+        background: #010409 !important;
+        border-bottom: 1px solid #21262d !important;
       }
 
       .terminal-nav button {
-        font-family: 'Share Tech Mono', monospace !important;
-        letter-spacing: 0.1em !important;
+        font-family: 'IBM Plex Mono', monospace !important;
+        letter-spacing: 0.05em !important;
       }
 
       .terminal-nav button:hover {
-        color: #00ff41 !important;
-        background: #001a00 !important;
+        color: #e6edf3 !important;
+        background: #21262d !important;
       }
 
       .terminal-active {
-        color: #00ff41 !important;
-        border-bottom-color: #00ff41 !important;
-        text-shadow: 0 0 8px #00ff4188 !important;
+        color: #58a6ff !important;
+        border-bottom-color: #1f6feb !important;
       }
 
       .ticker-tape {
-        background: #020802 !important;
-        border-bottom: 1px solid #0f2f0f !important;
+        background: #010409 !important;
+        border-bottom: 1px solid #21262d !important;
       }
 
       .top-nav {
-        background: #020802 !important;
-        border-bottom: 1px solid #0f2f0f !important;
+        background: #010409 !important;
+        border-bottom: 1px solid #21262d !important;
       }
 
       .search-box {
-        background: #0a0a0a !important;
-        border: 1px solid #0f2f0f !important;
-        border-radius: 2px !important;
+        background: #0d1117 !important;
+        border: 1px solid #30363d !important;
+        border-radius: 6px !important;
       }
 
       .search-box:focus-within {
-        border-color: #00ff4144 !important;
-        box-shadow: 0 0 8px #00ff4122 !important;
+        border-color: #1f6feb !important;
       }
 
       input {
-        font-family: 'Share Tech Mono', monospace !important;
-        color: #00ff41 !important;
+        font-family: 'IBM Plex Mono', monospace !important;
+        color: #e6edf3 !important;
       }
 
       input::placeholder {
-        color: #1a3f1a !important;
+        color: #484f58 !important;
       }
 
       button {
-        font-family: 'Share Tech Mono', monospace !important;
+        font-family: 'IBM Plex Mono', monospace !important;
         cursor: pointer;
       }
 
       .status-bar {
-        background: #020802 !important;
-        border-top: 1px solid #0f2f0f !important;
-        color: #1a4f1a !important;
+        background: #010409 !important;
+        border-top: 1px solid #21262d !important;
+        color: #484f58 !important;
       }
 
       .metric-row {
-        border-bottom: 1px solid #0a1a0a !important;
+        border-bottom: 1px solid #21262d !important;
       }
 
       .crypto-card {
-        background: #020802 !important;
-        border: 1px solid #0f2f0f !important;
-        border-radius: 2px !important;
-        transition: all 0.2s !important;
+        background: #0d1117 !important;
+        border: 1px solid #21262d !important;
+        border-radius: 4px !important;
+        transition: all 0.15s !important;
       }
 
       .crypto-card:hover {
-        border-color: #00ff4133 !important;
-        box-shadow: 0 0 8px #00ff4111 !important;
+        border-color: #30363d !important;
       }
 
       .crypto-card.active {
-        border-color: #00ff4166 !important;
-        box-shadow: 0 0 12px #00ff4122 !important;
+        border-color: #1f6feb !important;
+        background: #0c2044 !important;
       }
 
       .tf-button {
-        font-family: 'Share Tech Mono', monospace !important;
+        font-family: 'IBM Plex Mono', monospace !important;
         font-size: 10px !important;
       }
 
       .tf-button.active {
-        background: #001a00 !important;
-        color: #00ff41 !important;
+        background: #0c2044 !important;
+        color: #58a6ff !important;
       }
 
       .news-card {
-        border: 1px solid #0a1a0a !important;
-        border-radius: 2px !important;
-        transition: border-color 0.2s !important;
+        border: 1px solid #21262d !important;
+        border-radius: 4px !important;
+        transition: border-color 0.15s !important;
       }
 
       .news-card:hover {
-        border-color: #00ff4133 !important;
+        border-color: #30363d !important;
+        background: #161b22 !important;
       }
 
       .watchlist-row:hover {
-        background: #020802 !important;
+        background: #161b22 !important;
       }
 
       .eye-card {
-        background: #020802 !important;
-        border: 1px solid #0f2f0f !important;
-        border-radius: 2px !important;
-        transition: all 0.2s !important;
+        background: #0d1117 !important;
+        border: 1px solid #21262d !important;
+        border-radius: 4px !important;
+        transition: all 0.15s !important;
       }
 
       .eye-card:hover {
-        border-color: #00ff4133 !important;
-        box-shadow: 0 0 12px #00ff4111 !important;
+        border-color: #1f6feb !important;
+        background: #0c2044 !important;
       }
 
       .logo-text {
-        font-family: 'Orbitron', monospace !important;
-        font-weight: 900 !important;
-        color: #00ff41 !important;
-        text-shadow: 0 0 10px #00ff4188 !important;
-        letter-spacing: 0.2em !important;
+        font-family: 'IBM Plex Sans', sans-serif !important;
+        font-weight: 600 !important;
+        color: #e6edf3 !important;
+        letter-spacing: 0.15em !important;
       }
 
       .live-dot {
-        background: #00ff41 !important;
-        box-shadow: 0 0 6px #00ff41 !important;
+        background: #3fb950 !important;
+        box-shadow: none !important;
       }
 
-      .positive { color: #00ff41 !important; }
-      .negative { color: #ff4444 !important; }
+      .positive { color: #3fb950 !important; }
+      .negative { color: #f85149 !important; }
 
       .coming-soon-badge {
-        border-color: #1a4f1a !important;
-        color: #00ff4188 !important;
+        border-color: #30363d !important;
+        color: #7d8590 !important;
       }
 
       .feature-badge {
-        border-color: #0f2f0f !important;
-        color: #1a4f1a !important;
+        border-color: #21262d !important;
+        color: #484f58 !important;
       }
     `}</style>
   );
@@ -288,7 +277,7 @@ function CommoditiesDashboard() {
   const startP = chartData[0]?.price || 0;
   const endP = chartData[chartData.length - 1]?.price || 0;
   const chg = endP - startP;
-  const lc = chg >= 0 ? "#00ff41" : "#ff4444";
+  const lc = chg >= 0 ? "#58a6ff" : "#f85149";
   const minP = chartData.length ? Math.min(...chartData.map(d => d.price)) * 0.995 : 0;
   const maxP = chartData.length ? Math.max(...chartData.map(d => d.price)) * 1.005 : 0;
   const activeCommodity = COMMODITIES.find(c => c.ticker === active);
@@ -303,7 +292,7 @@ function CommoditiesDashboard() {
           {categories.map(cat => (
             <button key={cat} onClick={() => setCategory(cat)}
               className="px-3 py-1 text-xs font-mono border rounded transition-colors"
-              style={{ borderColor: category === cat ? "#00ff41" : "#0f2f0f", color: category === cat ? "#00ff41" : "#1a4f1a", background: category === cat ? "#001a00" : "transparent" }}>
+              style={{ borderColor: category === cat ? "#58a6ff" : "#21262d", color: category === cat ? "#58a6ff" : "#7d8590", background: category === cat ? "#0c2044" : "transparent" }}>
               {cat}
             </button>
           ))}
@@ -315,15 +304,15 @@ function CommoditiesDashboard() {
             return (
               <div key={c.ticker} onClick={() => setActive(c.ticker)}
                 className="flex items-center justify-between p-2 rounded cursor-pointer transition-colors"
-                style={{ background: isActive ? "#001a00" : "transparent", border: "1px solid", borderColor: isActive ? "#00ff4144" : "#0a1a0a" }}>
+                style={{ background: isActive ? "#0c2044" : "transparent", border: "1px solid", borderColor: isActive ? "#58a6ff44" : "#1c2128" }}>
                 <div>
-                  <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#00ff41" : "#a0ffa0" }}>{c.label}</div>
-                  <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{c.symbol} · {c.unit}</div>
+                  <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#58a6ff" : "#e6edf3" }}>{c.label}</div>
+                  <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{c.symbol} · {c.unit}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs font-mono font-bold" style={{ color: "#e0ffe8" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
+                  <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
                   {d && (
-                    <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#00ff41" : "#ff4444" }}>
+                    <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#58a6ff" : "#f85149" }}>
                       {d.changePct >= 0 ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
                     </div>
                   )}
@@ -339,23 +328,23 @@ function CommoditiesDashboard() {
             <div className="terminal-header">{activeCommodity?.label} — {activeCommodity?.unit}</div>
             {prices[active] && (
               <div className="flex items-center gap-3 mt-1">
-                <span className="text-lg font-mono font-bold" style={{ color: "#e0ffe8" }}>${fmt.price(prices[active]?.price)}</span>
+                <span className="text-lg font-mono font-bold" style={{ color: "#e6edf3" }}>${fmt.price(prices[active]?.price)}</span>
                 <span className="text-xs font-mono" style={{ color: clr(prices[active]?.changePct) }}>
                   {prices[active]?.changePct >= 0 ? "▲" : "▼"} {Math.abs(prices[active]?.change).toFixed(2)} ({Math.abs(prices[active]?.changePct).toFixed(2)}%)
                 </span>
               </div>
             )}
           </div>
-          <div className="flex border rounded overflow-hidden" style={{ borderColor: "#0f2f0f" }}>
+          <div className="flex border rounded overflow-hidden" style={{ borderColor: "#21262d" }}>
             {["1W","1M","3M","1Y"].map(t => (
               <button key={t} onClick={() => setTf(t)} className="px-3 py-1 text-xs font-mono transition-colors"
-                style={{ background: tf === t ? "#001a00" : "transparent", color: tf === t ? "#00ff41" : "#1a4f1a", borderRight: "1px solid #0f2f0f" }}>{t}</button>
+                style={{ background: tf === t ? "#0c2044" : "transparent", color: tf === t ? "#58a6ff" : "#7d8590", borderRight: "1px solid #21262d" }}>{t}</button>
             ))}
           </div>
         </div>
         <div style={{ height: 260 }}>
           {loading ? (
-            <div className="flex items-center justify-center h-full text-xs font-mono animate-pulse" style={{ color: "#1a4f1a" }}>Loading chart...</div>
+            <div className="flex items-center justify-center h-full text-xs font-mono animate-pulse" style={{ color: "#7d8590" }}>Loading chart...</div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
@@ -365,10 +354,10 @@ function CommoditiesDashboard() {
                     <stop offset="95%" stopColor={lc} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#0a1a0a" vertical={false} />
-                <XAxis dataKey="date" tick={{ fill: "#1a4f1a", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(chartData.length / 6))} />
-                <YAxis domain={[minP, maxP]} tick={{ fill: "#1a4f1a", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} tickFormatter={v => "$" + v.toFixed(0)} width={52} />
-                <Tooltip contentStyle={{ background: "#020802", border: "1px solid #0f2f0f", borderRadius: 2, fontSize: 10, fontFamily: "monospace" }} labelStyle={{ color: "#1a4f1a" }} itemStyle={{ color: "#00ff41" }} formatter={v => ["$" + fmt.price(v), "Price"]} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#1c2128" vertical={false} />
+                <XAxis dataKey="date" tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(chartData.length / 6))} />
+                <YAxis domain={[minP, maxP]} tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} tickFormatter={v => "$" + v.toFixed(0)} width={52} />
+                <Tooltip contentStyle={{ background: "#0d1117", border: "1px solid #21262d", borderRadius: 2, fontSize: 10, fontFamily: "monospace" }} labelStyle={{ color: "#7d8590" }} itemStyle={{ color: "#58a6ff" }} formatter={v => ["$" + fmt.price(v), "Price"]} />
                 <Area type="monotone" dataKey="price" stroke={lc} strokeWidth={1.5} fill="url(#commGrad)" dot={false} activeDot={{ r: 3, fill: lc }} />
               </AreaChart>
             </ResponsiveContainer>
@@ -383,10 +372,10 @@ function CommoditiesDashboard() {
             return (
               <div key={c.ticker} onClick={() => { setActive(c.ticker); setCategory(c.category); }}
                 className="p-2 rounded cursor-pointer transition-colors"
-                style={{ background: "#020802", border: "1px solid #0a1a0a" }}>
-                <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{c.symbol}</div>
-                <div className="text-xs font-mono font-bold" style={{ color: "#e0ffe8" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
-                {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#00ff41" : "#ff4444" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
+                style={{ background: "#0d1117", border: "1px solid #1c2128" }}>
+                <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{c.symbol}</div>
+                <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
+                {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#58a6ff" : "#f85149" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
               </div>
             );
           })}
@@ -459,7 +448,7 @@ function CryptoDashboard() {
   const startP = chartData[0]?.price || 0;
   const endP = chartData[chartData.length - 1]?.price || 0;
   const chg = endP - startP;
-  const lc = chg >= 0 ? "#00ff41" : "#ff4444";
+  const lc = chg >= 0 ? "#58a6ff" : "#f85149";
   const minP = chartData.length ? Math.min(...chartData.map(d => d.price)) * 0.995 : 0;
   const maxP = chartData.length ? Math.max(...chartData.map(d => d.price)) * 1.005 : 0;
   const activeCoin = COINS.find(c => c.ticker === active);
@@ -475,18 +464,18 @@ function CryptoDashboard() {
             return (
               <div key={c.ticker} onClick={() => setActive(c.ticker)}
                 className="flex items-center justify-between p-2 rounded cursor-pointer transition-colors"
-                style={{ background: isActive ? "#001a00" : "transparent", border: "1px solid", borderColor: isActive ? "#00ff4144" : "#0a1a0a" }}>
+                style={{ background: isActive ? "#0c2044" : "transparent", border: "1px solid", borderColor: isActive ? "#58a6ff44" : "#1c2128" }}>
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded flex items-center justify-center text-xs font-mono font-bold"
-                    style={{ background: "#0a1a0a", color: isActive ? "#00ff41" : "#1a4f1a" }}>{c.symbol.slice(0,1)}</div>
+                    style={{ background: "#1c2128", color: isActive ? "#58a6ff" : "#7d8590" }}>{c.symbol.slice(0,1)}</div>
                   <div>
-                    <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#00ff41" : "#a0ffa0" }}>{c.label}</div>
-                    <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{c.symbol}</div>
+                    <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#58a6ff" : "#e6edf3" }}>{c.label}</div>
+                    <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{c.symbol}</div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs font-mono font-bold" style={{ color: "#e0ffe8" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
-                  {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#00ff41" : "#ff4444" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
+                  <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
+                  {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#58a6ff" : "#f85149" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
                 </div>
               </div>
             );
@@ -500,23 +489,23 @@ function CryptoDashboard() {
             <div className="terminal-header">{activeCoin?.label} ({activeCoin?.symbol})</div>
             {prices[active] && (
               <div className="flex items-center gap-3 mt-1">
-                <span className="font-mono font-bold" style={{ color: "#e0ffe8", fontSize: 22 }}>${fmt.price(prices[active]?.price)}</span>
+                <span className="font-mono font-bold" style={{ color: "#e6edf3", fontSize: 22 }}>${fmt.price(prices[active]?.price)}</span>
                 <span className="text-xs font-mono" style={{ color: clr(prices[active]?.changePct) }}>
                   {prices[active]?.changePct >= 0 ? "▲" : "▼"} {Math.abs(prices[active]?.change || 0).toFixed(2)} ({Math.abs(prices[active]?.changePct || 0).toFixed(2)}%)
                 </span>
               </div>
             )}
           </div>
-          <div className="flex border rounded overflow-hidden" style={{ borderColor: "#0f2f0f" }}>
+          <div className="flex border rounded overflow-hidden" style={{ borderColor: "#21262d" }}>
             {["1W","1M","3M","1Y"].map(t => (
               <button key={t} onClick={() => setTf(t)} className="px-3 py-1 text-xs font-mono transition-colors"
-                style={{ background: tf === t ? "#001a00" : "transparent", color: tf === t ? "#00ff41" : "#1a4f1a", borderRight: "1px solid #0f2f0f" }}>{t}</button>
+                style={{ background: tf === t ? "#0c2044" : "transparent", color: tf === t ? "#58a6ff" : "#7d8590", borderRight: "1px solid #21262d" }}>{t}</button>
             ))}
           </div>
         </div>
         <div style={{ height: 280 }}>
           {loading ? (
-            <div className="flex items-center justify-center h-full text-xs font-mono animate-pulse" style={{ color: "#1a4f1a" }}>Loading chart...</div>
+            <div className="flex items-center justify-center h-full text-xs font-mono animate-pulse" style={{ color: "#7d8590" }}>Loading chart...</div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
@@ -526,10 +515,10 @@ function CryptoDashboard() {
                     <stop offset="95%" stopColor={lc} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#0a1a0a" vertical={false} />
-                <XAxis dataKey="date" tick={{ fill: "#1a4f1a", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(chartData.length / 6))} />
-                <YAxis domain={[minP, maxP]} tick={{ fill: "#1a4f1a", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} tickFormatter={v => "$" + (v >= 1000 ? (v/1000).toFixed(1) + "k" : v.toFixed(2))} width={55} />
-                <Tooltip contentStyle={{ background: "#020802", border: "1px solid #0f2f0f", borderRadius: 2, fontSize: 10, fontFamily: "monospace" }} labelStyle={{ color: "#1a4f1a" }} itemStyle={{ color: "#00ff41" }} formatter={v => ["$" + fmt.price(v), "Price"]} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#1c2128" vertical={false} />
+                <XAxis dataKey="date" tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(chartData.length / 6))} />
+                <YAxis domain={[minP, maxP]} tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} tickFormatter={v => "$" + (v >= 1000 ? (v/1000).toFixed(1) + "k" : v.toFixed(2))} width={55} />
+                <Tooltip contentStyle={{ background: "#0d1117", border: "1px solid #21262d", borderRadius: 2, fontSize: 10, fontFamily: "monospace" }} labelStyle={{ color: "#7d8590" }} itemStyle={{ color: "#58a6ff" }} formatter={v => ["$" + fmt.price(v), "Price"]} />
                 <Area type="monotone" dataKey="price" stroke={lc} strokeWidth={1.5} fill="url(#cryptoDashGrad)" dot={false} activeDot={{ r: 3, fill: lc }} />
               </AreaChart>
             </ResponsiveContainer>
@@ -545,10 +534,10 @@ function CryptoDashboard() {
             return (
               <div key={c.ticker} onClick={() => setActive(c.ticker)}
                 className="p-2 rounded cursor-pointer"
-                style={{ background: "#020802", border: "1px solid #0a1a0a" }}>
-                <div className="text-xs font-mono font-bold" style={{ color: "#1a4f1a" }}>{c.symbol}</div>
-                <div className="text-xs font-mono font-bold" style={{ color: "#e0ffe8" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
-                {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#00ff41" : "#ff4444" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
+                style={{ background: "#0d1117", border: "1px solid #1c2128" }}>
+                <div className="text-xs font-mono font-bold" style={{ color: "#7d8590" }}>{c.symbol}</div>
+                <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
+                {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#58a6ff" : "#f85149" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
               </div>
             );
           })}
@@ -652,7 +641,7 @@ function SupplyChainDashboard() {
   const startP = chartData[0]?.price || 0;
   const endP = chartData[chartData.length - 1]?.price || 0;
   const chg = endP - startP;
-  const lc = chg >= 0 ? "#00ff41" : "#ff4444";
+  const lc = chg >= 0 ? "#58a6ff" : "#f85149";
   const minP = chartData.length ? Math.min(...chartData.map(d => d.price)) * 0.995 : 0;
   const maxP = chartData.length ? Math.max(...chartData.map(d => d.price)) * 1.005 : 0;
   const activeIndex = INDICES.find(c => c.ticker === active);
@@ -662,7 +651,7 @@ function SupplyChainDashboard() {
 
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/2", gridRow: "1/3", overflowY: "auto" }}>
         <div className="terminal-header mb-1">📊 Macro Indicators</div>
-        <div className="text-xs font-mono mb-3" style={{ color: "#1a4f1a" }}>Monthly published figures</div>
+        <div className="text-xs font-mono mb-3" style={{ color: "#7d8590" }}>Monthly published figures</div>
         <div className="flex flex-col gap-1">
           {FRED_SERIES.map(s => {
             const d = fredData[s.id];
@@ -670,21 +659,21 @@ function SupplyChainDashboard() {
             const chg = d?.change;
             const display = val ? (s.id === "BOPGSTB" ? "$" + (val/1000).toFixed(1) + "B" : val.toFixed(2) + s.suffix) : "Loading...";
             const chgDisplay = chg ? (chg >= 0 ? "+" : "") + chg.toFixed(2) + s.suffix : "—";
-            const chgColor = !chg ? "#1a4f1a" : chg >= 0 ? "#00ff41" : "#ff4444";
+            const chgColor = !chg ? "#7d8590" : chg >= 0 ? "#58a6ff" : "#f85149";
             return (
-              <div key={s.id} className="p-2 rounded" style={{ background: "#020802", border: "1px solid #0a1a0a" }}>
+              <div key={s.id} className="p-2 rounded" style={{ background: "#0d1117", border: "1px solid #1c2128" }}>
                 <div className="flex items-center justify-between mb-0.5">
                   <div>
-                    <div className="text-xs font-mono font-bold" style={{ color: "#a0ffa0" }}>{s.label}</div>
-                    <div className="text-xs font-mono" style={{ color: "#0f2f0f" }}>{s.src} · {s.freq}</div>
+                    <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{s.label}</div>
+                    <div className="text-xs font-mono" style={{ color: "#21262d" }}>{s.src} · {s.freq}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs font-mono font-bold" style={{ color: "#ffaa00" }}>{display}</div>
+                    <div className="text-xs font-mono font-bold" style={{ color: "#e3b341" }}>{display}</div>
                     <div className="text-xs font-mono" style={{ color: chgColor }}>{chgDisplay}</div>
                   </div>
                 </div>
-                <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{s.note}</div>
-                {d?.date && <div className="text-xs font-mono" style={{ color: "#0f2f0f" }}>As of {d.date}</div>}
+                <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{s.note}</div>
+                {d?.date && <div className="text-xs font-mono" style={{ color: "#21262d" }}>As of {d.date}</div>}
               </div>
             );
           })}
@@ -698,15 +687,15 @@ function SupplyChainDashboard() {
             return (
               <div key={c.ticker} onClick={() => setActive(c.ticker)}
                 className="p-2 rounded cursor-pointer transition-colors"
-                style={{ background: isActive ? "#001a00" : "#020802", border: "1px solid", borderColor: isActive ? "#00ff4144" : "#0a1a0a" }}>
+                style={{ background: isActive ? "#0c2044" : "#0d1117", border: "1px solid", borderColor: isActive ? "#58a6ff44" : "#1c2128" }}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#00ff41" : "#a0ffa0" }}>{c.label}</div>
-                    <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{c.desc}</div>
+                    <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#58a6ff" : "#e6edf3" }}>{c.label}</div>
+                    <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{c.desc}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs font-mono font-bold" style={{ color: "#e0ffe8" }}>{d ? (d.price > 100 ? d.price.toFixed(0) : d.price.toFixed(2)) : "..."}</div>
-                    {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#00ff41" : "#ff4444" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
+                    <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{d ? (d.price > 100 ? d.price.toFixed(0) : d.price.toFixed(2)) : "..."}</div>
+                    {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#58a6ff" : "#f85149" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
                   </div>
                 </div>
               </div>
@@ -719,10 +708,10 @@ function SupplyChainDashboard() {
         <div className="flex items-center justify-between mb-3">
           <div>
             <div className="terminal-header">{activeIndex?.label}</div>
-            <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{activeIndex?.desc}</div>
+            <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{activeIndex?.desc}</div>
             {prices[active] && (
               <div className="flex items-center gap-3 mt-1">
-                <span className="font-mono font-bold" style={{ color: "#e0ffe8", fontSize: 20 }}>
+                <span className="font-mono font-bold" style={{ color: "#e6edf3", fontSize: 20 }}>
                   {prices[active]?.price > 100 ? prices[active]?.price?.toFixed(0) : prices[active]?.price?.toFixed(2)}
                 </span>
                 <span className="text-xs font-mono" style={{ color: clr(prices[active]?.changePct) }}>
@@ -731,16 +720,16 @@ function SupplyChainDashboard() {
               </div>
             )}
           </div>
-          <div className="flex border rounded overflow-hidden" style={{ borderColor: "#0f2f0f" }}>
+          <div className="flex border rounded overflow-hidden" style={{ borderColor: "#21262d" }}>
             {["1W","1M","3M","1Y","5Y"].map(t => (
               <button key={t} onClick={() => setTf(t)} className="px-2 py-1 text-xs font-mono transition-colors"
-                style={{ background: tf === t ? "#001a00" : "transparent", color: tf === t ? "#00ff41" : "#1a4f1a", borderRight: "1px solid #0f2f0f" }}>{t}</button>
+                style={{ background: tf === t ? "#0c2044" : "transparent", color: tf === t ? "#58a6ff" : "#7d8590", borderRight: "1px solid #21262d" }}>{t}</button>
             ))}
           </div>
         </div>
         <div style={{ height: 240 }}>
           {loading ? (
-            <div className="flex items-center justify-center h-full text-xs font-mono animate-pulse" style={{ color: "#1a4f1a" }}>Loading chart...</div>
+            <div className="flex items-center justify-center h-full text-xs font-mono animate-pulse" style={{ color: "#7d8590" }}>Loading chart...</div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
@@ -750,10 +739,10 @@ function SupplyChainDashboard() {
                     <stop offset="95%" stopColor={lc} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#0a1a0a" vertical={false} />
-                <XAxis dataKey="date" tick={{ fill: "#1a4f1a", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(chartData.length / 6))} />
-                <YAxis domain={[minP, maxP]} tick={{ fill: "#1a4f1a", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} tickFormatter={v => v > 1000 ? (v/1000).toFixed(1)+"k" : v.toFixed(0)} width={45} />
-                <Tooltip contentStyle={{ background: "#020802", border: "1px solid #0f2f0f", borderRadius: 2, fontSize: 10, fontFamily: "monospace" }} labelStyle={{ color: "#1a4f1a" }} itemStyle={{ color: "#00ff41" }} formatter={v => [v.toFixed(2), activeIndex?.symbol]} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#1c2128" vertical={false} />
+                <XAxis dataKey="date" tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(chartData.length / 6))} />
+                <YAxis domain={[minP, maxP]} tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} tickFormatter={v => v > 1000 ? (v/1000).toFixed(1)+"k" : v.toFixed(0)} width={45} />
+                <Tooltip contentStyle={{ background: "#0d1117", border: "1px solid #21262d", borderRadius: 2, fontSize: 10, fontFamily: "monospace" }} labelStyle={{ color: "#7d8590" }} itemStyle={{ color: "#58a6ff" }} formatter={v => [v.toFixed(2), activeIndex?.symbol]} />
                 <Area type="monotone" dataKey="price" stroke={lc} strokeWidth={1.5} fill="url(#scGrad)" dot={false} activeDot={{ r: 3, fill: lc }} />
               </AreaChart>
             </ResponsiveContainer>
@@ -765,18 +754,18 @@ function SupplyChainDashboard() {
 
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/3", gridRow: "3/4" }}>
         <div className="terminal-header mb-1">📋 Supply Chain Intelligence</div>
-        <div className="text-xs font-mono mb-2" style={{ color: "#1a4f1a" }}>Monthly published figures — not real-time</div>
+        <div className="text-xs font-mono mb-2" style={{ color: "#7d8590" }}>Monthly published figures — not real-time</div>
         <div className="grid grid-cols-4 gap-3">
           {[
-            { label: "Global SC Pressure", value: "-0.42", sub: "NY Fed Index · Below avg stress", color: "#00ff41" },
-            { label: "Semiconductor Lead Time", value: "14.2 wks", sub: "Down from 26 wks peak", color: "#00ff41" },
-            { label: "ISM Manufacturing PMI", value: "48.7", sub: "Contraction territory (<50)", color: "#ff4444" },
-            { label: "Freight Cost Index", value: "112.4", sub: "Freightos Baltic · Normalized", color: "#ffaa00" },
+            { label: "Global SC Pressure", value: "-0.42", sub: "NY Fed Index · Below avg stress", color: "#58a6ff" },
+            { label: "Semiconductor Lead Time", value: "14.2 wks", sub: "Down from 26 wks peak", color: "#58a6ff" },
+            { label: "ISM Manufacturing PMI", value: "48.7", sub: "Contraction territory (<50)", color: "#f85149" },
+            { label: "Freight Cost Index", value: "112.4", sub: "Freightos Baltic · Normalized", color: "#e3b341" },
           ].map(item => (
-            <div key={item.label} className="p-3 rounded" style={{ background: "#020802", border: "1px solid #0a1a0a" }}>
-              <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{item.label}</div>
+            <div key={item.label} className="p-3 rounded" style={{ background: "#0d1117", border: "1px solid #1c2128" }}>
+              <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{item.label}</div>
               <div className="text-lg font-mono font-bold mt-1" style={{ color: item.color }}>{item.value}</div>
-              <div className="text-xs font-mono mt-0.5" style={{ color: "#1a4f1a" }}>{item.sub}</div>
+              <div className="text-xs font-mono mt-0.5" style={{ color: "#7d8590" }}>{item.sub}</div>
             </div>
           ))}
         </div>
@@ -809,10 +798,10 @@ function EyeOfSauron() {
     const mod = MODULES.find(m => m.id === active);
     return (
       <div className="flex-1 flex flex-col">
-        <div className="flex items-center gap-3 px-4 py-2" style={{ borderBottom: "1px solid #0f2f0f" }}>
+        <div className="flex items-center gap-3 px-4 py-2" style={{ borderBottom: "1px solid #21262d" }}>
           <button onClick={() => setActive(null)}
             className="text-xs font-mono px-3 py-1 rounded transition-colors"
-            style={{ background: "#001a00", color: "#00ff41", border: "1px solid #00ff4133" }}>
+            style={{ background: "#0c2044", color: "#58a6ff", border: "1px solid #58a6ff33" }}>
             ← Back
           </button>
           <span style={{ fontSize: 18 }}>{mod.icon}</span>
@@ -829,7 +818,7 @@ function EyeOfSauron() {
     <div className="flex-1 p-4">
       <div className="mb-4">
         <div className="terminal-header text-lg mb-1">👁 Eye of Sauron</div>
-        <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>Global intelligence feeds — click any module to expand</div>
+        <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Global intelligence feeds — click any module to expand</div>
       </div>
       <div className="grid gap-3" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
         {MODULES.map(mod => (
@@ -838,12 +827,12 @@ function EyeOfSauron() {
             className="eye-card p-4 transition-all"
             style={{ cursor: mod.tag ? "default" : "pointer", minHeight: 140 }}>
             <div style={{ fontSize: 36 }} className="mb-3">{mod.icon}</div>
-            <div className="font-mono font-bold text-sm mb-1" style={{ color: mod.tag ? "#1a4f1a" : "#a0ffa0" }}>{mod.title}</div>
-            <div className="font-mono text-xs leading-relaxed mb-3" style={{ color: "#1a4f1a" }}>{mod.desc}</div>
+            <div className="font-mono font-bold text-sm mb-1" style={{ color: mod.tag ? "#7d8590" : "#e6edf3" }}>{mod.title}</div>
+            <div className="font-mono text-xs leading-relaxed mb-3" style={{ color: "#7d8590" }}>{mod.desc}</div>
             {mod.tag ? (
-              <span className="text-xs font-mono px-2 py-1 rounded" style={{ border: "1px solid #1a4f1a", color: "#00ff4144" }}>Coming Soon</span>
+              <span className="text-xs font-mono px-2 py-1 rounded" style={{ border: "1px solid #7d8590", color: "#58a6ff44" }}>Coming Soon</span>
             ) : (
-              <span className="text-xs font-mono px-2 py-1 rounded" style={{ border: "1px solid #00ff4133", color: "#00ff41" }}>● Click to Open</span>
+              <span className="text-xs font-mono px-2 py-1 rounded" style={{ border: "1px solid #58a6ff33", color: "#58a6ff" }}>● Click to Open</span>
             )}
           </div>
         ))}
@@ -854,10 +843,10 @@ function EyeOfSauron() {
 
 function TankerMap() {
   return (
-    <div className="flex flex-col" style={{ borderTop: "1px solid #0f2f0f" }}>
-      <div className="flex items-center gap-3 px-3 py-2" style={{ borderBottom: "1px solid #0f2f0f" }}>
+    <div className="flex flex-col" style={{ borderTop: "1px solid #21262d" }}>
+      <div className="flex items-center gap-3 px-3 py-2" style={{ borderBottom: "1px solid #21262d" }}>
         <span className="terminal-header">🛢 Live Vessel Tracker — MarineTraffic</span>
-        <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "#001a00", color: "#00ff41", border: "1px solid #00ff4133" }}>● LIVE</span>
+        <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "#0c2044", color: "#58a6ff", border: "1px solid #58a6ff33" }}>● LIVE</span>
       </div>
       <iframe
         src="https://www.marinetraffic.com/en/ais/embed/maptype:0/mmsi:0/vesseltype:80/zoom:4/shownames:true/bgcolor:000000"
@@ -871,10 +860,10 @@ function TankerMap() {
 
 function FlightTracker() {
   return (
-    <div className="flex flex-col" style={{ borderTop: "1px solid #0f2f0f" }}>
-      <div className="flex items-center gap-3 px-3 py-2" style={{ borderBottom: "1px solid #0f2f0f" }}>
+    <div className="flex flex-col" style={{ borderTop: "1px solid #21262d" }}>
+      <div className="flex items-center gap-3 px-3 py-2" style={{ borderBottom: "1px solid #21262d" }}>
         <span className="terminal-header">✈️ Live Flight Tracker — FlightRadar24</span>
-        <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "#001a00", color: "#00ff41", border: "1px solid #00ff4133" }}>● LIVE</span>
+        <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "#0c2044", color: "#58a6ff", border: "1px solid #58a6ff33" }}>● LIVE</span>
       </div>
       <iframe
         src="https://globe.adsbexchange.com/?largeMode=1"
@@ -888,11 +877,11 @@ function FlightTracker() {
 
 function EnergyGrid() {
   return (
-    <div className="flex flex-col" style={{ borderTop: "1px solid #0f2f0f" }}>
-      <div className="flex items-center gap-3 px-3 py-2" style={{ borderBottom: "1px solid #0f2f0f" }}>
+    <div className="flex flex-col" style={{ borderTop: "1px solid #21262d" }}>
+      <div className="flex items-center gap-3 px-3 py-2" style={{ borderBottom: "1px solid #21262d" }}>
         <span className="terminal-header">⚡ Live Energy Grid — Electricity Maps</span>
-        <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "#001a00", color: "#00ff41", border: "1px solid #00ff4133" }}>● LIVE</span>
-        <span className="text-xs font-mono" style={{ color: "#1a4f1a" }}>Carbon intensity & energy mix by country</span>
+        <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "#0c2044", color: "#58a6ff", border: "1px solid #58a6ff33" }}>● LIVE</span>
+        <span className="text-xs font-mono" style={{ color: "#7d8590" }}>Carbon intensity & energy mix by country</span>
       </div>
       <iframe
         src="https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48"
@@ -1005,14 +994,14 @@ function WeatherDashboard() {
             return (
               <div key={c.name} onClick={() => setActive(c.name)}
                 className="p-2 rounded cursor-pointer transition-colors"
-                style={{ background: isActive ? "#001a00" : "#020802", border: "1px solid", borderColor: isActive ? "#00ff4144" : "#0a1a0a" }}>
+                style={{ background: isActive ? "#0c2044" : "#0d1117", border: "1px solid", borderColor: isActive ? "#58a6ff44" : "#1c2128" }}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-mono font-bold" style={{ color: isActive ? "#00ff41" : "#a0ffa0" }}>{c.flag} {c.name}</span>
+                  <span className="text-xs font-mono font-bold" style={{ color: isActive ? "#58a6ff" : "#e6edf3" }}>{c.flag} {c.name}</span>
                   <span style={{ fontSize: 16 }}>{wmo(w?.code).icon}</span>
                 </div>
-                <div className="text-lg font-mono font-bold" style={{ color: "#e0ffe8" }}>{w ? w.temp + "°C" : "..."}</div>
-                <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{wmo(w?.code).label}</div>
-                <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>💨 {w?.wind || "—"} mph</div>
+                <div className="text-lg font-mono font-bold" style={{ color: "#e6edf3" }}>{w ? w.temp + "°C" : "..."}</div>
+                <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{wmo(w?.code).label}</div>
+                <div className="text-xs font-mono" style={{ color: "#7d8590" }}>💨 {w?.wind || "—"} mph</div>
               </div>
             );
           })}
@@ -1028,14 +1017,14 @@ function WeatherDashboard() {
             return (
               <div key={c.name} onClick={() => setActive(c.name)}
                 className="p-2 rounded cursor-pointer transition-colors"
-                style={{ background: isActive ? "#001a00" : "#020802", border: "1px solid", borderColor: isActive ? "#00ff4144" : "#0a1a0a" }}>
+                style={{ background: isActive ? "#0c2044" : "#0d1117", border: "1px solid", borderColor: isActive ? "#58a6ff44" : "#1c2128" }}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-mono font-bold" style={{ color: isActive ? "#00ff41" : "#a0ffa0" }}>{c.flag} {c.name}</span>
+                  <span className="text-xs font-mono font-bold" style={{ color: isActive ? "#58a6ff" : "#e6edf3" }}>{c.flag} {c.name}</span>
                   <span style={{ fontSize: 16 }}>{wmo(w?.code).icon}</span>
                 </div>
-                <div className="text-lg font-mono font-bold" style={{ color: "#e0ffe8" }}>{w ? w.temp + "°C" : "..."}</div>
-                <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{wmo(w?.code).label}</div>
-                <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>💨 {w?.wind || "—"} mph</div>
+                <div className="text-lg font-mono font-bold" style={{ color: "#e6edf3" }}>{w ? w.temp + "°C" : "..."}</div>
+                <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{wmo(w?.code).label}</div>
+                <div className="text-xs font-mono" style={{ color: "#7d8590" }}>💨 {w?.wind || "—"} mph</div>
               </div>
             );
           })}
@@ -1046,11 +1035,11 @@ function WeatherDashboard() {
         <div className="terminal-header mb-3">{activeCity?.flag} {active} — 7 Day Forecast</div>
         <div className="grid grid-cols-7 gap-1">
           {forecast.slice(0, 7).map((f, i) => (
-            <div key={i} className="flex flex-col items-center p-1.5 rounded" style={{ background: "#020802", border: "1px solid #0a1a0a" }}>
-              <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{f.date.split(",")[0]}</div>
+            <div key={i} className="flex flex-col items-center p-1.5 rounded" style={{ background: "#0d1117", border: "1px solid #1c2128" }}>
+              <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{f.date.split(",")[0]}</div>
               <div style={{ fontSize: 20, margin: "4px 0" }}>{wmo(f.code).icon}</div>
-              <div className="text-xs font-mono font-bold" style={{ color: "#e0ffe8" }}>{f.max}°</div>
-              <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{f.min}°</div>
+              <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{f.max}°</div>
+              <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{f.min}°</div>
             </div>
           ))}
         </div>
@@ -1060,23 +1049,23 @@ function WeatherDashboard() {
         <div className="terminal-header mb-3">⚠️ Market Weather Alerts</div>
         <div className="flex flex-col gap-2">
           {loading ? (
-            <div className="text-xs font-mono animate-pulse" style={{ color: "#1a4f1a" }}>Loading weather data...</div>
+            <div className="text-xs font-mono animate-pulse" style={{ color: "#7d8590" }}>Loading weather data...</div>
           ) : (
             CITIES.map(c => {
               const w = weather[c.name];
               if (!w) return null;
               const alerts = [];
-              if (w.temp > 38) alerts.push({ msg: "Extreme heat may affect energy demand", color: "#ff4444" });
+              if (w.temp > 38) alerts.push({ msg: "Extreme heat may affect energy demand", color: "#f85149" });
               if (w.temp < -10) alerts.push({ msg: "Extreme cold driving heating demand", color: "#4444ff" });
-              if (w.wind > 40) alerts.push({ msg: "High winds may disrupt operations", color: "#ffaa00" });
-              if ([95, 99, 82].includes(w.code)) alerts.push({ msg: "Severe storms reported", color: "#ff4444" });
+              if (w.wind > 40) alerts.push({ msg: "High winds may disrupt operations", color: "#e3b341" });
+              if ([95, 99, 82].includes(w.code)) alerts.push({ msg: "Severe storms reported", color: "#f85149" });
               if (alerts.length === 0) return null;
               return alerts.map((alert, i) => (
-                <div key={c.name + i} className="flex items-start gap-2 p-2 rounded" style={{ background: "#020802", border: "1px solid #1a0a0a" }}>
+                <div key={c.name + i} className="flex items-start gap-2 p-2 rounded" style={{ background: "#0d1117", border: "1px solid #1a0a0a" }}>
                   <span className="text-xs" style={{ color: alert.color }}>⚠</span>
                   <div>
-                    <div className="text-xs font-mono font-bold" style={{ color: "#a0ffa0" }}>{c.flag} {c.name}</div>
-                    <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>{alert.msg}</div>
+                    <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{c.flag} {c.name}</div>
+                    <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{alert.msg}</div>
                   </div>
                 </div>
               ));
@@ -1087,7 +1076,7 @@ function WeatherDashboard() {
             if (!w) return true;
             return w.temp <= 38 && w.temp >= -10 && w.wind <= 40 && ![95,99,82].includes(w.code);
           }) && (
-            <div className="text-xs font-mono" style={{ color: "#1a4f1a" }}>✓ No significant weather alerts across major financial centers</div>
+            <div className="text-xs font-mono" style={{ color: "#7d8590" }}>✓ No significant weather alerts across major financial centers</div>
           )}
         </div>
       </div>
@@ -1133,7 +1122,7 @@ function TopNav({ ticker, setTicker, quote, loading }) {
   return (
     <div className="flex items-center gap-4 px-4 py-2.5 border-b border-gray-800 bg-gray-950">
       <div className="flex items-center gap-2">
-        <Zap size={16} style={{ color: "#00ff41" }} />
+        <Zap size={16} style={{ color: "#58a6ff" }} />
         <span className="logo-text" style={{ fontSize: 13 }}>OMNES VIDENTES</span>
       </div>
       <div className="flex items-center bg-gray-900 border border-gray-700 rounded px-2 py-1 gap-2 max-w-xs w-full">
@@ -1211,7 +1200,7 @@ function PriceChart({ ticker }) {
   const endPrice = data[data.length - 1]?.price || 0;
   const chg = endPrice - startPrice;
   const pct = startPrice ? (chg / startPrice) * 100 : 0;
-  const lc = chg >= 0 ? "#00d084" : "#ff4757";
+  const lc = chg >= 0 ? "#3fb950" : "#f85149";
   const minP = data.length ? Math.min(...data.map((d) => d.price)) * 0.995 : 0;
   const maxP = data.length ? Math.max(...data.map((d) => d.price)) * 1.005 : 0;
 
@@ -1301,8 +1290,8 @@ function CompanyProfile({ profile }) {
 }
 
 const sentimentStyle = {
-  bullish: { color: "#00d084", bg: "rgba(0,208,132,0.1)", label: "BULLISH" },
-  bearish: { color: "#ff4757", bg: "rgba(255,71,87,0.1)", label: "BEARISH" },
+  bullish: { color: "#3fb950", bg: "rgba(63,185,80,0.1)", label: "BULLISH" },
+  bearish: { color: "#f85149", bg: "rgba(248,81,73,0.1)", label: "BEARISH" },
   neutral: { color: "#9ca3af", bg: "rgba(156,163,175,0.1)", label: "NEUTRAL" },
 };
 function getSentiment(headline) {
@@ -1386,7 +1375,7 @@ function FinancialStatements({ ticker }) {
       <div className="overflow-x-auto">
         <table className="w-full text-xs font-mono">
           <thead><tr><th className="text-left text-gray-600 py-1 pr-3 font-normal">Metric ($B)</th>{rows.map(r=><th key={r.period} className="text-right text-gray-500 py-1 px-2 font-normal">{r.period}</th>)}</tr></thead>
-          <tbody>{cols.map(([key,label])=><tr key={key} className="border-t border-gray-800"><td className="text-gray-400 py-1.5 pr-3">{label}</td>{rows.map((r,i)=><td key={i} className="text-right py-1.5 px-2 font-semibold" style={{color:r[key]<0?"#ff4757":"#e5e7eb"}}>{r[key]<0?"-$"+Math.abs(r[key]).toFixed(2):"$"+(r[key]||0).toFixed(2)}</td>)}</tr>)}</tbody>
+          <tbody>{cols.map(([key,label])=><tr key={key} className="border-t border-gray-800"><td className="text-gray-400 py-1.5 pr-3">{label}</td>{rows.map((r,i)=><td key={i} className="text-right py-1.5 px-2 font-semibold" style={{color:r[key]<0?"#f85149":"#e5e7eb"}}>{r[key]<0?"-$"+Math.abs(r[key]).toFixed(2):"$"+(r[key]||0).toFixed(2)}</td>)}</tr>)}</tbody>
         </table>
       </div>
     </div>
@@ -1446,7 +1435,7 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black text-gray-100 flex flex-col" style={{ fontFamily: "'Share Tech Mono', monospace", background: "#000" }}>
+    <div className="min-h-screen bg-black text-gray-100 flex flex-col" style={{ fontFamily: "'Share Tech Mono', monospace", background: "#0d1117" }}>
       <GlobalStyles />
       <TickerTape tapeData={tapeData} />
       <div className="terminal-nav flex items-center gap-0 px-4">
@@ -1501,9 +1490,9 @@ export default function App() {
           <div className="mt-1">
             {tapeData.map(t => (
               <div key={t.symbol} className="watchlist-row flex justify-between items-center py-1.5 border-b border-gray-800 cursor-pointer px-1 rounded transition-colors" onClick={()=>setTicker(t.symbol)}>
-                <span className="text-xs font-mono font-bold" style={{ color: "#a0ffa0" }}>{t.symbol}</span>
+                <span className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{t.symbol}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono" style={{ color: "#e0ffe8" }}>${fmt.price(t.price)}</span>
+                  <span className="text-xs font-mono" style={{ color: "#e6edf3" }}>${fmt.price(t.price)}</span>
                   <span className="text-xs font-mono font-bold" style={{color:clr(t.changePct)}}>{t.changePct>=0?"▲":"▼"}{Math.abs(t.changePct||0).toFixed(2)}%</span>
                 </div>
               </div>
