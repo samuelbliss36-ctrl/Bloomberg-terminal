@@ -1085,6 +1085,119 @@ function WeatherDashboard() {
 }
 
 
+
+function AnalystData({ ticker }) {
+  const [data, setData] = useState(null);
+  const [targets, setTargets] = useState(null);
+  const [earnings, setEarnings] = useState(null);
+  const [insider, setInsider] = useState(null);
+
+  useEffect(() => {
+    Promise.all([
+      api("/stock/recommendation?symbol=" + ticker),
+      api("/stock/price-target?symbol=" + ticker),
+      api("/stock/earnings?symbol=" + ticker + "&limit=4"),
+      api("/stock/insider-transactions?symbol=" + ticker),
+    ]).then(([rec, tgt, earn, ins]) => {
+      setData(rec?.[0] || null);
+      setTargets(tgt || null);
+      setEarnings(earn?.data?.slice(0, 4) || []);
+      setInsider(ins?.data?.slice(0, 6) || []);
+    }).catch(() => {});
+  }, [ticker]);
+
+  const total = data ? (data.buy + data.hold + data.sell + data.strongBuy + data.strongSell) : 0;
+  const bullPct = total ? Math.round(((data.buy + data.strongBuy) / total) * 100) : 0;
+  const bearPct = total ? Math.round(((data.sell + data.strongSell) / total) * 100) : 0;
+  const holdPct = total ? Math.round((data.hold / total) * 100) : 0;
+
+  return (
+    <div className="h-full grid gap-2" style={{ gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr" }}>
+      
+      <div>
+        <div className="terminal-header mb-2">📊 Analyst Ratings</div>
+        {!data ? <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Loading...</div> : (
+          <div>
+            <div className="flex gap-1 mb-2" style={{ height: 8, borderRadius: 4, overflow: "hidden" }}>
+              <div style={{ width: bullPct + "%", background: "#3fb950" }} />
+              <div style={{ width: holdPct + "%", background: "#e3b341" }} />
+              <div style={{ width: bearPct + "%", background: "#f85149" }} />
+            </div>
+            <div className="grid grid-cols-3 gap-1">
+              {[["Strong Buy", data.strongBuy, "#3fb950"], ["Buy", data.buy, "#3fb950"], ["Hold", data.hold, "#e3b341"], ["Sell", data.sell, "#f85149"], ["Strong Sell", data.strongSell, "#f85149"]].map(([l, v, c]) => (
+                <div key={l} className="p-1 rounded" style={{ background: "#0d1117", border: "1px solid #21262d" }}>
+                  <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{l}</div>
+                  <div className="text-sm font-mono font-bold" style={{ color: c }}>{v}</div>
+                </div>
+              ))}
+              <div className="p-1 rounded" style={{ background: "#0d1117", border: "1px solid #21262d" }}>
+                <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Period</div>
+                <div className="text-xs font-mono" style={{ color: "#e6edf3" }}>{data.period}</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="terminal-header mb-2">🎯 Price Targets</div>
+        {!targets ? <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Loading...</div> : (
+          <div className="flex flex-col gap-1">
+            {[["High", targets.targetHigh, "#3fb950"], ["Average", targets.targetMean, "#58a6ff"], ["Low", targets.targetLow, "#f85149"], ["Current", targets.lastUpdated, "#7d8590"]].map(([l, v, c]) => (
+              <div key={l} className="flex justify-between py-1" style={{ borderBottom: "1px solid #21262d" }}>
+                <span className="text-xs font-mono" style={{ color: "#7d8590" }}>{l}</span>
+                <span className="text-xs font-mono font-bold" style={{ color: c }}>{l === "Current" ? v?.slice(0,10) : v ? "$" + v.toFixed(2) : "N/A"}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={{ overflowY: "auto" }}>
+        <div className="terminal-header mb-2">📈 Earnings Surprises</div>
+        {!earnings ? <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Loading...</div> : (
+          <div className="flex flex-col gap-1">
+            {earnings.map((e, i) => {
+              const surprise = e.actual - e.estimate;
+              const pct = e.estimate ? (surprise / Math.abs(e.estimate) * 100).toFixed(1) : 0;
+              return (
+                <div key={i} className="flex justify-between items-center py-1" style={{ borderBottom: "1px solid #21262d" }}>
+                  <span className="text-xs font-mono" style={{ color: "#7d8590" }}>{e.period}</span>
+                  <span className="text-xs font-mono" style={{ color: "#7d8590" }}>Est: ${e.estimate?.toFixed(2)}</span>
+                  <span className="text-xs font-mono" style={{ color: "#e6edf3" }}>Act: ${e.actual?.toFixed(2)}</span>
+                  <span className="text-xs font-mono font-bold" style={{ color: surprise >= 0 ? "#3fb950" : "#f85149" }}>{surprise >= 0 ? "+" : ""}{pct}%</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div style={{ overflowY: "auto" }}>
+        <div className="terminal-header mb-2">🏦 Insider Transactions</div>
+        {!insider ? <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Loading...</div> : (
+          <div className="flex flex-col gap-1">
+            {insider.map((t, i) => (
+              <div key={i} className="flex justify-between items-center py-1" style={{ borderBottom: "1px solid #21262d" }}>
+                <div>
+                  <div className="text-xs font-mono" style={{ color: "#e6edf3" }}>{t.name?.split(" ").slice(-1)[0]}</div>
+                  <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{t.transactionDate}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-mono font-bold" style={{ color: t.change > 0 ? "#3fb950" : "#f85149" }}>
+                    {t.change > 0 ? "BUY" : "SELL"} {Math.abs(t.change).toLocaleString()}
+                  </div>
+                  <div className="text-xs font-mono" style={{ color: "#7d8590" }}>${t.transactionPrice?.toFixed(2)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function TickerTape({ tapeData }) {
   const ref = useRef(null);
   useEffect(() => {
@@ -1353,10 +1466,11 @@ function EventsCalendar({ earnings }) {
 }
 
 function FinancialStatements({ ticker }) {
+  const [expanded, setExpanded] = useState(false);
   const [tab, setTab] = useState("income");
   const [data, setData] = useState(null);
   useEffect(() => {
-    api("/stock/financials-reported?symbol=" + ticker + "&freq=quarterly").then(d => setData(d.data?.slice(0,4) || []));
+    api("/stock/financials-reported?symbol=" + ticker + "&freq=quarterly").then(d => setData(d.data?.slice(0,40) || []));
   }, [ticker]);
   const tabs = [{ key: "income", label: "Income Stmt" }, { key: "balance", label: "Balance Sheet" }, { key: "cashflow", label: "Cash Flow" }];
   const find = (arr, key) => arr?.find(x=>x.concept.includes(key))?.value/1e9||0;
@@ -1364,13 +1478,64 @@ function FinancialStatements({ ticker }) {
   const extractBS = r => ({ totalAssets: find(r?.bs,"Assets"), totalLiabilities: find(r?.bs,"Liabilities"), cash: find(r?.bs,"CashAndCashEquivalentsAtCarryingValue") });
   const extractCF = r => ({ operatingCF: find(r?.cf,"NetCashProvidedByUsedInOperatingActivities"), capEx: find(r?.cf,"PaymentsToAcquirePropertyPlantAndEquipment") });
   if (!data) return <div className="text-gray-600 text-xs font-mono animate-pulse">Loading financials...</div>;
-  const rows = data.map(d => ({ period: d.form + " " + d.filed?.slice(0,4), ...(tab==="income"?extractIC(d.report):tab==="balance"?extractBS(d.report):extractCF(d.report)) }));
+  const getQuarter = (d) => {
+    const end = d.endDate || d.startDate || d.filed || "";
+    const date = new Date(end);
+    const month = date.getMonth() + 1;
+    const yr = date.getFullYear();
+    if (month <= 3) return "Q1 " + yr;
+    if (month <= 6) return "Q2 " + yr;
+    if (month <= 9) return "Q3 " + yr;
+    return "Q4 " + yr;
+  };
+  const rows = data.map(d => ({ period: getQuarter(d), ...(tab==="income"?extractIC(d.report):tab==="balance"?extractBS(d.report):extractCF(d.report)) }));
   const colMap = { income: [["revenue","Revenue"],["grossProfit","Gross Profit"],["netIncome","Net Income"]], balance: [["totalAssets","Total Assets"],["totalLiabilities","Total Liab."],["cash","Cash"]], cashflow: [["operatingCF","Operating CF"],["capEx","CapEx"]] };
   const cols = colMap[tab];
+  if (expanded) {
+    return (
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 2000, background: "#0d1117", display: "flex", flexDirection: "column" }}>
+        <div className="flex items-center justify-between px-4 py-2" style={{ borderBottom: "1px solid #21262d" }}>
+          <div className="flex items-center gap-3">
+            <span className="terminal-header">📊 Financial Statements — {ticker}</span>
+            <div className="flex">
+              {tabs.map(t => <button key={t.key} onClick={()=>setTab(t.key)} className="px-3 py-1 text-xs font-mono border-b-2 transition-colors" style={{ borderBottomColor: tab===t.key?"#58a6ff":"transparent", color: tab===t.key?"#58a6ff":"#7d8590", background:"transparent" }}>{t.label}</button>)}
+            </div>
+          </div>
+          <button onClick={() => setExpanded(false)} style={{ color: "#7d8590", background: "#161b22", border: "1px solid #30363d", borderRadius: 4, padding: "4px 12px", cursor: "pointer", fontSize: 12, fontFamily: "monospace" }}>✕ Close</button>
+        </div>
+        <div className="flex-1 overflow-auto p-4">
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontFamily: "monospace" }}>
+            <thead>
+              <tr style={{ position: "sticky", top: 0, background: "#161b22", zIndex: 1 }}>
+                <th style={{ textAlign: "left", padding: "8px 12px", color: "#7d8590", fontWeight: 500, borderBottom: "2px solid #30363d", minWidth: 180 }}>Metric ($B)</th>
+                {rows.map(r => <th key={r.period} style={{ textAlign: "right", padding: "8px 12px", color: "#7d8590", fontWeight: 500, borderBottom: "2px solid #30363d", minWidth: 100 }}>{r.period}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {cols.map(([key, label]) => (
+                <tr key={key} style={{ borderBottom: "1px solid #21262d" }} onMouseEnter={e => e.currentTarget.style.background="#161b22"} onMouseLeave={e => e.currentTarget.style.background="transparent"}>
+                  <td style={{ padding: "7px 12px", color: "#7d8590", fontWeight: 500 }}>{label}</td>
+                  {rows.map((r, i) => (
+                    <td key={i} style={{ textAlign: "right", padding: "7px 12px", color: r[key] < 0 ? "#f85149" : "#e6edf3", fontWeight: 500 }}>
+                      {r[key] < 0 ? "-$" + Math.abs(r[key]).toFixed(2) : "$" + (r[key] || 0).toFixed(2)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full">
-      <div className="flex border-b border-gray-800 mb-3">
-        {tabs.map(t => <button key={t.key} onClick={()=>setTab(t.key)} className="px-3 py-1.5 text-xs font-mono border-b-2 transition-colors" style={{ borderBottomColor: tab===t.key?"#60a5fa":"transparent", color: tab===t.key?"#60a5fa":"#6b7280", background:"transparent" }}>{t.label}</button>)}
+      <div className="flex items-center justify-between border-b mb-2" style={{ borderColor: "#21262d" }}>
+        <div className="flex">
+          {tabs.map(t => <button key={t.key} onClick={()=>setTab(t.key)} className="px-3 py-1.5 text-xs font-mono border-b-2 transition-colors" style={{ borderBottomColor: tab===t.key?"#58a6ff":"transparent", color: tab===t.key?"#58a6ff":"#7d8590", background:"transparent" }}>{t.label}</button>)}
+        </div>
+        <button onClick={() => setExpanded(true)} style={{ color: "#7d8590", background: "none", border: "none", cursor: "pointer", fontSize: 10, fontFamily: "monospace", padding: "2px 8px" }}>⤢ Expand</button>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs font-mono">
@@ -1504,56 +1669,52 @@ export default function App() {
       {activePage === "eye" && <EyeOfSauron />}
 
       {activePage !== "financial" && activePage !== "technical" && activePage !== "eye" && null}
-      {activePage === "financial" && <div className="flex-1 p-3 grid gap-3" style={{ gridTemplateColumns: "1fr 280px 240px", gridTemplateRows: "340px auto auto" }}>
+      {activePage === "financial" && <div className="flex-1 p-2 grid gap-2" style={{ gridTemplateColumns: "1fr 210px 210px 190px", gridTemplateRows: "300px 220px 200px", height: "calc(100vh - 90px)", overflow: "hidden" }}>
 
-        {/* Row 1 */}
-        <Panel style={{ gridColumn: "1/2", gridRow: "1/2" }}>
-          <div className="flex items-center gap-1.5 mb-2"><span className="terminal-header"><Activity size={12} /></span><span className="terminal-header">{ticker} Price Chart</span></div>
-          <div style={{ height: 280, minHeight: 280, width: "100%" }}><PriceChart ticker={ticker} /></div>
+        <Panel style={{ gridColumn: "1/2", gridRow: "1/2", overflow: "hidden" }}>
+          <div className="flex items-center gap-1.5 mb-1"><span className="terminal-header"><Activity size={11} /></span><span className="terminal-header">{ticker} · Price Chart</span></div>
+          <div style={{ height: 255, minHeight: 255 }}><PriceChart ticker={ticker} /></div>
         </Panel>
 
-        <Panel style={{ gridColumn: "2/3", gridRow: "1/2" }}>
+        <Panel style={{ gridColumn: "2/3", gridRow: "1/2", overflowY: "auto" }}>
           <KeyMetrics quote={quote} metrics={metrics} />
         </Panel>
 
-        <Panel style={{ gridColumn: "3/4", gridRow: "1/2" }}>
-          <div className="flex items-center gap-1.5 mb-2"><span className="terminal-header"><Star size={12} /></span><span className="terminal-header">Watchlist</span></div>
-          <div className="mt-1">
-            {tapeData.map(t => (
-              <div key={t.symbol} className="watchlist-row flex justify-between items-center py-1.5 border-b border-gray-800 cursor-pointer px-1 rounded transition-colors" onClick={()=>setTicker(t.symbol)}>
-                <span className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{t.symbol}</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono" style={{ color: "#e6edf3" }}>${fmt.price(t.price)}</span>
-                  <span className="text-xs font-mono font-bold" style={{color:clr(t.changePct)}}>{t.changePct>=0?"▲":"▼"}{Math.abs(t.changePct||0).toFixed(2)}%</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Panel>
-
-        {/* Row 2 */}
-        <Panel style={{ gridColumn: "1/2", gridRow: "2/3" }}>
-          <div className="flex items-center gap-1.5 mb-2"><span className="terminal-header"><DollarSign size={12} /></span><span className="terminal-header">Financial Statements</span></div>
-          <div style={{ height: 200, minHeight: 200, overflowY: "auto" }}><FinancialStatements ticker={ticker} /></div>
-        </Panel>
-
-        <Panel style={{ gridColumn: "2/3", gridRow: "2/3" }}>
+        <Panel style={{ gridColumn: "3/4", gridRow: "1/2", overflowY: "auto" }}>
           <QuickStats quote={quote} metrics={metrics} />
         </Panel>
 
-        <Panel style={{ gridColumn: "3/4", gridRow: "2/3" }}>
-          <div className="flex items-center gap-1.5 mb-2"><span className="terminal-header"><Calendar size={12} /></span><span className="terminal-header">Upcoming Events</span></div>
-          <div className="mt-1 overflow-y-auto flex-1"><EventsCalendar earnings={earnings} /></div>
+        <Panel style={{ gridColumn: "4/5", gridRow: "1/3", overflowY: "auto" }}>
+          <div className="flex items-center gap-1.5 mb-2"><span className="terminal-header"><Star size={11} /></span><span className="terminal-header">Watchlist</span></div>
+          {tapeData.map(t => (
+            <div key={t.symbol} className="watchlist-row flex justify-between items-center py-1 border-b cursor-pointer px-1 rounded" style={{ borderColor: "#21262d" }} onClick={()=>setTicker(t.symbol)}>
+              <span className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{t.symbol}</span>
+              <div className="flex flex-col items-end">
+                <span className="text-xs font-mono" style={{ color: "#e6edf3" }}>${fmt.price(t.price)}</span>
+                <span className="text-xs font-mono" style={{color:clr(t.changePct)}}>{t.changePct>=0?"▲":"▼"}{Math.abs(t.changePct||0).toFixed(2)}%</span>
+              </div>
+            </div>
+          ))}
+          <div className="mt-3 mb-1"><span className="terminal-header">Events</span></div>
+          <EventsCalendar earnings={earnings} />
         </Panel>
 
-        {/* Row 3 */}
-        <Panel style={{ gridColumn: "1/2", gridRow: "3/4" }}>
+        <Panel style={{ gridColumn: "1/2", gridRow: "2/3", overflow: "hidden" }}>
+          <div className="flex items-center gap-1.5 mb-1"><span className="terminal-header"><DollarSign size={11} /></span><span className="terminal-header">Financial Statements</span></div>
+          <div style={{ overflowY: "auto", height: 185 }}><FinancialStatements ticker={ticker} /></div>
+        </Panel>
+
+        <Panel style={{ gridColumn: "2/4", gridRow: "2/3", overflowY: "auto" }}>
+          <AnalystData ticker={ticker} />
+        </Panel>
+
+        <Panel style={{ gridColumn: "1/3", gridRow: "3/4", overflowY: "auto" }}>
+          <div className="flex items-center gap-1.5 mb-1"><span className="terminal-header"><Newspaper size={11} /></span><span className="terminal-header">News & Sentiment</span></div>
+          <NewsFeed news={news} />
+        </Panel>
+
+        <Panel style={{ gridColumn: "3/5", gridRow: "3/4", overflowY: "auto" }}>
           <CompanyProfile profile={profile} />
-        </Panel>
-
-        <Panel style={{ gridColumn: "2/4", gridRow: "3/4" }}>
-          <div className="flex items-center gap-1.5 mb-2"><span className="terminal-header"><Newspaper size={12} /></span><span className="terminal-header">News & Sentiment</span></div>
-          <div className="mt-1 overflow-y-auto flex-1"><NewsFeed news={news} /></div>
         </Panel>
 
       </div>
