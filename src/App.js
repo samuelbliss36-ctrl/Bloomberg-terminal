@@ -779,7 +779,7 @@ function TechnicalAnalysis({ ticker }) {
   const [data, setData] = useState([]);
   const [tf, setTf] = useState("3M");
   const [loading, setLoading] = useState(true);
-  const [indicator, setIndicator] = useState("rsi");
+  // const [indicator, setIndicator] = useState("rsi");
   const TF_RANGE = { "1M": "1mo", "3M": "3mo", "6M": "6mo", "1Y": "1y" };
 
   useEffect(() => {
