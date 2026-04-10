@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { AreaChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Search, Bell, Settings, RefreshCw, Zap, ArrowUpRight, ArrowDownRight, Calendar, Newspaper, Building2, DollarSign, BarChart2, Activity, Star } from "lucide-react";
+import { Search, Bell, Settings, RefreshCw, Zap, ArrowUpRight, ArrowDownRight, Newspaper, Building2, DollarSign, BarChart2, Activity, Star } from "lucide-react";
 
 const FINNHUB_KEY = process.env.REACT_APP_FINNHUB_KEY;
 const BASE = "https://finnhub.io/api/v1";
