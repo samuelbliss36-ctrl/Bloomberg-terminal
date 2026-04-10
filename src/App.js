@@ -1993,9 +1993,19 @@ export default function App() {
   }, [ticker]);
 
   useEffect(() => {
-    Promise.all(WATCHLIST.map((s, i) => 
-      delay(i * 200).then(() => api("/quote?symbol="+s).then(q=>({symbol:s,price:q.c,changePct:q.dp})))
-    )).then(setTapeData);
+    // Stagger watchlist to avoid rate limiting
+    const fetchTape = async () => {
+      const results = [];
+      for (let i = 0; i < WATCHLIST.length; i++) {
+        await delay(i * 150);
+        try {
+          const q = await api("/quote?symbol=" + WATCHLIST[i]);
+          results.push({ symbol: WATCHLIST[i], price: q.c, changePct: q.dp });
+          setTapeData([...results]);
+        } catch(e) {}
+      }
+    };
+    fetchTape();
   }, []);
 
   return (
