@@ -1141,12 +1141,13 @@ function AnalystData({ ticker }) {
 
       <div>
         <div className="terminal-header mb-2">🎯 Price Targets</div>
-        {!targets ? <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Loading...</div> : (
+        {!targets ? <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Loading...</div> : 
+         !targets.targetMean ? <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Not available on free tier</div> : (
           <div className="flex flex-col gap-1">
-            {[["High", targets.targetHigh, "#3fb950"], ["Average", targets.targetMean, "#58a6ff"], ["Low", targets.targetLow, "#f85149"], ["Current", targets.lastUpdated, "#7d8590"]].map(([l, v, c]) => (
+            {[["High", targets.targetHigh, "#3fb950"], ["Average", targets.targetMean, "#58a6ff"], ["Low", targets.targetLow, "#f85149"], ["Updated", targets.lastUpdated, "#7d8590"]].map(([l, v, c]) => (
               <div key={l} className="flex justify-between py-1" style={{ borderBottom: "1px solid #21262d" }}>
                 <span className="text-xs font-mono" style={{ color: "#7d8590" }}>{l}</span>
-                <span className="text-xs font-mono font-bold" style={{ color: c }}>{l === "Current" ? v?.slice(0,10) : v ? "$" + v.toFixed(2) : "N/A"}</span>
+                <span className="text-xs font-mono font-bold" style={{ color: c }}>{l === "Updated" ? v?.slice(0,10) : v ? "$" + v.toFixed(2) : "N/A"}</span>
               </div>
             ))}
           </div>
@@ -1367,7 +1368,7 @@ function TopNav({ ticker, setTicker, quote, loading, onSettingsClick }) {
             {quote.dp >= 0 ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
             {fmt.change(quote.d)} ({fmt.pct(quote.dp)})
           </span>
-          <span className="text-gray-500 text-xs font-mono">Vol: {fmt.volume(quote.v || quote.volume)}</span>
+          <span className="text-gray-500 text-xs font-mono">Vol: {fmt.volume(quote.v > 0 ? quote.v : quote.volume)}</span>
         </div>
       )}
       {loading && <span className="text-yellow-500 text-xs font-mono animate-pulse">Loading...</span>}
@@ -1506,7 +1507,7 @@ function CompanyProfile({ profile }) {
     <div>
       <div className="flex items-center gap-1.5 mb-2"><span className="terminal-header"><Building2 size={12} /></span><span className="terminal-header">Company Profile</span></div>
       <div className="grid grid-cols-3 gap-2 mt-2 mb-3">
-        {[["Sector", profile.finnhubIndustry], ["Country", profile.country], ["Employees", profile.employeeTotal?.toLocaleString()], ["Founded", profile.ipo?.split("-")[0]], ["Exchange", profile.exchange], ["Currency", profile.currency]].map(([k, v]) => (
+        {[["Sector", profile.finnhubIndustry], ["Country", profile.country], ["Employees", profile.employeeTotal ? profile.employeeTotal.toLocaleString() : (profile.shareOutstanding ? (profile.shareOutstanding/1000).toFixed(0)+"K shares" : "N/A")], ["Founded", profile.ipo?.split("-")[0]], ["Exchange", profile.exchange], ["Currency", profile.currency]].map(([k, v]) => (
           <div key={k} className="terminal-panel p-1.5"><div className="text-gray-600 text-xs font-mono">{k}</div><div className="text-gray-200 text-xs font-mono font-semibold truncate">{v || "N/A"}</div></div>
         ))}
       </div>
