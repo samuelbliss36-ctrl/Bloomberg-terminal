@@ -1117,7 +1117,7 @@ function TickerTape({ tapeData }) {
   );
 }
 
-function TopNav({ ticker, setTicker, quote, loading }) {
+function TopNav({ ticker, setTicker, quote, loading, onSettingsClick }) {
   const [input, setInput] = useState(ticker);
   return (
     <div className="flex items-center gap-4 px-4 py-2.5 border-b border-gray-800 bg-gray-950">
@@ -1144,7 +1144,7 @@ function TopNav({ ticker, setTicker, quote, loading }) {
       <div className="ml-auto flex items-center gap-3 text-gray-500">
         <Bell size={14} />
         <RefreshCw size={14} className="cursor-pointer hover:text-gray-300" onClick={() => setTicker(ticker)} />
-        <Settings size={14} />
+        <Settings size={14} className="cursor-pointer hover:text-gray-300" onClick={onSettingsClick} />
         <div className="h-4 w-px bg-gray-700" />
         <span className="text-xs font-mono text-gray-600">LIVE</span>
         <span className="live-dot animate-pulse" style={{ width: 8, height: 8, borderRadius: "50%", display: "inline-block" }} />
@@ -1399,6 +1399,8 @@ const Panel = ({ children, className = "", style = {} }) => <div className={"ter
 
 export default function App() {
   const [activePage, setActivePage] = useState("financial");
+  const [settings, setSettings] = useState({ showTickerTape: true });
+  const [showSettings, setShowSettings] = useState(false);
   const [ticker, setTicker] = useState("AAPL");
   const [quote, setQuote] = useState(null);
   const [metrics, setMetrics] = useState(null);
@@ -1437,7 +1439,36 @@ export default function App() {
   return (
     <div className="min-h-screen bg-black text-gray-100 flex flex-col" style={{ fontFamily: "'Share Tech Mono', monospace", background: "#0d1117" }}>
       <GlobalStyles />
-      <TickerTape tapeData={tapeData} />
+      {settings.showTickerTape && <TickerTape tapeData={tapeData} />}
+      {showSettings && (
+        <div style={{ position: "fixed", top: 48, right: 16, zIndex: 1000, background: "#161b22", border: "1px solid #30363d", borderRadius: 6, padding: 16, minWidth: 260, boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
+          <div className="flex items-center justify-between mb-3">
+            <span className="terminal-header">⚙ Settings</span>
+            <button onClick={() => setShowSettings(false)} style={{ color: "#7d8590", background: "none", border: "none", cursor: "pointer", fontSize: 16 }}>✕</button>
+          </div>
+          <div style={{ borderTop: "1px solid #21262d", paddingTop: 12 }}>
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <div className="text-xs font-mono" style={{ color: "#e6edf3" }}>Ticker Tape</div>
+                <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Scrolling price bar at top</div>
+              </div>
+              <button
+                onClick={() => setSettings(s => ({ ...s, showTickerTape: !s.showTickerTape }))}
+                style={{
+                  width: 40, height: 22, borderRadius: 11, border: "none", cursor: "pointer",
+                  background: settings.showTickerTape ? "#1f6feb" : "#30363d",
+                  position: "relative", transition: "background 0.2s"
+                }}>
+                <div style={{
+                  position: "absolute", top: 3, left: settings.showTickerTape ? 21 : 3,
+                  width: 16, height: 16, borderRadius: "50%", background: "#fff",
+                  transition: "left 0.2s"
+                }} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="terminal-nav flex items-center gap-0 px-4">
         {[
           { key: "financial", label: "📈 Financial" },
@@ -1454,7 +1485,7 @@ export default function App() {
           </button>
         ))}
       </div>
-      <TopNav ticker={ticker} setTicker={setTicker} quote={quote} loading={loading} />
+      <TopNav ticker={ticker} setTicker={setTicker} quote={quote} loading={loading} onSettingsClick={() => setShowSettings(!showSettings)} />
       {activePage === "commodities" && <CommoditiesDashboard />}
       {activePage === "crypto" && <CryptoDashboard />}
       {activePage === "supplychain" && <SupplyChainDashboard />}
