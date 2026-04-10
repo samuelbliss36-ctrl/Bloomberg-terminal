@@ -1646,7 +1646,7 @@ function TopNav({ ticker, setTicker, quote, loading, onSettingsClick }) {
             {quote.dp >= 0 ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
             {fmt.change(quote.d)} ({fmt.pct(quote.dp)})
           </span>
-          <span className="text-gray-500 text-xs font-mono">Vol: {fmt.volume(quote.v > 0 ? quote.v : (metrics?.metric?.avgVolume10D || quote.volume))}</span>
+          <span className="text-gray-500 text-xs font-mono">Vol: {fmt.volume(quote.v > 0 ? quote.v : null)}</span>
         </div>
       )}
       {loading && <span className="text-yellow-500 text-xs font-mono animate-pulse">Loading...</span>}
