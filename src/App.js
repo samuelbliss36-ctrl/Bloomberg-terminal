@@ -1198,6 +1198,123 @@ function AnalystData({ ticker }) {
   );
 }
 
+
+function PeerComparison({ ticker, metrics, quote }) {
+  const [peers, setPeers] = useState([]);
+  const [peerData, setPeerData] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api("/stock/peers?symbol=" + ticker)
+      .then(p => {
+        const peerList = (p || []).slice(0, 6);
+        setPeers(peerList);
+        return Promise.all(
+          peerList.map((s, i) =>
+            delay(i * 300).then(() =>
+              Promise.all([
+                api("/quote?symbol=" + s),
+                api("/stock/metric?symbol=" + s + "&metric=all"),
+              ]).then(([q, m]) => [s, { quote: q, metrics: m }])
+            )
+          )
+        );
+      })
+      .then(results => {
+        setPeerData(Object.fromEntries(results));
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [ticker]); // eslint-disable-line
+
+  const allTickers = [ticker, ...peers.filter(p => p !== ticker)];
+  const allData = {
+    [ticker]: { quote, metrics },
+    ...peerData,
+  };
+
+  const METRICS = [
+    { label: "Price", fn: (q, m) => q?.c ? "$" + fmt.price(q.c) : "N/A", compare: false },
+    { label: "Change %", fn: (q, m) => q?.dp ? fmt.pct(q.dp) : "N/A", compare: true, higher: true },
+    { label: "Market Cap", fn: (q, m) => m?.metric?.marketCapitalization ? fmt.large(m.metric.marketCapitalization * 1e6) : "N/A", compare: false },
+    { label: "P/E (TTM)", fn: (q, m) => m?.metric?.peBasicExclExtraTTM ? m.metric.peBasicExclExtraTTM.toFixed(1) : "N/A", compare: true, higher: false },
+    { label: "Fwd P/E", fn: (q, m) => m?.metric?.peExclExtraAnnual ? m.metric.peExclExtraAnnual.toFixed(1) : "N/A", compare: true, higher: false },
+    { label: "EPS (TTM)", fn: (q, m) => m?.metric?.epsBasicExclExtraItemsTTM ? "$" + m.metric.epsBasicExclExtraItemsTTM.toFixed(2) : "N/A", compare: true, higher: true },
+    { label: "Revenue TTM", fn: (q, m) => m?.metric?.revenuePerShareTTM ? fmt.large(m.metric.revenuePerShareTTM * (m.metric.marketCapitalization || 0) / (m.metric?.["52WeekHigh"] || 1)) : (m?.metric?.revenue ? fmt.large(m.metric.revenue) : "N/A"), compare: false },
+    { label: "Gross Margin", fn: (q, m) => m?.metric?.grossMarginTTM ? m.metric.grossMarginTTM.toFixed(1) + "%" : "N/A", compare: true, higher: true },
+    { label: "Net Margin", fn: (q, m) => m?.metric?.netProfitMarginTTM ? m.metric.netProfitMarginTTM.toFixed(1) + "%" : "N/A", compare: true, higher: true },
+    { label: "ROE", fn: (q, m) => m?.metric?.roeTTM ? m.metric.roeTTM.toFixed(1) + "%" : "N/A", compare: true, higher: true },
+    { label: "Beta", fn: (q, m) => m?.metric?.beta ? m.metric.beta.toFixed(2) : "N/A", compare: false },
+    { label: "Div Yield", fn: (q, m) => m?.metric?.dividendYieldIndicatedAnnual ? m.metric.dividendYieldIndicatedAnnual.toFixed(2) + "%" : "N/A", compare: true, higher: true },
+    { label: "52W High", fn: (q, m) => m?.metric?.["52WeekHigh"] ? "$" + fmt.price(m.metric["52WeekHigh"]) : "N/A", compare: false },
+    { label: "52W Low", fn: (q, m) => m?.metric?.["52WeekLow"] ? "$" + fmt.price(m.metric["52WeekLow"]) : "N/A", compare: false },
+    { label: "Price/Book", fn: (q, m) => m?.metric?.pbAnnual ? m.metric.pbAnnual.toFixed(1) : "N/A", compare: true, higher: false },
+  ];
+
+  const getBest = (metric, tickers, data) => {
+    if (!metric.compare) return null;
+    let best = null;
+    let bestVal = metric.higher ? -Infinity : Infinity;
+    tickers.forEach(t => {
+      const d = data[t];
+      if (!d) return;
+      const raw = metric.fn(d.quote, d.metrics);
+      const num = parseFloat(raw.replace(/[$%,]/g, ""));
+      if (isNaN(num)) return;
+      if (metric.higher ? num > bestVal : num < bestVal) {
+        bestVal = num;
+        best = t;
+      }
+    });
+    return best;
+  };
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-full text-xs font-mono animate-pulse" style={{ color: "#7d8590" }}>
+      Loading peer data...
+    </div>
+  );
+
+  return (
+    <div style={{ overflowX: "auto", overflowY: "auto", height: "100%" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontFamily: "monospace", minWidth: 600 }}>
+        <thead>
+          <tr style={{ position: "sticky", top: 0, background: "#161b22", zIndex: 1 }}>
+            <th style={{ textAlign: "left", padding: "6px 10px", color: "#7d8590", fontWeight: 500, borderBottom: "2px solid #30363d", minWidth: 120 }}>Metric</th>
+            {allTickers.map(t => (
+              <th key={t} style={{ textAlign: "right", padding: "6px 10px", borderBottom: "2px solid #30363d", minWidth: 90, color: t === ticker ? "#58a6ff" : "#7d8590", fontWeight: t === ticker ? 700 : 500 }}>{t}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {METRICS.map(m => {
+            const best = getBest(m, allTickers, allData);
+            return (
+              <tr key={m.label} style={{ borderBottom: "1px solid #21262d" }}
+                onMouseEnter={e => e.currentTarget.style.background = "#161b22"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                <td style={{ padding: "5px 10px", color: "#7d8590", fontWeight: 500 }}>{m.label}</td>
+                {allTickers.map(t => {
+                  const d = allData[t];
+                  const val = d ? m.fn(d.quote, d.metrics) : "...";
+                  const isBest = best === t;
+                  const isMain = t === ticker;
+                  return (
+                    <td key={t} style={{ textAlign: "right", padding: "5px 10px", color: isBest ? "#3fb950" : isMain ? "#e6edf3" : "#7d8590", fontWeight: isMain ? 600 : 400, background: isBest ? "rgba(63,185,80,0.05)" : "transparent" }}>
+                      {val}
+                      {isBest && " ★"}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function TickerTape({ tapeData }) {
   const ref = useRef(null);
   useEffect(() => {
@@ -1250,7 +1367,7 @@ function TopNav({ ticker, setTicker, quote, loading, onSettingsClick }) {
             {quote.dp >= 0 ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
             {fmt.change(quote.d)} ({fmt.pct(quote.dp)})
           </span>
-          <span className="text-gray-500 text-xs font-mono">Vol: {fmt.volume(quote.v)}</span>
+          <span className="text-gray-500 text-xs font-mono">Vol: {fmt.volume(quote.v || quote.volume)}</span>
         </div>
       )}
       {loading && <span className="text-yellow-500 text-xs font-mono animate-pulse">Loading...</span>}
@@ -1564,6 +1681,7 @@ const Panel = ({ children, className = "", style = {} }) => <div className={"ter
 
 export default function App() {
   const [activePage, setActivePage] = useState("financial");
+  const [subPage, setSubPage] = useState("overview");
   const [settings, setSettings] = useState({ showTickerTape: true });
   const [showSettings, setShowSettings] = useState(false);
   const [ticker, setTicker] = useState("AAPL");
@@ -1669,7 +1787,22 @@ export default function App() {
       {activePage === "eye" && <EyeOfSauron />}
 
       {activePage !== "financial" && activePage !== "technical" && activePage !== "eye" && null}
-      {activePage === "financial" && <div className="flex-1 p-2 grid gap-2" style={{ gridTemplateColumns: "1fr 210px 210px 190px", gridTemplateRows: "300px 220px 200px", height: "calc(100vh - 90px)", overflow: "hidden" }}>
+      {activePage === "financial" && <div className="flex flex-col flex-1" style={{ overflow: "hidden" }}>
+        <div className="flex items-center gap-0 px-3 pt-2" style={{ borderBottom: "1px solid #21262d" }}>
+          {[["overview", "📊 Overview"], ["peers", "🔍 Peer Comparison"]].map(([k, l]) => (
+            <button key={k} onClick={() => setSubPage(k)}
+              className="px-4 py-2 text-xs font-mono transition-colors border-b-2"
+              style={{ borderBottomColor: subPage === k ? "#58a6ff" : "transparent", color: subPage === k ? "#58a6ff" : "#7d8590", background: "transparent" }}>
+              {l}
+            </button>
+          ))}
+        </div>
+        {subPage === "peers" && (
+          <div className="flex-1 p-2" style={{ overflow: "hidden" }}>
+            <PeerComparison ticker={ticker} metrics={metrics} quote={quote} />
+          </div>
+        )}
+        {subPage === "overview" && <div className="flex-1 p-2 grid gap-2" style={{ gridTemplateColumns: "1fr 210px 210px 190px", gridTemplateRows: "300px 220px 200px", height: "calc(100vh - 90px)", overflow: "hidden" }}>
 
         <Panel style={{ gridColumn: "1/2", gridRow: "1/2", overflow: "hidden" }}>
           <div className="flex items-center gap-1.5 mb-1"><span className="terminal-header"><Activity size={11} /></span><span className="terminal-header">{ticker} · Price Chart</span></div>
@@ -1717,6 +1850,8 @@ export default function App() {
           <CompanyProfile profile={profile} />
         </Panel>
 
+      </div>
+      }
       </div>
       }
       <div className="status-bar flex items-center gap-4 px-4 py-1.5 text-xs font-mono">
