@@ -1220,6 +1220,7 @@ function classifyGeoArticle(article) {
   const bearish = BEARISH_WORDS.filter(w => text.includes(w)).length;
   const signal = bearish > bullish + 1 ? "Bearish" : bullish > bearish + 1 ? "Bullish" : "Neutral";
 
+  const catCfg = GEO_CATEGORIES[category];
   return { category, regions, impact, signal, assets: catCfg.assets, why: catCfg.why };
 }
 
