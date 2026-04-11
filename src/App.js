@@ -569,16 +569,256 @@ function CryptoDashboard() {
 
 
 
-function SupplyChainDashboard() {
+function FXDashboard({ onOpenResearch }) {
+  const FX_PAIRS = [
+    { ticker: "EURUSD=X",  label: "EUR/USD",  region: "Eurozone", dec: 4 },
+    { ticker: "GBPUSD=X",  label: "GBP/USD",  region: "UK",       dec: 4 },
+    { ticker: "USDJPY=X",  label: "USD/JPY",  region: "Japan",    dec: 2 },
+    { ticker: "USDCHF=X",  label: "USD/CHF",  region: "Switzerland", dec: 4 },
+    { ticker: "AUDUSD=X",  label: "AUD/USD",  region: "Australia",dec: 4 },
+    { ticker: "USDCAD=X",  label: "USD/CAD",  region: "Canada",   dec: 4 },
+    { ticker: "USDCNY=X",  label: "USD/CNY",  region: "China",    dec: 4 },
+    { ticker: "DX=F",      label: "DXY Index",region: "Global",   dec: 3 },
+    { ticker: "USDINR=X",  label: "USD/INR",  region: "India",    dec: 2 },
+    { ticker: "USDMXN=X",  label: "USD/MXN",  region: "Mexico",   dec: 4 },
+    { ticker: "USDBRL=X",  label: "USD/BRL",  region: "Brazil",   dec: 4 },
+    { ticker: "USDKRW=X",  label: "USD/KRW",  region: "S. Korea", dec: 0 },
+  ];
+
+  const CB_SERIES = [
+    { id: "FEDFUNDS",          label: "Fed Funds",    flag: "🇺🇸", bank: "Federal Reserve"  },
+    { id: "ECBDFR",            label: "ECB Rate",     flag: "🇪🇺", bank: "ECB"              },
+    { id: "INTDSRGBM193N",     label: "BoE Rate",     flag: "🇬🇧", bank: "Bank of England"  },
+    { id: "IRSTCI01CHM156N",   label: "SNB Rate",     flag: "🇨🇭", bank: "Swiss Natl Bank"  },
+    { id: "IRSTCI01AUM156N",   label: "RBA Rate",     flag: "🇦🇺", bank: "Reserve Bank Au"  },
+    { id: "IRSTCI01CAM156N",   label: "BoC Rate",     flag: "🇨🇦", bank: "Bank of Canada"   },
+  ];
+
+  const [prices,    setPrices]    = useState({});
+  const [active,    setActive]    = useState("EURUSD=X");
+  const [chartData, setChartData] = useState([]);
+  const [tf,        setTf]        = useState("3M");
+  const [cbRates,   setCbRates]   = useState({});
+  const [chartLoading, setChartLoading] = useState(true);
+  const TF_RANGE = { "1W":"5d", "1M":"1mo", "3M":"3mo", "1Y":"1y" };
+
+  // Fetch all FX prices (Yahoo Finance via /api/chart)
+  useEffect(() => {
+    Promise.all(
+      FX_PAIRS.map(p =>
+        fetch("/api/chart?ticker=" + encodeURIComponent(p.ticker) + "&range=1d&interval=1m")
+          .then(r => r.json())
+          .then(d => {
+            const meta = d?.chart?.result?.[0]?.meta;
+            const price = meta?.regularMarketPrice;
+            const prev  = meta?.previousClose;
+            const changePct = price && prev ? ((price - prev) / prev) * 100 : null;
+            return [p.ticker, { price, changePct }];
+          })
+          .catch(() => [p.ticker, null])
+      )
+    ).then(results => setPrices(Object.fromEntries(results)));
+  }, []); // eslint-disable-line
+
+  // Fetch chart for active pair
+  useEffect(() => {
+    setChartLoading(true);
+    fetch("/api/chart?ticker=" + encodeURIComponent(active) + "&range=" + TF_RANGE[tf] + "&interval=1d")
+      .then(r => r.json())
+      .then(d => {
+        const result = d?.chart?.result?.[0];
+        if (result) {
+          const activePairDec = FX_PAIRS.find(p => p.ticker === active)?.dec ?? 4;
+          const mapped = (result.timestamp || []).map((t, i) => ({
+            date: new Date(t * 1000).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
+            price: result.indicators.quote[0].close[i]
+              ? +result.indicators.quote[0].close[i].toFixed(activePairDec)
+              : null,
+          })).filter(d => d.price !== null);
+          setChartData(mapped);
+        }
+        setChartLoading(false);
+      })
+      .catch(() => setChartLoading(false));
+  }, [active, tf]); // eslint-disable-line
+
+  // Fetch central bank rates from FRED
+  useEffect(() => {
+    Promise.all(
+      CB_SERIES.map(s =>
+        fetch("/api/fred?series=" + s.id)
+          .then(r => r.json())
+          .then(d => {
+            const valid = (d.observations || []).filter(o => o.value !== "." && !isNaN(parseFloat(o.value)));
+            const latest = valid[valid.length - 1];
+            return [s.id, { ...s, value: latest ? parseFloat(latest.value) : null, date: latest?.date }];
+          })
+          .catch(() => [s.id, { ...s, value: null }])
+      )
+    ).then(results => setCbRates(Object.fromEntries(results)));
+  }, []); // eslint-disable-line
+
+  const activePairCfg = FX_PAIRS.find(p => p.ticker === active);
+  const activeDec = activePairCfg?.dec ?? 4;
+  const activePrice = prices[active];
+  const startP = chartData[0]?.price || 0;
+  const endP   = chartData[chartData.length - 1]?.price || 0;
+  const lc = endP >= startP ? "#3fb950" : "#f85149";
+  const minP = chartData.length ? Math.min(...chartData.map(d => d.price)) * 0.9995 : 0;
+  const maxP = chartData.length ? Math.max(...chartData.map(d => d.price)) * 1.0005 : 0;
+
+  return (
+    <div className="flex-1 p-3" style={{ display:"grid", gridTemplateColumns:"240px 1fr 200px", gridTemplateRows:"1fr auto", gap:12, height:"calc(100vh - 90px)", overflow:"hidden" }}>
+
+      {/* Left: FX pairs list */}
+      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn:"1/2", gridRow:"1/3", overflowY:"auto" }}>
+        <div className="terminal-header mb-3">💱 FX Pairs</div>
+        <div className="flex flex-col gap-1">
+          {FX_PAIRS.map(p => {
+            const d = prices[p.ticker];
+            const isActive = active === p.ticker;
+            return (
+              <div key={p.ticker} onClick={() => setActive(p.ticker)}
+                className="flex items-center justify-between p-2 rounded cursor-pointer"
+                style={{ background:isActive?"#0c2044":"transparent", border:"1px solid", borderColor:isActive?"#3fb95044":"#1c2128" }}>
+                <div>
+                  <div className="text-xs font-mono font-bold" style={{ color:isActive?"#3fb950":"#e6edf3" }}>{p.label}</div>
+                  <div className="text-xs font-mono" style={{ color:"#484f58" }}>{p.region}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-mono font-bold" style={{ color:"#e6edf3" }}>
+                    {d?.price != null ? d.price.toFixed(p.dec) : "…"}
+                  </div>
+                  {d?.changePct != null && (
+                    <div className="text-xs font-mono" style={{ color:d.changePct>=0?"#3fb950":"#f85149" }}>
+                      {d.changePct>=0?"▲":"▼"}{Math.abs(d.changePct).toFixed(3)}%
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Center: Chart */}
+      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn:"2/3", gridRow:"1/2" }}>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="terminal-header">{activePairCfg?.label} · {activePairCfg?.region}</div>
+            {activePrice && (
+              <div className="flex items-center gap-3 mt-1">
+                <span className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:22 }}>
+                  {activePrice.price != null ? activePrice.price.toFixed(activeDec) : "—"}
+                </span>
+                {activePrice.changePct != null && (
+                  <span className="text-xs font-mono" style={{ color:clr(activePrice.changePct) }}>
+                    {activePrice.changePct>=0?"▲":"▼"} {Math.abs(activePrice.changePct).toFixed(3)}%
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {onOpenResearch && (
+              <button onClick={() => onOpenResearch({ id:active, label:activePairCfg?.label||active, type:"fx", ticker:active, category:"FX" })}
+                className="font-mono px-2 py-1 text-xs rounded"
+                style={{ background:"#0c2044", border:"1px solid #3fb95033", color:"#3fb950", cursor:"pointer" }}>
+                → Research
+              </button>
+            )}
+            <div className="flex border rounded overflow-hidden" style={{ borderColor:"#21262d" }}>
+              {["1W","1M","3M","1Y"].map(t => (
+                <button key={t} onClick={() => setTf(t)} className="px-2 py-1 text-xs font-mono"
+                  style={{ background:tf===t?"#0c2044":"transparent", color:tf===t?"#58a6ff":"#7d8590", borderRight:"1px solid #21262d" }}>{t}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div style={{ height:260 }}>
+          {chartLoading ? (
+            <div className="flex items-center justify-center h-full text-xs font-mono" style={{ color:"#7d8590" }}>Loading...</div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top:4, right:4, left:0, bottom:0 }}>
+                <defs>
+                  <linearGradient id="fxChartGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor={lc} stopOpacity={0.2} />
+                    <stop offset="95%" stopColor={lc} stopOpacity={0}   />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1c2128" vertical={false} />
+                <XAxis dataKey="date" tick={{ fill:"#7d8590", fontSize:9, fontFamily:"monospace" }} tickLine={false} axisLine={false} interval={Math.max(1,Math.floor(chartData.length/6))} />
+                <YAxis domain={[minP,maxP]} tick={{ fill:"#7d8590", fontSize:9, fontFamily:"monospace" }} tickLine={false} axisLine={false} tickFormatter={v => v.toFixed(activeDec)} width={60} />
+                <Tooltip contentStyle={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:2, fontSize:10, fontFamily:"monospace" }} labelStyle={{ color:"#7d8590" }} formatter={v => [v.toFixed(activeDec), activePairCfg?.label]} />
+                <Area type="monotone" dataKey="price" stroke={lc} strokeWidth={1.5} fill="url(#fxChartGrad)" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      {/* Right: Central bank rates */}
+      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn:"3/4", gridRow:"1/2", overflowY:"auto" }}>
+        <div className="terminal-header mb-3">🏦 Central Bank Rates</div>
+        <div className="flex flex-col gap-2">
+          {CB_SERIES.map(s => {
+            const r = cbRates[s.id];
+            return (
+              <div key={s.id} className="p-2 rounded" style={{ background:"#0d1117", border:"1px solid #1c2128" }}>
+                <div className="text-xs font-mono" style={{ color:"#484f58" }}>{s.flag} {s.bank}</div>
+                <div className="font-mono font-bold text-sm mt-0.5" style={{ color:"#e3b341" }}>
+                  {r?.value != null ? r.value.toFixed(2) + "%" : "—"}
+                </div>
+                <div className="text-xs font-mono" style={{ color:"#7d8590" }}>{s.label}</div>
+                {r?.date && <div className="text-xs font-mono" style={{ color:"#21262d" }}>As of {r.date}</div>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Bottom: FX heat map */}
+      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn:"2/4", gridRow:"2/3" }}>
+        <div className="terminal-header mb-3">📊 Day Change Heat Map</div>
+        <div className="grid gap-2" style={{ gridTemplateColumns:"repeat(auto-fill, minmax(110px, 1fr))" }}>
+          {FX_PAIRS.map(p => {
+            const d = prices[p.ticker];
+            const pct = d?.changePct;
+            const intensity = pct != null ? Math.min(Math.abs(pct)/0.8, 1) : 0;
+            const bgColor = pct == null ? "#0d1117"
+              : pct >= 0 ? "rgba(63,185,80," + (0.08 + intensity*0.15) + ")"
+              : "rgba(248,81,73," + (0.08 + intensity*0.15) + ")";
+            return (
+              <div key={p.ticker} onClick={() => setActive(p.ticker)} className="p-2 rounded cursor-pointer"
+                style={{ background:bgColor, border:"1px solid", borderColor:active===p.ticker?"#3fb95066":"#1c2128" }}>
+                <div className="text-xs font-mono font-bold" style={{ color:"#e6edf3" }}>{p.label}</div>
+                <div className="text-xs font-mono" style={{ color:pct==null?"#7d8590":clr(pct) }}>
+                  {pct != null ? (pct>=0?"▲":"▼") + Math.abs(pct).toFixed(3)+"%" : "…"}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SupplyChainDashboard({ onOpenResearch }) {
   const FRED_SERIES = [
-    { id: "FEDFUNDS", label: "Fed Funds Rate", note: "FOMC rate decision", src: "Federal Reserve", suffix: "%", freq: "Monthly" },
-    { id: "DGS10", label: "US 10Y Treasury", note: "Risk-free rate benchmark", src: "US Treasury", suffix: "%", freq: "Daily" },
-    { id: "DGS2", label: "US 2Y Treasury", note: "Short-term rate expectation", src: "US Treasury", suffix: "%", freq: "Daily" },
-    { id: "CPIAUCSL", label: "CPI (Urban)", note: "Consumer price inflation", src: "BLS", suffix: "", freq: "Monthly" },
-    { id: "PPIACO", label: "PPI All Commodities", note: "Producer price inflation", src: "BLS", suffix: "", freq: "Monthly" },
-    { id: "UNRATE", label: "Unemployment Rate", note: "US labor market health", src: "BLS", suffix: "%", freq: "Monthly" },
-    { id: "BOPGSTB", label: "US Trade Balance", note: "Monthly trade deficit ($M)", src: "Census", suffix: "M", freq: "Monthly" },
-    { id: "T10YIE", label: "10Y Breakeven Inflation", note: "Market inflation expectation", src: "Fed", suffix: "%", freq: "Daily" },
+    { id: "FEDFUNDS",    label: "Fed Funds Rate",          note: "FOMC policy rate",                src: "Federal Reserve", suffix: "%",  freq: "Monthly" },
+    { id: "DGS10",       label: "US 10Y Treasury",         note: "Risk-free rate benchmark",        src: "US Treasury",     suffix: "%",  freq: "Daily"   },
+    { id: "DGS2",        label: "US 2Y Treasury",          note: "Short-term rate expectation",     src: "US Treasury",     suffix: "%",  freq: "Daily"   },
+    { id: "T10Y2Y",      label: "Yield Curve (10Y-2Y)",    note: "Inversion = recession signal",    src: "Fed",             suffix: "%",  freq: "Daily"   },
+    { id: "T10YIE",      label: "10Y Breakeven Inflation", note: "Market inflation expectation",    src: "Fed",             suffix: "%",  freq: "Daily"   },
+    { id: "CPIAUCSL",    label: "CPI (Urban)",             note: "Consumer price inflation",        src: "BLS",             suffix: "",   freq: "Monthly" },
+    { id: "PCEPI",       label: "PCE Price Index",         note: "Fed's preferred inflation gauge", src: "BEA",             suffix: "",   freq: "Monthly" },
+    { id: "PPIACO",      label: "PPI All Commodities",     note: "Producer price inflation",        src: "BLS",             suffix: "",   freq: "Monthly" },
+    { id: "UNRATE",      label: "Unemployment Rate",       note: "US labor market health",          src: "BLS",             suffix: "%",  freq: "Monthly" },
+    { id: "GDP",         label: "US Real GDP",             note: "Quarterly economic output",       src: "BEA",             suffix: "",   freq: "Quarterly"},
+    { id: "M2SL",        label: "M2 Money Supply",         note: "Broad money supply ($B)",         src: "Federal Reserve", suffix: "B",  freq: "Monthly" },
+    { id: "BOPGSTB",     label: "US Trade Balance",        note: "Monthly goods trade deficit",     src: "Census",          suffix: "M",  freq: "Monthly" },
   ];
 
   const INDICES = [
@@ -593,7 +833,7 @@ function SupplyChainDashboard() {
 
 
   const [prices, setPrices] = useState({});
-  const [active, setActive] = useState("^BDI");
+  const [active, setActive] = useState("CL=F");
   const [chartData, setChartData] = useState([]);
   const [tf, setTf] = useState("1Y");
   const [loading, setLoading] = useState(true);
@@ -607,13 +847,13 @@ function SupplyChainDashboard() {
         fetch("/api/fred?series=" + s.id)
           .then(r => r.json())
           .then(d => {
-            const obs = d.observations;
-            const latest = obs?.find(o => o.value !== ".");
-            const prev = obs?.find((o, i) => i > 0 && o.value !== ".");
-            const val = parseFloat(latest?.value);
-            const prevVal = parseFloat(prev?.value);
-            const change = val - prevVal;
-            return [s.id, { value: val, change, date: latest?.date }];
+            const valid = (d.observations || []).filter(o => o.value !== "." && !isNaN(parseFloat(o.value)));
+            const latest = valid[valid.length - 1];
+            const prev   = valid[valid.length - 2];
+            const val    = latest ? parseFloat(latest.value) : NaN;
+            const prevVal = prev ? parseFloat(prev.value) : NaN;
+            const change = !isNaN(val) && !isNaN(prevVal) ? val - prevVal : null;
+            return [s.id, { value: !isNaN(val) ? val : null, change, date: latest?.date }];
           })
           .catch(() => [s.id, null])
       )
@@ -675,11 +915,20 @@ function SupplyChainDashboard() {
             const d = fredData[s.id];
             const val = d?.value;
             const chg = d?.change;
-            const display = val ? (s.id === "BOPGSTB" ? "$" + (val/1000).toFixed(1) + "B" : val.toFixed(2) + s.suffix) : "Loading...";
-            const chgDisplay = chg ? (chg >= 0 ? "+" : "") + chg.toFixed(2) + s.suffix : "—";
-            const chgColor = !chg ? "#7d8590" : chg >= 0 ? "#58a6ff" : "#f85149";
+            const display = val != null
+              ? s.id === "BOPGSTB" ? "$" + (val/1000).toFixed(1) + "B"
+              : s.id === "M2SL"    ? "$" + (val/1000).toFixed(2) + "T"
+              : s.id === "GDP"     ? "$" + (val/1000).toFixed(1) + "T"
+              : val.toFixed(2) + s.suffix
+              : "Loading...";
+            const chgDisplay = chg != null ? (chg >= 0 ? "+" : "") + chg.toFixed(2) + s.suffix : "—";
+            const chgColor = chg == null ? "#7d8590" : chg >= 0 ? "#58a6ff" : "#f85149";
+            const researchItem = { id: s.id, label: s.label, type: "macro", series: s.id, category: "Macro" };
             return (
-              <div key={s.id} className="p-2 rounded" style={{ background: "#0d1117", border: "1px solid #1c2128" }}>
+              <div key={s.id} className="p-2 rounded" onClick={() => onOpenResearch && onOpenResearch(researchItem)}
+                style={{ background: "#0d1117", border: "1px solid #1c2128", cursor: onOpenResearch ? "pointer" : "default" }}
+                onMouseEnter={e => { if (onOpenResearch) e.currentTarget.style.borderColor="#30363d"; }}
+                onMouseLeave={e => { if (onOpenResearch) e.currentTarget.style.borderColor="#1c2128"; }}>
                 <div className="flex items-center justify-between mb-0.5">
                   <div>
                     <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{s.label}</div>
@@ -770,24 +1019,6 @@ function SupplyChainDashboard() {
 
 
 
-      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/3", gridRow: "3/4" }}>
-        <div className="terminal-header mb-1">📋 Supply Chain Intelligence</div>
-        <div className="text-xs font-mono mb-2" style={{ color: "#7d8590" }}>Monthly published figures — not real-time</div>
-        <div className="grid grid-cols-4 gap-3">
-          {[
-            { label: "Global SC Pressure", value: "-0.42", sub: "NY Fed Index · Below avg stress", color: "#58a6ff" },
-            { label: "Semiconductor Lead Time", value: "14.2 wks", sub: "Down from 26 wks peak", color: "#58a6ff" },
-            { label: "ISM Manufacturing PMI", value: "48.7", sub: "Contraction territory (<50)", color: "#f85149" },
-            { label: "Freight Cost Index", value: "112.4", sub: "Freightos Baltic · Normalized", color: "#e3b341" },
-          ].map(item => (
-            <div key={item.label} className="p-3 rounded" style={{ background: "#0d1117", border: "1px solid #1c2128" }}>
-              <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{item.label}</div>
-              <div className="text-lg font-mono font-bold mt-1" style={{ color: item.color }}>{item.value}</div>
-              <div className="text-xs font-mono mt-0.5" style={{ color: "#7d8590" }}>{item.sub}</div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
@@ -3944,6 +4175,42 @@ function PortfolioTracker() {
 
 const Panel = ({ children, className = "", style = {} }) => <div className={"terminal-panel terminal-glow p-3 flex flex-col " + className} style={style}>{children}</div>;
 
+function MarketSessionBadges() {
+  const SESSIONS = [
+    { name: "NYSE",   open: { h:14, m:30 }, close: { h:21, m:0  }, tz: "America/New_York",  flag: "🇺🇸" },
+    { name: "LSE",    open: { h:8,  m:0  }, close: { h:16, m:30 }, tz: "Europe/London",     flag: "🇬🇧" },
+    { name: "TSE",    open: { h:0,  m:0  }, close: { h:6,  m:0  }, tz: "Asia/Tokyo",        flag: "🇯🇵" },
+    { name: "HKEx",   open: { h:1,  m:30 }, close: { h:8,  m:0  }, tz: "Asia/Hong_Kong",    flag: "🇭🇰" },
+  ];
+  const [, setTick] = useState(0); // tick unused intentionally — triggers re-render
+  useEffect(() => {
+    const iv = setInterval(() => setTick(t => t+1), 30000);
+    return () => clearInterval(iv);
+  }, []);
+  return (
+    <div className="flex items-center gap-3">
+      {SESSIONS.map(s => {
+        const now = new Date();
+        const utcH = now.getUTCHours();
+        const utcM = now.getUTCMinutes();
+        const utcMins = utcH * 60 + utcM;
+        // Simple UTC-based approximation (ignores DST exactly but good enough for indicator)
+        const offsets = { "America/New_York":-240, "Europe/London":60, "Asia/Tokyo":540, "Asia/Hong_Kong":480 };
+        const off = offsets[s.tz] || 0;
+        const localMins = ((utcMins + off) % 1440 + 1440) % 1440;
+        const openMins  = s.open.h  * 60 + s.open.m;
+        const closeMins = s.close.h * 60 + s.close.m;
+        const isOpen = localMins >= openMins && localMins < closeMins;
+        return (
+          <span key={s.name} className="font-mono" style={{ color: isOpen ? "#3fb950" : "#484f58", fontSize:9 }}>
+            {s.flag} {s.name} {isOpen ? "●" : "○"}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function App() {
   const [activePage, setActivePage] = useState("financial");
   const [subPage, setSubPage] = useState("overview");
@@ -4003,7 +4270,7 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black text-gray-100 flex flex-col" style={{ fontFamily: "'Share Tech Mono', monospace", background: "#0d1117" }}>
+    <div className="min-h-screen bg-black text-gray-100 flex flex-col" style={{ fontFamily: "'IBM Plex Mono', monospace", background: "#0d1117" }}>
       <GlobalStyles />
       {settings.showTickerTape && <TickerTape tapeData={tapeData} />}
       {showSettings && (
@@ -4040,9 +4307,10 @@ export default function App() {
           { key: "financial", label: "📈 Financial" },
           { key: "commodities", label: "🛢 Commodities" },
           { key: "crypto", label: "₿ Crypto" },
-          { key: "supplychain", label: "🚢 Supply Chain" },
+          { key: "supplychain", label: "📉 Macro" },
           { key: "technical", label: "📊 Technical" },
           { key: "eye", label: "👁 Eye of Sauron" },
+          { key: "fx", label: "💱 FX" },
           { key: "portfolio", label: "💼 Portfolio" },
           { key: "research", label: "🔬 Research" },
         ].map(p => (
@@ -4056,7 +4324,8 @@ export default function App() {
       <TopNav ticker={ticker} setTicker={setTicker} quote={quote} loading={loading} onSettingsClick={() => setShowSettings(!showSettings)} />
       {activePage === "commodities" && <CommoditiesDashboard />}
       {activePage === "crypto" && <CryptoDashboard />}
-      {activePage === "supplychain" && <SupplyChainDashboard />}
+      {activePage === "supplychain" && <SupplyChainDashboard onOpenResearch={item => { setPendingResearchItem(item); setActivePage("research"); }} />}
+      {activePage === "fx" && <FXDashboard onOpenResearch={item => { setPendingResearchItem(item); setActivePage("research"); }} />}
       {activePage === "technical" && <TechnicalAnalysis ticker={ticker} />}
 
       {activePage === "eye" && <EyeOfSauron onOpenResearch={item => { setPendingResearchItem(item); setActivePage("research"); }} />}
@@ -4132,8 +4401,8 @@ export default function App() {
       }
       <div className="status-bar flex items-center gap-4 px-4 py-1.5 text-xs font-mono">
         <span>OMNES VIDENTES · LIVE DATA</span>
-        <span className="text-gray-800">|</span>
-        <span>Type a ticker and press Enter to search</span>
+        <span style={{ color:"#21262d" }}>|</span>
+        <MarketSessionBadges />
         <span className="ml-auto">Last Updated: {statusTime}</span>
       </div>
     </div>
