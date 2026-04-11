@@ -1061,7 +1061,395 @@ function TechnicalAnalysis({ ticker }) {
   );
 }
 
-function EyeOfSauron() {
+// ─────────────────────────────────────────────────────────────
+// GEOPOLITICAL EVENTS INTELLIGENCE MODULE
+// ─────────────────────────────────────────────────────────────
+
+const GEO_CATEGORIES = {
+  "Conflict": {
+    keywords: ["war","military","attack","strike","troops","missile","bomb","invasion","combat","weapons","nato","ceasefire","offensive","armed","artillery","airstrike","soldier","battlefield","warfare","nuclear","hostilities","casualt"],
+    color: "#f85149", bg: "rgba(248,81,73,0.08)",
+    assets: [
+      { id:"GC=F",  label:"Gold",              type:"commodity", ticker:"GC=F",  category:"Commodities" },
+      { id:"CL=F",  label:"Crude Oil",          type:"commodity", ticker:"CL=F",  category:"Commodities" },
+      { id:"ITA",   label:"Defense ETF (ITA)",  type:"equity",    ticker:"ITA",   category:"Equities" },
+      { id:"DX=F",  label:"USD Index",          type:"fx",        ticker:"DX=F",  category:"FX" },
+    ],
+    why: "Military escalation drives safe-haven flows into gold and USD, lifts energy prices on supply-risk fears, and boosts defense sector revenues.",
+  },
+  "Central Bank": {
+    keywords: ["federal reserve","fed ","rate hike","rate cut","interest rate","monetary policy","central bank","powell","lagarde","ecb","boj","pboc","fomc","inflation","basis points","quantitative","balance sheet","tightening","easing","pivot"],
+    color: "#bc8cff", bg: "rgba(188,140,255,0.08)",
+    assets: [
+      { id:"DGS10", label:"10Y Treasury",  type:"macro",     series:"DGS10",  category:"Macro" },
+      { id:"SPY",   label:"S&P 500",       type:"equity",    ticker:"SPY",    category:"Indices" },
+      { id:"GC=F",  label:"Gold",          type:"commodity", ticker:"GC=F",   category:"Commodities" },
+      { id:"DX=F",  label:"USD Index",     type:"fx",        ticker:"DX=F",   category:"FX" },
+    ],
+    why: "Rate decisions move bond yields, equity discount rates, and currency strength simultaneously across all asset classes.",
+  },
+  "Trade / Sanctions": {
+    keywords: ["tariff","sanction","trade war","embargo","export ban","import restriction","trade deal","wto","customs","protectionism","decoupling","blacklist","trade dispute","quota","import tax","levy"],
+    color: "#e3b341", bg: "rgba(227,179,65,0.08)",
+    assets: [
+      { id:"EURUSD=X", label:"EUR/USD",     type:"fx",        ticker:"EURUSD=X", category:"FX" },
+      { id:"HG=F",     label:"Copper",      type:"commodity", ticker:"HG=F",     category:"Commodities" },
+      { id:"SPY",      label:"S&P 500",     type:"equity",    ticker:"SPY",      category:"Indices" },
+      { id:"USDCNY=X", label:"USD/CNY",     type:"fx",        ticker:"USDCNY=X", category:"FX" },
+    ],
+    why: "Trade barriers raise input costs, compress corporate margins, and force currency adjustments in affected economies.",
+  },
+  "Elections / Politics": {
+    keywords: ["election","vote","president","congress","parliament","government","political crisis","referendum","coup","protest","regime change","poll","candidate","impeach","legislature","snap election","cabinet"],
+    color: "#58a6ff", bg: "rgba(88,166,255,0.08)",
+    assets: [
+      { id:"SPY",      label:"S&P 500",    type:"equity", ticker:"SPY",      category:"Indices" },
+      { id:"EURUSD=X", label:"EUR/USD",    type:"fx",     ticker:"EURUSD=X", category:"FX" },
+      { id:"GC=F",     label:"Gold",       type:"commodity", ticker:"GC=F",  category:"Commodities" },
+    ],
+    why: "Political uncertainty elevates risk premia, weakens local currencies, and can abruptly reverse fiscal and regulatory policy trajectories.",
+  },
+  "Energy": {
+    keywords: ["oil price","opec","natural gas","pipeline","energy crisis","petroleum","crude","lng","fuel","refinery","production cut","energy supply","power grid","oil output","barrel","brent","wti","gas price"],
+    color: "#f0883e", bg: "rgba(240,136,62,0.08)",
+    assets: [
+      { id:"CL=F",  label:"Crude Oil (WTI)", type:"commodity", ticker:"CL=F", category:"Commodities" },
+      { id:"NG=F",  label:"Natural Gas",      type:"commodity", ticker:"NG=F", category:"Commodities" },
+      { id:"CPIAUCSL", label:"CPI Inflation", type:"macro",     series:"CPIAUCSL", category:"Macro" },
+    ],
+    why: "Energy supply disruptions feed directly into CPI, widen trade deficits in import-dependent economies, and pressure corporate margins globally.",
+  },
+  "Supply Chain": {
+    keywords: ["supply chain","shipping","freight","semiconductor","chip shortage","factory","manufacturing","logistics","container","port strike","disruption","shortage","inventory","production halt","bottleneck"],
+    color: "#3fb950", bg: "rgba(63,185,80,0.08)",
+    assets: [
+      { id:"HG=F", label:"Copper",      type:"commodity", ticker:"HG=F", category:"Commodities" },
+      { id:"NVDA", label:"NVIDIA",      type:"equity",    ticker:"NVDA", category:"Equities" },
+      { id:"QQQ",  label:"Nasdaq 100",  type:"equity",    ticker:"QQQ",  category:"Indices" },
+    ],
+    why: "Supply constraints elevate input costs, delay product cycles, and create concentrated earnings risk in technology and manufacturing sectors.",
+  },
+};
+
+const GEO_REGIONS = {
+  "🇺🇸 US":         ["united states"," u.s.","american","washington","biden","trump","congress","federal reserve","white house","pentagon","us economy","us dollar"],
+  "🇨🇳 China":       ["china","chinese","beijing","xi jinping","pboc","ccp","taiwan strait","hong kong","shanghai","yuan","renminbi"],
+  "🇷🇺 Russia":      ["russia","russian","moscow","putin","kremlin","ukraine","rouble","gazprom"],
+  "🇪🇺 Europe":      ["europe","european","eu ","ecb","germany","france","united kingdom","uk ","britain","euro zone","eurozone","sterling"],
+  "🌍 Middle East":  ["iran","israel","saudi","opec","gulf","iraq","syria","yemen","palestin","hamas","hezbollah","middle east","riyadh","tehran"],
+  "🌏 Asia Pacific": ["japan","south korea","india","australia","singapore","boj","asia pacific","southeast asia","asean","rupee","yen"],
+  "🌎 LatAm":        ["brazil","mexico","argentina","venezuela","chile","colombia","latin america","real ","peso"],
+};
+
+const GEO_ASSET_COLOR = { equity:"#58a6ff", commodity:"#e3b341", fx:"#3fb950", macro:"#bc8cff", topic:"#f0883e" };
+
+const BULLISH_WORDS = ["ceasefire","peace deal","agreement","resolved","de-escalat","easing tension","recovery","stimulus","rate cut","rate cuts","surplus","positive","diplomatic","accord","truce"];
+const BEARISH_WORDS = ["invasion","attack","crisis","default","collapse","recession","escalat","new sanction","tariff hike","production cut","shortage","blockade","restrict","ultimatum","threat","conflict","hostile","offensive"];
+
+function classifyGeoArticle(article) {
+  const text = ((article.headline || "") + " " + (article.summary || "")).toLowerCase();
+  let category = null, maxScore = 0;
+  for (const [cat, cfg] of Object.entries(GEO_CATEGORIES)) {
+    const score = cfg.keywords.filter(kw => text.includes(kw)).length;
+    if (score > maxScore) { maxScore = score; category = cat; }
+  }
+  if (!category || maxScore === 0) return null;
+
+  const regions = Object.entries(GEO_REGIONS)
+    .filter(([, kws]) => kws.some(kw => text.includes(kw)))
+    .map(([r]) => r);
+
+  const catCfg = GEO_CATEGORIES[category];
+  let impact = maxScore >= 4 || (catCfg.color === "#f85149" && maxScore >= 2) ? "High" : maxScore >= 2 ? "Medium" : "Low";
+
+  const bullish = BULLISH_WORDS.filter(w => text.includes(w)).length;
+  const bearish = BEARISH_WORDS.filter(w => text.includes(w)).length;
+  const signal = bearish > bullish + 1 ? "Bearish" : bullish > bearish + 1 ? "Bullish" : "Neutral";
+
+  return { category, regions, impact, signal, assets: catCfg.assets, why: catCfg.why };
+}
+
+function geoTimeAgo(ts) {
+  const s = Math.floor(Date.now() / 1000) - ts;
+  if (s < 60) return "Just now";
+  if (s < 3600) return Math.floor(s / 60) + "m ago";
+  if (s < 86400) return Math.floor(s / 3600) + "h ago";
+  return Math.floor(s / 86400) + "d ago";
+}
+
+function GeopoliticalEvents({ onOpenResearch }) {
+  const [events, setEvents]         = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [selected, setSelected]     = useState(null);
+  const [lastRefresh, setLastRefresh] = useState(null);
+  const [filterImpact, setFilterImpact] = useState("All");
+  const [filterCat, setFilterCat]   = useState("All");
+  const [filterTime, setFilterTime] = useState("24H");
+
+  const fetchEvents = async () => {
+    setLoading(true);
+    try {
+      const [general, forex] = await Promise.all([
+        api("/news?category=general"),
+        delay(300).then(() => api("/news?category=forex")),
+      ]);
+      const raw = [...(Array.isArray(general) ? general : []), ...(Array.isArray(forex) ? forex : [])];
+      const seen = new Set();
+      const unique = raw.filter(a => { if (seen.has(a.id)) return false; seen.add(a.id); return true; });
+      const classified = unique
+        .map(a => { const m = classifyGeoArticle(a); return m ? { ...a, ...m } : null; })
+        .filter(Boolean);
+      const order = { High:0, Medium:1, Low:2 };
+      classified.sort((a, b) => order[a.impact] !== order[b.impact] ? order[a.impact] - order[b.impact] : b.datetime - a.datetime);
+      setEvents(classified);
+      if (classified.length > 0) setSelected(classified[0]);
+      setLastRefresh(Date.now());
+    } catch(e) {}
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchEvents();
+    const iv = setInterval(fetchEvents, 5 * 60 * 1000);
+    return () => clearInterval(iv);
+  }, []); // eslint-disable-line
+
+  const nowSec = Date.now() / 1000;
+  const timeWindow = { "1H":3600, "6H":21600, "24H":86400 }[filterTime];
+  const filtered = events.filter(e =>
+    (filterImpact === "All" || e.impact === filterImpact) &&
+    (filterCat    === "All" || e.category === filterCat) &&
+    (nowSec - e.datetime <= timeWindow)
+  );
+
+  const impactColor  = { High:"#f85149", Medium:"#e3b341", Low:"#3fb950" };
+  const signalColor  = { Bullish:"#3fb950", Bearish:"#f85149", Neutral:"#7d8590" };
+  const signalIcon   = { Bullish:"▲", Bearish:"▼", Neutral:"◆" };
+
+  return (
+    <div className="flex flex-col" style={{ height:"100%", overflow:"hidden" }}>
+
+      {/* ── Filter bar ── */}
+      <div className="px-4 py-2 flex items-center gap-3 flex-wrap" style={{ borderBottom:"1px solid #21262d", background:"#010409", flexShrink:0 }}>
+        <span className="font-mono" style={{ background:"#0c2044", color:"#58a6ff", border:"1px solid #58a6ff33", borderRadius:3, padding:"2px 8px", fontSize:10 }}>● LIVE</span>
+
+        <div className="flex items-center gap-1">
+          <span className="font-mono" style={{ color:"#484f58", fontSize:9 }}>IMPACT:</span>
+          {["All","High","Medium","Low"].map(v => (
+            <button key={v} onClick={() => setFilterImpact(v)} className="font-mono"
+              style={{ padding:"2px 8px", fontSize:10, borderRadius:3, border:"1px solid", cursor:"pointer",
+                background: filterImpact===v ? (impactColor[v]||"#21262d")+"22" : "transparent",
+                borderColor: filterImpact===v ? (impactColor[v]||"#58a6ff") : "#21262d",
+                color: filterImpact===v ? (impactColor[v]||"#58a6ff") : "#7d8590" }}>
+              {v}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-1">
+          <span className="font-mono" style={{ color:"#484f58", fontSize:9 }}>CATEGORY:</span>
+          {["All",...Object.keys(GEO_CATEGORIES)].map(v => {
+            const cfg = GEO_CATEGORIES[v];
+            return (
+              <button key={v} onClick={() => setFilterCat(v)} className="font-mono"
+                style={{ padding:"2px 8px", fontSize:10, borderRadius:3, border:"1px solid", cursor:"pointer",
+                  background: filterCat===v ? (cfg?.bg||"#21262d") : "transparent",
+                  borderColor: filterCat===v ? (cfg?.color||"#58a6ff") : "#21262d",
+                  color: filterCat===v ? (cfg?.color||"#58a6ff") : "#7d8590" }}>
+                {v}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-1">
+          <span className="font-mono" style={{ color:"#484f58", fontSize:9 }}>TIME:</span>
+          {["1H","6H","24H"].map(v => (
+            <button key={v} onClick={() => setFilterTime(v)} className="font-mono"
+              style={{ padding:"2px 8px", fontSize:10, borderRadius:3, border:"1px solid", cursor:"pointer",
+                background: filterTime===v ? "#0c2044" : "transparent",
+                borderColor: filterTime===v ? "#58a6ff" : "#21262d",
+                color: filterTime===v ? "#58a6ff" : "#7d8590" }}>
+              {v}
+            </button>
+          ))}
+        </div>
+
+        <button onClick={fetchEvents} disabled={loading} className="font-mono"
+          style={{ padding:"2px 10px", fontSize:10, borderRadius:3, border:"1px solid #30363d", background:"transparent", color:loading?"#7d8590":"#58a6ff", cursor:loading?"wait":"pointer", marginLeft:"auto" }}>
+          {loading ? "⟳ Updating…" : "⟳ Refresh"}
+        </button>
+        {lastRefresh && (
+          <span className="font-mono" style={{ color:"#484f58", fontSize:9 }}>
+            {filtered.length} events · {new Date(lastRefresh).toLocaleTimeString()}
+          </span>
+        )}
+      </div>
+
+      {/* ── Two-column workspace ── */}
+      <div className="flex flex-1" style={{ overflow:"hidden" }}>
+
+        {/* Left: scrollable event feed */}
+        <div style={{ width:460, flexShrink:0, borderRight:"1px solid #21262d", overflowY:"auto" }}>
+          {loading && events.length === 0 ? (
+            <div className="flex items-center justify-center p-10 font-mono" style={{ color:"#7d8590", fontSize:12 }}>Fetching intelligence feed…</div>
+          ) : filtered.length === 0 ? (
+            <div className="flex items-center justify-center p-10 font-mono" style={{ color:"#7d8590", fontSize:12 }}>No events match current filters.</div>
+          ) : filtered.map(event => {
+            const cfg = GEO_CATEGORIES[event.category];
+            const isSelected = selected?.id === event.id;
+            const ageSec = nowSec - event.datetime;
+            const isBreaking = event.impact === "High" && ageSec < 3600;
+            const isNew      = ageSec < 1800 && !isBreaking;
+            return (
+              <div key={event.id} onClick={() => setSelected(event)}
+                style={{ borderBottom:"1px solid #161b22", borderLeft:"3px solid " + (isSelected ? cfg.color : impactColor[event.impact]),
+                  background: isSelected ? cfg.bg : "transparent", padding:"10px 14px", cursor:"pointer", transition:"background 0.15s" }}
+                onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background="#0d1117"; }}
+                onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background="transparent"; }}>
+
+                <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                  {isBreaking && <span className="font-mono" style={{ background:"#f8514922", border:"1px solid #f85149", borderRadius:2, padding:"0 5px", fontSize:8, color:"#f85149", textTransform:"uppercase" }}>⚡ Breaking</span>}
+                  {isNew      && <span className="font-mono" style={{ background:"#3fb95022", border:"1px solid #3fb950", borderRadius:2, padding:"0 5px", fontSize:8, color:"#3fb950", textTransform:"uppercase" }}>● New</span>}
+                  <span className="font-mono" style={{ background:cfg.bg, border:"1px solid "+cfg.color+"55", borderRadius:2, padding:"0 6px", fontSize:9, color:cfg.color, textTransform:"uppercase" }}>{event.category}</span>
+                  <span className="font-mono" style={{ border:"1px solid "+impactColor[event.impact]+"44", borderRadius:2, padding:"0 5px", fontSize:9, color:impactColor[event.impact] }}>{event.impact}</span>
+                  <span className="font-mono ml-auto" style={{ color:"#484f58", fontSize:9 }}>{geoTimeAgo(event.datetime)}</span>
+                </div>
+
+                <div className="font-mono leading-snug mb-1.5" style={{ color:"#e6edf3", fontSize:12, fontWeight:isBreaking?600:400 }}>
+                  {event.headline}
+                </div>
+
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="font-mono" style={{ color:"#7d8590", fontSize:10 }}>{event.source}</span>
+                  {event.regions.slice(0,3).map(r => <span key={r} className="font-mono" style={{ color:"#484f58", fontSize:10 }}>{r}</span>)}
+                </div>
+
+                <div className="flex flex-wrap gap-1 items-center">
+                  {event.assets.slice(0,3).map(a => (
+                    <span key={a.id} className="font-mono" style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:2, padding:"1px 6px", fontSize:9, color:"#7d8590" }}>
+                      {a.label}
+                    </span>
+                  ))}
+                  <span className="font-mono ml-auto" style={{ fontSize:10, color:signalColor[event.signal] }}>
+                    {signalIcon[event.signal]} {event.signal}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Right: event detail */}
+        <div className="flex-1 p-5" style={{ overflowY:"auto" }}>
+          {!selected ? (
+            <div className="flex items-center justify-center h-full font-mono" style={{ color:"#484f58", fontSize:12 }}>
+              Select an event to view intelligence detail
+            </div>
+          ) : (() => {
+            const cfg = GEO_CATEGORIES[selected.category];
+            const ageSec = nowSec - selected.datetime;
+            const isBreaking = selected.impact === "High" && ageSec < 3600;
+            return (
+              <div>
+                {/* Badges */}
+                <div className="flex items-center gap-2 mb-4 flex-wrap">
+                  {isBreaking && <span className="font-mono" style={{ background:"#f8514922", border:"1px solid #f85149", borderRadius:3, padding:"3px 10px", fontSize:10, color:"#f85149" }}>⚡ BREAKING</span>}
+                  <span className="font-mono" style={{ background:cfg.bg, border:"1px solid "+cfg.color, borderRadius:3, padding:"3px 10px", fontSize:10, color:cfg.color }}>{selected.category.toUpperCase()}</span>
+                  <span className="font-mono" style={{ border:"1px solid "+impactColor[selected.impact], borderRadius:3, padding:"3px 10px", fontSize:10, color:impactColor[selected.impact] }}>{selected.impact.toUpperCase()} IMPACT</span>
+                  <span className="font-mono ml-auto" style={{ color:"#7d8590", fontSize:10 }}>{selected.source} · {geoTimeAgo(selected.datetime)}</span>
+                </div>
+
+                {/* Headline */}
+                <h2 className="font-mono font-bold leading-snug mb-3" style={{ color:"#e6edf3", fontSize:16 }}>{selected.headline}</h2>
+
+                {/* Regions */}
+                {selected.regions.length > 0 && (
+                  <div className="flex items-center gap-2 mb-4 flex-wrap">
+                    <span className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>Region:</span>
+                    {selected.regions.map(r => (
+                      <span key={r} className="font-mono" style={{ background:"#21262d", borderRadius:3, padding:"2px 8px", fontSize:11, color:"#7d8590" }}>{r}</span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Summary */}
+                {selected.summary && (
+                  <div className="mb-4 p-3" style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4 }}>
+                    <div className="font-mono mb-1.5" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Summary</div>
+                    <p className="font-mono leading-relaxed" style={{ color:"#7d8590", fontSize:12 }}>{selected.summary}</p>
+                  </div>
+                )}
+
+                {/* Why it matters */}
+                <div className="mb-4 p-3" style={{ background:cfg.bg, border:"1px solid "+cfg.color+"44", borderRadius:4 }}>
+                  <div className="font-mono mb-1.5" style={{ color:cfg.color, fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Why It Matters</div>
+                  <p className="font-mono leading-relaxed" style={{ color:"#e6edf3", fontSize:12 }}>{cfg.why}</p>
+                </div>
+
+                {/* Signal + link row */}
+                <div className="flex items-center gap-4 mb-4 p-3" style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4 }}>
+                  <div>
+                    <div className="font-mono mb-1" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>Directional Signal</div>
+                    <div className="font-mono font-bold" style={{ color:signalColor[selected.signal], fontSize:18 }}>
+                      {signalIcon[selected.signal]} {selected.signal}
+                    </div>
+                  </div>
+                  <div className="ml-auto flex gap-2">
+                    <a href={selected.url} target="_blank" rel="noopener noreferrer"
+                      className="font-mono"
+                      style={{ background:"#1f6feb", borderRadius:4, padding:"7px 14px", color:"#fff", fontSize:11, textDecoration:"none" }}>
+                      Full Article ↗
+                    </a>
+                  </div>
+                </div>
+
+                {/* Impacted assets */}
+                <div className="mb-4">
+                  <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>
+                    Impacted Assets {onOpenResearch ? "— Click to Research" : ""}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {selected.assets.map(a => (
+                      <button key={a.id}
+                        onClick={() => onOpenResearch && onOpenResearch(a)}
+                        className="font-mono"
+                        style={{ background:"#0d1117", border:"1px solid #30363d", borderRadius:4, padding:"7px 14px", fontSize:12, color:GEO_ASSET_COLOR[a.type]||"#7d8590", cursor:onOpenResearch?"pointer":"default", transition:"all 0.15s" }}
+                        onMouseEnter={e => { if (onOpenResearch) { e.currentTarget.style.borderColor=cfg.color; e.currentTarget.style.background=cfg.bg; } }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor="#30363d"; e.currentTarget.style.background="#0d1117"; }}>
+                        {a.label}{onOpenResearch ? " ↗" : ""}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Intelligence metadata grid */}
+                <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Intelligence Classification</div>
+                <div className="grid" style={{ gridTemplateColumns:"1fr 1fr 1fr", gap:6 }}>
+                  {[
+                    ["Category",  selected.category],
+                    ["Impact",    selected.impact],
+                    ["Signal",    selected.signal],
+                    ["Source",    selected.source],
+                    ["Regions",   selected.regions.length ? selected.regions.map(r => r.split(" ").slice(1).join(" ")).join(", ") : "Global"],
+                    ["Published", geoTimeAgo(selected.datetime)],
+                  ].map(([k, v]) => (
+                    <div key={k} className="p-2" style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4 }}>
+                      <div className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>{k}</div>
+                      <div className="font-mono" style={{ color:"#e6edf3", fontSize:11 }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EyeOfSauron({ onOpenResearch }) {
   const [active, setActive] = useState(null);
 
   const MODULES = [
@@ -1070,7 +1458,7 @@ function EyeOfSauron() {
     { id: "flights", icon: "✈️", title: "Flight Tracker", desc: "Real-time global flight tracking via ADS-B Exchange" },
     { id: "energy", icon: "⚡", title: "Energy Grid", desc: "Live US electricity grid demand and generation mix" },
     { id: "tankers", icon: "🚢", title: "Shipping Routes", desc: "Major shipping lane congestion and freight rates", tag: "Coming Soon" },
-    { id: "geo", icon: "🌍", title: "Geopolitical Events", desc: "Live news filtered for events affecting global markets", tag: "Coming Soon" },
+    { id: "geo", icon: "🌍", title: "Geopolitical Events", desc: "Live intelligence feed — market-moving events classified by impact and region" },
   ];
 
   const renderModule = (id) => {
@@ -1078,6 +1466,7 @@ function EyeOfSauron() {
     if (id === "vessels") return <TankerMap />;
     if (id === "flights") return <FlightTracker />;
     if (id === "energy") return <EnergyGrid />;
+    if (id === "geo")    return <GeopoliticalEvents onOpenResearch={onOpenResearch} />;
     return null;
   };
 
@@ -2504,7 +2893,7 @@ function ResearchHomeDashboard({ onOpen }) {
   );
 }
 
-function ResearchBrowser() {
+function ResearchBrowser({ pendingItem, onPendingConsumed }) {
   const [query, setQuery]               = useState("");
   const [suggestions, setSuggestions]   = useState([]);
   const [suggestionIdx, setSuggestionIdx] = useState(-1);
@@ -2558,6 +2947,11 @@ function ResearchBrowser() {
   };
 
   const closePanel = id => setPanels(prev => prev.filter(p => p.id !== id));
+
+  // Consume external trigger (e.g. from Geopolitical Events module)
+  useEffect(() => {
+    if (pendingItem) { openPanel(pendingItem); onPendingConsumed && onPendingConsumed(); }
+  }, [pendingItem]); // eslint-disable-line
 
   const handleKeyDown = e => {
     if (!suggestions.length) return;
@@ -2952,6 +3346,7 @@ export default function App() {
   const [earnings, setEarnings] = useState(null);
   const [tapeData, setTapeData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [pendingResearchItem, setPendingResearchItem] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -3046,9 +3441,9 @@ export default function App() {
       {activePage === "supplychain" && <SupplyChainDashboard />}
       {activePage === "technical" && <TechnicalAnalysis ticker={ticker} />}
 
-      {activePage === "eye" && <EyeOfSauron />}
+      {activePage === "eye" && <EyeOfSauron onOpenResearch={item => { setPendingResearchItem(item); setActivePage("research"); }} />}
       {activePage === "portfolio" && <PortfolioTracker />}
-      {activePage === "research" && <ResearchBrowser />}
+      {activePage === "research" && <ResearchBrowser pendingItem={pendingResearchItem} onPendingConsumed={() => setPendingResearchItem(null)} />}
 
       {activePage !== "financial" && activePage !== "technical" && activePage !== "eye" && null}
       {activePage === "financial" && <div className="flex flex-col flex-1" style={{ overflow: "hidden" }}>
