@@ -209,6 +209,15 @@ function GlobalStyles() {
         border-color: #21262d !important;
         color: #484f58 !important;
       }
+
+      .holding-row:hover {
+        background: #0d1117 !important;
+      }
+
+      .pf-input:focus {
+        border-color: #1f6feb !important;
+        outline: none !important;
+      }
     `}</style>
   );
 }
@@ -1956,6 +1965,279 @@ function QuickStats({ quote, metrics }) {
 }
 
 
+function PortfolioTracker() {
+  const [holdings, setHoldings] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("ov_portfolio") || "[]"); }
+    catch { return []; }
+  });
+  const [quotes, setQuotes] = useState({});
+  const [loadingQuotes, setLoadingQuotes] = useState(false);
+  const [form, setForm] = useState({ ticker: "", shares: "", avgCost: "" });
+  const [formError, setFormError] = useState("");
+
+  useEffect(() => {
+    localStorage.setItem("ov_portfolio", JSON.stringify(holdings));
+  }, [holdings]);
+
+  const tickerKey = holdings.map(h => h.ticker).join(",");
+  useEffect(() => {
+    if (!holdings.length) { setQuotes({}); return; }
+    setLoadingQuotes(true);
+    const fetch_ = async () => {
+      const newQuotes = {};
+      for (let i = 0; i < holdings.length; i++) {
+        if (i > 0) await delay(i * 200);
+        try {
+          const q = await api("/quote?symbol=" + holdings[i].ticker);
+          newQuotes[holdings[i].ticker] = { price: q.c, change: q.d, changePct: q.dp };
+        } catch(e) {}
+      }
+      setQuotes(newQuotes);
+      setLoadingQuotes(false);
+    };
+    fetch_();
+  }, [tickerKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const addHolding = () => {
+    const t = form.ticker.trim().toUpperCase();
+    const s = parseFloat(form.shares);
+    const c = parseFloat(form.avgCost);
+    if (!t) { setFormError("Enter a ticker symbol"); return; }
+    if (!s || s <= 0) { setFormError("Enter a valid share count"); return; }
+    if (!c || c <= 0) { setFormError("Enter a valid average cost"); return; }
+    const idx = holdings.findIndex(h => h.ticker === t);
+    if (idx >= 0) {
+      const old = holdings[idx];
+      const totalShares = old.shares + s;
+      const newAvg = (old.shares * old.avgCost + s * c) / totalShares;
+      const updated = [...holdings];
+      updated[idx] = { ticker: t, shares: totalShares, avgCost: newAvg };
+      setHoldings(updated);
+    } else {
+      setHoldings([...holdings, { ticker: t, shares: s, avgCost: c }]);
+    }
+    setForm({ ticker: "", shares: "", avgCost: "" });
+    setFormError("");
+  };
+
+  const removeHolding = (ticker) => setHoldings(holdings.filter(h => h.ticker !== ticker));
+
+  const refreshQuotes = () => {
+    if (!holdings.length || loadingQuotes) return;
+    setLoadingQuotes(true);
+    const fetch_ = async () => {
+      const newQuotes = { ...quotes };
+      for (let i = 0; i < holdings.length; i++) {
+        if (i > 0) await delay(i * 200);
+        try {
+          const q = await api("/quote?symbol=" + holdings[i].ticker);
+          newQuotes[holdings[i].ticker] = { price: q.c, change: q.d, changePct: q.dp };
+        } catch(e) {}
+      }
+      setQuotes(newQuotes);
+      setLoadingQuotes(false);
+    };
+    fetch_();
+  };
+
+  let totalValue = 0, totalCost = 0, dayPnlTotal = 0;
+  holdings.forEach(h => {
+    const q = quotes[h.ticker];
+    const price = q?.price || h.avgCost;
+    totalValue += price * h.shares;
+    totalCost += h.avgCost * h.shares;
+    if (q?.change) dayPnlTotal += q.change * h.shares;
+  });
+  const totalPnl = totalValue - totalCost;
+  const totalPnlPct = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0;
+
+  const summaryCards = [
+    { label: "Portfolio Value", value: "$" + totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), color: "#e6edf3" },
+    { label: "Today's P&L", value: (dayPnlTotal >= 0 ? "+" : "") + "$" + Math.abs(dayPnlTotal).toFixed(2), color: clr(dayPnlTotal) },
+    { label: "Total P&L", value: (totalPnl >= 0 ? "+" : "") + "$" + Math.abs(totalPnl).toFixed(2), color: clr(totalPnl) },
+    { label: "Total Return", value: totalCost > 0 ? fmt.pct(totalPnlPct) : "—", color: totalCost > 0 ? clr(totalPnlPct) : "#7d8590" },
+  ];
+
+  const inputStyle = { background: "#0d1117", border: "1px solid #30363d", borderRadius: 4, color: "#e6edf3", fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, padding: "6px 8px", width: "100%" };
+
+  return (
+    <div className="flex flex-col flex-1" style={{ height: "calc(100vh - 90px)", overflow: "hidden" }}>
+      {/* Summary row */}
+      <div className="grid gap-2 p-2" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+        {summaryCards.map(({ label, value, color }) => (
+          <div key={label} className="terminal-panel p-3">
+            <div className="text-xs font-mono" style={{ color: "#7d8590", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 10 }}>{label}</div>
+            <div className="font-mono font-bold mt-1" style={{ color, fontSize: 18 }}>{value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Main content */}
+      <div className="flex gap-2 px-2 pb-2 flex-1" style={{ overflow: "hidden", minHeight: 0 }}>
+        {/* Holdings table */}
+        <div className="terminal-panel terminal-glow flex-1 flex flex-col p-3" style={{ overflowY: "auto" }}>
+          <div className="flex items-center justify-between mb-3">
+            <span className="terminal-header">💼 Holdings ({holdings.length})</span>
+            <button onClick={refreshQuotes} disabled={loadingQuotes}
+              className="text-xs font-mono px-2 py-1"
+              style={{ border: "1px solid #30363d", borderRadius: 4, background: "transparent", color: loadingQuotes ? "#7d8590" : "#58a6ff", cursor: loadingQuotes ? "wait" : "pointer" }}>
+              {loadingQuotes ? "⟳ Updating..." : "⟳ Refresh"}
+            </button>
+          </div>
+
+          {holdings.length === 0 ? (
+            <div className="flex flex-col items-center justify-center flex-1" style={{ color: "#7d8590" }}>
+              <div className="text-xs font-mono text-center">No positions yet.</div>
+              <div className="text-xs font-mono text-center mt-1">Add holdings using the form on the right.</div>
+            </div>
+          ) : (
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid #30363d" }}>
+                  {["Ticker", "Shares", "Avg Cost", "Price", "Mkt Value", "P&L ($)", "Return", "Day Chg", ""].map(h => (
+                    <th key={h} className="text-left px-2 py-2"
+                      style={{ color: "#7d8590", fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {holdings.map(h => {
+                  const q = quotes[h.ticker];
+                  const price = q?.price ?? null;
+                  const mktValue = price !== null ? price * h.shares : null;
+                  const costBasis = h.avgCost * h.shares;
+                  const pnl = mktValue !== null ? mktValue - costBasis : null;
+                  const pnlPct = pnl !== null ? (pnl / costBasis) * 100 : null;
+                  const alloc = totalValue > 0 && mktValue !== null ? (mktValue / totalValue) * 100 : 0;
+                  return (
+                    <tr key={h.ticker} className="holding-row" style={{ borderBottom: "1px solid #161b22" }}>
+                      <td className="px-2 py-2">
+                        <div className="font-mono font-bold" style={{ color: "#58a6ff", fontSize: 12 }}>{h.ticker}</div>
+                        <div className="font-mono" style={{ color: "#7d8590", fontSize: 10 }}>{alloc.toFixed(1)}%</div>
+                      </td>
+                      <td className="px-2 py-2 font-mono" style={{ color: "#e6edf3", fontSize: 12 }}>{h.shares.toLocaleString()}</td>
+                      <td className="px-2 py-2 font-mono" style={{ color: "#e6edf3", fontSize: 12 }}>${fmt.price(h.avgCost)}</td>
+                      <td className="px-2 py-2 font-mono" style={{ color: price !== null ? "#e6edf3" : "#7d8590", fontSize: 12 }}>
+                        {price !== null ? "$" + fmt.price(price) : loadingQuotes ? "…" : "—"}
+                      </td>
+                      <td className="px-2 py-2 font-mono" style={{ color: "#e6edf3", fontSize: 12 }}>
+                        {mktValue !== null ? "$" + mktValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+                      </td>
+                      <td className="px-2 py-2 font-mono" style={{ color: pnl !== null ? clr(pnl) : "#7d8590", fontSize: 12 }}>
+                        {pnl !== null ? (pnl >= 0 ? "+" : "") + "$" + Math.abs(pnl).toFixed(2) : "—"}
+                      </td>
+                      <td className="px-2 py-2 font-mono" style={{ color: pnlPct !== null ? clr(pnlPct) : "#7d8590", fontSize: 12 }}>
+                        {pnlPct !== null ? fmt.pct(pnlPct) : "—"}
+                      </td>
+                      <td className="px-2 py-2 font-mono" style={{ color: q?.changePct != null ? clr(q.changePct) : "#7d8590", fontSize: 12 }}>
+                        {q?.changePct != null ? fmt.pct(q.changePct) : "—"}
+                      </td>
+                      <td className="px-2 py-2">
+                        <button onClick={() => removeHolding(h.ticker)}
+                          style={{ color: "#f85149", background: "none", border: "none", cursor: "pointer", fontSize: 14, lineHeight: 1 }}>✕</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              {holdings.length > 1 && (
+                <tfoot>
+                  <tr style={{ borderTop: "1px solid #30363d" }}>
+                    <td className="px-2 py-2 font-mono font-bold" style={{ color: "#7d8590", fontSize: 11 }} colSpan={4}>TOTAL</td>
+                    <td className="px-2 py-2 font-mono font-bold" style={{ color: "#e6edf3", fontSize: 12 }}>
+                      ${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td className="px-2 py-2 font-mono font-bold" style={{ color: clr(totalPnl), fontSize: 12 }}>
+                      {totalPnl >= 0 ? "+" : ""}${Math.abs(totalPnl).toFixed(2)}
+                    </td>
+                    <td className="px-2 py-2 font-mono font-bold" style={{ color: clr(totalPnlPct), fontSize: 12 }}>
+                      {fmt.pct(totalPnlPct)}
+                    </td>
+                    <td colSpan={2} />
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          )}
+        </div>
+
+        {/* Right panel */}
+        <div className="flex flex-col gap-2" style={{ width: 280, flexShrink: 0 }}>
+          {/* Add position form */}
+          <div className="terminal-panel terminal-glow p-3">
+            <div className="terminal-header mb-3">+ Add / Update Position</div>
+            <div className="flex flex-col gap-2">
+              <div>
+                <div className="font-mono mb-1" style={{ color: "#7d8590", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>Ticker</div>
+                <input className="pf-input" value={form.ticker}
+                  onChange={e => setForm(f => ({ ...f, ticker: e.target.value.toUpperCase() }))}
+                  onKeyDown={e => e.key === "Enter" && document.getElementById("pf-shares")?.focus()}
+                  placeholder="AAPL" style={inputStyle} />
+              </div>
+              <div>
+                <div className="font-mono mb-1" style={{ color: "#7d8590", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>Shares</div>
+                <input id="pf-shares" className="pf-input" type="number" min="0" step="any"
+                  value={form.shares}
+                  onChange={e => setForm(f => ({ ...f, shares: e.target.value }))}
+                  onKeyDown={e => e.key === "Enter" && document.getElementById("pf-cost")?.focus()}
+                  placeholder="100" style={inputStyle} />
+              </div>
+              <div>
+                <div className="font-mono mb-1" style={{ color: "#7d8590", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>Avg Cost / Share ($)</div>
+                <input id="pf-cost" className="pf-input" type="number" min="0" step="any"
+                  value={form.avgCost}
+                  onChange={e => setForm(f => ({ ...f, avgCost: e.target.value }))}
+                  onKeyDown={e => e.key === "Enter" && addHolding()}
+                  placeholder="150.00" style={inputStyle} />
+              </div>
+              {formError && <div className="font-mono" style={{ color: "#f85149", fontSize: 11 }}>{formError}</div>}
+              <button onClick={addHolding}
+                className="font-mono font-semibold py-2 mt-1"
+                style={{ background: "#1f6feb", border: "none", borderRadius: 4, color: "#fff", cursor: "pointer", fontSize: 12, letterSpacing: "0.05em" }}>
+                ADD POSITION
+              </button>
+              <div className="font-mono" style={{ color: "#484f58", fontSize: 10 }}>
+                Adding an existing ticker averages your cost basis.
+              </div>
+            </div>
+          </div>
+
+          {/* Allocation breakdown */}
+          {holdings.length > 0 && (
+            <div className="terminal-panel terminal-glow p-3 flex-1" style={{ overflowY: "auto" }}>
+              <div className="terminal-header mb-3">📊 Allocation</div>
+              {[...holdings]
+                .map(h => {
+                  const q = quotes[h.ticker];
+                  const price = q?.price || h.avgCost;
+                  return { ...h, mktValue: price * h.shares };
+                })
+                .sort((a, b) => b.mktValue - a.mktValue)
+                .map(h => {
+                  const pct = totalValue > 0 ? (h.mktValue / totalValue) * 100 : 0;
+                  const q = quotes[h.ticker];
+                  return (
+                    <div key={h.ticker} className="mb-3">
+                      <div className="flex justify-between font-mono mb-1" style={{ fontSize: 11 }}>
+                        <span style={{ color: "#e6edf3" }}>{h.ticker}</span>
+                        <span style={{ color: q?.changePct != null ? clr(q.changePct) : "#7d8590" }}>
+                          {pct.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div style={{ background: "#21262d", borderRadius: 2, height: 4 }}>
+                        <div style={{ width: pct + "%", height: "100%", background: "#1f6feb", borderRadius: 2, transition: "width 0.4s ease" }} />
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const Panel = ({ children, className = "", style = {} }) => <div className={"terminal-panel terminal-glow p-3 flex flex-col " + className} style={style}>{children}</div>;
 
 export default function App() {
@@ -2049,6 +2331,7 @@ export default function App() {
           { key: "supplychain", label: "🚢 Supply Chain" },
           { key: "technical", label: "📊 Technical" },
           { key: "eye", label: "👁 Eye of Sauron" },
+          { key: "portfolio", label: "💼 Portfolio" },
         ].map(p => (
           <button key={p.key} onClick={() => setActivePage(p.key)}
             className="px-5 py-2.5 text-xs font-mono font-semibold tracking-wider uppercase transition-colors border-b-2"
@@ -2064,6 +2347,7 @@ export default function App() {
       {activePage === "technical" && <TechnicalAnalysis ticker={ticker} />}
 
       {activePage === "eye" && <EyeOfSauron />}
+      {activePage === "portfolio" && <PortfolioTracker />}
 
       {activePage !== "financial" && activePage !== "technical" && activePage !== "eye" && null}
       {activePage === "financial" && <div className="flex flex-col flex-1" style={{ overflow: "hidden" }}>
