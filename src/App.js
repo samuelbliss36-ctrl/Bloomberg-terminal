@@ -1,10 +1,19 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from "react";
 import { AreaChart, Area, BarChart, Bar, Line, Cell, ReferenceLine, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Search, Bell, Settings, RefreshCw, Zap, ArrowUpRight, ArrowDownRight, Newspaper, Building2, DollarSign, BarChart2, Activity, Star } from "lucide-react";
 
 const FINNHUB_KEY = process.env.REACT_APP_FINNHUB_KEY;
 const BASE = "https://finnhub.io/api/v1";
-const api = (path) => fetch(BASE + path + "&token=" + FINNHUB_KEY).then((r) => r.json());
+
+// In-memory API cache — 60 s TTL prevents duplicate requests for same data within a session
+const _apiCache = new Map();
+const api = (path) => {
+  const hit = _apiCache.get(path);
+  if (hit && Date.now() - hit.ts < 60_000) return Promise.resolve(hit.data);
+  return fetch(BASE + path + "&token=" + FINNHUB_KEY)
+    .then(r => r.json())
+    .then(data => { _apiCache.set(path, { data, ts: Date.now() }); return data; });
+};
 
 const fmt = {
   price: (v) => v?.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
@@ -1232,6 +1241,10 @@ function geoTimeAgo(ts) {
   return Math.floor(s / 86400) + "d ago";
 }
 
+const GEO_IMPACT_COLOR = { High:"#f85149", Medium:"#e3b341", Low:"#3fb950" };
+const GEO_SIGNAL_COLOR = { Bullish:"#3fb950", Bearish:"#f85149", Neutral:"#7d8590" };
+const GEO_SIGNAL_ICON  = { Bullish:"▲", Bearish:"▼", Neutral:"◆" };
+
 function GeopoliticalEvents({ onOpenResearch }) {
   const [events, setEvents]         = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -1277,9 +1290,6 @@ function GeopoliticalEvents({ onOpenResearch }) {
     (nowSec - e.datetime <= timeWindow)
   );
 
-  const impactColor  = { High:"#f85149", Medium:"#e3b341", Low:"#3fb950" };
-  const signalColor  = { Bullish:"#3fb950", Bearish:"#f85149", Neutral:"#7d8590" };
-  const signalIcon   = { Bullish:"▲", Bearish:"▼", Neutral:"◆" };
 
   return (
     <div className="flex flex-col" style={{ height:"100%", overflow:"hidden" }}>
@@ -1293,9 +1303,9 @@ function GeopoliticalEvents({ onOpenResearch }) {
           {["All","High","Medium","Low"].map(v => (
             <button key={v} onClick={() => setFilterImpact(v)} className="font-mono"
               style={{ padding:"2px 8px", fontSize:10, borderRadius:3, border:"1px solid", cursor:"pointer",
-                background: filterImpact===v ? (impactColor[v]||"#21262d")+"22" : "transparent",
-                borderColor: filterImpact===v ? (impactColor[v]||"#58a6ff") : "#21262d",
-                color: filterImpact===v ? (impactColor[v]||"#58a6ff") : "#7d8590" }}>
+                background: filterImpact===v ? (GEO_IMPACT_COLOR[v]||"#21262d")+"22" : "transparent",
+                borderColor: filterImpact===v ? (GEO_IMPACT_COLOR[v]||"#58a6ff") : "#21262d",
+                color: filterImpact===v ? (GEO_IMPACT_COLOR[v]||"#58a6ff") : "#7d8590" }}>
               {v}
             </button>
           ))}
@@ -1358,7 +1368,7 @@ function GeopoliticalEvents({ onOpenResearch }) {
             const isNew      = ageSec < 1800 && !isBreaking;
             return (
               <div key={event.id} onClick={() => setSelected(event)}
-                style={{ borderBottom:"1px solid #161b22", borderLeft:"3px solid " + (isSelected ? cfg.color : impactColor[event.impact]),
+                style={{ borderBottom:"1px solid #161b22", borderLeft:"3px solid " + (isSelected ? cfg.color : GEO_IMPACT_COLOR[event.impact]),
                   background: isSelected ? cfg.bg : "transparent", padding:"10px 14px", cursor:"pointer", transition:"background 0.15s" }}
                 onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background="#0d1117"; }}
                 onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background="transparent"; }}>
@@ -1367,7 +1377,7 @@ function GeopoliticalEvents({ onOpenResearch }) {
                   {isBreaking && <span className="font-mono" style={{ background:"#f8514922", border:"1px solid #f85149", borderRadius:2, padding:"0 5px", fontSize:8, color:"#f85149", textTransform:"uppercase" }}>⚡ Breaking</span>}
                   {isNew      && <span className="font-mono" style={{ background:"#3fb95022", border:"1px solid #3fb950", borderRadius:2, padding:"0 5px", fontSize:8, color:"#3fb950", textTransform:"uppercase" }}>● New</span>}
                   <span className="font-mono" style={{ background:cfg.bg, border:"1px solid "+cfg.color+"55", borderRadius:2, padding:"0 6px", fontSize:9, color:cfg.color, textTransform:"uppercase" }}>{event.category}</span>
-                  <span className="font-mono" style={{ border:"1px solid "+impactColor[event.impact]+"44", borderRadius:2, padding:"0 5px", fontSize:9, color:impactColor[event.impact] }}>{event.impact}</span>
+                  <span className="font-mono" style={{ border:"1px solid "+GEO_IMPACT_COLOR[event.impact]+"44", borderRadius:2, padding:"0 5px", fontSize:9, color:GEO_IMPACT_COLOR[event.impact] }}>{event.impact}</span>
                   <span className="font-mono ml-auto" style={{ color:"#484f58", fontSize:9 }}>{geoTimeAgo(event.datetime)}</span>
                 </div>
 
@@ -1386,8 +1396,8 @@ function GeopoliticalEvents({ onOpenResearch }) {
                       {a.label}
                     </span>
                   ))}
-                  <span className="font-mono ml-auto" style={{ fontSize:10, color:signalColor[event.signal] }}>
-                    {signalIcon[event.signal]} {event.signal}
+                  <span className="font-mono ml-auto" style={{ fontSize:10, color:GEO_SIGNAL_COLOR[event.signal] }}>
+                    {GEO_SIGNAL_ICON[event.signal]} {event.signal}
                   </span>
                 </div>
               </div>
@@ -1411,7 +1421,7 @@ function GeopoliticalEvents({ onOpenResearch }) {
                 <div className="flex items-center gap-2 mb-4 flex-wrap">
                   {isBreaking && <span className="font-mono" style={{ background:"#f8514922", border:"1px solid #f85149", borderRadius:3, padding:"3px 10px", fontSize:10, color:"#f85149" }}>⚡ BREAKING</span>}
                   <span className="font-mono" style={{ background:cfg.bg, border:"1px solid "+cfg.color, borderRadius:3, padding:"3px 10px", fontSize:10, color:cfg.color }}>{selected.category.toUpperCase()}</span>
-                  <span className="font-mono" style={{ border:"1px solid "+impactColor[selected.impact], borderRadius:3, padding:"3px 10px", fontSize:10, color:impactColor[selected.impact] }}>{selected.impact.toUpperCase()} IMPACT</span>
+                  <span className="font-mono" style={{ border:"1px solid "+GEO_IMPACT_COLOR[selected.impact], borderRadius:3, padding:"3px 10px", fontSize:10, color:GEO_IMPACT_COLOR[selected.impact] }}>{selected.impact.toUpperCase()} IMPACT</span>
                   <span className="font-mono ml-auto" style={{ color:"#7d8590", fontSize:10 }}>{selected.source} · {geoTimeAgo(selected.datetime)}</span>
                 </div>
 
@@ -1446,8 +1456,8 @@ function GeopoliticalEvents({ onOpenResearch }) {
                 <div className="flex items-center gap-4 mb-4 p-3" style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4 }}>
                   <div>
                     <div className="font-mono mb-1" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>Directional Signal</div>
-                    <div className="font-mono font-bold" style={{ color:signalColor[selected.signal], fontSize:18 }}>
-                      {signalIcon[selected.signal]} {selected.signal}
+                    <div className="font-mono font-bold" style={{ color:GEO_SIGNAL_COLOR[selected.signal], fontSize:18 }}>
+                      {GEO_SIGNAL_ICON[selected.signal]} {selected.signal}
                     </div>
                   </div>
                   <div className="ml-auto flex gap-2">
@@ -2047,7 +2057,7 @@ function PeerComparison({ ticker, metrics, quote }) {
   );
 }
 
-function TickerTape({ tapeData }) {
+const TickerTape = memo(function TickerTape({ tapeData }) {
   const ref = useRef(null);
   useEffect(() => {
     const el = ref.current;
@@ -2062,54 +2072,91 @@ function TickerTape({ tapeData }) {
     const id = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(id);
   }, []);
-  const items = [...tapeData, ...tapeData];
+  // Duplicate items so seamless loop never shows a gap
+  const items = useMemo(() => [...tapeData, ...tapeData], [tapeData]);
   return (
     <div className="ticker-tape overflow-hidden" style={{ height: 28 }}>
       <div ref={ref} className="flex items-center gap-6 whitespace-nowrap" style={{ paddingTop: 5 }}>
         {items.map((t, i) => (
-          <span key={i} className="flex items-center gap-1.5 text-xs font-mono">
-            <span className="text-gray-400 font-semibold">{t.symbol}</span>
-            <span className="text-gray-200">${fmt.price(t.price)}</span>
-            <span style={{ color: clr(t.changePct) }}>{t.changePct >= 0 ? "▲" : "▼"} {Math.abs(t.changePct || 0).toFixed(2)}%</span>
-            <span className="text-gray-700 ml-2">|</span>
+          <span key={t.symbol + i} className="flex items-center gap-1.5 text-xs font-mono">
+            <span style={{ color: "#7d8590", fontWeight: 600 }}>{t.symbol}</span>
+            <span style={{ color: "#e6edf3" }}>${fmt.price(t.price)}</span>
+            <span style={{ color: clr(t.changePct) }}>{t.changePct >= 0 ? "▲" : "▼"}{Math.abs(t.changePct || 0).toFixed(2)}%</span>
+            <span style={{ color: "#21262d", marginLeft: 8 }}>|</span>
           </span>
         ))}
       </div>
     </div>
   );
-}
+});
 
 function TopNav({ ticker, setTicker, quote, loading, onSettingsClick }) {
   const [input, setInput] = useState(ticker);
+  const [focused, setFocused] = useState(false);
+
+  // Sync search box when ticker changes externally (watchlist click, etc.)
+  useEffect(() => { setInput(ticker); }, [ticker]);
+
+  const handleRefresh = useCallback(() => {
+    // Bust cache for current ticker then re-trigger the fetch effect
+    const prefix = "/quote?symbol=" + ticker;
+    _apiCache.forEach((_, k) => { if (k.includes(ticker)) _apiCache.delete(k); });
+    setTicker(ticker + " "); // force state change then normalize
+    setTimeout(() => setTicker(ticker), 0);
+  }, [ticker, setTicker]);
+
   return (
-    <div className="flex items-center gap-4 px-4 py-2.5 border-b border-gray-800 bg-gray-950">
-      <div className="flex items-center gap-2">
-        <Zap size={16} style={{ color: "#58a6ff" }} />
-        <span className="logo-text" style={{ fontSize: 13 }}>OMNES VIDENTES</span>
+    <div className="top-nav flex items-center gap-4 px-4 py-2"
+      style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+      <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
+        <Zap size={14} style={{ color: "#58a6ff" }} />
+        <span className="logo-text" style={{ fontSize: 12 }}>OMNES VIDENTES</span>
       </div>
-      <div className="flex items-center bg-gray-900 border border-gray-700 rounded px-2 py-1 gap-2 max-w-xs w-full">
-        <Search size={12} className="text-gray-500" />
-        <input className="bg-transparent text-gray-100 text-sm font-mono outline-none w-full placeholder-gray-600" placeholder="Search ticker... (e.g. AAPL)" value={input} onChange={(e) => setInput(e.target.value.toUpperCase())} onKeyDown={(e) => { if (e.key === "Enter") setTicker(input); }} />
+
+      <div className="flex items-center gap-2 px-2 py-1.5"
+        style={{ background: "#0d1117", border: "1px solid " + (focused ? "#1f6feb" : "#30363d"),
+          borderRadius: 5, transition: "border-color 0.15s", minWidth: 220, maxWidth: 300 }}>
+        <Search size={11} style={{ color: "#7d8590", flexShrink: 0 }} />
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value.toUpperCase())}
+          onKeyDown={e => { if (e.key === "Enter") setTicker(input.trim()); }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder="Ticker… (Enter to load)"
+          style={{ background: "transparent", border: "none", color: "#e6edf3", fontSize: 12,
+            fontFamily: "'IBM Plex Mono', monospace", outline: "none", width: "100%" }}
+        />
       </div>
-      {quote && (
-        <div className="flex items-center gap-3">
-          <span className="text-white font-bold text-lg font-mono">{ticker}</span>
-          <span className="text-gray-300 font-mono text-lg">${fmt.price(quote.c)}</span>
-          <span className="flex items-center gap-1 text-sm font-mono px-2 py-0.5 rounded" style={{ color: clr(quote.dp), background: bg(quote.dp) }}>
-            {quote.dp >= 0 ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
+
+      {quote ? (
+        <div className="flex items-center gap-3" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+          <span style={{ color: "#e6edf3", fontWeight: 700, fontSize: 14 }}>{ticker}</span>
+          <span style={{ color: "#e6edf3", fontSize: 16, fontWeight: 600 }}>${fmt.price(quote.c)}</span>
+          <span className="flex items-center gap-1" style={{ color: clr(quote.dp), background: bg(quote.dp),
+            fontSize: 12, padding: "2px 8px", borderRadius: 4 }}>
+            {quote.dp >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
             {fmt.change(quote.d)} ({fmt.pct(quote.dp)})
           </span>
-          <span className="text-gray-500 text-xs font-mono">Vol: {fmt.volume(quote.v > 0 ? quote.v : null)}</span>
+          <span style={{ color: "#484f58", fontSize: 11 }}>Vol {fmt.volume(quote.v > 0 ? quote.v : null)}</span>
+          <span style={{ color: "#484f58", fontSize: 11 }}>O {fmt.price(quote.o)}</span>
+          <span style={{ color: "#484f58", fontSize: 11 }}>H {fmt.price(quote.h)}</span>
+          <span style={{ color: "#484f58", fontSize: 11 }}>L {fmt.price(quote.l)}</span>
         </div>
-      )}
-      {loading && <span className="text-yellow-500 text-xs font-mono animate-pulse">Loading...</span>}
-      <div className="ml-auto flex items-center gap-3 text-gray-500">
-        <Bell size={14} />
-        <RefreshCw size={14} className="cursor-pointer hover:text-gray-300" onClick={() => setTicker(ticker)} />
-        <Settings size={14} className="cursor-pointer hover:text-gray-300" onClick={onSettingsClick} />
-        <div className="h-4 w-px bg-gray-700" />
-        <span className="text-xs font-mono text-gray-600">LIVE</span>
-        <span className="live-dot animate-pulse" style={{ width: 8, height: 8, borderRadius: "50%", display: "inline-block" }} />
+      ) : loading ? (
+        <span style={{ color: "#e3b341", fontSize: 11, fontFamily: "'IBM Plex Mono', monospace" }}>● Loading {ticker}…</span>
+      ) : null}
+
+      <div className="ml-auto flex items-center gap-3" style={{ flexShrink: 0 }}>
+        <button onClick={handleRefresh} title="Refresh data" style={{ color: "#7d8590", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center" }}>
+          <RefreshCw size={13} />
+        </button>
+        <button onClick={onSettingsClick} title="Settings" style={{ color: "#7d8590", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center" }}>
+          <Settings size={13} />
+        </button>
+        <div style={{ width: 1, height: 14, background: "#21262d" }} />
+        <span style={{ color: "#484f58", fontSize: 9, fontFamily: "'IBM Plex Mono', monospace", letterSpacing: "0.08em" }}>LIVE</span>
+        <span className="live-dot" style={{ width: 6, height: 6, borderRadius: "50%", display: "inline-block" }} />
       </div>
     </div>
   );
@@ -2953,6 +3000,7 @@ function ResearchBrowser({ pendingItem, onPendingConsumed }) {
   const [suggestions, setSuggestions]   = useState([]);
   const [suggestionIdx, setSuggestionIdx] = useState(-1);
   const [panels, setPanels]             = useState([]);
+  const [searchFocused, setSearchFocused] = useState(false);
   const [recentSearches, setRecentSearches] = useState(() => {
     try { return JSON.parse(localStorage.getItem("ov_research_recent") || "[]"); }
     catch { return []; }
@@ -3028,9 +3076,9 @@ function ResearchBrowser({ pendingItem, onPendingConsumed }) {
       <div className="px-4 py-3" style={{ borderBottom:"1px solid #21262d", background:"#010409", flexShrink:0 }}>
         <div style={{ position:"relative", maxWidth:680 }}>
           <div className="flex items-center gap-2 px-3 py-2"
-            style={{ background:"#161b22", border:"1px solid #30363d", borderRadius:6 }}
-            onFocusCapture={e => e.currentTarget.style.borderColor="#1f6feb"}
-            onBlurCapture={e => e.currentTarget.style.borderColor="#30363d"}>
+            style={{ background:"#161b22", border:"1px solid " + (searchFocused ? "#1f6feb" : "#30363d"), borderRadius:6 }}
+            onFocusCapture={() => setSearchFocused(true)}
+            onBlurCapture={() => setSearchFocused(false)}>
             <Search size={13} style={{ color:"#7d8590", flexShrink:0 }} />
             <input ref={searchRef} value={query}
               onChange={e => { setQuery(e.target.value); setSuggestionIdx(-1); }}
@@ -3402,6 +3450,13 @@ export default function App() {
   const [tapeData, setTapeData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pendingResearchItem, setPendingResearchItem] = useState(null);
+  const [statusTime, setStatusTime] = useState(() => new Date().toLocaleTimeString());
+
+  // Live clock in status bar
+  useEffect(() => {
+    const iv = setInterval(() => setStatusTime(new Date().toLocaleTimeString()), 1000);
+    return () => clearInterval(iv);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -3424,17 +3479,17 @@ export default function App() {
   }, [ticker]);
 
   useEffect(() => {
-    // Stagger watchlist to avoid rate limiting
+    // Stagger to respect Finnhub rate limits; single state update at end to avoid 8 re-renders
     const fetchTape = async () => {
       const results = [];
       for (let i = 0; i < WATCHLIST.length; i++) {
-        await delay(i * 150);
+        if (i > 0) await delay(150);
         try {
           const q = await api("/quote?symbol=" + WATCHLIST[i]);
           results.push({ symbol: WATCHLIST[i], price: q.c, changePct: q.dp });
-          setTapeData([...results]);
         } catch(e) {}
       }
+      setTapeData(results);
     };
     fetchTape();
   }, []);
@@ -3500,7 +3555,6 @@ export default function App() {
       {activePage === "portfolio" && <PortfolioTracker />}
       {activePage === "research" && <ResearchBrowser pendingItem={pendingResearchItem} onPendingConsumed={() => setPendingResearchItem(null)} />}
 
-      {activePage !== "financial" && activePage !== "technical" && activePage !== "eye" && null}
       {activePage === "financial" && <div className="flex flex-col flex-1" style={{ overflow: "hidden" }}>
         <div className="flex items-center gap-0 px-3 pt-2" style={{ borderBottom: "1px solid #21262d" }}>
           {[["overview", "📊 Overview"], ["peers", "🔍 Peer Comparison"]].map(([k, l]) => (
@@ -3572,7 +3626,7 @@ export default function App() {
         <span>OMNES VIDENTES · LIVE DATA</span>
         <span className="text-gray-800">|</span>
         <span>Type a ticker and press Enter to search</span>
-        <span className="ml-auto">Last Updated: {new Date().toLocaleTimeString()}</span>
+        <span className="ml-auto">Last Updated: {statusTime}</span>
       </div>
     </div>
   );
