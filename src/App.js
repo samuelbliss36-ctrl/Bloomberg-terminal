@@ -1065,102 +1065,156 @@ function TechnicalAnalysis({ ticker }) {
 // GEOPOLITICAL EVENTS INTELLIGENCE MODULE
 // ─────────────────────────────────────────────────────────────
 
+// Keywords are intentionally multi-word or unambiguous to prevent cross-category pollution.
+// "war" / "attack" / "strike" are NOT in Conflict — they appear in "trade war", "oil price attack" etc.
 const GEO_CATEGORIES = {
-  "Conflict": {
-    keywords: ["war","military","attack","strike","troops","missile","bomb","invasion","combat","weapons","nato","ceasefire","offensive","armed","artillery","airstrike","soldier","battlefield","warfare","nuclear","hostilities","casualt"],
-    color: "#f85149", bg: "rgba(248,81,73,0.08)",
-    assets: [
-      { id:"GC=F",  label:"Gold",              type:"commodity", ticker:"GC=F",  category:"Commodities" },
-      { id:"CL=F",  label:"Crude Oil",          type:"commodity", ticker:"CL=F",  category:"Commodities" },
-      { id:"ITA",   label:"Defense ETF (ITA)",  type:"equity",    ticker:"ITA",   category:"Equities" },
-      { id:"DX=F",  label:"USD Index",          type:"fx",        ticker:"DX=F",  category:"FX" },
-    ],
-    why: "Military escalation drives safe-haven flows into gold and USD, lifts energy prices on supply-risk fears, and boosts defense sector revenues.",
-  },
   "Central Bank": {
-    keywords: ["federal reserve","fed ","rate hike","rate cut","interest rate","monetary policy","central bank","powell","lagarde","ecb","boj","pboc","fomc","inflation","basis points","quantitative","balance sheet","tightening","easing","pivot"],
+    keywords: [
+      "federal reserve","interest rate","rate hike","rate cut","fomc",
+      "ecb","bank of japan","boj","pboc","monetary policy","basis point",
+      "central bank","powell","lagarde","ueda","rate decision","hawkish",
+      "dovish","rate pause","fed funds","bond yield","yield curve",
+      "treasury yield","quantitative easing","quantitative tightening",
+      "rate increase","rate decrease","inflation target","fed meeting",
+      "rate hold","rate outlook","fed chair","rate cycle","fed pivot",
+    ],
     color: "#bc8cff", bg: "rgba(188,140,255,0.08)",
     assets: [
-      { id:"DGS10", label:"10Y Treasury",  type:"macro",     series:"DGS10",  category:"Macro" },
-      { id:"SPY",   label:"S&P 500",       type:"equity",    ticker:"SPY",    category:"Indices" },
-      { id:"GC=F",  label:"Gold",          type:"commodity", ticker:"GC=F",   category:"Commodities" },
-      { id:"DX=F",  label:"USD Index",     type:"fx",        ticker:"DX=F",   category:"FX" },
+      { id:"DGS10", label:"10Y Treasury", type:"macro",     series:"DGS10", category:"Macro" },
+      { id:"SPY",   label:"S&P 500",      type:"equity",    ticker:"SPY",   category:"Indices" },
+      { id:"GC=F",  label:"Gold",         type:"commodity", ticker:"GC=F",  category:"Commodities" },
+      { id:"DX=F",  label:"USD Index",    type:"fx",        ticker:"DX=F",  category:"FX" },
     ],
     why: "Rate decisions move bond yields, equity discount rates, and currency strength simultaneously across all asset classes.",
   },
   "Trade / Sanctions": {
-    keywords: ["tariff","sanction","trade war","embargo","export ban","import restriction","trade deal","wto","customs","protectionism","decoupling","blacklist","trade dispute","quota","import tax","levy"],
+    keywords: [
+      "tariff","sanction","trade war","embargo","export ban","import ban",
+      "wto","trade deal","export control","trade restriction","trade deficit",
+      "decoupling","blacklist","trade dispute","import duty","trade policy",
+      "trade tension","economic sanction","trade barrier","trade agreement",
+      "trade war","counter-tariff","technology ban","chip ban","export license",
+    ],
     color: "#e3b341", bg: "rgba(227,179,65,0.08)",
     assets: [
-      { id:"EURUSD=X", label:"EUR/USD",     type:"fx",        ticker:"EURUSD=X", category:"FX" },
-      { id:"HG=F",     label:"Copper",      type:"commodity", ticker:"HG=F",     category:"Commodities" },
-      { id:"SPY",      label:"S&P 500",     type:"equity",    ticker:"SPY",      category:"Indices" },
-      { id:"USDCNY=X", label:"USD/CNY",     type:"fx",        ticker:"USDCNY=X", category:"FX" },
+      { id:"EURUSD=X", label:"EUR/USD",  type:"fx",        ticker:"EURUSD=X", category:"FX" },
+      { id:"HG=F",     label:"Copper",   type:"commodity", ticker:"HG=F",     category:"Commodities" },
+      { id:"SPY",      label:"S&P 500",  type:"equity",    ticker:"SPY",      category:"Indices" },
+      { id:"USDCNY=X", label:"USD/CNY",  type:"fx",        ticker:"USDCNY=X", category:"FX" },
     ],
     why: "Trade barriers raise input costs, compress corporate margins, and force currency adjustments in affected economies.",
   },
   "Elections / Politics": {
-    keywords: ["election","vote","president","congress","parliament","government","political crisis","referendum","coup","protest","regime change","poll","candidate","impeach","legislature","snap election","cabinet"],
+    keywords: [
+      "election","referendum","snap election","general election","presidential election",
+      "political crisis","impeachment","government collapse","political turmoil",
+      "election result","coup","regime change","political instability","civil unrest",
+      "protest","opposition leader","ballot","polling","vote count","political tension",
+      "legislative","parliament","head of state","prime minister","chancellor",
+    ],
     color: "#58a6ff", bg: "rgba(88,166,255,0.08)",
     assets: [
-      { id:"SPY",      label:"S&P 500",    type:"equity", ticker:"SPY",      category:"Indices" },
-      { id:"EURUSD=X", label:"EUR/USD",    type:"fx",     ticker:"EURUSD=X", category:"FX" },
-      { id:"GC=F",     label:"Gold",       type:"commodity", ticker:"GC=F",  category:"Commodities" },
+      { id:"SPY",      label:"S&P 500", type:"equity",    ticker:"SPY",      category:"Indices" },
+      { id:"EURUSD=X", label:"EUR/USD", type:"fx",        ticker:"EURUSD=X", category:"FX" },
+      { id:"GC=F",     label:"Gold",    type:"commodity", ticker:"GC=F",     category:"Commodities" },
     ],
-    why: "Political uncertainty elevates risk premia, weakens local currencies, and can abruptly reverse fiscal and regulatory policy trajectories.",
+    why: "Political uncertainty elevates risk premia, weakens local currencies, and can abruptly reverse fiscal and regulatory trajectories.",
   },
   "Energy": {
-    keywords: ["oil price","opec","natural gas","pipeline","energy crisis","petroleum","crude","lng","fuel","refinery","production cut","energy supply","power grid","oil output","barrel","brent","wti","gas price"],
+    keywords: [
+      "opec","crude oil","oil price","natural gas","brent crude","wti crude",
+      "oil barrel","energy crisis","oil production","gas supply","lng",
+      "oil output","refinery","oil supply","energy supply","energy market",
+      "gas pipeline","oil reserves","energy security","production quota",
+      "oil demand","gas price","electricity price","oil cut","oil output cut",
+      "energy price","gas shortage","fuel price","opec+","oil inventory",
+    ],
     color: "#f0883e", bg: "rgba(240,136,62,0.08)",
     assets: [
-      { id:"CL=F",  label:"Crude Oil (WTI)", type:"commodity", ticker:"CL=F", category:"Commodities" },
-      { id:"NG=F",  label:"Natural Gas",      type:"commodity", ticker:"NG=F", category:"Commodities" },
-      { id:"CPIAUCSL", label:"CPI Inflation", type:"macro",     series:"CPIAUCSL", category:"Macro" },
+      { id:"CL=F",     label:"Crude Oil (WTI)", type:"commodity", ticker:"CL=F",     category:"Commodities" },
+      { id:"NG=F",     label:"Natural Gas",      type:"commodity", ticker:"NG=F",     category:"Commodities" },
+      { id:"CPIAUCSL", label:"CPI Inflation",    type:"macro",     series:"CPIAUCSL", category:"Macro" },
     ],
     why: "Energy supply disruptions feed directly into CPI, widen trade deficits in import-dependent economies, and pressure corporate margins globally.",
   },
   "Supply Chain": {
-    keywords: ["supply chain","shipping","freight","semiconductor","chip shortage","factory","manufacturing","logistics","container","port strike","disruption","shortage","inventory","production halt","bottleneck"],
+    keywords: [
+      "supply chain","chip shortage","semiconductor","freight rate","shipping disruption",
+      "port strike","container ship","manufacturing slowdown","inventory shortage",
+      "supply disruption","chip supply","logistics","factory shutdown","supply bottleneck",
+      "global shortage","production delay","microchip","fab","foundry","chip maker",
+      "wafer","shortage","congestion","cargo","freight","ocean freight",
+    ],
     color: "#3fb950", bg: "rgba(63,185,80,0.08)",
     assets: [
-      { id:"HG=F", label:"Copper",      type:"commodity", ticker:"HG=F", category:"Commodities" },
-      { id:"NVDA", label:"NVIDIA",      type:"equity",    ticker:"NVDA", category:"Equities" },
-      { id:"QQQ",  label:"Nasdaq 100",  type:"equity",    ticker:"QQQ",  category:"Indices" },
+      { id:"HG=F", label:"Copper",     type:"commodity", ticker:"HG=F", category:"Commodities" },
+      { id:"NVDA", label:"NVIDIA",     type:"equity",    ticker:"NVDA", category:"Equities" },
+      { id:"QQQ",  label:"Nasdaq 100", type:"equity",    ticker:"QQQ",  category:"Indices" },
     ],
     why: "Supply constraints elevate input costs, delay product cycles, and create concentrated earnings risk in technology and manufacturing sectors.",
+  },
+  "Conflict": {
+    // Only unambiguous military terms — "war"/"attack"/"strike" intentionally excluded
+    keywords: [
+      "troops","ceasefire","airstrike","air strike","artillery","frontline",
+      "shelling","drone strike","rocket fire","military operation","armed forces",
+      "warplane","missile launch","military offensive","war crimes","bombardment",
+      "invasion","fighter jet","ground troops","naval battle","military escalation",
+      "military conflict","armed attack","military base","casualt","hostage",
+      "nato forces","peacekeeping","demilitariz","occupied territory","siege",
+    ],
+    color: "#f85149", bg: "rgba(248,81,73,0.08)",
+    assets: [
+      { id:"GC=F", label:"Gold",             type:"commodity", ticker:"GC=F", category:"Commodities" },
+      { id:"CL=F", label:"Crude Oil",         type:"commodity", ticker:"CL=F", category:"Commodities" },
+      { id:"ITA",  label:"Defense ETF (ITA)", type:"equity",    ticker:"ITA",  category:"Equities" },
+      { id:"DX=F", label:"USD Index",         type:"fx",        ticker:"DX=F", category:"FX" },
+    ],
+    why: "Military escalation drives safe-haven flows into gold and USD, lifts energy prices on supply-risk fears, and boosts defense sector revenues.",
   },
 };
 
 const GEO_REGIONS = {
-  "🇺🇸 US":         ["united states"," u.s.","american","washington","biden","trump","congress","federal reserve","white house","pentagon","us economy","us dollar"],
-  "🇨🇳 China":       ["china","chinese","beijing","xi jinping","pboc","ccp","taiwan strait","hong kong","shanghai","yuan","renminbi"],
-  "🇷🇺 Russia":      ["russia","russian","moscow","putin","kremlin","ukraine","rouble","gazprom"],
-  "🇪🇺 Europe":      ["europe","european","eu ","ecb","germany","france","united kingdom","uk ","britain","euro zone","eurozone","sterling"],
-  "🌍 Middle East":  ["iran","israel","saudi","opec","gulf","iraq","syria","yemen","palestin","hamas","hezbollah","middle east","riyadh","tehran"],
-  "🌏 Asia Pacific": ["japan","south korea","india","australia","singapore","boj","asia pacific","southeast asia","asean","rupee","yen"],
-  "🌎 LatAm":        ["brazil","mexico","argentina","venezuela","chile","colombia","latin america","real ","peso"],
+  "🇺🇸 US":         ["united states","u.s. ","american","washington dc","biden","trump","congress","federal reserve","white house","pentagon","u.s. economy","u.s. dollar","treasury secretary"],
+  "🇨🇳 China":       ["china","chinese","beijing","xi jinping","pboc","ccp","taiwan","hong kong","shanghai","yuan","renminbi","chinese economy"],
+  "🇷🇺 Russia":      ["russia","russian","moscow","putin","kremlin","ukraine","rouble","gazprom","russian economy"],
+  "🇪🇺 Europe":      ["europe","european","eurozone","ecb","germany","france","united kingdom","britain","euro zone","sterling","european union","eu trade"],
+  "🌍 Middle East":  ["iran","israel","saudi","opec","gulf state","iraq","syria","yemen","palestin","hamas","hezbollah","middle east","riyadh","tehran"],
+  "🌏 Asia Pacific": ["japan","south korea","india","australia","singapore","bank of japan","asia pacific","southeast asia","asean","indian rupee","japanese yen"],
+  "🌎 LatAm":        ["brazil","mexico","argentina","venezuela","chile","colombia","latin america","brazilian real","mexican peso"],
 };
 
 const GEO_ASSET_COLOR = { equity:"#58a6ff", commodity:"#e3b341", fx:"#3fb950", macro:"#bc8cff", topic:"#f0883e" };
 
-const BULLISH_WORDS = ["ceasefire","peace deal","agreement","resolved","de-escalat","easing tension","recovery","stimulus","rate cut","rate cuts","surplus","positive","diplomatic","accord","truce"];
-const BEARISH_WORDS = ["invasion","attack","crisis","default","collapse","recession","escalat","new sanction","tariff hike","production cut","shortage","blockade","restrict","ultimatum","threat","conflict","hostile","offensive"];
+const BULLISH_WORDS = ["ceasefire","peace deal","diplomatic agreement","de-escalat","easing tension","recovery","stimulus","rate cut","rate cuts","trade deal signed","accord","truce","resolution","normalization"];
+const BEARISH_WORDS = ["invasion","crisis","default","collapse","recession","escalat","new sanction","tariff hike","production cut","blockade","restrict","ultimatum","hostile","military offensive","coup","regime collapse"];
 
 function classifyGeoArticle(article) {
   const text = ((article.headline || "") + " " + (article.summary || "")).toLowerCase();
-  let category = null, maxScore = 0;
+
+  // Score each category; higher score = better match
+  const scores = {};
   for (const [cat, cfg] of Object.entries(GEO_CATEGORIES)) {
-    const score = cfg.keywords.filter(kw => text.includes(kw)).length;
-    if (score > maxScore) { maxScore = score; category = cat; }
+    scores[cat] = cfg.keywords.filter(kw => text.includes(kw)).length;
   }
-  if (!category || maxScore === 0) return null;
+  const maxScore = Math.max(...Object.values(scores));
+  if (maxScore === 0) return null;
+
+  // Pick category with highest score; on tie prefer the non-Conflict category
+  // (Conflict is last in the object, so iterating in reverse for tie-breaking)
+  const entries = Object.entries(scores).sort((a, b) => {
+    if (b[1] !== a[1]) return b[1] - a[1];           // higher score wins
+    if (a[0] === "Conflict") return 1;                // Conflict loses ties
+    if (b[0] === "Conflict") return -1;
+    return 0;
+  });
+  const category = entries[0][0];
 
   const regions = Object.entries(GEO_REGIONS)
     .filter(([, kws]) => kws.some(kw => text.includes(kw)))
     .map(([r]) => r);
 
-  const catCfg = GEO_CATEGORIES[category];
-  let impact = maxScore >= 4 || (catCfg.color === "#f85149" && maxScore >= 2) ? "High" : maxScore >= 2 ? "Medium" : "Low";
+  let impact = maxScore >= 4 ? "High" : maxScore >= 2 ? "Medium" : "Low";
 
   const bullish = BULLISH_WORDS.filter(w => text.includes(w)).length;
   const bearish = BEARISH_WORDS.filter(w => text.includes(w)).length;
