@@ -1965,6 +1965,705 @@ function QuickStats({ quote, metrics }) {
 }
 
 
+// ─────────────────────────────────────────────────────────────
+// RESEARCH BROWSER
+// ─────────────────────────────────────────────────────────────
+
+const RESEARCH_CATALOG = [
+  { id: "SPY",           label: "S&P 500 ETF",           type: "equity",    ticker: "SPY",          category: "Indices" },
+  { id: "QQQ",           label: "Nasdaq 100 ETF",         type: "equity",    ticker: "QQQ",          category: "Indices" },
+  { id: "IWM",           label: "Russell 2000 ETF",       type: "equity",    ticker: "IWM",          category: "Indices" },
+  { id: "DIA",           label: "Dow Jones ETF",          type: "equity",    ticker: "DIA",          category: "Indices" },
+  { id: "AAPL",          label: "Apple Inc.",             type: "equity",    ticker: "AAPL",         category: "Equities" },
+  { id: "MSFT",          label: "Microsoft Corp.",        type: "equity",    ticker: "MSFT",         category: "Equities" },
+  { id: "NVDA",          label: "NVIDIA Corp.",           type: "equity",    ticker: "NVDA",         category: "Equities" },
+  { id: "GOOGL",         label: "Alphabet Inc.",          type: "equity",    ticker: "GOOGL",        category: "Equities" },
+  { id: "AMZN",          label: "Amazon.com",             type: "equity",    ticker: "AMZN",         category: "Equities" },
+  { id: "META",          label: "Meta Platforms",         type: "equity",    ticker: "META",         category: "Equities" },
+  { id: "TSLA",          label: "Tesla Inc.",             type: "equity",    ticker: "TSLA",         category: "Equities" },
+  { id: "JPM",           label: "JPMorgan Chase",         type: "equity",    ticker: "JPM",          category: "Banks" },
+  { id: "GS",            label: "Goldman Sachs",          type: "equity",    ticker: "GS",           category: "Banks" },
+  { id: "BAC",           label: "Bank of America",        type: "equity",    ticker: "BAC",          category: "Banks" },
+  { id: "MS",            label: "Morgan Stanley",         type: "equity",    ticker: "MS",           category: "Banks" },
+  { id: "C",             label: "Citigroup",              type: "equity",    ticker: "C",            category: "Banks" },
+  { id: "GC=F",          label: "Gold",                   type: "commodity", ticker: "GC=F",         category: "Commodities" },
+  { id: "CL=F",          label: "Crude Oil (WTI)",        type: "commodity", ticker: "CL=F",         category: "Commodities" },
+  { id: "SI=F",          label: "Silver",                 type: "commodity", ticker: "SI=F",         category: "Commodities" },
+  { id: "NG=F",          label: "Natural Gas",            type: "commodity", ticker: "NG=F",         category: "Commodities" },
+  { id: "HG=F",          label: "Copper",                 type: "commodity", ticker: "HG=F",         category: "Commodities" },
+  { id: "ZW=F",          label: "Wheat",                  type: "commodity", ticker: "ZW=F",         category: "Commodities" },
+  { id: "EURUSD=X",      label: "EUR/USD",                type: "fx",        ticker: "EURUSD=X",     category: "FX" },
+  { id: "GBPUSD=X",      label: "GBP/USD",                type: "fx",        ticker: "GBPUSD=X",     category: "FX" },
+  { id: "USDJPY=X",      label: "USD/JPY",                type: "fx",        ticker: "USDJPY=X",     category: "FX" },
+  { id: "USDCNY=X",      label: "USD/CNY",                type: "fx",        ticker: "USDCNY=X",     category: "FX" },
+  { id: "DX=F",          label: "US Dollar Index",        type: "fx",        ticker: "DX=F",         category: "FX" },
+  { id: "FEDFUNDS",      label: "Fed Funds Rate",         type: "macro",     series: "FEDFUNDS",     category: "Macro" },
+  { id: "DGS10",         label: "10-Year Treasury",       type: "macro",     series: "DGS10",        category: "Macro" },
+  { id: "DGS2",          label: "2-Year Treasury",        type: "macro",     series: "DGS2",         category: "Macro" },
+  { id: "CPIAUCSL",      label: "CPI (Inflation)",        type: "macro",     series: "CPIAUCSL",     category: "Macro" },
+  { id: "PCEPI",         label: "PCE Price Index",        type: "macro",     series: "PCEPI",        category: "Macro" },
+  { id: "UNRATE",        label: "Unemployment Rate",      type: "macro",     series: "UNRATE",       category: "Macro" },
+  { id: "GDP",           label: "US GDP",                 type: "macro",     series: "GDP",          category: "Macro" },
+  { id: "T10Y2Y",        label: "Yield Curve (10Y-2Y)",   type: "macro",     series: "T10Y2Y",       category: "Macro" },
+  { id: "topic-inflation", label: "Inflation",            type: "topic",                             category: "Topics" },
+  { id: "topic-rates",     label: "Interest Rates",       type: "topic",                             category: "Topics" },
+  { id: "topic-energy",    label: "Energy Markets",       type: "topic",                             category: "Topics" },
+  { id: "topic-credit",    label: "Credit Markets",       type: "topic",                             category: "Topics" },
+];
+
+const RELATED_MAP = {
+  "SPY":      [{ id:"QQQ", label:"Nasdaq 100 ETF", type:"equity", ticker:"QQQ", category:"Indices" }, { id:"IWM", label:"Russell 2000", type:"equity", ticker:"IWM", category:"Indices" }, { id:"FEDFUNDS", label:"Fed Funds Rate", type:"macro", series:"FEDFUNDS", category:"Macro" }, { id:"topic-rates", label:"Interest Rates", type:"topic", category:"Topics" }],
+  "QQQ":      [{ id:"AAPL", label:"Apple", type:"equity", ticker:"AAPL", category:"Equities" }, { id:"MSFT", label:"Microsoft", type:"equity", ticker:"MSFT", category:"Equities" }, { id:"NVDA", label:"NVIDIA", type:"equity", ticker:"NVDA", category:"Equities" }, { id:"topic-rates", label:"Interest Rates", type:"topic", category:"Topics" }],
+  "AAPL":     [{ id:"MSFT", label:"Microsoft", type:"equity", ticker:"MSFT", category:"Equities" }, { id:"GOOGL", label:"Alphabet", type:"equity", ticker:"GOOGL", category:"Equities" }, { id:"QQQ", label:"Nasdaq 100", type:"equity", ticker:"QQQ", category:"Indices" }, { id:"DGS10", label:"10Y Treasury", type:"macro", series:"DGS10", category:"Macro" }],
+  "MSFT":     [{ id:"AAPL", label:"Apple", type:"equity", ticker:"AAPL", category:"Equities" }, { id:"NVDA", label:"NVIDIA", type:"equity", ticker:"NVDA", category:"Equities" }, { id:"QQQ", label:"Nasdaq 100", type:"equity", ticker:"QQQ", category:"Indices" }],
+  "NVDA":     [{ id:"AAPL", label:"Apple", type:"equity", ticker:"AAPL", category:"Equities" }, { id:"QQQ", label:"Nasdaq 100", type:"equity", ticker:"QQQ", category:"Indices" }, { id:"TSLA", label:"Tesla", type:"equity", ticker:"TSLA", category:"Equities" }],
+  "TSLA":     [{ id:"NVDA", label:"NVIDIA", type:"equity", ticker:"NVDA", category:"Equities" }, { id:"QQQ", label:"Nasdaq 100", type:"equity", ticker:"QQQ", category:"Indices" }, { id:"CL=F", label:"Crude Oil", type:"commodity", ticker:"CL=F", category:"Commodities" }],
+  "JPM":      [{ id:"GS", label:"Goldman Sachs", type:"equity", ticker:"GS", category:"Banks" }, { id:"BAC", label:"Bank of America", type:"equity", ticker:"BAC", category:"Banks" }, { id:"FEDFUNDS", label:"Fed Funds Rate", type:"macro", series:"FEDFUNDS", category:"Macro" }, { id:"DGS10", label:"10Y Treasury", type:"macro", series:"DGS10", category:"Macro" }],
+  "GS":       [{ id:"JPM", label:"JPMorgan", type:"equity", ticker:"JPM", category:"Banks" }, { id:"MS", label:"Morgan Stanley", type:"equity", ticker:"MS", category:"Banks" }, { id:"FEDFUNDS", label:"Fed Funds Rate", type:"macro", series:"FEDFUNDS", category:"Macro" }],
+  "BAC":      [{ id:"JPM", label:"JPMorgan", type:"equity", ticker:"JPM", category:"Banks" }, { id:"C", label:"Citigroup", type:"equity", ticker:"C", category:"Banks" }, { id:"DGS10", label:"10Y Treasury", type:"macro", series:"DGS10", category:"Macro" }],
+  "GC=F":     [{ id:"SI=F", label:"Silver", type:"commodity", ticker:"SI=F", category:"Commodities" }, { id:"EURUSD=X", label:"EUR/USD", type:"fx", ticker:"EURUSD=X", category:"FX" }, { id:"CPIAUCSL", label:"CPI Inflation", type:"macro", series:"CPIAUCSL", category:"Macro" }, { id:"DX=F", label:"USD Index", type:"fx", ticker:"DX=F", category:"FX" }],
+  "CL=F":     [{ id:"NG=F", label:"Natural Gas", type:"commodity", ticker:"NG=F", category:"Commodities" }, { id:"HG=F", label:"Copper", type:"commodity", ticker:"HG=F", category:"Commodities" }, { id:"topic-energy", label:"Energy Markets", type:"topic", category:"Topics" }, { id:"EURUSD=X", label:"EUR/USD", type:"fx", ticker:"EURUSD=X", category:"FX" }],
+  "NG=F":     [{ id:"CL=F", label:"Crude Oil", type:"commodity", ticker:"CL=F", category:"Commodities" }, { id:"topic-energy", label:"Energy Markets", type:"topic", category:"Topics" }],
+  "HG=F":     [{ id:"CL=F", label:"Crude Oil", type:"commodity", ticker:"CL=F", category:"Commodities" }, { id:"GC=F", label:"Gold", type:"commodity", ticker:"GC=F", category:"Commodities" }, { id:"CPIAUCSL", label:"CPI Inflation", type:"macro", series:"CPIAUCSL", category:"Macro" }],
+  "EURUSD=X": [{ id:"GBPUSD=X", label:"GBP/USD", type:"fx", ticker:"GBPUSD=X", category:"FX" }, { id:"DX=F", label:"USD Index", type:"fx", ticker:"DX=F", category:"FX" }, { id:"FEDFUNDS", label:"Fed Funds Rate", type:"macro", series:"FEDFUNDS", category:"Macro" }],
+  "DX=F":     [{ id:"EURUSD=X", label:"EUR/USD", type:"fx", ticker:"EURUSD=X", category:"FX" }, { id:"GC=F", label:"Gold", type:"commodity", ticker:"GC=F", category:"Commodities" }, { id:"FEDFUNDS", label:"Fed Funds Rate", type:"macro", series:"FEDFUNDS", category:"Macro" }],
+  "GBPUSD=X": [{ id:"EURUSD=X", label:"EUR/USD", type:"fx", ticker:"EURUSD=X", category:"FX" }, { id:"DX=F", label:"USD Index", type:"fx", ticker:"DX=F", category:"FX" }],
+  "USDJPY=X": [{ id:"DX=F", label:"USD Index", type:"fx", ticker:"DX=F", category:"FX" }, { id:"FEDFUNDS", label:"Fed Funds Rate", type:"macro", series:"FEDFUNDS", category:"Macro" }],
+  "FEDFUNDS": [{ id:"DGS10", label:"10Y Treasury", type:"macro", series:"DGS10", category:"Macro" }, { id:"DGS2", label:"2Y Treasury", type:"macro", series:"DGS2", category:"Macro" }, { id:"T10Y2Y", label:"Yield Curve", type:"macro", series:"T10Y2Y", category:"Macro" }, { id:"topic-rates", label:"Interest Rates", type:"topic", category:"Topics" }],
+  "DGS10":    [{ id:"DGS2", label:"2Y Treasury", type:"macro", series:"DGS2", category:"Macro" }, { id:"FEDFUNDS", label:"Fed Funds Rate", type:"macro", series:"FEDFUNDS", category:"Macro" }, { id:"T10Y2Y", label:"Yield Curve", type:"macro", series:"T10Y2Y", category:"Macro" }, { id:"topic-rates", label:"Interest Rates", type:"topic", category:"Topics" }],
+  "DGS2":     [{ id:"DGS10", label:"10Y Treasury", type:"macro", series:"DGS10", category:"Macro" }, { id:"FEDFUNDS", label:"Fed Funds Rate", type:"macro", series:"FEDFUNDS", category:"Macro" }, { id:"T10Y2Y", label:"Yield Curve", type:"macro", series:"T10Y2Y", category:"Macro" }],
+  "CPIAUCSL": [{ id:"FEDFUNDS", label:"Fed Funds Rate", type:"macro", series:"FEDFUNDS", category:"Macro" }, { id:"DGS10", label:"10Y Treasury", type:"macro", series:"DGS10", category:"Macro" }, { id:"GC=F", label:"Gold", type:"commodity", ticker:"GC=F", category:"Commodities" }, { id:"topic-inflation", label:"Inflation", type:"topic", category:"Topics" }],
+  "T10Y2Y":   [{ id:"DGS10", label:"10Y Treasury", type:"macro", series:"DGS10", category:"Macro" }, { id:"DGS2", label:"2Y Treasury", type:"macro", series:"DGS2", category:"Macro" }, { id:"FEDFUNDS", label:"Fed Funds Rate", type:"macro", series:"FEDFUNDS", category:"Macro" }, { id:"topic-credit", label:"Credit Markets", type:"topic", category:"Topics" }],
+  "UNRATE":   [{ id:"CPIAUCSL", label:"CPI Inflation", type:"macro", series:"CPIAUCSL", category:"Macro" }, { id:"FEDFUNDS", label:"Fed Funds Rate", type:"macro", series:"FEDFUNDS", category:"Macro" }, { id:"topic-inflation", label:"Inflation", type:"topic", category:"Topics" }],
+  "topic-inflation": [{ id:"CPIAUCSL", label:"CPI", type:"macro", series:"CPIAUCSL", category:"Macro" }, { id:"FEDFUNDS", label:"Fed Funds Rate", type:"macro", series:"FEDFUNDS", category:"Macro" }, { id:"GC=F", label:"Gold", type:"commodity", ticker:"GC=F", category:"Commodities" }, { id:"DGS10", label:"10Y Treasury", type:"macro", series:"DGS10", category:"Macro" }],
+  "topic-rates":     [{ id:"FEDFUNDS", label:"Fed Funds Rate", type:"macro", series:"FEDFUNDS", category:"Macro" }, { id:"DGS10", label:"10Y Treasury", type:"macro", series:"DGS10", category:"Macro" }, { id:"T10Y2Y", label:"Yield Curve", type:"macro", series:"T10Y2Y", category:"Macro" }, { id:"JPM", label:"JPMorgan", type:"equity", ticker:"JPM", category:"Banks" }],
+  "topic-energy":    [{ id:"CL=F", label:"Crude Oil", type:"commodity", ticker:"CL=F", category:"Commodities" }, { id:"NG=F", label:"Natural Gas", type:"commodity", ticker:"NG=F", category:"Commodities" }, { id:"HG=F", label:"Copper", type:"commodity", ticker:"HG=F", category:"Commodities" }, { id:"EURUSD=X", label:"EUR/USD", type:"fx", ticker:"EURUSD=X", category:"FX" }],
+  "topic-credit":    [{ id:"T10Y2Y", label:"Yield Curve", type:"macro", series:"T10Y2Y", category:"Macro" }, { id:"DGS10", label:"10Y Treasury", type:"macro", series:"DGS10", category:"Macro" }, { id:"JPM", label:"JPMorgan", type:"equity", ticker:"JPM", category:"Banks" }, { id:"GS", label:"Goldman Sachs", type:"equity", ticker:"GS", category:"Banks" }],
+};
+
+const TOPIC_CONFIG = {
+  "topic-inflation": {
+    title: "Inflation", icon: "📈",
+    desc: "Consumer prices, purchasing power, and monetary policy response.",
+    macro: [
+      { id:"CPIAUCSL", label:"CPI",          series:"CPIAUCSL" },
+      { id:"PCEPI",    label:"PCE",          series:"PCEPI" },
+      { id:"FEDFUNDS", label:"Fed Funds",    series:"FEDFUNDS" },
+      { id:"DGS10",    label:"10Y Treasury", series:"DGS10" },
+    ],
+    assets: [
+      { id:"GC=F",      label:"Gold",          type:"commodity", ticker:"GC=F",      category:"Commodities" },
+      { id:"EURUSD=X",  label:"EUR/USD",        type:"fx",        ticker:"EURUSD=X",  category:"FX" },
+      { id:"TIP",       label:"TIP (TIPS ETF)", type:"equity",    ticker:"TIP",       category:"Equities" },
+    ],
+  },
+  "topic-rates": {
+    title: "Interest Rates", icon: "📊",
+    desc: "Federal Reserve policy, Treasury yields, and the yield curve.",
+    macro: [
+      { id:"FEDFUNDS", label:"Fed Funds",          series:"FEDFUNDS" },
+      { id:"DGS2",     label:"2Y Treasury",        series:"DGS2" },
+      { id:"DGS10",    label:"10Y Treasury",       series:"DGS10" },
+      { id:"T10Y2Y",   label:"Yield Curve (10-2)", series:"T10Y2Y" },
+    ],
+    assets: [
+      { id:"TLT", label:"TLT (20Y Treasury)", type:"equity", ticker:"TLT", category:"Equities" },
+      { id:"SHY", label:"SHY (1-3Y Treasury)", type:"equity", ticker:"SHY", category:"Equities" },
+      { id:"JPM", label:"JPMorgan",            type:"equity", ticker:"JPM", category:"Banks" },
+    ],
+  },
+  "topic-energy": {
+    title: "Energy Markets", icon: "⚡",
+    desc: "Crude oil, natural gas, and energy sector dynamics.",
+    macro: [
+      { id:"CPIAUCSL", label:"CPI", series:"CPIAUCSL" },
+    ],
+    assets: [
+      { id:"CL=F", label:"Crude Oil (WTI)",  type:"commodity", ticker:"CL=F", category:"Commodities" },
+      { id:"NG=F", label:"Natural Gas",       type:"commodity", ticker:"NG=F", category:"Commodities" },
+      { id:"HG=F", label:"Copper",            type:"commodity", ticker:"HG=F", category:"Commodities" },
+    ],
+  },
+  "topic-credit": {
+    title: "Credit Markets", icon: "🏦",
+    desc: "Corporate bonds, credit spreads, and bank lending conditions.",
+    macro: [
+      { id:"T10Y2Y",   label:"Yield Curve", series:"T10Y2Y" },
+      { id:"DGS10",    label:"10Y Treasury", series:"DGS10" },
+      { id:"FEDFUNDS", label:"Fed Funds",    series:"FEDFUNDS" },
+    ],
+    assets: [
+      { id:"LQD", label:"LQD (IG Bonds)",        type:"equity", ticker:"LQD", category:"Equities" },
+      { id:"HYG", label:"HYG (High Yield Bonds)", type:"equity", ticker:"HYG", category:"Equities" },
+      { id:"JPM", label:"JPMorgan",               type:"equity", ticker:"JPM", category:"Banks" },
+    ],
+  },
+};
+
+const RB_TYPE_COLOR = { equity:"#58a6ff", commodity:"#e3b341", fx:"#3fb950", macro:"#bc8cff", topic:"#f0883e" };
+
+function ResearchMiniChart({ data, color = "#58a6ff", height = 60 }) {
+  if (!data || data.length < 2) return <div style={{ height }} />;
+  const gradId = "rg" + color.replace(/[^a-z0-9]/gi, "");
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <AreaChart data={data} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%"  stopColor={color} stopOpacity={0.25} />
+            <stop offset="95%" stopColor={color} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <Area type="monotone" dataKey="v" stroke={color} strokeWidth={1.5} fill={"url(#" + gradId + ")"} dot={false} isAnimationActive={false} />
+        <YAxis domain={["auto","auto"]} hide />
+        <Tooltip
+          contentStyle={{ background:"#161b22", border:"1px solid #30363d", borderRadius:4, fontSize:10, fontFamily:"'IBM Plex Mono', monospace" }}
+          labelFormatter={() => ""}
+          formatter={v => [v?.toFixed(4), ""]} />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
+function ResearchPanelShell({ title, subtitle, badge, onClose, children }) {
+  return (
+    <div className="terminal-panel terminal-glow flex flex-col" style={{ minHeight: 340 }}>
+      <div className="flex items-center justify-between px-3 pt-3 pb-2" style={{ borderBottom:"1px solid #21262d", flexShrink:0 }}>
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="min-w-0">
+            <div className="font-mono font-bold truncate" style={{ color:"#e6edf3", fontSize:13 }}>{title}</div>
+            {subtitle && <div className="font-mono truncate" style={{ color:"#7d8590", fontSize:10 }}>{subtitle}</div>}
+          </div>
+          {badge && (
+            <span className="font-mono" style={{ background:"#21262d", border:"1px solid #30363d", borderRadius:3, padding:"1px 6px", fontSize:9, color:"#7d8590", textTransform:"uppercase", letterSpacing:"0.05em", flexShrink:0 }}>
+              {badge}
+            </span>
+          )}
+        </div>
+        <button onClick={onClose} style={{ color:"#7d8590", background:"none", border:"none", cursor:"pointer", fontSize:14, marginLeft:8, flexShrink:0 }}>✕</button>
+      </div>
+      <div className="flex flex-col flex-1 p-3">{children}</div>
+    </div>
+  );
+}
+
+function RelatedLinks({ itemId, onOpen }) {
+  const links = RELATED_MAP[itemId] || [];
+  if (!links.length) return null;
+  return (
+    <div className="mt-auto pt-2" style={{ borderTop:"1px solid #21262d" }}>
+      <div className="font-mono mb-1.5" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Related</div>
+      <div className="flex flex-wrap gap-1">
+        {links.map(link => (
+          <button key={link.id} onClick={() => onOpen(link)} className="font-mono"
+            style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:3, padding:"2px 7px", fontSize:10, color:RB_TYPE_COLOR[link.type]||"#7d8590", cursor:"pointer" }}
+            onMouseEnter={e => e.currentTarget.style.borderColor="#30363d"}
+            onMouseLeave={e => e.currentTarget.style.borderColor="#21262d"}>
+            {link.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EquityResearchPanel({ item, onClose, onOpen }) {
+  const [quote, setQuote] = useState(null);
+  const [chartData, setChartData] = useState([]);
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    const today = new Date().toISOString().split("T")[0];
+    const monthAgo = new Date(Date.now() - 30*24*3600*1000).toISOString().split("T")[0];
+    Promise.all([
+      api("/quote?symbol=" + item.ticker),
+      delay(200).then(() => api("/company-news?symbol=" + item.ticker + "&from=" + monthAgo + "&to=" + today)),
+      fetch("/api/chart?ticker=" + encodeURIComponent(item.ticker) + "&range=1mo&interval=1d").then(r => r.json()),
+    ]).then(([q, n, c]) => {
+      setQuote(q);
+      setNews(Array.isArray(n) ? n.slice(0, 3) : []);
+      const result = c?.chart?.result?.[0];
+      if (result) {
+        const ts = result.timestamp || [];
+        const closes = result.indicators?.quote?.[0]?.close || [];
+        setChartData(ts.map((t, i) => ({ t, v: closes[i] })).filter(d => d.v != null));
+      }
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [item.ticker]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <ResearchPanelShell title={item.label} subtitle={item.ticker} badge="Equity" onClose={onClose}>
+      {loading ? (
+        <div className="flex items-center justify-center flex-1 font-mono" style={{ color:"#7d8590", fontSize:11 }}>Loading…</div>
+      ) : (
+        <>
+          <div className="flex items-baseline justify-between mb-1">
+            <span className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:22 }}>${fmt.price(quote?.c)}</span>
+            <span className="font-mono" style={{ color:clr(quote?.dp||0), fontSize:12 }}>
+              {quote?.dp != null ? fmt.pct(quote.dp) : "—"}
+              {quote?.d != null ? " (" + fmt.change(quote.d) + ")" : ""}
+            </span>
+          </div>
+          <div style={{ marginBottom:6 }}>
+            <ResearchMiniChart data={chartData} color={quote?.dp >= 0 ? "#3fb950" : "#f85149"} height={60} />
+          </div>
+          <div className="grid mb-2" style={{ gridTemplateColumns:"1fr 1fr 1fr", gap:"2px 8px" }}>
+            {[
+              ["Open",       "$" + fmt.price(quote?.o)],
+              ["High",       "$" + fmt.price(quote?.h)],
+              ["Low",        "$" + fmt.price(quote?.l)],
+              ["Prev Close", "$" + fmt.price(quote?.pc)],
+              ["Day Chg",    fmt.change(quote?.d)],
+              ["Day Chg %",  fmt.pct(quote?.dp)],
+            ].map(([k, v]) => (
+              <div key={k} className="py-0.5">
+                <div className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>{k}</div>
+                <div className="font-mono" style={{ color:"#e6edf3", fontSize:11 }}>{v}</div>
+              </div>
+            ))}
+          </div>
+          {news.length > 0 && (
+            <div style={{ borderTop:"1px solid #21262d", paddingTop:6, marginBottom:4 }}>
+              <div className="font-mono mb-1" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>News</div>
+              {news.slice(0, 2).map((n, i) => (
+                <a key={i} href={n.url} target="_blank" rel="noopener noreferrer"
+                  className="block font-mono mb-1 leading-tight"
+                  style={{ color:"#7d8590", fontSize:10, textDecoration:"none" }}
+                  onMouseEnter={e => e.currentTarget.style.color="#e6edf3"}
+                  onMouseLeave={e => e.currentTarget.style.color="#7d8590"}>
+                  · {n.headline?.slice(0, 85)}{(n.headline?.length||0) > 85 ? "…" : ""}
+                </a>
+              ))}
+            </div>
+          )}
+          <RelatedLinks itemId={item.id} onOpen={onOpen} />
+        </>
+      )}
+    </ResearchPanelShell>
+  );
+}
+
+function MarketResearchPanel({ item, onClose, onOpen }) {
+  const [chartData, setChartData] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const isFX = item.type === "fx";
+  const decimals = isFX ? 4 : 2;
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("/api/chart?ticker=" + encodeURIComponent(item.ticker) + "&range=3mo&interval=1d")
+      .then(r => r.json())
+      .then(c => {
+        const result = c?.chart?.result?.[0];
+        if (result) {
+          const ts = result.timestamp || [];
+          const closes = result.indicators?.quote?.[0]?.close || [];
+          const data = ts.map((t, i) => ({ t, v: closes[i] })).filter(d => d.v != null);
+          setChartData(data);
+          if (data.length >= 2) {
+            const cur = data[data.length - 1].v;
+            const prev = data[data.length - 2].v;
+            const m1 = data[Math.max(0, data.length - 22)].v;
+            setSummary({ cur, prev, dayPct:((cur-prev)/prev)*100, m1Pct:((cur-m1)/m1)*100 });
+          }
+        }
+        setLoading(false);
+      }).catch(() => setLoading(false));
+  }, [item.ticker]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const priceStr = summary ? summary.cur.toLocaleString("en-US", { minimumFractionDigits:decimals, maximumFractionDigits:decimals }) : "—";
+
+  return (
+    <ResearchPanelShell title={item.label} subtitle={item.ticker} badge={isFX ? "FX" : "Commodity"} onClose={onClose}>
+      {loading ? (
+        <div className="flex items-center justify-center flex-1 font-mono" style={{ color:"#7d8590", fontSize:11 }}>Loading…</div>
+      ) : (
+        <>
+          <div className="flex items-baseline justify-between mb-1">
+            <span className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:22 }}>{isFX ? "" : "$"}{priceStr}</span>
+            <div className="flex flex-col items-end">
+              {summary && <span className="font-mono" style={{ color:clr(summary.dayPct), fontSize:12 }}>Day {fmt.pct(summary.dayPct)}</span>}
+              {summary && <span className="font-mono" style={{ color:clr(summary.m1Pct), fontSize:10 }}>1M {fmt.pct(summary.m1Pct)}</span>}
+            </div>
+          </div>
+          <div style={{ marginBottom:8 }}>
+            <ResearchMiniChart data={chartData} color={summary?.dayPct >= 0 ? "#3fb950" : "#f85149"} height={110} />
+          </div>
+          {summary && (
+            <div className="grid mb-2" style={{ gridTemplateColumns:"1fr 1fr", gap:"4px 8px" }}>
+              {[
+                ["Prev Close", (isFX?"":"$") + summary.prev.toFixed(decimals)],
+                ["1M Return",  fmt.pct(summary.m1Pct)],
+              ].map(([k, v]) => (
+                <div key={k}>
+                  <div className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>{k}</div>
+                  <div className="font-mono" style={{ color:"#e6edf3", fontSize:11 }}>{v}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          <RelatedLinks itemId={item.id} onOpen={onOpen} />
+        </>
+      )}
+    </ResearchPanelShell>
+  );
+}
+
+function MacroResearchPanel({ item, onClose, onOpen }) {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("/api/fred?series=" + item.series)
+      .then(r => r.json())
+      .then(d => {
+        const obs = (d.observations || [])
+          .filter(o => o.value !== "." && !isNaN(parseFloat(o.value)))
+          .slice(-60)
+          .map(o => ({ t: o.date, v: parseFloat(o.value) }));
+        setData(obs);
+        setLoading(false);
+      }).catch(() => setLoading(false));
+  }, [item.series]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const latest = data[data.length - 1];
+  const prev   = data[data.length - 2];
+  const yearAgo = data[Math.max(0, data.length - 13)];
+  const yoyPct = latest && yearAgo && yearAgo.v !== 0 ? ((latest.v - yearAgo.v) / Math.abs(yearAgo.v)) * 100 : null;
+  const mom = latest && prev ? latest.v - prev.v : null;
+
+  return (
+    <ResearchPanelShell title={item.label} subtitle={item.series} badge="Macro" onClose={onClose}>
+      {loading ? (
+        <div className="flex items-center justify-center flex-1 font-mono" style={{ color:"#7d8590", fontSize:11 }}>Loading…</div>
+      ) : !data.length ? (
+        <div className="flex items-center justify-center flex-1 font-mono" style={{ color:"#f85149", fontSize:11 }}>No data available</div>
+      ) : (
+        <>
+          <div className="flex items-baseline justify-between mb-0.5">
+            <span className="font-mono font-bold" style={{ color:"#bc8cff", fontSize:24 }}>{latest?.v?.toFixed(2)}</span>
+            <div className="flex flex-col items-end">
+              {yoyPct != null && <span className="font-mono" style={{ color:clr(yoyPct), fontSize:11 }}>YoY {fmt.pct(yoyPct)}</span>}
+              {mom != null && <span className="font-mono" style={{ color:clr(mom), fontSize:10 }}>MoM {mom >= 0 ? "+" : ""}{mom.toFixed(2)}</span>}
+            </div>
+          </div>
+          <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:10 }}>As of {latest?.t}</div>
+          <div style={{ flex:1, marginBottom:6 }}>
+            <ResearchMiniChart data={data} color="#bc8cff" height={120} />
+          </div>
+          <div className="grid mb-2" style={{ gridTemplateColumns:"1fr 1fr", gap:"4px 8px" }}>
+            {[
+              ["Previous",   prev?.v?.toFixed(2) || "—"],
+              ["1Y Ago",     yearAgo?.v?.toFixed(2) || "—"],
+            ].map(([k, v]) => (
+              <div key={k}>
+                <div className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>{k}</div>
+                <div className="font-mono" style={{ color:"#e6edf3", fontSize:11 }}>{v}</div>
+              </div>
+            ))}
+          </div>
+          <RelatedLinks itemId={item.id} onOpen={onOpen} />
+        </>
+      )}
+    </ResearchPanelShell>
+  );
+}
+
+function TopicResearchPanel({ item, onClose, onOpen }) {
+  const cfg = TOPIC_CONFIG[item.id];
+  const [macroData, setMacroData] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!cfg) return;
+    setLoading(true);
+    Promise.all(
+      cfg.macro.map((m, i) =>
+        delay(i * 200)
+          .then(() => fetch("/api/fred?series=" + m.series).then(r => r.json()))
+          .then(d => {
+            const obs = (d.observations || []).filter(o => o.value !== "." && !isNaN(parseFloat(o.value)));
+            const latest = obs[obs.length - 1];
+            const prev   = obs[obs.length - 2];
+            return { id:m.id, label:m.label, latest:latest ? parseFloat(latest.value) : null, date:latest?.date, prev:prev ? parseFloat(prev.value) : null };
+          })
+          .catch(() => ({ id:m.id, label:m.label, latest:null }))
+      )
+    ).then(results => {
+      setMacroData(Object.fromEntries(results.map(r => [r.id, r])));
+      setLoading(false);
+    });
+  }, [item.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!cfg) return null;
+
+  return (
+    <ResearchPanelShell title={cfg.icon + " " + cfg.title} subtitle={cfg.desc} badge="Topic" onClose={onClose}>
+      {loading ? (
+        <div className="flex items-center justify-center flex-1 font-mono" style={{ color:"#7d8590", fontSize:11 }}>Loading…</div>
+      ) : (
+        <>
+          <div className="grid mb-3" style={{ gridTemplateColumns:"1fr 1fr", gap:6 }}>
+            {cfg.macro.map(m => {
+              const d = macroData[m.id];
+              const mom = d?.latest != null && d?.prev != null ? d.latest - d.prev : null;
+              return (
+                <button key={m.id} onClick={() => onOpen({ id:m.id, label:m.label, type:"macro", series:m.series, category:"Macro" })}
+                  className="text-left p-2"
+                  style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4, cursor:"pointer", transition:"border-color 0.15s" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="#30363d"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor="#21262d"}>
+                  <div className="font-mono" style={{ color:"#7d8590", fontSize:9, textTransform:"uppercase" }}>{m.label}</div>
+                  <div className="font-mono font-bold" style={{ color:"#bc8cff", fontSize:16 }}>
+                    {d?.latest != null ? d.latest.toFixed(2) : "—"}
+                  </div>
+                  {mom != null && (
+                    <div className="font-mono" style={{ color:clr(mom), fontSize:10 }}>
+                      {mom >= 0 ? "▲" : "▼"} {Math.abs(mom).toFixed(2)}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ borderTop:"1px solid #21262d", paddingTop:8, marginBottom:4 }}>
+            <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Related Assets</div>
+            <div className="flex flex-wrap gap-1.5">
+              {cfg.assets.map(a => (
+                <button key={a.id} onClick={() => onOpen(a)} className="font-mono"
+                  style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:3, padding:"3px 8px", fontSize:11, color:RB_TYPE_COLOR[a.type]||"#7d8590", cursor:"pointer" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="#30363d"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor="#21262d"}>
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <RelatedLinks itemId={item.id} onOpen={onOpen} />
+        </>
+      )}
+    </ResearchPanelShell>
+  );
+}
+
+function ResearchPanel({ item, onClose, onOpen }) {
+  switch (item.type) {
+    case "equity":    return <EquityResearchPanel  item={item} onClose={onClose} onOpen={onOpen} />;
+    case "commodity": return <MarketResearchPanel  item={item} onClose={onClose} onOpen={onOpen} />;
+    case "fx":        return <MarketResearchPanel  item={item} onClose={onClose} onOpen={onOpen} />;
+    case "macro":     return <MacroResearchPanel   item={item} onClose={onClose} onOpen={onOpen} />;
+    case "topic":     return <TopicResearchPanel   item={item} onClose={onClose} onOpen={onOpen} />;
+    default:          return null;
+  }
+}
+
+const HOME_TILES = [
+  { heading:"Macro",       color:"#bc8cff", ids:["FEDFUNDS","DGS10","T10Y2Y","CPIAUCSL","UNRATE"] },
+  { heading:"Equities",    color:"#58a6ff", ids:["SPY","QQQ","AAPL","NVDA","TSLA"] },
+  { heading:"Commodities", color:"#e3b341", ids:["GC=F","CL=F","SI=F","HG=F","NG=F"] },
+  { heading:"FX",          color:"#3fb950", ids:["EURUSD=X","DX=F","GBPUSD=X","USDJPY=X","USDCNY=X"] },
+  { heading:"Banks",       color:"#58a6ff", ids:["JPM","GS","BAC","MS","C"] },
+  { heading:"Topics",      color:"#f0883e", ids:["topic-inflation","topic-rates","topic-energy","topic-credit"] },
+];
+
+function ResearchHomeDashboard({ onOpen }) {
+  const byId = Object.fromEntries(RESEARCH_CATALOG.map(c => [c.id, c]));
+  return (
+    <div>
+      <div className="font-mono mb-4" style={{ color:"#484f58", fontSize:11 }}>
+        Search above to open research panels — or start from a quick-access tile below. Press <span style={{ color:"#7d8590" }}>/</span> to focus the search bar.
+      </div>
+      <div className="grid gap-4" style={{ gridTemplateColumns:"repeat(auto-fill, minmax(260px, 1fr))" }}>
+        {HOME_TILES.map(({ heading, color, ids }) => (
+          <div key={heading} className="terminal-panel p-3">
+            <div className="font-mono mb-2" style={{ color, fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em" }}>{heading}</div>
+            <div className="flex flex-col gap-1">
+              {ids.map(id => {
+                const item = byId[id];
+                if (!item) return null;
+                return (
+                  <button key={id} onClick={() => onOpen(item)} className="text-left font-mono px-2 py-1.5"
+                    style={{ background:"transparent", border:"1px solid #21262d", borderRadius:4, color:"#e6edf3", fontSize:12, cursor:"pointer", transition:"all 0.15s" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor="#30363d"; e.currentTarget.style.background="#0d1117"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor="#21262d"; e.currentTarget.style.background="transparent"; }}>
+                    <span style={{ color }}>{item.label}</span>
+                    <span style={{ color:"#484f58", marginLeft:8, fontSize:10 }}>{item.id}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ResearchBrowser() {
+  const [query, setQuery]               = useState("");
+  const [suggestions, setSuggestions]   = useState([]);
+  const [suggestionIdx, setSuggestionIdx] = useState(-1);
+  const [panels, setPanels]             = useState([]);
+  const [recentSearches, setRecentSearches] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("ov_research_recent") || "[]"); }
+    catch { return []; }
+  });
+  const debounceRef = useRef(null);
+  const searchRef   = useRef(null);
+
+  // Press "/" anywhere to focus search
+  useEffect(() => {
+    const handler = e => {
+      if (e.key === "/" && document.activeElement !== searchRef.current && document.activeElement?.tagName !== "INPUT") {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  // Debounced autocomplete
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!query.trim()) { setSuggestions([]); setSuggestionIdx(-1); return; }
+    debounceRef.current = setTimeout(async () => {
+      const q = query.toLowerCase();
+      const local = RESEARCH_CATALOG.filter(item =>
+        item.label.toLowerCase().includes(q) || item.id.toLowerCase().includes(q)
+      ).slice(0, 6);
+      try {
+        const res = await api("/search?q=" + encodeURIComponent(query));
+        const remote = (res.result || []).slice(0, 8).map(r => ({
+          id:r.symbol, label:r.description || r.symbol, type:"equity", ticker:r.symbol, category:"Equities"
+        }));
+        const merged = [...local];
+        remote.forEach(e => { if (!merged.find(m => m.id === e.id)) merged.push(e); });
+        setSuggestions(merged.slice(0, 10));
+      } catch { setSuggestions(local); }
+    }, 300);
+  }, [query]);
+
+  const openPanel = item => {
+    const newRecent = [item, ...recentSearches.filter(r => r.id !== item.id)].slice(0, 8);
+    setRecentSearches(newRecent);
+    localStorage.setItem("ov_research_recent", JSON.stringify(newRecent));
+    setPanels(prev => prev.find(p => p.id === item.id) ? prev : [{ ...item }, ...prev]);
+    setQuery(""); setSuggestions([]); setSuggestionIdx(-1);
+  };
+
+  const closePanel = id => setPanels(prev => prev.filter(p => p.id !== id));
+
+  const handleKeyDown = e => {
+    if (!suggestions.length) return;
+    if (e.key === "ArrowDown")  { e.preventDefault(); setSuggestionIdx(i => Math.min(i+1, suggestions.length-1)); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setSuggestionIdx(i => Math.max(i-1, -1)); }
+    else if (e.key === "Enter" && suggestionIdx >= 0) { openPanel(suggestions[suggestionIdx]); }
+    else if (e.key === "Escape") { setSuggestions([]); setSuggestionIdx(-1); setQuery(""); }
+  };
+
+  const grouped = suggestions.reduce((acc, s) => {
+    if (!acc[s.category]) acc[s.category] = [];
+    acc[s.category].push(s);
+    return acc;
+  }, {});
+
+  return (
+    <div className="flex flex-col flex-1" style={{ height:"calc(100vh - 90px)", overflow:"hidden" }}>
+      {/* ── Search bar ── */}
+      <div className="px-4 py-3" style={{ borderBottom:"1px solid #21262d", background:"#010409", flexShrink:0 }}>
+        <div style={{ position:"relative", maxWidth:680 }}>
+          <div className="flex items-center gap-2 px-3 py-2"
+            style={{ background:"#161b22", border:"1px solid #30363d", borderRadius:6 }}
+            onFocusCapture={e => e.currentTarget.style.borderColor="#1f6feb"}
+            onBlurCapture={e => e.currentTarget.style.borderColor="#30363d"}>
+            <Search size={13} style={{ color:"#7d8590", flexShrink:0 }} />
+            <input ref={searchRef} value={query}
+              onChange={e => { setQuery(e.target.value); setSuggestionIdx(-1); }}
+              onKeyDown={handleKeyDown}
+              placeholder="Search equities, commodities, FX, macro indicators, topics… (press / to focus)"
+              style={{ background:"transparent", border:"none", color:"#e6edf3", fontSize:12, flex:1, outline:"none", minWidth:0 }} />
+            {query && (
+              <button onClick={() => { setQuery(""); setSuggestions([]); setSuggestionIdx(-1); searchRef.current?.focus(); }}
+                style={{ color:"#7d8590", background:"none", border:"none", cursor:"pointer", flexShrink:0, fontSize:12 }}>✕</button>
+            )}
+            <span className="font-mono" style={{ color:"#484f58", fontSize:9, flexShrink:0 }}>/</span>
+          </div>
+
+          {/* Dropdown */}
+          {suggestions.length > 0 && (
+            <div style={{ position:"absolute", top:"calc(100% + 4px)", left:0, right:0, background:"#161b22", border:"1px solid #30363d", borderRadius:6, zIndex:200, boxShadow:"0 12px 32px rgba(0,0,0,0.6)", overflow:"hidden" }}>
+              {Object.entries(grouped).map(([cat, items]) => (
+                <div key={cat}>
+                  <div style={{ padding:"5px 12px 2px", color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.1em", background:"#0d1117" }}>{cat}</div>
+                  {items.map(item => {
+                    const idx = suggestions.indexOf(item);
+                    const active = idx === suggestionIdx;
+                    return (
+                      <div key={item.id}
+                        onClick={() => openPanel(item)}
+                        onMouseEnter={() => setSuggestionIdx(idx)}
+                        style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"7px 12px", cursor:"pointer", background:active?"#1f2937":"transparent", borderLeft:active?"2px solid #1f6feb":"2px solid transparent" }}>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-mono font-bold" style={{ color:RB_TYPE_COLOR[item.type]||"#7d8590", fontSize:11, width:80, flexShrink:0 }}>{item.id}</span>
+                          <span className="font-mono truncate" style={{ color:"#e6edf3", fontSize:12 }}>{item.label}</span>
+                        </div>
+                        <span className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", marginLeft:8, flexShrink:0 }}>{item.type}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Recent searches row */}
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
+          {recentSearches.length > 0 && !query && (
+            <>
+              <span className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>Recent:</span>
+              {recentSearches.map(r => (
+                <button key={r.id} onClick={() => openPanel(r)} className="font-mono"
+                  style={{ background:"#161b22", border:"1px solid #21262d", borderRadius:3, padding:"2px 8px", color:RB_TYPE_COLOR[r.type]||"#7d8590", fontSize:10, cursor:"pointer" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="#30363d"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor="#21262d"}>
+                  {r.label}
+                </button>
+              ))}
+            </>
+          )}
+          {panels.length > 0 && (
+            <button onClick={() => setPanels([])} className="font-mono ml-auto"
+              style={{ color:"#f85149", background:"none", border:"none", cursor:"pointer", fontSize:10 }}>
+              Close all ({panels.length})
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Panel workspace ── */}
+      <div className="flex-1" style={{ overflowY:"auto", padding:12 }}>
+        {panels.length === 0
+          ? <ResearchHomeDashboard onOpen={openPanel} />
+          : (
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(380px, 1fr))", gap:12, alignItems:"start" }}>
+              {panels.map(p => (
+                <ResearchPanel key={p.id} item={p} onClose={() => closePanel(p.id)} onOpen={openPanel} />
+              ))}
+            </div>
+          )
+        }
+      </div>
+    </div>
+  );
+}
+
 function PortfolioTracker() {
   const [holdings, setHoldings] = useState(() => {
     try { return JSON.parse(localStorage.getItem("ov_portfolio") || "[]"); }
@@ -2332,6 +3031,7 @@ export default function App() {
           { key: "technical", label: "📊 Technical" },
           { key: "eye", label: "👁 Eye of Sauron" },
           { key: "portfolio", label: "💼 Portfolio" },
+          { key: "research", label: "🔬 Research" },
         ].map(p => (
           <button key={p.key} onClick={() => setActivePage(p.key)}
             className="px-5 py-2.5 text-xs font-mono font-semibold tracking-wider uppercase transition-colors border-b-2"
@@ -2348,6 +3048,7 @@ export default function App() {
 
       {activePage === "eye" && <EyeOfSauron />}
       {activePage === "portfolio" && <PortfolioTracker />}
+      {activePage === "research" && <ResearchBrowser />}
 
       {activePage !== "financial" && activePage !== "technical" && activePage !== "eye" && null}
       {activePage === "financial" && <div className="flex flex-col flex-1" style={{ overflow: "hidden" }}>
