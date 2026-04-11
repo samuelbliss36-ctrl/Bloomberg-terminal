@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from "react";
 import { AreaChart, Area, BarChart, Bar, Line, Cell, ReferenceLine, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Search, Bell, Settings, RefreshCw, Zap, ArrowUpRight, ArrowDownRight, Newspaper, Building2, DollarSign, BarChart2, Activity, Star } from "lucide-react";
+import { Search, Settings, RefreshCw, Zap, ArrowUpRight, ArrowDownRight, Newspaper, Building2, DollarSign, BarChart2, Activity, Star } from "lucide-react";
 
 const FINNHUB_KEY = process.env.REACT_APP_FINNHUB_KEY;
 const BASE = "https://finnhub.io/api/v1";
@@ -2099,7 +2099,6 @@ function TopNav({ ticker, setTicker, quote, loading, onSettingsClick }) {
 
   const handleRefresh = useCallback(() => {
     // Bust cache for current ticker then re-trigger the fetch effect
-    const prefix = "/quote?symbol=" + ticker;
     _apiCache.forEach((_, k) => { if (k.includes(ticker)) _apiCache.delete(k); });
     setTicker(ticker + " "); // force state change then normalize
     setTimeout(() => setTicker(ticker), 0);
