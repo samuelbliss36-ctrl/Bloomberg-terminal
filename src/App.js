@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from "react";
-import { AreaChart, Area, BarChart, Bar, Line, Cell, ReferenceLine, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, BarChart, Bar, Line, Cell, ReferenceLine, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart } from "recharts";
 import { Search, Settings, RefreshCw, Zap, ArrowUpRight, ArrowDownRight, Newspaper, Building2, DollarSign, BarChart2, Activity, Star } from "lucide-react";
 
 const FINNHUB_KEY = process.env.REACT_APP_FINNHUB_KEY;
 const BASE = "https://finnhub.io/api/v1";
 
-// In-memory API cache — 60 s TTL prevents duplicate requests for same data within a session
+// In-memory API cache — 60 s TTL for Finnhub, 5 min for chart data
 const _apiCache = new Map();
 const api = (path) => {
   const hit = _apiCache.get(path);
@@ -13,6 +13,25 @@ const api = (path) => {
   return fetch(BASE + path + "&token=" + FINNHUB_KEY)
     .then(r => r.json())
     .then(data => { _apiCache.set(path, { data, ts: Date.now() }); return data; });
+};
+
+// Chart data cache — 5 min TTL (OHLCV data doesn't change rapidly)
+const _chartCache = new Map();
+const fetchChart = (ticker, range, interval) => {
+  const key = ticker + "|" + range + "|" + interval;
+  const hit = _chartCache.get(key);
+  if (hit && Date.now() - hit.ts < 300_000) return Promise.resolve(hit.data);
+  return fetch("/api/chart?ticker=" + encodeURIComponent(ticker) + "&range=" + range + "&interval=" + interval)
+    .then(r => r.json())
+    .then(data => { _chartCache.set(key, { data, ts: Date.now() }); return data; });
+};
+
+// Persistent settings helpers
+const loadSettings = () => {
+  try { return JSON.parse(localStorage.getItem("ov_settings") || "{}"); } catch { return {}; }
+};
+const saveSettings = (s) => {
+  try { localStorage.setItem("ov_settings", JSON.stringify(s)); } catch {}
 };
 
 const fmt = {
@@ -248,56 +267,26 @@ function CommoditiesDashboard() {
     { ticker: "KC=F", label: "Coffee", symbol: "KC", unit: "$/lb", category: "Agriculture" },
   ];
 
-  const [prices, setPrices] = useState({});
-  const [active, setActive] = useState("GC=F");
-  const [chartData, setChartData] = useState([]);
-  const [tf, setTf] = useState("3M");
-  const [loading, setLoading] = useState(true);
+  const [prices,   setPrices]   = useState({});
+  const [active,   setActive]   = useState("GC=F");
   const [category, setCategory] = useState("Metals");
-  const TF_RANGE = { "1W": "5d", "1M": "1mo", "3M": "3mo", "1Y": "1y" };
 
   useEffect(() => {
     Promise.all(
       COMMODITIES.map(c =>
-        fetch("/api/chart?ticker=" + c.ticker + "&range=1d&interval=1m")
-          .then(r => r.json())
+        fetchChart(c.ticker, "1d", "1m")
           .then(d => {
             const meta = d?.chart?.result?.[0]?.meta;
             const price = meta?.regularMarketPrice;
-            const prev = meta?.previousClose;
-            const change = price - prev;
-            const changePct = (change / prev) * 100;
-            return [c.ticker, { price, change, changePct }];
+            const prev  = meta?.previousClose;
+            const changePct = price && prev ? ((price - prev) / prev) * 100 : null;
+            return [c.ticker, { price, changePct }];
           })
           .catch(() => [c.ticker, null])
       )
     ).then(results => setPrices(Object.fromEntries(results)));
   }, []); // eslint-disable-line
 
-  useEffect(() => {
-    setLoading(true);
-    fetch("/api/chart?ticker=" + active + "&range=" + TF_RANGE[tf] + "&interval=1d")
-      .then(r => r.json())
-      .then(d => {
-        const result = d?.chart?.result?.[0];
-        if (result) {
-          const mapped = result.timestamp.map((t, i) => ({
-            date: new Date(t * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-            price: result.indicators.quote[0].close[i] ? +result.indicators.quote[0].close[i].toFixed(2) : null,
-          })).filter(d => d.price !== null);
-          setChartData(mapped);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, [active, tf]); // eslint-disable-line
-
-  const startP = chartData[0]?.price || 0;
-  const endP = chartData[chartData.length - 1]?.price || 0;
-  const chg = endP - startP;
-  const lc = chg >= 0 ? "#58a6ff" : "#f85149";
-  const minP = chartData.length ? Math.min(...chartData.map(d => d.price)) * 0.995 : 0;
-  const maxP = chartData.length ? Math.max(...chartData.map(d => d.price)) * 1.005 : 0;
   const activeCommodity = COMMODITIES.find(c => c.ticker === active);
   const categories = ["Metals", "Energy", "Agriculture"];
   const filtered = COMMODITIES.filter(c => c.category === category);
@@ -341,45 +330,20 @@ function CommoditiesDashboard() {
         </div>
       </div>
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "2/3", gridRow: "1/2" }}>
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <div className="terminal-header">{activeCommodity?.label} — {activeCommodity?.unit}</div>
-            {prices[active] && (
-              <div className="flex items-center gap-3 mt-1">
-                <span className="text-lg font-mono font-bold" style={{ color: "#e6edf3" }}>${fmt.price(prices[active]?.price)}</span>
-                <span className="text-xs font-mono" style={{ color: clr(prices[active]?.changePct) }}>
-                  {prices[active]?.changePct >= 0 ? "▲" : "▼"} {Math.abs(prices[active]?.change).toFixed(2)} ({Math.abs(prices[active]?.changePct).toFixed(2)}%)
-                </span>
-              </div>
-            )}
-          </div>
-          <div className="flex border rounded overflow-hidden" style={{ borderColor: "#21262d" }}>
-            {["1W","1M","3M","1Y"].map(t => (
-              <button key={t} onClick={() => setTf(t)} className="px-3 py-1 text-xs font-mono transition-colors"
-                style={{ background: tf === t ? "#0c2044" : "transparent", color: tf === t ? "#58a6ff" : "#7d8590", borderRight: "1px solid #21262d" }}>{t}</button>
-            ))}
-          </div>
-        </div>
-        <div style={{ height: 260 }}>
-          {loading ? (
-            <div className="flex items-center justify-center h-full text-xs font-mono animate-pulse" style={{ color: "#7d8590" }}>Loading chart...</div>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="commGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={lc} stopOpacity={0.2} />
-                    <stop offset="95%" stopColor={lc} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1c2128" vertical={false} />
-                <XAxis dataKey="date" tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(chartData.length / 6))} />
-                <YAxis domain={[minP, maxP]} tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} tickFormatter={v => "$" + v.toFixed(0)} width={52} />
-                <Tooltip contentStyle={{ background: "#0d1117", border: "1px solid #21262d", borderRadius: 2, fontSize: 10, fontFamily: "monospace" }} labelStyle={{ color: "#7d8590" }} itemStyle={{ color: "#58a6ff" }} formatter={v => ["$" + fmt.price(v), "Price"]} />
-                <Area type="monotone" dataKey="price" stroke={lc} strokeWidth={1.5} fill="url(#commGrad)" dot={false} activeDot={{ r: 3, fill: lc }} />
-              </AreaChart>
-            </ResponsiveContainer>
+        <div className="flex items-center gap-2 mb-1">
+          <span className="terminal-header">{activeCommodity?.label}</span>
+          <span className="font-mono" style={{ color:"#484f58", fontSize:9 }}>{activeCommodity?.unit}</span>
+          {prices[active]?.price && (
+            <span className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:14, marginLeft:4 }}>${fmt.price(prices[active].price)}</span>
           )}
+          {prices[active]?.changePct != null && (
+            <span className="font-mono" style={{ color:clr(prices[active].changePct), fontSize:11 }}>
+              {prices[active].changePct >= 0 ? "▲" : "▼"} {Math.abs(prices[active].changePct).toFixed(2)}%
+            </span>
+          )}
+        </div>
+        <div style={{ height: 280 }}>
+          <UniversalChart ticker={active} height={280} showVolume defaultTf="3M" />
         </div>
       </div>
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "2/3", gridRow: "2/3" }}>
@@ -422,57 +386,26 @@ function CryptoDashboard() {
 
   const [prices, setPrices] = useState({});
   const [active, setActive] = useState("BTC-USD");
-  const [chartData, setChartData] = useState([]);
-  const [tf, setTf] = useState("1M");
-  const [loading, setLoading] = useState(true);
-  const TF_RANGE = { "1W": "5d", "1M": "1mo", "3M": "3mo", "1Y": "1y" };
+  const activeCoin = COINS.find(c => c.ticker === active);
 
   useEffect(() => {
     Promise.all(
       COINS.map(c =>
-        fetch("/api/chart?ticker=" + c.ticker + "&range=1d&interval=1m")
-          .then(r => r.json())
+        fetchChart(c.ticker, "1d", "1m")
           .then(d => {
             const meta = d?.chart?.result?.[0]?.meta;
             const price = meta?.regularMarketPrice;
-            const prev = meta?.previousClose;
-            const change = price - prev;
-            const changePct = (change / prev) * 100;
-            return [c.ticker, { price, change, changePct }];
+            const prev  = meta?.previousClose;
+            const changePct = price && prev ? ((price - prev) / prev) * 100 : null;
+            return [c.ticker, { price, changePct }];
           })
           .catch(() => [c.ticker, null])
       )
     ).then(results => setPrices(Object.fromEntries(results)));
   }, []); // eslint-disable-line
 
-  useEffect(() => {
-    setLoading(true);
-    fetch("/api/chart?ticker=" + active + "&range=" + TF_RANGE[tf] + "&interval=1d")
-      .then(r => r.json())
-      .then(d => {
-        const result = d?.chart?.result?.[0];
-        if (result) {
-          const mapped = result.timestamp.map((t, i) => ({
-            date: new Date(t * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-            price: result.indicators.quote[0].close[i] ? +result.indicators.quote[0].close[i].toFixed(2) : null,
-          })).filter(d => d.price !== null);
-          setChartData(mapped);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, [active, tf]); // eslint-disable-line
-
-  const startP = chartData[0]?.price || 0;
-  const endP = chartData[chartData.length - 1]?.price || 0;
-  const chg = endP - startP;
-  const lc = chg >= 0 ? "#58a6ff" : "#f85149";
-  const minP = chartData.length ? Math.min(...chartData.map(d => d.price)) * 0.995 : 0;
-  const maxP = chartData.length ? Math.max(...chartData.map(d => d.price)) * 1.005 : 0;
-  const activeCoin = COINS.find(c => c.ticker === active);
-
   return (
-    <div className="flex-1 p-3 grid gap-3" style={{ gridTemplateColumns: "300px 1fr", gridTemplateRows: "1fr auto" }}>
+    <div className="flex-1 p-3 grid gap-3" style={{ gridTemplateColumns: "280px 1fr", gridTemplateRows: "1fr auto" }}>
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/2", gridRow: "1/3", overflowY: "auto" }}>
         <div className="terminal-header mb-3">₿ Crypto Markets</div>
         <div className="flex flex-col gap-1">
@@ -492,8 +425,8 @@ function CryptoDashboard() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
-                  {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#58a6ff" : "#f85149" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
+                  <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{d?.price ? "$" + fmt.price(d.price) : "..."}</div>
+                  {d?.changePct != null && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#58a6ff" : "#f85149" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
                 </div>
               </div>
             );
@@ -501,46 +434,14 @@ function CryptoDashboard() {
         </div>
       </div>
 
-      <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "2/3", gridRow: "1/2" }}>
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <div className="terminal-header">{activeCoin?.label} ({activeCoin?.symbol})</div>
-            {prices[active] && (
-              <div className="flex items-center gap-3 mt-1">
-                <span className="font-mono font-bold" style={{ color: "#e6edf3", fontSize: 22 }}>${fmt.price(prices[active]?.price)}</span>
-                <span className="text-xs font-mono" style={{ color: clr(prices[active]?.changePct) }}>
-                  {prices[active]?.changePct >= 0 ? "▲" : "▼"} {Math.abs(prices[active]?.change || 0).toFixed(2)} ({Math.abs(prices[active]?.changePct || 0).toFixed(2)}%)
-                </span>
-              </div>
-            )}
-          </div>
-          <div className="flex border rounded overflow-hidden" style={{ borderColor: "#21262d" }}>
-            {["1W","1M","3M","1Y"].map(t => (
-              <button key={t} onClick={() => setTf(t)} className="px-3 py-1 text-xs font-mono transition-colors"
-                style={{ background: tf === t ? "#0c2044" : "transparent", color: tf === t ? "#58a6ff" : "#7d8590", borderRight: "1px solid #21262d" }}>{t}</button>
-            ))}
-          </div>
+      <div className="terminal-panel terminal-glow p-3 flex flex-col" style={{ gridColumn: "2/3", gridRow: "1/2" }}>
+        <div className="flex items-center gap-3 mb-2">
+          <span className="terminal-header">{activeCoin?.label} ({activeCoin?.symbol})</span>
+          {prices[active]?.price && <span className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:18 }}>${fmt.price(prices[active].price)}</span>}
+          {prices[active]?.changePct != null && <span className="font-mono" style={{ color:clr(prices[active].changePct), fontSize:12 }}>{prices[active].changePct>=0?"▲":"▼"}{Math.abs(prices[active].changePct).toFixed(2)}%</span>}
         </div>
-        <div style={{ height: 280 }}>
-          {loading ? (
-            <div className="flex items-center justify-center h-full text-xs font-mono animate-pulse" style={{ color: "#7d8590" }}>Loading chart...</div>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="cryptoDashGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={lc} stopOpacity={0.2} />
-                    <stop offset="95%" stopColor={lc} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1c2128" vertical={false} />
-                <XAxis dataKey="date" tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(chartData.length / 6))} />
-                <YAxis domain={[minP, maxP]} tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} tickFormatter={v => "$" + (v >= 1000 ? (v/1000).toFixed(1) + "k" : v.toFixed(2))} width={55} />
-                <Tooltip contentStyle={{ background: "#0d1117", border: "1px solid #21262d", borderRadius: 2, fontSize: 10, fontFamily: "monospace" }} labelStyle={{ color: "#7d8590" }} itemStyle={{ color: "#58a6ff" }} formatter={v => ["$" + fmt.price(v), "Price"]} />
-                <Area type="monotone" dataKey="price" stroke={lc} strokeWidth={1.5} fill="url(#cryptoDashGrad)" dot={false} activeDot={{ r: 3, fill: lc }} />
-              </AreaChart>
-            </ResponsiveContainer>
-          )}
+        <div style={{ flex:1, minHeight:280 }}>
+          <UniversalChart ticker={active} height={280} showVolume defaultTf="1M" />
         </div>
       </div>
 
@@ -554,8 +455,8 @@ function CryptoDashboard() {
                 className="p-2 rounded cursor-pointer"
                 style={{ background: "#0d1117", border: "1px solid #1c2128" }}>
                 <div className="text-xs font-mono font-bold" style={{ color: "#7d8590" }}>{c.symbol}</div>
-                <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
-                {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#58a6ff" : "#f85149" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
+                <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{d?.price ? "$" + fmt.price(d.price) : "..."}</div>
+                {d?.changePct != null && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#58a6ff" : "#f85149" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
               </div>
             );
           })}
@@ -596,11 +497,7 @@ function FXDashboard({ onOpenResearch }) {
 
   const [prices,    setPrices]    = useState({});
   const [active,    setActive]    = useState("EURUSD=X");
-  const [chartData, setChartData] = useState([]);
-  const [tf,        setTf]        = useState("3M");
   const [cbRates,   setCbRates]   = useState({});
-  const [chartLoading, setChartLoading] = useState(true);
-  const TF_RANGE = { "1W":"5d", "1M":"1mo", "3M":"3mo", "1Y":"1y" };
 
   // Fetch all FX prices (Yahoo Finance via /api/chart)
   useEffect(() => {
@@ -619,28 +516,6 @@ function FXDashboard({ onOpenResearch }) {
       )
     ).then(results => setPrices(Object.fromEntries(results)));
   }, []); // eslint-disable-line
-
-  // Fetch chart for active pair
-  useEffect(() => {
-    setChartLoading(true);
-    fetch("/api/chart?ticker=" + encodeURIComponent(active) + "&range=" + TF_RANGE[tf] + "&interval=1d")
-      .then(r => r.json())
-      .then(d => {
-        const result = d?.chart?.result?.[0];
-        if (result) {
-          const activePairDec = FX_PAIRS.find(p => p.ticker === active)?.dec ?? 4;
-          const mapped = (result.timestamp || []).map((t, i) => ({
-            date: new Date(t * 1000).toLocaleDateString("en-US", { month:"short", day:"numeric" }),
-            price: result.indicators.quote[0].close[i]
-              ? +result.indicators.quote[0].close[i].toFixed(activePairDec)
-              : null,
-          })).filter(d => d.price !== null);
-          setChartData(mapped);
-        }
-        setChartLoading(false);
-      })
-      .catch(() => setChartLoading(false));
-  }, [active, tf]); // eslint-disable-line
 
   // Fetch central bank rates from FRED
   useEffect(() => {
@@ -661,11 +536,6 @@ function FXDashboard({ onOpenResearch }) {
   const activePairCfg = FX_PAIRS.find(p => p.ticker === active);
   const activeDec = activePairCfg?.dec ?? 4;
   const activePrice = prices[active];
-  const startP = chartData[0]?.price || 0;
-  const endP   = chartData[chartData.length - 1]?.price || 0;
-  const lc = endP >= startP ? "#3fb950" : "#f85149";
-  const minP = chartData.length ? Math.min(...chartData.map(d => d.price)) * 0.9995 : 0;
-  const maxP = chartData.length ? Math.max(...chartData.map(d => d.price)) * 1.0005 : 0;
 
   return (
     <div className="flex-1 p-3" style={{ display:"grid", gridTemplateColumns:"240px 1fr 200px", gridTemplateRows:"1fr auto", gap:12, height:"calc(100vh - 90px)", overflow:"hidden" }}>
@@ -703,7 +573,7 @@ function FXDashboard({ onOpenResearch }) {
 
       {/* Center: Chart */}
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn:"2/3", gridRow:"1/2" }}>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2">
           <div>
             <div className="terminal-header">{activePairCfg?.label} · {activePairCfg?.region}</div>
             {activePrice && (
@@ -719,43 +589,15 @@ function FXDashboard({ onOpenResearch }) {
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            {onOpenResearch && (
-              <button onClick={() => onOpenResearch({ id:active, label:activePairCfg?.label||active, type:"fx", ticker:active, category:"FX" })}
-                className="font-mono px-2 py-1 text-xs rounded"
-                style={{ background:"#0c2044", border:"1px solid #3fb95033", color:"#3fb950", cursor:"pointer" }}>
-                → Research
-              </button>
-            )}
-            <div className="flex border rounded overflow-hidden" style={{ borderColor:"#21262d" }}>
-              {["1W","1M","3M","1Y"].map(t => (
-                <button key={t} onClick={() => setTf(t)} className="px-2 py-1 text-xs font-mono"
-                  style={{ background:tf===t?"#0c2044":"transparent", color:tf===t?"#58a6ff":"#7d8590", borderRight:"1px solid #21262d" }}>{t}</button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div style={{ height:260 }}>
-          {chartLoading ? (
-            <div className="flex items-center justify-center h-full text-xs font-mono" style={{ color:"#7d8590" }}>Loading...</div>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top:4, right:4, left:0, bottom:0 }}>
-                <defs>
-                  <linearGradient id="fxChartGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor={lc} stopOpacity={0.2} />
-                    <stop offset="95%" stopColor={lc} stopOpacity={0}   />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1c2128" vertical={false} />
-                <XAxis dataKey="date" tick={{ fill:"#7d8590", fontSize:9, fontFamily:"monospace" }} tickLine={false} axisLine={false} interval={Math.max(1,Math.floor(chartData.length/6))} />
-                <YAxis domain={[minP,maxP]} tick={{ fill:"#7d8590", fontSize:9, fontFamily:"monospace" }} tickLine={false} axisLine={false} tickFormatter={v => v.toFixed(activeDec)} width={60} />
-                <Tooltip contentStyle={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:2, fontSize:10, fontFamily:"monospace" }} labelStyle={{ color:"#7d8590" }} formatter={v => [v.toFixed(activeDec), activePairCfg?.label]} />
-                <Area type="monotone" dataKey="price" stroke={lc} strokeWidth={1.5} fill="url(#fxChartGrad)" dot={false} />
-              </AreaChart>
-            </ResponsiveContainer>
+          {onOpenResearch && (
+            <button onClick={() => onOpenResearch({ id:active, label:activePairCfg?.label||active, type:"fx", ticker:active, category:"FX" })}
+              className="font-mono px-2 py-1 text-xs rounded"
+              style={{ background:"#0c2044", border:"1px solid #3fb95033", color:"#3fb950", cursor:"pointer" }}>
+              → Research
+            </button>
           )}
         </div>
+        <UniversalChart ticker={active} height={260} defaultTf="3M" prefix="" decimals={activeDec} label={activePairCfg?.label} />
       </div>
 
       {/* Right: Central bank rates */}
@@ -834,11 +676,6 @@ function SupplyChainDashboard({ onOpenResearch }) {
 
   const [prices, setPrices] = useState({});
   const [active, setActive] = useState("CL=F");
-  const [chartData, setChartData] = useState([]);
-  const [tf, setTf] = useState("1Y");
-  const [loading, setLoading] = useState(true);
-  const TF_RANGE = { "1W": "5d", "1M": "1mo", "3M": "3mo", "1Y": "1y", "5Y": "5y" };
-
   const [fredData, setFredData] = useState({});
 
   useEffect(() => {
@@ -878,30 +715,6 @@ function SupplyChainDashboard({ onOpenResearch }) {
     ).then(results => setPrices(Object.fromEntries(results)));
   }, []); // eslint-disable-line
 
-  useEffect(() => {
-    setLoading(true);
-    fetch("/api/chart?ticker=" + encodeURIComponent(active) + "&range=" + TF_RANGE[tf] + "&interval=1d")
-      .then(r => r.json())
-      .then(d => {
-        const result = d?.chart?.result?.[0];
-        if (result) {
-          const mapped = result.timestamp.map((t, i) => ({
-            date: new Date(t * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-            price: result.indicators.quote[0].close[i] ? +result.indicators.quote[0].close[i].toFixed(2) : null,
-          })).filter(d => d.price !== null);
-          setChartData(mapped);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, [active, tf]); // eslint-disable-line
-
-  const startP = chartData[0]?.price || 0;
-  const endP = chartData[chartData.length - 1]?.price || 0;
-  const chg = endP - startP;
-  const lc = chg >= 0 ? "#58a6ff" : "#f85149";
-  const minP = chartData.length ? Math.min(...chartData.map(d => d.price)) * 0.995 : 0;
-  const maxP = chartData.length ? Math.max(...chartData.map(d => d.price)) * 1.005 : 0;
   const activeIndex = INDICES.find(c => c.ticker === active);
 
   return (
@@ -972,49 +785,21 @@ function SupplyChainDashboard({ onOpenResearch }) {
       </div>
 
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "2/3", gridRow: "1/2" }}>
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <div className="terminal-header">{activeIndex?.label}</div>
-            <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{activeIndex?.desc}</div>
-            {prices[active] && (
-              <div className="flex items-center gap-3 mt-1">
-                <span className="font-mono font-bold" style={{ color: "#e6edf3", fontSize: 20 }}>
-                  {prices[active]?.price > 100 ? prices[active]?.price?.toFixed(0) : prices[active]?.price?.toFixed(2)}
-                </span>
-                <span className="text-xs font-mono" style={{ color: clr(prices[active]?.changePct) }}>
-                  {prices[active]?.changePct >= 0 ? "▲" : "▼"} {Math.abs(prices[active]?.changePct || 0).toFixed(2)}%
-                </span>
-              </div>
-            )}
-          </div>
-          <div className="flex border rounded overflow-hidden" style={{ borderColor: "#21262d" }}>
-            {["1W","1M","3M","1Y","5Y"].map(t => (
-              <button key={t} onClick={() => setTf(t)} className="px-2 py-1 text-xs font-mono transition-colors"
-                style={{ background: tf === t ? "#0c2044" : "transparent", color: tf === t ? "#58a6ff" : "#7d8590", borderRight: "1px solid #21262d" }}>{t}</button>
-            ))}
-          </div>
-        </div>
-        <div style={{ height: 240 }}>
-          {loading ? (
-            <div className="flex items-center justify-center h-full text-xs font-mono animate-pulse" style={{ color: "#7d8590" }}>Loading chart...</div>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="scGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={lc} stopOpacity={0.2} />
-                    <stop offset="95%" stopColor={lc} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1c2128" vertical={false} />
-                <XAxis dataKey="date" tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(chartData.length / 6))} />
-                <YAxis domain={[minP, maxP]} tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} tickFormatter={v => v > 1000 ? (v/1000).toFixed(1)+"k" : v.toFixed(0)} width={45} />
-                <Tooltip contentStyle={{ background: "#0d1117", border: "1px solid #21262d", borderRadius: 2, fontSize: 10, fontFamily: "monospace" }} labelStyle={{ color: "#7d8590" }} itemStyle={{ color: "#58a6ff" }} formatter={v => [v.toFixed(2), activeIndex?.symbol]} />
-                <Area type="monotone" dataKey="price" stroke={lc} strokeWidth={1.5} fill="url(#scGrad)" dot={false} activeDot={{ r: 3, fill: lc }} />
-              </AreaChart>
-            </ResponsiveContainer>
+        <div className="mb-2">
+          <div className="terminal-header">{activeIndex?.label}</div>
+          <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{activeIndex?.desc}</div>
+          {prices[active] && (
+            <div className="flex items-center gap-3 mt-1">
+              <span className="font-mono font-bold" style={{ color: "#e6edf3", fontSize: 20 }}>
+                {prices[active]?.price > 100 ? prices[active]?.price?.toFixed(0) : prices[active]?.price?.toFixed(2)}
+              </span>
+              <span className="text-xs font-mono" style={{ color: clr(prices[active]?.changePct) }}>
+                {prices[active]?.changePct >= 0 ? "▲" : "▼"} {Math.abs(prices[active]?.changePct || 0).toFixed(2)}%
+              </span>
+            </div>
           )}
         </div>
+        <UniversalChart ticker={active} height={240} showVolume defaultTf="1Y" label={activeIndex?.label} />
       </div>
 
 
@@ -2393,93 +2178,246 @@ function TopNav({ ticker, setTicker, quote, loading, onSettingsClick }) {
 }
 
 const TIMEFRAMES = ["1W", "1M", "3M", "1Y"];
-const TF_DAYS = { "1W": 7, "1M": 30, "3M": 90, "1Y": 365 };
-// const TF_RES = { "1W": "D", "1M": "D", "3M": "D", "1Y": "W" };
+const TF_CFG = {
+  "1W": { range: "5d",  interval: "1h",  days: 7   },
+  "1M": { range: "1mo", interval: "1d",  days: 30  },
+  "3M": { range: "3mo", interval: "1d",  days: 90  },
+  "1Y": { range: "1y",  interval: "1d",  days: 365 },
+};
 
-function PriceChart({ ticker }) {
-  const [tf, setTf] = useState("3M");
-  const [data, setData] = useState([]);
+// Candlestick bar rendered as a custom Recharts shape
+function CandlestickBar(props) {
+  const { x, y, width, payload } = props;
+  if (!payload || payload.open == null) return null;
+  const { open, close, high, low } = payload;
+  const isUp = close >= open;
+  const color = isUp ? "#3fb950" : "#f85149";
+  const bodyTop    = Math.min(open, close);
+  const bodyBottom = Math.max(open, close);
+  const bodyH = Math.max(1, bodyBottom - bodyTop);
+  const cx = x + width / 2;
+  // y scale: props gives us the Y coordinate of the bar's "value", which is the high.
+  // We get yScale via the scaleLinear from recharts internal.
+  // Instead we rely on the parent ComposedChart's YAxis domain being set to [minL, maxH].
+  // The "y" prop here is the pixel top of the bar rect — recharts computes it from the dataKey.
+  // We use a custom approach: pass yScale via the shape function's numeric props.
+  // recharts passes: x (left edge), y (pixel top of high), width, height (pixel span high→low)
+  const totalH = props.height; // pixel height from high to low
+  if (totalH <= 0 || isNaN(totalH)) return null;
+  const domainSpan = high - low;
+  if (domainSpan <= 0) return null;
+  const pxPerUnit = totalH / domainSpan;
+  const bodyTopPx    = y + (high - bodyBottom) * pxPerUnit;
+  const bodyH_px     = Math.max(1, bodyH * pxPerUnit);
+  const wickTopPx    = y;
+  const wickBottomPx = y + totalH;
+  return (
+    <g>
+      {/* Wick */}
+      <line x1={cx} y1={wickTopPx} x2={cx} y2={wickBottomPx} stroke={color} strokeWidth={1} />
+      {/* Body */}
+      <rect x={x + 1} y={bodyTopPx} width={Math.max(1, width - 2)} height={bodyH_px}
+        fill={isUp ? "rgba(63,185,80,0.85)" : "rgba(248,81,73,0.85)"}
+        stroke={color} strokeWidth={0.5} />
+    </g>
+  );
+}
+
+function useOHLC(ticker, tf) {
+  const [data,    setData]    = useState([]);
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
-    // const to = Math.floor(Date.now() / 1000);
-    // const from = to - TF_DAYS[tf] * 24 * 3600;
-    const range = TF_DAYS[tf] <= 7 ? "5d" : TF_DAYS[tf] <= 30 ? "1mo" : TF_DAYS[tf] <= 90 ? "3mo" : "1y";
-    const interval = TF_DAYS[tf] <= 7 ? "1h" : "1d";
-    fetch("/api/chart?ticker=" + ticker + "&range=" + range + "&interval=" + interval)
-      .then(r => r.json())
-      .then(d => {
-        const result = d?.chart?.result?.[0];
-        if (result) {
-          const timestamps = result.timestamp;
-          const closes = result.indicators.quote[0].close;
-          const volumes = result.indicators.quote[0].volume;
-          const mapped = timestamps.map((t, i) => ({
-            date: new Date(t * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-            price: closes[i] ? +closes[i].toFixed(2) : null,
-            volume: volumes[i] || 0,
-            sma20: 0,
-          })).filter(d => d.price !== null);
-          mapped.forEach((item, i) => {
-            if (i >= 19) {
-              const slice = mapped.slice(i - 19, i + 1);
-              item.sma20 = +(slice.reduce((s, x) => s + x.price, 0) / 20).toFixed(2);
-            } else {
-              item.sma20 = item.price;
-            }
-          });
-          setData(mapped);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    const { range, interval } = TF_CFG[tf] || TF_CFG["3M"];
+    fetchChart(ticker, range, interval).then(d => {
+      if (cancelled) return;
+      const result = d?.chart?.result?.[0];
+      if (result) {
+        const q       = result.indicators.quote[0];
+        const ts      = result.timestamp || [];
+        const closes  = q.close  || [];
+        const opens   = q.open   || [];
+        const highs   = q.high   || [];
+        const lows    = q.low    || [];
+        const volumes = q.volume || [];
+        const raw = ts.map((t, i) => ({
+          ts:    t,
+          date:  new Date(t * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+          close:  closes[i]  != null ? +closes[i].toFixed(4)  : null,
+          open:   opens[i]   != null ? +opens[i].toFixed(4)   : null,
+          high:   highs[i]   != null ? +highs[i].toFixed(4)   : null,
+          low:    lows[i]    != null ? +lows[i].toFixed(4)    : null,
+          volume: volumes[i] || 0,
+        })).filter(d => d.close != null && d.open != null && d.high != null && d.low != null);
+
+        // SMA-20 on close
+        raw.forEach((item, i) => {
+          if (i >= 19) {
+            const slice = raw.slice(i - 19, i + 1);
+            item.sma20 = +(slice.reduce((s, x) => s + x.close, 0) / 20).toFixed(4);
+          }
+        });
+
+        setData(raw);
+      }
+      setLoading(false);
+    }).catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [ticker, tf]);
 
-  const startPrice = data[0]?.price || 0;
-  const endPrice = data[data.length - 1]?.price || 0;
-  const chg = endPrice - startPrice;
-  const pct = startPrice ? (chg / startPrice) * 100 : 0;
-  const lc = chg >= 0 ? "#3fb950" : "#f85149";
-  const minP = data.length ? Math.min(...data.map((d) => d.price)) * 0.995 : 0;
-  const maxP = data.length ? Math.max(...data.map((d) => d.price)) * 1.005 : 0;
+  return { data, loading };
+}
+
+function ChartTypeBtn({ value, active, onClick, children }) {
+  return (
+    <button onClick={() => onClick(value)} className="font-mono"
+      style={{ padding:"2px 8px", fontSize:10, borderRadius:3, border:"1px solid",
+        background: active ? "#0c2044" : "transparent",
+        borderColor: active ? "#58a6ff" : "#21262d",
+        color: active ? "#58a6ff" : "#7d8590", cursor:"pointer" }}>
+      {children}
+    </button>
+  );
+}
+
+function UniversalChart({ ticker, height = 220, showVolume = false, colorUp = "#3fb950", colorDown = "#f85149", defaultType = "area", defaultTf = "3M", prefix = "$", decimals = 2, label }) {
+  const [tf,        setTf]        = useState(defaultTf);
+  const [chartType, setChartType] = useState(defaultType);
+  const { data, loading } = useOHLC(ticker, tf);
+
+  const startC  = data[0]?.close  || 0;
+  const endC    = data[data.length - 1]?.close || 0;
+  const chg     = endC - startC;
+  const pct     = startC ? (chg / startC) * 100 : 0;
+  const lc      = chg >= 0 ? colorUp : colorDown;
+  const allLows  = data.map(d => d.low);
+  const allHighs = data.map(d => d.high);
+  const minP = data.length ? Math.min(...allLows)  * 0.9995 : 0;
+  const maxP = data.length ? Math.max(...allHighs) * 1.0005 : 0;
+  const xi   = Math.max(1, Math.floor(data.length / 6));
+  const gradId = "ucg_" + ticker.replace(/[^a-z0-9]/gi, "") + "_" + tf;
+  const tooltipStyle = { background:"#0d1117", border:"1px solid #21262d", borderRadius:4, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" };
+  const tickStyle    = { fill:"#484f58", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" };
+  const fmt2 = v => v != null ? prefix + (+v).toFixed(decimals) : "—";
+
+  const commonAxes = (
+    <>
+      <CartesianGrid strokeDasharray="3 3" stroke="#161b22" vertical={false} />
+      <XAxis dataKey="date" tick={tickStyle} tickLine={false} axisLine={false} interval={xi} />
+      <YAxis domain={[minP, maxP]} tick={tickStyle} tickLine={false} axisLine={false}
+        tickFormatter={v => prefix + v.toFixed(decimals <= 2 ? 0 : decimals)} width={decimals > 2 ? 68 : 52} />
+      <Tooltip contentStyle={tooltipStyle} labelStyle={{ color:"#7d8590" }}
+        formatter={(v, name) => [fmt2(v), name]} />
+    </>
+  );
+
+  const renderChart = () => {
+    if (chartType === "candle") {
+      return (
+        <ComposedChart data={data} margin={{ top:4, right:2, left:0, bottom:0 }}>
+          {commonAxes}
+          {/* Candlestick via Bar with custom shape */}
+          <Bar dataKey="high" shape={<CandlestickBar />} isAnimationActive={false}>
+            {data.map((d, i) => <Cell key={i} fill={d.close >= d.open ? colorUp : colorDown} />)}
+          </Bar>
+          {data.some(d => d.sma20) && (
+            <Line type="monotone" dataKey="sma20" stroke="#e3b341" strokeWidth={1} dot={false} isAnimationActive={false} name="SMA 20" connectNulls />
+          )}
+        </ComposedChart>
+      );
+    }
+    if (chartType === "line") {
+      return (
+        <ComposedChart data={data} margin={{ top:4, right:2, left:0, bottom:0 }}>
+          {commonAxes}
+          <Line type="monotone" dataKey="close" stroke={lc} strokeWidth={1.5} dot={false} isAnimationActive={false} name="Price" />
+          {data.some(d => d.sma20) && (
+            <Line type="monotone" dataKey="sma20" stroke="#e3b341" strokeWidth={1} dot={false} isAnimationActive={false} name="SMA 20" connectNulls strokeDasharray="4 2" />
+          )}
+        </ComposedChart>
+      );
+    }
+    // area (default)
+    return (
+      <ComposedChart data={data} margin={{ top:4, right:2, left:0, bottom:0 }}>
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%"  stopColor={lc} stopOpacity={0.18} />
+            <stop offset="95%" stopColor={lc} stopOpacity={0}    />
+          </linearGradient>
+        </defs>
+        {commonAxes}
+        <Area type="monotone" dataKey="close" stroke={lc} strokeWidth={1.5} fill={"url(#" + gradId + ")"} dot={false} isAnimationActive={false} name="Price" />
+        {data.some(d => d.sma20) && (
+          <Line type="monotone" dataKey="sma20" stroke="#e3b341" strokeWidth={1} dot={false} isAnimationActive={false} name="SMA 20" connectNulls strokeDasharray="4 2" />
+        )}
+      </ComposedChart>
+    );
+  };
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <span className="text-gray-400 text-xs font-mono uppercase tracking-wider">Price Chart</span>
-          {data.length > 0 && <span className="text-xs font-mono px-1.5 py-0.5 rounded" style={{ color: clr(chg), background: bg(chg) }}>{fmt.change(chg)} ({pct >= 0 ? "+" : ""}{pct.toFixed(2)}%) {tf}</span>}
+      {/* Controls row */}
+      <div className="flex items-center justify-between mb-2 flex-wrap gap-1">
+        <div className="flex items-center gap-2">
+          {label && <span className="font-mono" style={{ color:"#7d8590", fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em" }}>{label}</span>}
+          {data.length > 0 && (
+            <span className="font-mono" style={{ fontSize:10, color:lc, background:lc+"18", border:"1px solid "+lc+"33", borderRadius:3, padding:"1px 6px" }}>
+              {chg >= 0 ? "+" : ""}{fmt2(chg)} ({pct >= 0 ? "+" : ""}{pct.toFixed(2)}%) {tf}
+            </span>
+          )}
         </div>
-        <div className="flex border border-gray-800 rounded overflow-hidden">
-          {TIMEFRAMES.map((t) => (
-            <button key={t} onClick={() => setTf(t)} className="px-2.5 py-1 text-xs font-mono transition-colors" style={{ background: tf === t ? "#1a2744" : "transparent", color: tf === t ? "#60a5fa" : "#6b7280", borderRight: "1px solid #1f2937" }}>{t}</button>
-          ))}
+        <div className="flex items-center gap-1.5">
+          {/* Chart type */}
+          <div className="flex gap-1">
+            <ChartTypeBtn value="area"   active={chartType==="area"}   onClick={setChartType}>Area</ChartTypeBtn>
+            <ChartTypeBtn value="line"   active={chartType==="line"}   onClick={setChartType}>Line</ChartTypeBtn>
+            <ChartTypeBtn value="candle" active={chartType==="candle"} onClick={setChartType}>Candle</ChartTypeBtn>
+          </div>
+          {/* Timeframe */}
+          <div className="flex overflow-hidden rounded" style={{ border:"1px solid #21262d" }}>
+            {TIMEFRAMES.map(t => (
+              <button key={t} onClick={() => setTf(t)} className="font-mono"
+                style={{ padding:"2px 8px", fontSize:10, background:tf===t?"#0c2044":"transparent", color:tf===t?"#58a6ff":"#7d8590", borderRight:"1px solid #21262d", cursor:"pointer" }}>
+                {t}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-      <div className="flex-1 min-h-0" style={{ minHeight: 200 }}>
+      {/* Chart area */}
+      <div style={{ flex:1, minHeight: height }}>
         {loading ? (
-          <div className="flex items-center justify-center h-full text-gray-600 text-sm font-mono animate-pulse">Loading chart data...</div>
+          <div className="flex items-center justify-center h-full font-mono" style={{ color:"#484f58", fontSize:11 }}>Loading…</div>
+        ) : data.length === 0 ? (
+          <div className="flex items-center justify-center h-full font-mono" style={{ color:"#484f58", fontSize:11 }}>No data</div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={lc} stopOpacity={0.15} />
-                  <stop offset="95%" stopColor={lc} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
-              <XAxis dataKey="date" tick={{ fill: "#4b5563", fontSize: 10, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={Math.max(1, Math.floor(data.length / 6))} />
-              <YAxis domain={[minP, maxP]} tick={{ fill: "#4b5563", fontSize: 10, fontFamily: "monospace" }} tickLine={false} axisLine={false} tickFormatter={(v) => "$" + v.toFixed(0)} width={52} />
-              <Tooltip contentStyle={{ background: "#111827", border: "1px solid #374151", borderRadius: 4, fontSize: 10, fontFamily: "monospace" }} labelStyle={{ color: "#9ca3af" }} itemStyle={{ color: "#e5e7eb" }} formatter={(v) => ["$" + fmt.price(v)]} />
-              <Area type="monotone" dataKey="price" stroke={lc} strokeWidth={1.5} fill="url(#pg)" dot={false} activeDot={{ r: 3, fill: lc }} />
-              <Line type="monotone" dataKey="sma20" stroke="#f59e0b" strokeWidth={1} dot={false} strokeDasharray="4 2" />
-            </AreaChart>
+            {renderChart()}
           </ResponsiveContainer>
         )}
       </div>
+      {/* Volume bar (optional) */}
+      {showVolume && !loading && data.length > 0 && (
+        <div style={{ height:36, marginTop:2 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} margin={{ top:0, right:2, left:0, bottom:0 }}>
+              <YAxis hide domain={[0,"auto"]} />
+              <Bar dataKey="volume" isAnimationActive={false} radius={[1,1,0,0]}>
+                {data.map((d, i) => <Cell key={i} fill={d.close >= d.open ? "rgba(63,185,80,0.5)" : "rgba(248,81,73,0.5)"} />)}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
+}
+
+function PriceChart({ ticker }) {
+  return <UniversalChart ticker={ticker} height={200} showVolume defaultTf="3M" label="Price Chart" />;
 }
 
 function KeyMetrics({ quote, metrics }) {
@@ -4214,7 +4152,7 @@ function MarketSessionBadges() {
 export default function App() {
   const [activePage, setActivePage] = useState("financial");
   const [subPage, setSubPage] = useState("overview");
-  const [settings, setSettings] = useState({ showTickerTape: true });
+  const [settings, setSettings] = useState(() => ({ showTickerTape: true, ...loadSettings() }));
   const [showSettings, setShowSettings] = useState(false);
   const [ticker, setTicker] = useState("AAPL");
   const [quote, setQuote] = useState(null);
@@ -4286,7 +4224,7 @@ export default function App() {
                 <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Scrolling price bar at top</div>
               </div>
               <button
-                onClick={() => setSettings(s => ({ ...s, showTickerTape: !s.showTickerTape }))}
+                onClick={() => setSettings(s => { const n = { ...s, showTickerTape: !s.showTickerTape }; saveSettings(n); return n; })}
                 style={{
                   width: 40, height: 22, borderRadius: 11, border: "none", cursor: "pointer",
                   background: settings.showTickerTape ? "#1f6feb" : "#30363d",
