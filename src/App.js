@@ -1530,24 +1530,368 @@ function GeopoliticalEvents({ onOpenResearch }) {
   );
 }
 
+// ============================================================
+// GLOBAL INTELLIGENCE GLOBE — data + component
+// ============================================================
+
+const CHOKEPOINTS = [
+  { id:"hormuz",    name:"Strait of Hormuz",     lat:26.40, lng:56.40,  type:"Strait", oil:"21M bbl/day",  note:"Persian Gulf oil gateway — Iran/Oman border" },
+  { id:"malacca",   name:"Strait of Malacca",    lat:1.25,  lng:103.50, type:"Strait", oil:"19M bbl/day",  note:"SE Asia chokepoint — Singapore/Malaysia/Indonesia" },
+  { id:"suez",      name:"Suez Canal",            lat:30.50, lng:32.40,  type:"Canal",  oil:"9.5M bbl/day", note:"Europe–Asia shortcut through Egypt" },
+  { id:"bab",       name:"Bab el-Mandeb",         lat:12.58, lng:43.47,  type:"Strait", oil:"6.2M bbl/day", note:"Red Sea entry — Yemen/Djibouti coast" },
+  { id:"bosphorus", name:"Turkish Straits",       lat:41.12, lng:29.07,  type:"Strait", oil:"3.0M bbl/day", note:"Black Sea to Mediterranean — Turkey" },
+  { id:"panama",    name:"Panama Canal",          lat:9.00,  lng:-79.60, type:"Canal",  oil:"0.9M bbl/day", note:"Pacific–Atlantic shortcut — Panama" },
+  { id:"goodhope",  name:"Cape of Good Hope",     lat:-34.40,lng:18.50,  type:"Cape",   oil:"Bypass route", note:"Suez Canal alternative for VLCCs" },
+  { id:"horn",      name:"Cape Horn",             lat:-55.90,lng:-67.30, type:"Cape",   oil:"Bypass route", note:"Drake Passage — South America tip" },
+  { id:"danish",    name:"Danish Straits",        lat:57.50, lng:10.00,  type:"Strait", oil:"3.3M bbl/day", note:"Baltic Sea access — Skagerrak/Kattegat" },
+  { id:"lombok",    name:"Lombok Strait",         lat:-8.75, lng:115.75, type:"Strait", oil:"1.3M bbl/day", note:"Malacca bypass — Indonesia" },
+  { id:"taiwan",    name:"Taiwan Strait",         lat:24.50, lng:120.50, type:"Strait", oil:"1.8M bbl/day", note:"China–Japan shipping corridor" },
+];
+
+const OIL_ROUTES = [
+  { id:"pg-china",    name:"Persian Gulf → China",         startLat:26.40, startLng:56.40,  endLat:30.00,  endLng:121.00, vol:"4.5M bbl/day", region:"Middle East → China" },
+  { id:"pg-japan",    name:"Persian Gulf → Japan",         startLat:26.40, startLng:56.40,  endLat:34.70,  endLng:136.90, vol:"3.2M bbl/day", region:"Middle East → Japan" },
+  { id:"pg-india",    name:"Persian Gulf → India",         startLat:24.50, startLng:58.50,  endLat:19.10,  endLng:72.90,  vol:"1.5M bbl/day", region:"Middle East → India" },
+  { id:"pg-europe",   name:"Persian Gulf → Europe",        startLat:26.40, startLng:56.40,  endLat:51.50,  endLng:0.10,   vol:"2.4M bbl/day", region:"Middle East → Europe" },
+  { id:"pg-us",       name:"Persian Gulf → US Gulf",       startLat:24.50, startLng:55.00,  endLat:29.90,  endLng:-90.10, vol:"0.8M bbl/day", region:"Middle East → US" },
+  { id:"ru-europe",   name:"Russia/Baltic → Europe",       startLat:59.90, startLng:30.20,  endLat:53.90,  endLng:14.10,  vol:"1.8M bbl/day", region:"Russia → Europe" },
+  { id:"ru-china",    name:"Russia (ESPO) → China",        startLat:52.00, startLng:131.50, endLat:39.90,  endLng:116.40, vol:"0.9M bbl/day", region:"Russia → China" },
+  { id:"waf-europe",  name:"West Africa → Europe",         startLat:0.40,  startLng:9.50,   endLat:51.50,  endLng:0.10,   vol:"1.0M bbl/day", region:"West Africa → Europe" },
+  { id:"waf-us",      name:"West Africa → US East",        startLat:-8.80, startLng:13.20,  endLat:40.70,  endLng:-74.00, vol:"0.8M bbl/day", region:"West Africa → Americas" },
+  { id:"waf-china",   name:"West Africa → China",          startLat:0.40,  startLng:9.50,   endLat:22.30,  endLng:114.20, vol:"1.2M bbl/day", region:"West Africa → China" },
+  { id:"nafr-europe", name:"North Africa → Europe",        startLat:32.90, startLng:13.20,  endLat:40.80,  endLng:14.30,  vol:"0.7M bbl/day", region:"N. Africa → Europe" },
+  { id:"us-europe",   name:"US Gulf Coast → Europe",       startLat:29.90, startLng:-90.10, endLat:51.50,  endLng:0.10,   vol:"1.0M bbl/day", region:"Americas → Europe" },
+  { id:"can-us",      name:"Canada → US (pipeline)",       startLat:53.50, startLng:-113.50,endLat:29.70,  endLng:-95.40, vol:"3.9M bbl/day", region:"Canada → US" },
+  { id:"venezuela",   name:"Venezuela → US/China",         startLat:10.50, startLng:-66.90, endLat:29.90,  endLng:-90.10, vol:"0.6M bbl/day", region:"Americas → US" },
+  { id:"nsea-uk",     name:"North Sea → Europe",           startLat:57.00, startLng:3.00,   endLat:51.50,  endLng:0.10,   vol:"1.4M bbl/day", region:"North Sea" },
+  { id:"oman-asia",   name:"Oman/UAE → Asia",              startLat:23.60, startLng:58.59,  endLat:1.35,   endLng:103.82, vol:"2.5M bbl/day", region:"Gulf → SE Asia" },
+];
+
+const SEA_CABLES = [
+  { id:"marea",      name:"MAREA",           startLat:36.83, startLng:-76.00, endLat:43.26, endLng:-2.93,   capacity:"200 Tbps",  operators:"Microsoft, Facebook" },
+  { id:"aeconnect",  name:"AEConnect",       startLat:40.72, startLng:-73.97, endLat:54.22, endLng:-9.22,   capacity:"200 Tbps",  operators:"Aqua Comms" },
+  { id:"tat14",      name:"TAT-14",          startLat:39.37, startLng:-74.43, endLat:50.83, endLng:-4.55,   capacity:"3.2 Tbps",  operators:"Multi-operator consortium" },
+  { id:"dunant",     name:"Dunant",          startLat:40.72, startLng:-73.97, endLat:43.30, endLng:5.37,    capacity:"250 Tbps",  operators:"Google" },
+  { id:"amitie",     name:"Amitié",          startLat:40.72, startLng:-73.97, endLat:47.38, endLng:-2.21,   capacity:"400 Tbps",  operators:"Facebook, Microsoft, Aqua Comms" },
+  { id:"sam1",       name:"SAm-1",           startLat:25.77, startLng:-80.19, endLat:-3.72, endLng:-38.58,  capacity:"40 Gbps",   operators:"Telefónica" },
+  { id:"sas",        name:"SAS (S. Atlantic)", startLat:-3.72, startLng:-38.58, endLat:-33.93,endLng:18.42,  capacity:"12.8 Tbps", operators:"Angola Cables" },
+  { id:"seamewe3",   name:"SEA-ME-WE 3",     startLat:50.83, startLng:-4.55,  endLat:1.35,  endLng:103.82,  capacity:"960 Gbps",  operators:"Consortium (16 telcos)" },
+  { id:"seamewe5",   name:"SEA-ME-WE 5",     startLat:43.30, startLng:5.37,   endLat:1.35,  endLng:103.82,  capacity:"24 Tbps",   operators:"Consortium (15 telcos)" },
+  { id:"flag",       name:"FLAG (FEA)",       startLat:50.83, startLng:-4.55,  endLat:35.61, endLng:140.12,  capacity:"10 Gbps",   operators:"GCX" },
+  { id:"peace",      name:"PEACE",           startLat:24.86, startLng:67.01,  endLat:43.30, endLng:5.37,    capacity:"16 Tbps",   operators:"PEACE Cable International" },
+  { id:"eig",        name:"EIG",             startLat:51.50, startLng:-0.12,  endLat:19.08, endLng:72.88,   capacity:"3.84 Tbps", operators:"Alcatel Submarine Networks" },
+  { id:"faster",     name:"FASTER",          startLat:45.73, startLng:-123.95,endLat:35.61, endLng:140.12,  capacity:"60 Tbps",   operators:"Google, China Mobile" },
+  { id:"jupiter",    name:"Jupiter",         startLat:36.98, startLng:-122.03,endLat:34.69, endLng:135.50,  capacity:"60 Tbps",   operators:"Amazon, Facebook, SoftBank" },
+  { id:"aag",        name:"AAG",             startLat:35.37, startLng:-120.86,endLat:1.35,  endLng:103.82,  capacity:"40 Tbps",   operators:"Multi-operator" },
+  { id:"hawaiki",    name:"Hawaiki",         startLat:45.73, startLng:-123.95,endLat:-33.87,endLng:151.21,  capacity:"30 Tbps",   operators:"Hawaiki Submarine Cable" },
+  { id:"indigo",     name:"Indigo",          startLat:-31.95,startLng:115.84, endLat:19.08, endLng:72.88,   capacity:"36 Tbps",   operators:"Google, Telstra" },
+  { id:"apx",        name:"APX-East",        startLat:-33.87,startLng:151.21, endLat:22.28, endLng:114.16,  capacity:"80 Tbps",   operators:"AARNet, SubPartners" },
+  { id:"seacom",     name:"SEACOM",          startLat:-33.93,startLng:18.42,  endLat:19.08, endLng:72.88,   capacity:"1.28 Tbps", operators:"SEACOM" },
+  { id:"eassy",      name:"EASSy",           startLat:-33.93,startLng:18.42,  endLat:-11.70,endLng:43.24,   capacity:"4.72 Tbps", operators:"Multi-operator" },
+  { id:"ace",        name:"ACE",             startLat:50.83, startLng:-4.55,  endLat:-33.93,endLng:18.42,   capacity:"5.12 Tbps", operators:"Orange et al." },
+  { id:"wacs",       name:"WACS",            startLat:38.71, startLng:-9.14,  endLat:-33.93,endLng:18.42,   capacity:"5.12 Tbps", operators:"Multi-operator" },
+  { id:"trans-pac",  name:"Trans-Pacific Express", startLat:35.37,startLng:-120.86,endLat:34.69,endLng:135.50,capacity:"2.56 Tbps",operators:"China Telecom, AT&T" },
+];
+
+const CABLE_LANDINGS = [
+  { id:"shirley",   name:"Shirley, NY",         lat:40.88, lng:-72.89, country:"USA",       cables:["TAT-14","SeaLink"] },
+  { id:"vbeach",    name:"Virginia Beach, VA",  lat:36.83, lng:-76.00, country:"USA",       cables:["MAREA","ACMA"] },
+  { id:"miami",     name:"Miami, FL",           lat:25.77, lng:-80.19, country:"USA",       cables:["SAm-1","Maya-1"] },
+  { id:"morro",     name:"Morro Bay, CA",       lat:35.37, lng:-120.86,country:"USA",       cables:["AAG","TPE"] },
+  { id:"nedonna",   name:"Nedonna Beach, OR",   lat:45.73, lng:-123.95,country:"USA",       cables:["FASTER","Hawaiki"] },
+  { id:"bude",      name:"Bude, UK",            lat:50.83, lng:-4.55,  country:"UK",        cables:["TAT-14","FLAG","ACE"] },
+  { id:"killala",   name:"Killala, Ireland",    lat:54.22, lng:-9.22,  country:"Ireland",   cables:["AEConnect"] },
+  { id:"marseille", name:"Marseille, France",   lat:43.30, lng:5.37,   country:"France",    cables:["SEA-ME-WE 3","Dunant"] },
+  { id:"bilbao",    name:"Bilbao, Spain",       lat:43.26, lng:-2.93,  country:"Spain",     cables:["MAREA"] },
+  { id:"lisbon",    name:"Lisbon, Portugal",    lat:38.71, lng:-9.14,  country:"Portugal",  cables:["WACS","Atlantis-2"] },
+  { id:"fortaleza", name:"Fortaleza, Brazil",   lat:-3.72, lng:-38.58, country:"Brazil",    cables:["SAm-1","SEABRAS-1"] },
+  { id:"dakar",     name:"Dakar, Senegal",      lat:14.73, lng:-17.47, country:"Senegal",   cables:["ACE","Atlantis-2"] },
+  { id:"mumbai",    name:"Mumbai, India",       lat:19.08, lng:72.88,  country:"India",     cables:["SEA-ME-WE 3","EIG","Indigo"] },
+  { id:"chennai",   name:"Chennai, India",      lat:13.08, lng:80.29,  country:"India",     cables:["SEA-ME-WE 3"] },
+  { id:"karachi",   name:"Karachi, Pakistan",   lat:24.86, lng:67.01,  country:"Pakistan",  cables:["PEACE","SEA-ME-WE 3"] },
+  { id:"singapore", name:"Singapore",           lat:1.35,  lng:103.82, country:"Singapore", cables:["SEA-ME-WE 3","AAG","SEA-ME-WE 5"] },
+  { id:"hongkong",  name:"Hong Kong",           lat:22.28, lng:114.16, country:"China",     cables:["AAG","APX-East"] },
+  { id:"chiba",     name:"Chiba, Japan",        lat:35.61, lng:140.12, country:"Japan",     cables:["FASTER","FLAG"] },
+  { id:"sydney",    name:"Sydney, Australia",   lat:-33.87,lng:151.21, country:"Australia", cables:["Hawaiki","APX-East"] },
+  { id:"perth",     name:"Perth, Australia",    lat:-31.95,lng:115.84, country:"Australia", cables:["Indigo"] },
+  { id:"capetown",  name:"Cape Town, S. Africa",lat:-33.93,lng:18.42,  country:"S. Africa", cables:["SEACOM","WACS","SAT3","EASSy"] },
+];
+
+const GLOBE_LAYER_CONFIG = {
+  oilRoutes:     { label:"Oil Shipping Routes",    icon:"🛢",  color:"#f0a500", desc:"Major global oil tanker routes",           enabled:true  },
+  chokepoints:   { label:"Strategic Chokepoints",  icon:"⚓",  color:"#f85149", desc:"Critical maritime chokepoints",            enabled:true  },
+  seaCables:     { label:"Subsea Internet Cables", icon:"🌐",  color:"#58a6ff", desc:"Global undersea fiber-optic cables",       enabled:true  },
+  cableLandings: { label:"Cable Landing Points",   icon:"📡",  color:"#3fb950", desc:"Coastal cable terminal stations",          enabled:false },
+};
+
+const GLOBE_FUTURE_LAYERS = [
+  { icon:"🚢", label:"Ship Tracking (AIS)" },
+  { icon:"✈️", label:"Aircraft (ADS-B)"   },
+  { icon:"⚔️", label:"Military Activity"  },
+  { icon:"📦", label:"Trade Flows"        },
+  { icon:"🌪",  label:"Weather Systems"   },
+  { icon:"🛰",  label:"Satellite Coverage"},
+];
+
+function GlobalIntelligenceGlobe() {
+  const containerRef = useRef();
+  const globeEl     = useRef();
+  const [GlobeComp, setGlobeComp] = useState(null);
+  const [layers,    setLayers]    = useState(GLOBE_LAYER_CONFIG);
+  const [selected,  setSelected]  = useState(null);
+  const [hovered,   setHovered]   = useState(null);
+  const [dims,      setDims]      = useState({ w:800, h:600 });
+
+  // Lazy-load react-globe.gl (WebGL heavy — don't include in main bundle)
+  useEffect(() => {
+    import("react-globe.gl")
+      .then(mod => setGlobeComp(() => mod.default))
+      .catch(err => console.error("Globe load failed:", err));
+  }, []);
+
+  // Responsive container sizing
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const ro = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      if (width > 0 && height > 0) setDims({ w:Math.floor(width), h:Math.floor(height) });
+    });
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  // Configure controls once the globe renders
+  const onGlobeReady = useCallback(() => {
+    if (!globeEl.current) return;
+    const ctrl = globeEl.current.controls();
+    ctrl.autoRotate      = true;
+    ctrl.autoRotateSpeed = 0.35;
+    ctrl.enableDamping   = true;
+    ctrl.dampingFactor   = 0.1;
+    ctrl.minDistance     = 150;
+    ctrl.maxDistance     = 700;
+    globeEl.current.pointOfView({ lat:20, lng:10, altitude:2.3 }, 1200);
+  }, []);
+
+  const toggleLayer = useCallback((id) => {
+    setLayers(prev => ({ ...prev, [id]: { ...prev[id], enabled:!prev[id].enabled } }));
+  }, []);
+
+  // Arc dataset: oil routes + cables
+  const arcsData = useMemo(() => {
+    const out = [];
+    if (layers.oilRoutes.enabled)
+      out.push(...OIL_ROUTES.map(r => ({ ...r, _layer:"oilRoutes" })));
+    if (layers.seaCables.enabled)
+      out.push(...SEA_CABLES.map(c => ({ ...c, _layer:"seaCables" })));
+    return out;
+  }, [layers.oilRoutes.enabled, layers.seaCables.enabled]);
+
+  // Point dataset: chokepoints + landings
+  const pointsData = useMemo(() => {
+    const out = [];
+    if (layers.chokepoints.enabled)
+      out.push(...CHOKEPOINTS.map(p => ({ ...p, _layer:"chokepoints", _r:0.55, _alt:0.016 })));
+    if (layers.cableLandings.enabled)
+      out.push(...CABLE_LANDINGS.map(p => ({ ...p, _layer:"cableLandings", _r:0.22, _alt:0.005 })));
+    return out;
+  }, [layers.chokepoints.enabled, layers.cableLandings.enabled]);
+
+  const arcColor = useCallback((d) => {
+    if (d._layer === "oilRoutes")   return ["rgba(240,165,0,0.1)","rgba(240,165,0,0.9)"];
+    if (d._layer === "seaCables")   return ["rgba(88,166,255,0.08)","rgba(88,166,255,0.75)"];
+    return ["rgba(255,255,255,0.2)","rgba(255,255,255,0.8)"];
+  }, []);
+
+  const pointColor = useCallback((d) => {
+    if (d._layer === "chokepoints")   return layers.chokepoints.color;
+    if (d._layer === "cableLandings") return layers.cableLandings.color;
+    return "#fff";
+  }, [layers.chokepoints.color, layers.cableLandings.color]);
+
+  const tipStyle = "background:#0d1117;border:1px solid #30363d;padding:5px 10px;border-radius:3px;font-family:monospace;font-size:10px;color:#e6edf3;pointer-events:none";
+
+  const renderInfo = (d) => {
+    if (!d) return null;
+    return (
+      <div className="p-3 rounded mt-3" style={{ background:"#0d1117", border:"1px solid #30363d" }}>
+        <div className="font-mono font-bold text-xs mb-2" style={{ color:"#e6edf3" }}>{d.name}</div>
+        {d._layer === "chokepoints" && <>
+          <div className="text-xs font-mono mb-1" style={{ color:"#7d8590" }}>Type: <span style={{ color:"#e3b341" }}>{d.type}</span></div>
+          <div className="text-xs font-mono mb-1" style={{ color:"#7d8590" }}>Oil flow: <span style={{ color:"#f0a500" }}>{d.oil}</span></div>
+          <div className="text-xs font-mono leading-relaxed" style={{ color:"#484f58" }}>{d.note}</div>
+        </>}
+        {d._layer === "oilRoutes" && <>
+          <div className="text-xs font-mono mb-1" style={{ color:"#7d8590" }}>Region: <span style={{ color:"#e6edf3" }}>{d.region}</span></div>
+          <div className="text-xs font-mono" style={{ color:"#f0a500" }}>Volume: {d.vol}</div>
+        </>}
+        {d._layer === "seaCables" && <>
+          <div className="text-xs font-mono mb-1" style={{ color:"#7d8590" }}>Capacity: <span style={{ color:"#58a6ff" }}>{d.capacity}</span></div>
+          <div className="text-xs font-mono leading-relaxed" style={{ color:"#484f58" }}>{d.operators}</div>
+        </>}
+        {d._layer === "cableLandings" && <>
+          <div className="text-xs font-mono mb-1" style={{ color:"#7d8590" }}>Country: <span style={{ color:"#e6edf3" }}>{d.country}</span></div>
+          <div className="text-xs font-mono leading-relaxed" style={{ color:"#3fb950" }}>{d.cables?.join(", ")}</div>
+        </>}
+        <button onClick={() => setSelected(null)} className="mt-2 text-xs font-mono" style={{ color:"#484f58" }}>✕ Dismiss</button>
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex" style={{ height:"calc(100vh - 90px)", overflow:"hidden" }}>
+
+      {/* ── Left panel: layer controls + info ── */}
+      <div className="terminal-panel p-3 flex flex-col gap-2"
+        style={{ width:220, flexShrink:0, overflowY:"auto", borderRight:"1px solid #21262d" }}>
+
+        <div className="terminal-header">🎛 Layers</div>
+
+        {/* Active layers */}
+        {Object.entries(layers).map(([id, layer]) => (
+          <button key={id} onClick={() => toggleLayer(id)}
+            className="w-full flex items-start gap-2 p-2 rounded text-left transition-all"
+            style={{
+              background:layer.enabled ? "#0c2044" : "transparent",
+              border:"1px solid",
+              borderColor:layer.enabled ? layer.color+"44" : "#1c2128",
+              cursor:"pointer",
+            }}>
+            <div style={{ width:8, height:8, borderRadius:"50%", background:layer.enabled ? layer.color : "#484f58", flexShrink:0, marginTop:3 }} />
+            <div>
+              <div className="text-xs font-mono font-bold" style={{ color:layer.enabled?"#e6edf3":"#7d8590" }}>{layer.icon} {layer.label}</div>
+              <div className="text-xs font-mono" style={{ color:"#484f58", fontSize:9, lineHeight:1.4 }}>{layer.desc}</div>
+            </div>
+          </button>
+        ))}
+
+        {/* Future layers */}
+        <div className="mt-2">
+          <div className="text-xs font-mono mb-2" style={{ color:"#21262d", textTransform:"uppercase", letterSpacing:"0.08em" }}>Coming Soon</div>
+          {GLOBE_FUTURE_LAYERS.map(f => (
+            <div key={f.label} className="flex items-center gap-2 p-2 rounded mb-1"
+              style={{ border:"1px solid #1c2128", opacity:0.45 }}>
+              <div style={{ width:8, height:8, borderRadius:"50%", background:"#21262d" }} />
+              <div className="text-xs font-mono" style={{ color:"#484f58" }}>{f.icon} {f.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Selected element info */}
+        {renderInfo(selected)}
+      </div>
+
+      {/* ── Globe canvas ── */}
+      <div ref={containerRef} className="flex-1 relative" style={{ background:"#00000f" }}>
+        {!GlobeComp ? (
+          <div className="flex flex-col items-center justify-center h-full gap-3">
+            <div className="text-xs font-mono animate-pulse" style={{ color:"#7d8590" }}>Initializing WebGL renderer…</div>
+            <div className="text-xs font-mono" style={{ color:"#484f58" }}>Loading globe assets</div>
+          </div>
+        ) : (
+          <GlobeComp
+            ref={globeEl}
+            width={dims.w}
+            height={dims.h}
+            onGlobeReady={onGlobeReady}
+
+            /* Globe appearance */
+            globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
+            bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
+            backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
+            atmosphereColor="#1a3a6b"
+            atmosphereAltitude={0.18}
+
+            /* Arcs — oil routes & cables */
+            arcsData={arcsData}
+            arcStartLat="startLat"
+            arcStartLng="startLng"
+            arcEndLat="endLat"
+            arcEndLng="endLng"
+            arcColor={arcColor}
+            arcStroke={d => d._layer === "oilRoutes" ? 0.7 : 0.45}
+            arcDashLength={d => d._layer === "oilRoutes" ? 0.35 : 0.65}
+            arcDashGap={d => d._layer === "oilRoutes" ? 0.18 : 0.28}
+            arcDashAnimateTime={d => d._layer === "oilRoutes" ? 2800 : 4500}
+            arcAltitude={d => d._layer === "oilRoutes" ? 0.22 : 0.08}
+            arcLabel={d => `<div style="${tipStyle}"><b>${d.name}</b>${d.vol ? `<br/>Volume: ${d.vol}` : ""}${d.capacity ? `<br/>Cap: ${d.capacity}` : ""}</div>`}
+            onArcClick={d => setSelected(d)}
+            onArcHover={d => setHovered(d)}
+
+            /* Points — chokepoints & landings */
+            pointsData={pointsData}
+            pointLat="lat"
+            pointLng="lng"
+            pointColor={pointColor}
+            pointRadius="_r"
+            pointAltitude="_alt"
+            pointResolution={16}
+            pointLabel={d => `<div style="${tipStyle}"><b>${d.name}</b>${d.oil ? `<br/>Oil: ${d.oil}` : ""}${d.country ? `<br/>${d.country}` : ""}</div>`}
+            onPointClick={d => setSelected(d)}
+            onPointHover={d => setHovered(d)}
+          />
+        )}
+
+        {/* Interaction hint + hover name */}
+        <div className="absolute bottom-3 left-3 font-mono text-xs" style={{ color:"#484f58", pointerEvents:"none" }}>
+          {hovered
+            ? <span style={{ color:"#e6edf3" }}>{hovered.name}</span>
+            : <span>Drag to rotate · Scroll to zoom · Click elements for detail</span>
+          }
+        </div>
+
+        {/* Live stats overlay */}
+        <div className="absolute top-3 right-3 flex flex-col gap-1" style={{ pointerEvents:"none" }}>
+          {layers.oilRoutes.enabled && (
+            <div className="text-xs font-mono px-2 py-1 rounded"
+              style={{ background:"#0d111799", border:"1px solid #f0a50033", color:"#f0a500" }}>
+              🛢 {OIL_ROUTES.length} Oil routes
+            </div>
+          )}
+          {layers.seaCables.enabled && (
+            <div className="text-xs font-mono px-2 py-1 rounded"
+              style={{ background:"#0d111799", border:"1px solid #58a6ff33", color:"#58a6ff" }}>
+              🌐 {SEA_CABLES.length} Subsea cables
+            </div>
+          )}
+          {layers.chokepoints.enabled && (
+            <div className="text-xs font-mono px-2 py-1 rounded"
+              style={{ background:"#0d111799", border:"1px solid #f8514933", color:"#f85149" }}>
+              ⚓ {CHOKEPOINTS.length} Chokepoints
+            </div>
+          )}
+          {layers.cableLandings.enabled && (
+            <div className="text-xs font-mono px-2 py-1 rounded"
+              style={{ background:"#0d111799", border:"1px solid #3fb95033", color:"#3fb950" }}>
+              📡 {CABLE_LANDINGS.length} Landing pts
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EyeOfSauron({ onOpenResearch }) {
   const [active, setActive] = useState(null);
 
   const MODULES = [
-    { id: "weather", icon: "🌦", title: "Global Weather", desc: "Live weather across major financial centers worldwide" },
-    { id: "vessels", icon: "🛢", title: "Vessel Tracker", desc: "Live oil tankers and cargo ships via MarineTraffic" },
-    { id: "flights", icon: "✈️", title: "Flight Tracker", desc: "Real-time global flight tracking via ADS-B Exchange" },
-    { id: "energy", icon: "⚡", title: "Energy Grid", desc: "Live US electricity grid demand and generation mix" },
-    { id: "tankers", icon: "🚢", title: "Shipping Routes", desc: "Major shipping lane congestion and freight rates", tag: "Coming Soon" },
-    { id: "geo", icon: "🌍", title: "Geopolitical Events", desc: "Live intelligence feed — market-moving events classified by impact and region" },
+    { id: "globe",   icon: "🌐", title: "Infrastructure Globe", desc: "Interactive 3D globe — oil routes, subsea cables, strategic chokepoints" },
+    { id: "weather", icon: "🌦", title: "Global Weather",       desc: "Live weather across major financial centers worldwide" },
+    { id: "vessels", icon: "🛢", title: "Vessel Tracker",       desc: "Live oil tankers and cargo ships via MarineTraffic" },
+    { id: "flights", icon: "✈️", title: "Flight Tracker",       desc: "Real-time global flight tracking via ADS-B Exchange" },
+    { id: "energy",  icon: "⚡", title: "Energy Grid",          desc: "Live US electricity grid demand and generation mix" },
+    { id: "tankers", icon: "🚢", title: "Shipping Routes",      desc: "Major shipping lane congestion and freight rates", tag: "Coming Soon" },
+    { id: "geo",     icon: "🌍", title: "Geopolitical Events",  desc: "Live intelligence feed — market-moving events classified by impact and region" },
   ];
 
   const renderModule = (id) => {
+    if (id === "globe")   return <GlobalIntelligenceGlobe />;
     if (id === "weather") return <WeatherDashboard />;
     if (id === "vessels") return <TankerMap />;
     if (id === "flights") return <FlightTracker />;
-    if (id === "energy") return <EnergyGrid />;
-    if (id === "geo")    return <GeopoliticalEvents onOpenResearch={onOpenResearch} />;
+    if (id === "energy")  return <EnergyGrid />;
+    if (id === "geo")     return <GeopoliticalEvents onOpenResearch={onOpenResearch} />;
     return null;
   };
 
