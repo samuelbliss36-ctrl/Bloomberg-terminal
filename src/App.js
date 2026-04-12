@@ -1663,14 +1663,21 @@ function GlobalIntelligenceGlobe() {
   // Configure controls once the globe renders
   const onGlobeReady = useCallback(() => {
     if (!globeEl.current) return;
+
+    // User-driven only — no idle rotation
     const ctrl = globeEl.current.controls();
-    ctrl.autoRotate      = true;
-    ctrl.autoRotateSpeed = 0.35;
-    ctrl.enableDamping   = true;
-    ctrl.dampingFactor   = 0.1;
-    ctrl.minDistance     = 150;
-    ctrl.maxDistance     = 700;
-    globeEl.current.pointOfView({ lat:20, lng:10, altitude:2.3 }, 1200);
+    ctrl.autoRotate    = false;
+    ctrl.enableDamping = true;
+    ctrl.dampingFactor = 0.12;
+    ctrl.minDistance   = 150;
+    ctrl.maxDistance   = 700;
+    globeEl.current.pointOfView({ lat:20, lng:10, altitude:2.3 }, 800);
+
+    // Constant daylight: max ambient, zero directional (sun) light
+    globeEl.current.scene().traverse(obj => {
+      if (obj.isAmbientLight)     obj.intensity = 3.5;
+      if (obj.isDirectionalLight) obj.intensity = 0;
+    });
   }, []);
 
   const toggleLayer = useCallback((id) => {
@@ -1698,9 +1705,9 @@ function GlobalIntelligenceGlobe() {
   }, [layers.chokepoints.enabled, layers.cableLandings.enabled]);
 
   const arcColor = useCallback((d) => {
-    if (d._layer === "oilRoutes")   return ["rgba(240,165,0,0.1)","rgba(240,165,0,0.9)"];
-    if (d._layer === "seaCables")   return ["rgba(88,166,255,0.08)","rgba(88,166,255,0.75)"];
-    return ["rgba(255,255,255,0.2)","rgba(255,255,255,0.8)"];
+    if (d._layer === "oilRoutes") return "rgba(240,165,0,0.82)";
+    if (d._layer === "seaCables") return "rgba(88,166,255,0.72)";
+    return "rgba(255,255,255,0.7)";
   }, []);
 
   const pointColor = useCallback((d) => {
@@ -1750,7 +1757,7 @@ function GlobalIntelligenceGlobe() {
         {/* Active layers */}
         {Object.entries(layers).map(([id, layer]) => (
           <button key={id} onClick={() => toggleLayer(id)}
-            className="w-full flex items-start gap-2 p-2 rounded text-left transition-all"
+            className="w-full flex items-start gap-2 p-2 rounded text-left"
             style={{
               background:layer.enabled ? "#0c2044" : "transparent",
               border:"1px solid",
@@ -1782,7 +1789,7 @@ function GlobalIntelligenceGlobe() {
       </div>
 
       {/* ── Globe canvas ── */}
-      <div ref={containerRef} className="flex-1 relative" style={{ background:"#00000f" }}>
+      <div ref={containerRef} className="flex-1 relative" style={{ background:"#050c18" }}>
         {!GlobeComp ? (
           <div className="flex flex-col items-center justify-center h-full gap-3">
             <div className="text-xs font-mono animate-pulse" style={{ color:"#7d8590" }}>Initializing WebGL renderer…</div>
@@ -1795,26 +1802,26 @@ function GlobalIntelligenceGlobe() {
             height={dims.h}
             onGlobeReady={onGlobeReady}
 
-            /* Globe appearance */
-            globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
-            bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
+            /* Globe appearance — constant daylight, blue-marble texture */
+            globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
             backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
-            atmosphereColor="#1a3a6b"
-            atmosphereAltitude={0.18}
+            showAtmosphere={true}
+            atmosphereColor="#4a8fd4"
+            atmosphereAltitude={0.12}
 
-            /* Arcs — oil routes & cables */
+            /* Arcs — static solid lines, no dash animation */
             arcsData={arcsData}
             arcStartLat="startLat"
             arcStartLng="startLng"
             arcEndLat="endLat"
             arcEndLng="endLng"
             arcColor={arcColor}
-            arcStroke={d => d._layer === "oilRoutes" ? 0.7 : 0.45}
-            arcDashLength={d => d._layer === "oilRoutes" ? 0.35 : 0.65}
-            arcDashGap={d => d._layer === "oilRoutes" ? 0.18 : 0.28}
-            arcDashAnimateTime={d => d._layer === "oilRoutes" ? 2800 : 4500}
-            arcAltitude={d => d._layer === "oilRoutes" ? 0.22 : 0.08}
-            arcLabel={d => `<div style="${tipStyle}"><b>${d.name}</b>${d.vol ? `<br/>Volume: ${d.vol}` : ""}${d.capacity ? `<br/>Cap: ${d.capacity}` : ""}</div>`}
+            arcStroke={d => d._layer === "oilRoutes" ? 0.8 : 0.5}
+            arcDashLength={1}
+            arcDashGap={0}
+            arcDashAnimateTime={0}
+            arcAltitude={d => d._layer === "oilRoutes" ? 0.18 : 0.07}
+            arcLabel={d => `<div style="${tipStyle}"><b>${d.name}</b>${d.vol ? `<br/>Vol: ${d.vol}` : ""}${d.capacity ? `<br/>Cap: ${d.capacity}` : ""}</div>`}
             onArcClick={d => setSelected(d)}
             onArcHover={d => setHovered(d)}
 
@@ -1825,7 +1832,7 @@ function GlobalIntelligenceGlobe() {
             pointColor={pointColor}
             pointRadius="_r"
             pointAltitude="_alt"
-            pointResolution={16}
+            pointResolution={12}
             pointLabel={d => `<div style="${tipStyle}"><b>${d.name}</b>${d.oil ? `<br/>Oil: ${d.oil}` : ""}${d.country ? `<br/>${d.country}` : ""}</div>`}
             onPointClick={d => setSelected(d)}
             onPointHover={d => setHovered(d)}
