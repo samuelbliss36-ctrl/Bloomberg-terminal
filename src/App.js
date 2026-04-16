@@ -1870,11 +1870,7 @@ function GlobalIntelligenceGlobe({ onOpenResearch }) {
     add(SEA_CABLES,   "seaCables");
     add(TRADE_FLOWS,  "tradeFlows");
     return out;
-  }, [
-    layers.oilRoutes.enabled, layers.pipelines.enabled,
-    layers.seaCables.enabled, layers.tradeFlows.enabled,
-    region, importance,
-  ]);
+  }, [layers, region, importance]);
 
   // ── Point dataset (chokepoints + landings + ports + conflicts + sanctions) ──
   const pointsData = useMemo(() => {
@@ -1893,12 +1889,7 @@ function GlobalIntelligenceGlobe({ onOpenResearch }) {
     add(CONFLICT_ZONES,    "conflictZones");
     add(SANCTIONED_REGIONS,"sanctioned");
     return out;
-  }, [
-    layers.chokepoints.enabled, layers.cableLandings.enabled,
-    layers.majorPorts.enabled, layers.conflictZones.enabled,
-    layers.sanctioned.enabled,
-    region, importance,
-  ]);
+  }, [layers, region, importance]);
 
   // ── Info panel renderer ──
   const badge = (text, color) => (
