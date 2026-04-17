@@ -3444,6 +3444,452 @@ const TOPIC_CONFIG = {
   },
 };
 
+// ─── Static intelligence data for research panels ──────────────────────────
+const ENTITY_INTEL = {
+  // ── Commodities ──────────────────────────────────────────────────────────
+  "CL=F": {
+    whatItIs: "West Texas Intermediate (WTI) crude oil futures — the US benchmark for light sweet crude oil, deliverable at Cushing, Oklahoma.",
+    whyItMatters: "Oil is the world's most heavily traded commodity and the lifeblood of the global economy. It directly drives inflation, trade balances, currency values, and geopolitical alliances. Every percentage point move in oil ripples through airline costs, manufacturing margins, consumer purchasing power, and emerging-market debt.",
+    drivers: [
+      "OPEC+ production quotas and compliance rates",
+      "US shale production, rig counts (Baker Hughes weekly)",
+      "China & India demand — together >35% of global consumption growth",
+      "USD strength (oil globally priced in dollars — inverse correlation)",
+      "Middle East / Russia geopolitical risk premiums",
+      "US Strategic Petroleum Reserve (SPR) activity",
+      "Seasonal demand cycles (summer driving, winter heating)",
+      "Global inventory levels (EIA weekly reports)",
+    ],
+    relationships: [
+      { id:"NG=F",     label:"Natural Gas",    note:"Energy complex co-movement, substitution in power gen" },
+      { id:"HG=F",     label:"Copper",         note:"Both signal global industrial demand" },
+      { id:"DX=F",     label:"USD Index",      note:"Strong inverse — dollar up, oil pressured" },
+      { id:"CPIAUCSL", label:"CPI",            note:"Energy is ~7% of CPI basket" },
+      { id:"EURUSD=X", label:"EUR/USD",        note:"Oil exporters recycle petrodollars into EUR" },
+    ],
+    producers: [
+      { name:"United States", share:"~20%", note:"World's largest producer via shale" },
+      { name:"Saudi Arabia",  share:"~12%", note:"OPEC swing producer, Aramco" },
+      { name:"Russia",        share:"~11%", note:"Key OPEC+ partner, Urals blend" },
+      { name:"Iraq",          share:"~5%",  note:"OPEC member, Basra crude" },
+      { name:"Canada",        share:"~6%",  note:"Oil sands producer, exports to US" },
+      { name:"UAE / Kuwait",  share:"~6%",  note:"Gulf producers, low-cost extraction" },
+    ],
+  },
+  "GC=F": {
+    whatItIs: "COMEX gold futures — the global benchmark for gold prices, representing 100 troy oz per contract.",
+    whyItMatters: "Gold is the original safe-haven asset, holding value across millennia of monetary history. It serves as an inflation hedge, a currency hedge, a crisis hedge, and a central bank reserve asset. When real interest rates fall, dollar weakens, or systemic risk rises, gold typically rallies.",
+    drivers: [
+      "US real interest rates (gold thrives when real yields are negative)",
+      "USD strength — gold has a strong inverse correlation with DXY",
+      "Central bank buying / selling (record purchases in 2022-2024)",
+      "Inflation expectations and CPI surprises",
+      "Geopolitical risk and financial system stress",
+      "ETF flows (GLD, IAU) and COMEX positioning",
+      "Jewelry demand from India and China (50%+ of physical demand)",
+      "Mining supply growth (slow — ~3300 tonnes/yr, relatively inelastic)",
+    ],
+    relationships: [
+      { id:"SI=F",     label:"Silver",        note:"Highly correlated, silver amplifies gold moves" },
+      { id:"DX=F",     label:"USD Index",     note:"Primary driver — strong inverse correlation" },
+      { id:"CPIAUCSL", label:"CPI",           note:"Gold as inflation hedge" },
+      { id:"DGS10",    label:"10Y Treasury",  note:"Real yields are the key macro driver" },
+      { id:"EURUSD=X", label:"EUR/USD",       note:"EUR strength often accompanies gold strength" },
+    ],
+    producers: [
+      { name:"China",      share:"~11%", note:"World's largest miner, little exported" },
+      { name:"Australia",  share:"~10%", note:"Newcrest, major export hub" },
+      { name:"Russia",     share:"~9%",  note:"Largest non-Western reserves" },
+      { name:"Canada",     share:"~6%",  note:"Barrick, Agnico Eagle HQs" },
+      { name:"United States", share:"~6%", note:"Nevada is primary region" },
+      { name:"Ghana / S. Africa", share:"~8%", note:"African production declining" },
+    ],
+  },
+  "SI=F": {
+    whatItIs: "COMEX silver futures — 5,000 troy oz per contract. Silver is both a precious metal and industrial commodity.",
+    whyItMatters: "Silver uniquely straddles two markets: it follows gold as a safe-haven/monetary metal while also tracking industrial demand like copper. The 'gold/silver ratio' is a closely watched indicator — when it stretches above 80x, silver is historically cheap relative to gold.",
+    drivers: [
+      "Gold price direction (silver amplifies gold moves 2-3x)",
+      "Industrial demand: solar panels (photovoltaics consume ~15% of supply), EVs, electronics",
+      "Green energy buildout — solar capacity expansion is a structural tailwind",
+      "Investment demand: ETF flows, coin/bar buying",
+      "USD and real interest rates (same as gold)",
+      "Gold/Silver ratio — mean reversion tendencies",
+      "Mine supply from Mexico, Peru, China",
+    ],
+    relationships: [
+      { id:"GC=F",     label:"Gold",         note:"Primary driver, silver follows and amplifies" },
+      { id:"HG=F",     label:"Copper",       note:"Industrial demand overlap" },
+      { id:"DX=F",     label:"USD Index",    note:"Inverse correlation like gold" },
+      { id:"CPIAUCSL", label:"CPI",          note:"Inflation hedge component" },
+    ],
+    producers: [
+      { name:"Mexico",  share:"~23%", note:"World's largest producer" },
+      { name:"China",   share:"~14%", note:"Second largest, domestic focused" },
+      { name:"Peru",    share:"~13%", note:"Major producer, Fresnillo operations" },
+      { name:"Chile",   share:"~6%",  note:"Often byproduct of copper mining" },
+      { name:"Russia",  share:"~5%",  note:"Significant reserves" },
+    ],
+  },
+  "NG=F": {
+    whatItIs: "NYMEX Henry Hub natural gas futures — the US benchmark for natural gas prices at the Henry Hub pipeline in Louisiana.",
+    whyItMatters: "Natural gas heats homes, powers electricity generation, feeds LNG export terminals, and is a key petrochemical feedstock. It is the 'swing fuel' in power generation — competing with coal and renewables. European gas prices (TTF) have decoupled from Henry Hub due to LNG infrastructure, creating major arbitrage opportunities.",
+    drivers: [
+      "Weather extremes: cold winters (heating demand), hot summers (A/C power gen)",
+      "US production from Permian, Marcellus, Haynesville shale basins",
+      "LNG export capacity and demand from Europe/Asia",
+      "Storage levels vs. 5-year average (EIA weekly)",
+      "Coal-to-gas switching in power generation",
+      "Industrial demand (fertilizers, chemicals)",
+      "Pipeline constraints and infrastructure bottlenecks",
+    ],
+    relationships: [
+      { id:"CL=F",     label:"Crude Oil",   note:"Energy complex, but often diverges (Henry Hub vs WTI)" },
+      { id:"CPIAUCSL", label:"CPI",         note:"Utility component of inflation" },
+      { id:"EURUSD=X", label:"EUR/USD",     note:"European demand drives LNG export profits" },
+    ],
+    producers: [
+      { name:"United States", share:"~25%", note:"World's largest, shale revolution" },
+      { name:"Russia",        share:"~17%", note:"Gazprom pipelines to Europe" },
+      { name:"Iran",          share:"~7%",  note:"Second largest reserves globally" },
+      { name:"Qatar",         share:"~5%",  note:"World's largest LNG exporter" },
+      { name:"China",         share:"~5%",  note:"Rapidly growing domestic production" },
+    ],
+  },
+  "HG=F": {
+    whatItIs: "COMEX copper futures — priced per pound, 25,000 lb per contract. Often called 'Dr. Copper' for its PhD in economics.",
+    whyItMatters: "Copper is the world's leading industrial metal, used in wiring, plumbing, motors, EVs, solar panels, and wind turbines. Because copper demand tracks economic activity so closely, it is a real-time leading indicator of global growth. The energy transition has made copper structurally critical — one EV uses 4x the copper of a conventional car.",
+    drivers: [
+      "China construction and manufacturing activity (China = ~55% of consumption)",
+      "Global PMI and industrial production data",
+      "EV adoption and renewable energy buildout (structural demand driver)",
+      "Supply disruptions in Chile and Peru (>40% of global mine supply)",
+      "Inventories at LME, COMEX, SHFE warehouses",
+      "USD strength (inverse correlation)",
+      "Speculative positioning and CTAs",
+    ],
+    relationships: [
+      { id:"CL=F",     label:"Crude Oil",   note:"Both are global growth proxies" },
+      { id:"GC=F",     label:"Gold",        note:"Gold/Copper ratio signals risk-on/risk-off" },
+      { id:"DX=F",     label:"USD Index",   note:"Inverse — dollar up pressures copper" },
+      { id:"CPIAUCSL", label:"CPI",         note:"Industrial inflation component" },
+    ],
+    producers: [
+      { name:"Chile",        share:"~27%", note:"Codelco, world's largest copper company" },
+      { name:"Peru",         share:"~11%", note:"Subject to frequent social/political disruptions" },
+      { name:"Democratic Republic of Congo", share:"~10%", note:"Fast-growing, cobalt co-product" },
+      { name:"China",        share:"~8%",  note:"Smelting and refining giant" },
+      { name:"United States", share:"~5%", note:"Arizona mines — Freeport-McMoRan" },
+    ],
+  },
+  "ZW=F": {
+    whatItIs: "CBOT wheat futures — the benchmark for hard red winter wheat, deliverable in Chicago. 5,000 bushels per contract.",
+    whyItMatters: "Wheat feeds ~35% of humanity and is a strategic commodity for food security. Wheat prices directly affect bread, pasta, and animal feed costs globally. Disruptions in the Black Sea region (Ukraine+Russia = ~30% of global exports) cause immediate humanitarian and inflationary consequences.",
+    drivers: [
+      "Black Sea production and export disruptions (Russia/Ukraine war)",
+      "US winter wheat crop ratings (USDA weekly)",
+      "Weather: drought in Great Plains, frost in Europe, flooding in Asia",
+      "USD strength (most wheat trades in dollars)",
+      "Energy costs — fuel and fertilizer are major input costs",
+      "China import demand",
+      "USDA WASDE report (monthly supply/demand estimates)",
+    ],
+    relationships: [
+      { id:"CL=F",     label:"Crude Oil",   note:"Fuel and fertilizer costs" },
+      { id:"CPIAUCSL", label:"CPI",         note:"Food component of inflation" },
+      { id:"DX=F",     label:"USD Index",   note:"USD-priced commodity, inverse correlation" },
+    ],
+    producers: [
+      { name:"European Union", share:"~20%", note:"France, Germany, Poland are key exporters" },
+      { name:"China",          share:"~18%", note:"World's largest producer, mostly domestic" },
+      { name:"India",          share:"~14%", note:"Mostly domestic consumption" },
+      { name:"Russia",         share:"~11%", note:"World's largest exporter" },
+      { name:"United States",  share:"~7%",  note:"Hard red winter wheat, Kansas/Oklahoma" },
+      { name:"Ukraine",        share:"~4%",  note:"Major Black Sea exporter, disrupted by war" },
+    ],
+  },
+  // ── FX ────────────────────────────────────────────────────────────────────
+  "EURUSD=X": {
+    whatItIs: "The EUR/USD exchange rate — the world's most actively traded currency pair, representing the euro against the US dollar. ~24% of daily FX volume (~$1.1 trillion/day).",
+    whyItMatters: "EUR/USD is the global barometer of dollar strength and European economic health. It drives the cost of transatlantic trade, European corporate earnings in USD terms, and global commodity prices. When EUR/USD rises, dollar-denominated assets become cheaper for Europeans; when it falls, US exports become more competitive.",
+    drivers: [
+      "Fed vs. ECB interest rate differential (key driver of carry flows)",
+      "US economic data vs. Eurozone data (GDP, PMI, employment)",
+      "Inflation differentials between US and Eurozone",
+      "Energy prices — Europe imports energy in USD, high energy = EUR negative",
+      "Risk sentiment (EUR tends to weaken in global risk-off)",
+      "ECB policy statements and Christine Lagarde speeches",
+      "Current account balances — Eurozone traditionally runs a surplus",
+    ],
+    centralBanks: [
+      { name:"European Central Bank (ECB)", rate:"Deposit Facility Rate", series:"ECBDFR", currency:"EUR" },
+      { name:"Federal Reserve (Fed)",        rate:"Fed Funds Rate",         series:"FEDFUNDS", currency:"USD" },
+    ],
+    relationships: [
+      { id:"DX=F",     label:"USD Index",      note:"EUR is ~57% of DXY — near-perfect inverse" },
+      { id:"GC=F",     label:"Gold",           note:"EUR strength often accompanies gold strength" },
+      { id:"CL=F",     label:"Crude Oil",      note:"Energy import costs pressure EUR" },
+      { id:"FEDFUNDS", label:"Fed Funds Rate", note:"Rate differential is primary medium-term driver" },
+    ],
+  },
+  "GBPUSD=X": {
+    whatItIs: "GBP/USD ('Cable') — the exchange rate between the British pound and US dollar. One of the oldest FX pairs, named for the transatlantic telegraph cable.",
+    whyItMatters: "Cable is a key indicator of UK economic health and Brexit aftermath. The UK runs a structural current account deficit, making GBP sensitive to risk sentiment and capital flows. Post-Brexit, GBP has been structurally weaker due to trade friction with the EU.",
+    drivers: [
+      "Bank of England vs. Fed interest rate differential",
+      "UK economic data: GDP, inflation (CPI), employment, PMI",
+      "Brexit trade deal implementation and friction",
+      "UK current account deficit — requires constant capital inflows",
+      "Risk sentiment (GBP weakens sharply in crises)",
+      "Energy prices — UK is a net energy importer",
+      "Scottish independence risk (occasional tail risk)",
+    ],
+    centralBanks: [
+      { name:"Bank of England (BoE)",  rate:"Bank Rate", series:"BOEBANKRATE", currency:"GBP" },
+      { name:"Federal Reserve (Fed)", rate:"Fed Funds Rate", series:"FEDFUNDS", currency:"USD" },
+    ],
+    relationships: [
+      { id:"EURUSD=X", label:"EUR/USD",        note:"Highly correlated — both vs USD" },
+      { id:"DX=F",     label:"USD Index",      note:"GBP is ~11.9% of DXY" },
+      { id:"FEDFUNDS", label:"Fed Funds Rate", note:"Rate differential key driver" },
+    ],
+  },
+  "USDJPY=X": {
+    whatItIs: "USD/JPY — the US dollar vs. Japanese yen. The most important Asian FX pair and a key indicator of global carry trade activity.",
+    whyItMatters: "The yen is the world's premier safe-haven currency and the funding currency of choice for carry trades. When USD/JPY rises, it typically signals risk-on sentiment and carry trade expansion. When it falls rapidly, it signals unwinding of carry positions — which can trigger cascading global asset selloffs.",
+    drivers: [
+      "US-Japan interest rate differential — the widest of any G7 pair in recent history",
+      "Bank of Japan YCC (Yield Curve Control) policy changes",
+      "Japanese pension fund and life insurer hedging activity",
+      "Risk sentiment — yen strengthens sharply in risk-off",
+      "US Treasury yields — higher yields attract capital to USD",
+      "Japanese current account surplus — structural JPY demand",
+      "BoJ intervention history — Japan has intervened above 145-155",
+    ],
+    centralBanks: [
+      { name:"Bank of Japan (BoJ)",    rate:"Overnight Call Rate", series:"IRSTJPN156N", currency:"JPY" },
+      { name:"Federal Reserve (Fed)", rate:"Fed Funds Rate",       series:"FEDFUNDS",    currency:"USD" },
+    ],
+    relationships: [
+      { id:"DX=F",     label:"USD Index",      note:"USD/JPY is ~13.6% of DXY" },
+      { id:"DGS10",    label:"10Y Treasury",   note:"US yields are the primary USD/JPY driver" },
+      { id:"FEDFUNDS", label:"Fed Funds Rate", note:"Rate differential key driver" },
+      { id:"GC=F",     label:"Gold",           note:"Both are safe-haven assets — often move opposite USD/JPY" },
+    ],
+  },
+  "USDCNY=X": {
+    whatItIs: "USD/CNY — the US dollar vs. Chinese yuan (renminbi). China manages the yuan within a daily trading band, making this a managed, not freely floating, exchange rate.",
+    whyItMatters: "The yuan's value has massive global implications. A weaker yuan makes Chinese exports more competitive, putting deflationary pressure on global manufacturing. It also affects commodity demand (China buys in USD but earns in CNY). The PBOC's management of the yuan is a key geopolitical and trade policy lever.",
+    drivers: [
+      "PBOC daily fix (central rate set each morning)",
+      "US-China trade relations and tariff levels",
+      "Chinese capital account controls",
+      "China's current account surplus and reserve accumulation",
+      "US-China interest rate differential",
+      "Chinese economic growth — weaker growth = yuan depreciation pressure",
+      "Geopolitical tensions (Taiwan, technology restrictions)",
+    ],
+    centralBanks: [
+      { name:"People's Bank of China (PBOC)", rate:"Loan Prime Rate (1Y)", series:"INTDSRCNM193N", currency:"CNY" },
+      { name:"Federal Reserve (Fed)",          rate:"Fed Funds Rate",       series:"FEDFUNDS",      currency:"USD" },
+    ],
+    relationships: [
+      { id:"DX=F",     label:"USD Index",      note:"CNY is often a barometer of EM currencies" },
+      { id:"GC=F",     label:"Gold",           note:"Chinese demand for gold rises when CNY weakens" },
+      { id:"CL=F",     label:"Crude Oil",      note:"China is world's largest oil importer" },
+      { id:"HG=F",     label:"Copper",         note:"China drives copper prices; yuan strength = copper demand" },
+    ],
+  },
+  "DX=F": {
+    whatItIs: "The US Dollar Index (DXY) futures — measures USD strength against a basket of 6 currencies: EUR (57.6%), JPY (13.6%), GBP (11.9%), CAD (9.1%), SEK (4.2%), CHF (3.6%).",
+    whyItMatters: "The dollar index is the single most important macro variable in global finance. A strong dollar tightens financial conditions globally, pressures commodity prices (all priced in USD), stresses EM debt (issued in USD), and reduces US corporate earnings from overseas. Fed policy is the primary driver.",
+    drivers: [
+      "Federal Reserve policy and rate expectations (primary driver)",
+      "US growth vs. rest of world growth differential",
+      "US current account deficit — structural demand for foreign capital",
+      "Safe-haven demand during global stress events",
+      "US Treasury yield levels — higher yields attract capital",
+      "Inflation differentials between US and trading partners",
+      "EM crisis events — capital flight to USD",
+    ],
+    relationships: [
+      { id:"GC=F",     label:"Gold",           note:"Strong inverse — gold is anti-dollar" },
+      { id:"CL=F",     label:"Crude Oil",      note:"Inverse — dollar up pressures oil" },
+      { id:"EURUSD=X", label:"EUR/USD",        note:"EUR is 57.6% of DXY — almost mirror image" },
+      { id:"FEDFUNDS", label:"Fed Funds Rate", note:"Fed is the primary driver of dollar" },
+    ],
+  },
+  // ── Macro ────────────────────────────────────────────────────────────────
+  "FEDFUNDS": {
+    whatItIs: "The Federal Funds Rate — the interest rate at which US banks lend reserves to each other overnight. Set by the Federal Open Market Committee (FOMC) at 8 meetings per year.",
+    whyItMatters: "The Fed Funds Rate is the most powerful economic lever in the world. It influences every borrowing cost on earth — mortgages, auto loans, corporate bonds, EM debt. When the Fed hikes, it tightens financial conditions globally; when it cuts, it eases them. All risk assets ultimately price off this rate.",
+    drivers: [
+      "Inflation (CPI and PCE) vs. the Fed's 2% target",
+      "Labor market conditions (unemployment, job creation, wages)",
+      "GDP growth and recession risk",
+      "Financial stability concerns",
+      "Fed Chair communication (speeches, FOMC minutes, dot plot)",
+      "Geopolitical and exogenous shocks (COVID, financial crises)",
+    ],
+    relationships: [
+      { id:"DGS10",    label:"10Y Treasury",  note:"Long end reflects rate expectations + term premium" },
+      { id:"T10Y2Y",   label:"Yield Curve",   note:"Inversion signals recession risk" },
+      { id:"CPIAUCSL", label:"CPI",           note:"CPI vs 2% target drives Fed action" },
+      { id:"DX=F",     label:"USD Index",     note:"Higher rates = stronger dollar" },
+      { id:"GC=F",     label:"Gold",          note:"Higher real rates = gold headwind" },
+    ],
+  },
+  "DGS10": {
+    whatItIs: "The 10-Year US Treasury constant maturity yield — the benchmark 'risk-free' rate used to price virtually every asset on earth.",
+    whyItMatters: "The 10-year yield is the global discount rate. Every stock valuation model, every mortgage, every corporate bond spread is calculated relative to this rate. When the 10Y rises, it compresses equity valuations (especially growth stocks), strengthens the dollar, and tightens financial conditions globally.",
+    drivers: [
+      "Fed Funds Rate expectations (short end) and rate path pricing",
+      "Inflation expectations (breakevens) — real yield = nominal - inflation",
+      "US fiscal deficit and Treasury supply (bond issuance)",
+      "Foreign central bank demand (Japan, China hold ~$1T+ each)",
+      "Economic growth outlook",
+      "Term premium — compensation for duration risk",
+    ],
+    relationships: [
+      { id:"DGS2",     label:"2Y Treasury",   note:"2Y tracks Fed policy; spread = curve shape" },
+      { id:"T10Y2Y",   label:"Yield Curve",   note:"10Y minus 2Y is the classic recession indicator" },
+      { id:"FEDFUNDS", label:"Fed Funds Rate", note:"Fed anchors short end; market sets long end" },
+      { id:"CPIAUCSL", label:"CPI",           note:"Inflation expectations are embedded in 10Y yield" },
+    ],
+  },
+  "CPIAUCSL": {
+    whatItIs: "The Consumer Price Index for All Urban Consumers (CPI-U) — the US Bureau of Labor Statistics' measure of the average change in prices paid by consumers for goods and services.",
+    whyItMatters: "CPI is the most politically sensitive economic number in the US. It determines Fed policy, Social Security cost-of-living adjustments, TIPS returns, real wage growth, and the political fortunes of incumbents. CPI above 2% triggers Fed hikes; CPI below 2% allows rate cuts.",
+    drivers: [
+      "Energy prices (gasoline is ~4% of CPI and volatile)",
+      "Shelter/rent costs (~35% of CPI — largest single component)",
+      "Food prices (food at home ~8%)",
+      "Supply chain dynamics — import prices feed through to goods CPI",
+      "Labor costs — wages pass through to services inflation",
+      "Money supply growth (long-run monetary driver)",
+      "Demand strength relative to productive capacity",
+    ],
+    relationships: [
+      { id:"FEDFUNDS", label:"Fed Funds Rate", note:"CPI is primary trigger for Fed hikes/cuts" },
+      { id:"DGS10",    label:"10Y Treasury",  note:"Inflation expectations embedded in 10Y yield" },
+      { id:"GC=F",     label:"Gold",          note:"Gold is the classic inflation hedge" },
+      { id:"CL=F",     label:"Crude Oil",     note:"Energy is a large, volatile CPI component" },
+    ],
+  },
+  "T10Y2Y": {
+    whatItIs: "The 10-Year minus 2-Year Treasury yield spread — the most widely watched yield curve indicator. An inversion (negative value) has preceded every US recession since 1950.",
+    whyItMatters: "The yield curve inversion is one of the most reliable leading indicators in economics. When short-term rates exceed long-term rates, it signals that markets expect the economy to slow (and the Fed to cut rates). The lag between inversion and recession has ranged from 6 to 24 months.",
+    drivers: [
+      "Fed hiking cycles steepen the 2Y faster than the 10Y",
+      "Recession expectations compress long yields via flight to safety",
+      "Foreign demand for long-dated Treasuries (flattens curve)",
+      "Quantitative Easing/Tightening (QE buys long bonds, compresses 10Y)",
+      "Term premium — investors' required extra yield for duration",
+    ],
+    relationships: [
+      { id:"DGS10",    label:"10Y Treasury",  note:"Long end — set by market expectations + term premium" },
+      { id:"DGS2",     label:"2Y Treasury",   note:"Short end — tightly follows Fed policy" },
+      { id:"FEDFUNDS", label:"Fed Funds Rate", note:"Primary driver of 2Y (hence spread)" },
+      { id:"UNRATE",   label:"Unemployment",  note:"Inversion predicts rising unemployment" },
+    ],
+  },
+  "UNRATE": {
+    whatItIs: "The US Unemployment Rate (U-3) — the percentage of the labor force that is jobless, actively seeking work, and currently available for work.",
+    whyItMatters: "The unemployment rate is half of the Fed's dual mandate. Low unemployment gives the Fed room to fight inflation; rising unemployment shifts the Fed toward cutting rates. The Sahm Rule states that a 0.5pp rise in the 3-month average unemployment rate relative to the prior 12-month low signals the start of a recession.",
+    drivers: [
+      "Business cycle — hiring accelerates in expansions, contracts in recessions",
+      "Fed policy tightening — rate hikes slow hiring with a 12-18 month lag",
+      "Technological change and automation",
+      "Labor force participation rate changes",
+      "Immigration flows",
+      "Sector-specific dynamics (tech, finance more cyclical; healthcare, govt less so)",
+    ],
+    relationships: [
+      { id:"FEDFUNDS", label:"Fed Funds Rate", note:"Unemployment rising → Fed cuts rates" },
+      { id:"CPIAUCSL", label:"CPI",           note:"Phillips curve: low unemployment → wage inflation" },
+      { id:"T10Y2Y",   label:"Yield Curve",   note:"Yield curve inversion leads unemployment rise by 12-18m" },
+    ],
+  },
+  "GDP": {
+    whatItIs: "US Gross Domestic Product (GDP) — the total value of all goods and services produced in the United States, measured quarterly (annualized rate).",
+    whyItMatters: "GDP is the broadest measure of economic activity. Two consecutive quarters of negative GDP growth is the informal definition of recession. Strong GDP growth supports earnings, employment, and tax revenues; weak growth signals stress and potential Fed easing.",
+    drivers: [
+      "Consumer spending (~70% of US GDP)",
+      "Business investment (capex, inventories)",
+      "Government spending and fiscal policy",
+      "Net exports (trade balance)",
+      "Fed monetary policy and financial conditions",
+      "Technology productivity improvements",
+      "Demographics and labor force growth",
+    ],
+    relationships: [
+      { id:"FEDFUNDS", label:"Fed Funds Rate", note:"Fed tightens to slow GDP growth and cool inflation" },
+      { id:"UNRATE",   label:"Unemployment",  note:"GDP growth drives employment" },
+      { id:"CPIAUCSL", label:"CPI",           note:"Strong growth can stoke demand-pull inflation" },
+    ],
+  },
+  "DGS2": {
+    whatItIs: "The 2-Year US Treasury constant maturity yield — the most sensitive Treasury maturity to Federal Reserve policy expectations.",
+    whyItMatters: "The 2-year yield is effectively a market forecast for where the Fed Funds Rate will be in 2 years. It moves rapidly when Fed policy expectations shift, making it a real-time policy barometer. It is also the key input to the 10Y-2Y yield curve spread.",
+    drivers: [
+      "Federal Reserve policy rate and forward guidance",
+      "Inflation data surprises (CPI, PCE)",
+      "Employment reports (NFP, JOLTS, ADP)",
+      "FOMC meeting outcomes and dot plot",
+      "Fed Chair speeches and testimony",
+    ],
+    relationships: [
+      { id:"FEDFUNDS", label:"Fed Funds Rate", note:"2Y closely tracks fed funds rate expectations" },
+      { id:"DGS10",    label:"10Y Treasury",  note:"Spread = yield curve steepness" },
+      { id:"T10Y2Y",   label:"Yield Curve",   note:"2Y is the denominator of the key spread" },
+    ],
+  },
+  "PCEPI": {
+    whatItIs: "The Personal Consumption Expenditures Price Index (PCE) — the Federal Reserve's preferred measure of inflation, broader than CPI and uses a chain-weighting methodology.",
+    whyItMatters: "The Fed explicitly targets PCE inflation at 2%, not CPI. PCE tends to run ~0.3pp below CPI due to methodological differences (especially shelter costs). Fed officials watch core PCE (ex-food and energy) most closely when making rate decisions.",
+    drivers: [
+      "Same structural drivers as CPI but with different weightings",
+      "Shelter costs have a lower weight in PCE vs. CPI",
+      "Healthcare costs have a higher weight in PCE",
+      "Consumer spending patterns and substitution effects",
+      "Import prices and supply chain dynamics",
+    ],
+    relationships: [
+      { id:"CPIAUCSL", label:"CPI",           note:"PCE and CPI measure similar thing; PCE is Fed's target" },
+      { id:"FEDFUNDS", label:"Fed Funds Rate", note:"PCE is the direct trigger for Fed policy action" },
+      { id:"DGS10",    label:"10Y Treasury",  note:"PCE breakevens embedded in yields" },
+    ],
+  },
+};
+
+// Interest rate FRED series for FX panel rate differential charts
+const FX_RATE_PAIRS = {
+  "EURUSD=X": {
+    base:"EUR", quote:"USD",
+    baseSeries:"ECBDFR",     baseLabel:"ECB Deposit Rate",
+    quoteSeries:"FEDFUNDS",  quoteLabel:"Fed Funds Rate",
+    description:"The ECB–Fed rate differential is the primary medium-term driver of EUR/USD. When the Fed raises rates faster than the ECB, USD strengthens (EUR/USD falls); when the ECB leads, EUR strengthens.",
+  },
+  "GBPUSD=X": {
+    base:"GBP", quote:"USD",
+    baseSeries:"BOEBANKRATE", baseLabel:"BoE Bank Rate",
+    quoteSeries:"FEDFUNDS",   quoteLabel:"Fed Funds Rate",
+    description:"The BoE–Fed rate differential drives GBP/USD. The Bank of England has historically been reactive to both UK-specific inflation and global risk conditions.",
+  },
+  "USDJPY=X": {
+    base:"USD", quote:"JPY",
+    baseSeries:"FEDFUNDS",    baseLabel:"Fed Funds Rate",
+    quoteSeries:"IRSTJPN156N", quoteLabel:"BoJ Policy Rate",
+    description:"The Fed–BoJ differential is the widest of any G7 pair, making USD/JPY the most popular carry trade vehicle. BoJ's ultra-loose policy kept this spread extreme through 2022-2024.",
+  },
+  "USDCNY=X": {
+    base:"USD", quote:"CNY",
+    baseSeries:"FEDFUNDS",       baseLabel:"Fed Funds Rate",
+    quoteSeries:"INTDSRCNM193N", quoteLabel:"PBOC Lending Rate",
+    description:"The Fed–PBOC differential has widened significantly. China's managed exchange rate means the PBOC can resist market pressure, but sustained rate differentials create capital outflow pressure.",
+  },
+};
+
 // Market cap from Finnhub is in millions USD
 const fmtMktCap = v => { if (v == null || isNaN(v)) return "—"; if (v >= 1e6) return "$" + (v/1e6).toFixed(2) + "T"; if (v >= 1e3) return "$" + (v/1e3).toFixed(2) + "B"; return "$" + Math.round(v) + "M"; };
 const fmtX   = v => v == null || isNaN(v) ? "—" : v.toFixed(1) + "x";
@@ -3454,6 +3900,7 @@ const clrM   = v => v == null ? "#7d8590" : v > 0 ? "#3fb950" : "#f85149";
 
 const RB_TYPE_COLOR = { equity:"#58a6ff", commodity:"#e3b341", fx:"#3fb950", macro:"#bc8cff", topic:"#f0883e" };
 
+// eslint-disable-next-line no-unused-vars
 function ResearchMiniChart({ data, color = "#58a6ff", height = 60 }) {
   if (!data || data.length < 2) return <div style={{ height }} />;
   const gradId = "rg" + color.replace(/[^a-z0-9]/gi, "");
@@ -4093,129 +4540,635 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
   );
 }
 
-function MarketResearchPanel({ item, onClose, onOpen }) {
+function CommodityResearchPanel({ item, onClose, onOpen }) {
+  const TABS = ["Overview", "Intelligence", "Producers"];
+  const [activeTab, setActiveTab] = useState("Overview");
   const [chartData, setChartData] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
-  const isFX = item.type === "fx";
-  const decimals = isFX ? 4 : 2;
+  const intel = ENTITY_INTEL[item.ticker] || null;
 
   useEffect(() => {
     setLoading(true);
-    fetch("/api/chart?ticker=" + encodeURIComponent(item.ticker) + "&range=3mo&interval=1d")
+    setActiveTab("Overview");
+    setChartData([]); setSummary(null);
+    fetch("/api/chart?ticker=" + encodeURIComponent(item.ticker) + "&range=1y&interval=1d")
       .then(r => r.json())
       .then(c => {
         const result = c?.chart?.result?.[0];
         if (result) {
           const ts = result.timestamp || [];
           const closes = result.indicators?.quote?.[0]?.close || [];
-          const data = ts.map((t, i) => ({ t, v: closes[i] })).filter(d => d.v != null);
+          const highs  = result.indicators?.quote?.[0]?.high  || [];
+          const lows   = result.indicators?.quote?.[0]?.low   || [];
+          const data = ts.map((t, i) => ({
+            t,
+            v: closes[i] != null ? +closes[i].toFixed(4) : null,
+            h: highs[i]  != null ? +highs[i].toFixed(4)  : null,
+            l: lows[i]   != null ? +lows[i].toFixed(4)   : null,
+          })).filter(d => d.v != null);
           setChartData(data);
           if (data.length >= 2) {
-            const cur = data[data.length - 1].v;
+            const cur  = data[data.length - 1].v;
             const prev = data[data.length - 2].v;
-            const m1 = data[Math.max(0, data.length - 22)].v;
-            setSummary({ cur, prev, dayPct:((cur-prev)/prev)*100, m1Pct:((cur-m1)/m1)*100 });
+            const m1   = data[Math.max(0, data.length - 22)].v;
+            const ytd  = data[0].v;
+            const hi52 = Math.max(...data.map(d => d.h || d.v));
+            const lo52 = Math.min(...data.map(d => d.l || d.v));
+            setSummary({ cur, prev, dayPct:((cur-prev)/prev)*100, m1Pct:((cur-m1)/m1)*100, ytdPct:((cur-ytd)/ytd)*100, hi52, lo52 });
           }
         }
         setLoading(false);
       }).catch(() => setLoading(false));
   }, [item.ticker]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const priceStr = summary ? summary.cur.toLocaleString("en-US", { minimumFractionDigits:decimals, maximumFractionDigits:decimals }) : "—";
+  const priceColor = summary ? (summary.dayPct >= 0 ? "#3fb950" : "#f85149") : "#e3b341";
+  const pct52 = summary && summary.hi52 !== summary.lo52
+    ? Math.min(100, Math.max(0, ((summary.cur - summary.lo52) / (summary.hi52 - summary.lo52)) * 100))
+    : null;
+
+  const renderOverview = () => (
+    <div>
+      <div className="flex items-baseline gap-3 mb-3">
+        <span className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:26 }}>
+          ${summary ? summary.cur.toLocaleString("en-US", { minimumFractionDigits:2, maximumFractionDigits:2 }) : "—"}
+        </span>
+        {summary && (
+          <div className="flex items-center gap-2">
+            <span className="font-mono" style={{ color:priceColor, fontSize:13 }}>
+              {summary.dayPct >= 0 ? "▲" : "▼"} {Math.abs(summary.dayPct).toFixed(2)}%
+            </span>
+            <span className="font-mono" style={{ color:"#484f58", fontSize:10 }}>today</span>
+          </div>
+        )}
+      </div>
+      <div style={{ height:200, marginBottom:10 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={chartData} margin={{ top:4, right:2, bottom:0, left:0 }}>
+            <defs>
+              <linearGradient id={"cmg_" + item.ticker.replace(/[^a-z0-9]/gi,"")} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor={priceColor} stopOpacity={0.2} />
+                <stop offset="95%" stopColor={priceColor} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="t"
+              tickFormatter={t => { const d = new Date(t*1000); return (d.getMonth()+1)+"/"+(d.getDate()); }}
+              tick={{ fill:"#484f58", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }} tickLine={false} axisLine={false} interval={35} />
+            <YAxis domain={["auto","auto"]} hide />
+            <Tooltip
+              contentStyle={{ background:"#161b22", border:"1px solid #30363d", borderRadius:4, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" }}
+              labelFormatter={t => new Date(t*1000).toLocaleDateString()}
+              formatter={v => v != null ? ["$"+v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}), "Price"] : ["—", "Price"]} />
+            <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5}
+              fill={"url(#cmg_"+item.ticker.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+      {pct52 != null && (
+        <div className="mb-3">
+          <div className="flex justify-between font-mono mb-1" style={{ color:"#484f58", fontSize:9 }}>
+            <span>52W LOW ${summary.lo52.toLocaleString("en-US",{maximumFractionDigits:2})}</span>
+            <span style={{ color:"#7d8590" }}>52-WEEK RANGE</span>
+            <span>${summary.hi52.toLocaleString("en-US",{maximumFractionDigits:2})} 52W HIGH</span>
+          </div>
+          <div style={{ position:"relative", height:4, background:"#21262d", borderRadius:2 }}>
+            <div style={{ position:"absolute", left:0, width:pct52+"%", height:"100%", background:pct52>70?"#3fb950":pct52<30?"#f85149":"#e3b341", borderRadius:2 }} />
+            <div style={{ position:"absolute", left:pct52+"%", top:-3, width:2, height:10, background:"#e6edf3", borderRadius:1, transform:"translateX(-50%)" }} />
+          </div>
+        </div>
+      )}
+      {summary && (
+        <div className="grid mb-3" style={{ gridTemplateColumns:"repeat(3,1fr)", gap:"4px 12px" }}>
+          {[
+            ["Prev Close", "$"+summary.prev.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})],
+            ["1M Return",  (summary.m1Pct>=0?"+":"")+summary.m1Pct.toFixed(2)+"%"],
+            ["YTD Return", (summary.ytdPct>=0?"+":"")+summary.ytdPct.toFixed(2)+"%"],
+          ].map(([k,v]) => (
+            <div key={k}>
+              <div className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>{k}</div>
+              <div className="font-mono" style={{ color:"#e6edf3", fontSize:11 }}>{v}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      <RelatedLinks itemId={item.id} onOpen={onOpen} />
+    </div>
+  );
+
+  const renderIntelligence = () => {
+    if (!intel) return (
+      <div className="font-mono" style={{ color:"#484f58", fontSize:11 }}>No intelligence data available for this commodity.</div>
+    );
+    return (
+      <div className="flex flex-col gap-4">
+        <div>
+          <div className="font-mono mb-1" style={{ color:"#e3b341", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>What it is</div>
+          <div className="font-mono" style={{ color:"#8b949e", fontSize:11, lineHeight:1.6 }}>{intel.whatItIs}</div>
+        </div>
+        <div>
+          <div className="font-mono mb-1" style={{ color:"#e3b341", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Why it matters</div>
+          <div className="font-mono" style={{ color:"#8b949e", fontSize:11, lineHeight:1.6 }}>{intel.whyItMatters}</div>
+        </div>
+        <div>
+          <div className="font-mono mb-2" style={{ color:"#e3b341", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key drivers</div>
+          <div className="flex flex-col gap-1.5">
+            {intel.drivers.map((d, i) => (
+              <div key={i} className="flex gap-2 items-start">
+                <span style={{ color:"#e3b341", fontSize:9, marginTop:2, flexShrink:0 }}>▸</span>
+                <span className="font-mono" style={{ color:"#8b949e", fontSize:11, lineHeight:1.5 }}>{d}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        {intel.relationships && (
+          <div>
+            <div className="font-mono mb-2" style={{ color:"#e3b341", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Market relationships</div>
+            <div className="flex flex-col gap-1">
+              {intel.relationships.map(r => (
+                <button key={r.id} onClick={() => onOpen(RESEARCH_CATALOG.find(c => c.id === r.id) || { id:r.id, label:r.label, type:"macro", series:r.id, category:"Macro" })}
+                  className="flex items-center gap-2 text-left p-2"
+                  style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4, cursor:"pointer" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="#30363d"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor="#21262d"}>
+                  <span className="font-mono font-bold" style={{ color:RB_TYPE_COLOR[RESEARCH_CATALOG.find(c=>c.id===r.id)?.type||"macro"]||"#e3b341", fontSize:11, minWidth:70 }}>{r.label}</span>
+                  <span className="font-mono" style={{ color:"#484f58", fontSize:10 }}>{r.note}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderProducers = () => {
+    if (!intel?.producers) return (
+      <div className="font-mono" style={{ color:"#484f58", fontSize:11 }}>No producer data available.</div>
+    );
+    return (
+      <div>
+        <div className="font-mono mb-3" style={{ color:"#484f58", fontSize:10 }}>Top producing countries/regions by share of global output</div>
+        <div className="flex flex-col gap-2">
+          {intel.producers.map((p, i) => (
+            <div key={i} className="p-2" style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4 }}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:12 }}>{p.name}</span>
+                <span className="font-mono font-bold" style={{ color:"#e3b341", fontSize:13 }}>{p.share}</span>
+              </div>
+              <div className="font-mono" style={{ color:"#484f58", fontSize:10 }}>{p.note}</div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 pt-3" style={{ borderTop:"1px solid #21262d" }}>
+          <RelatedLinks itemId={item.id} onOpen={onOpen} />
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <ResearchPanelShell title={item.label} subtitle={item.ticker} badge={isFX ? "FX" : "Commodity"} onClose={onClose}>
+    <ResearchPanelShell title={item.label} subtitle={item.ticker} badge="Commodity" onClose={onClose}>
+      {/* Tab bar */}
+      <div className="flex gap-1 mb-3" style={{ borderBottom:"1px solid #21262d", paddingBottom:8, flexShrink:0 }}>
+        {TABS.map(t => (
+          <button key={t} onClick={() => setActiveTab(t)} className="font-mono"
+            style={{ background:"none", border:"none", padding:"3px 10px", fontSize:10, cursor:"pointer",
+              color: activeTab===t ? "#e6edf3" : "#484f58",
+              borderBottom: activeTab===t ? "2px solid #e3b341" : "2px solid transparent",
+              transition:"color 0.15s" }}>
+            {t}
+          </button>
+        ))}
+      </div>
       {loading ? (
         <div className="flex items-center justify-center flex-1 font-mono" style={{ color:"#7d8590", fontSize:11 }}>Loading…</div>
       ) : (
-        <>
-          <div className="flex items-baseline justify-between mb-1">
-            <span className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:22 }}>{isFX ? "" : "$"}{priceStr}</span>
-            <div className="flex flex-col items-end">
-              {summary && <span className="font-mono" style={{ color:clr(summary.dayPct), fontSize:12 }}>Day {fmt.pct(summary.dayPct)}</span>}
-              {summary && <span className="font-mono" style={{ color:clr(summary.m1Pct), fontSize:10 }}>1M {fmt.pct(summary.m1Pct)}</span>}
+        <div style={{ overflowY:"auto", flex:1 }}>
+          {activeTab === "Overview"      && renderOverview()}
+          {activeTab === "Intelligence"  && renderIntelligence()}
+          {activeTab === "Producers"     && renderProducers()}
+        </div>
+      )}
+    </ResearchPanelShell>
+  );
+}
+
+function FXResearchPanel({ item, onClose, onOpen }) {
+  const TABS = item.ticker === "DX=F" ? ["Overview", "Intelligence"] : ["Overview", "Rate Differential", "Intelligence"];
+  const [activeTab, setActiveTab] = useState("Overview");
+  const [chartData, setChartData] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [rateData, setRateData] = useState(null);
+  const [rateLoading, setRateLoading] = useState(false);
+  const intel = ENTITY_INTEL[item.ticker] || null;
+  const ratePair = FX_RATE_PAIRS[item.ticker] || null;
+
+  useEffect(() => {
+    setLoading(true);
+    setActiveTab("Overview");
+    setChartData([]); setSummary(null); setRateData(null);
+    fetch("/api/chart?ticker=" + encodeURIComponent(item.ticker) + "&range=1y&interval=1d")
+      .then(r => r.json())
+      .then(c => {
+        const result = c?.chart?.result?.[0];
+        if (result) {
+          const ts = result.timestamp || [];
+          const closes = result.indicators?.quote?.[0]?.close || [];
+          const data = ts.map((t, i) => ({ t, v: closes[i] != null ? +closes[i].toFixed(4) : null })).filter(d => d.v != null);
+          setChartData(data);
+          if (data.length >= 2) {
+            const cur  = data[data.length - 1].v;
+            const prev = data[data.length - 2].v;
+            const m1   = data[Math.max(0, data.length - 22)].v;
+            const ytd  = data[0].v;
+            setSummary({ cur, prev, dayPct:((cur-prev)/prev)*100, m1Pct:((cur-m1)/m1)*100, ytdPct:((cur-ytd)/ytd)*100 });
+          }
+        }
+        setLoading(false);
+      }).catch(() => setLoading(false));
+  }, [item.ticker]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (activeTab !== "Rate Differential" || !ratePair || rateData) return;
+    setRateLoading(true);
+    Promise.all([
+      fetch("/api/fred?series=" + ratePair.baseSeries).then(r => r.json()),
+      fetch("/api/fred?series=" + ratePair.quoteSeries).then(r => r.json()),
+    ]).then(([bd, qd]) => {
+      const parse = d => (d.observations || [])
+        .filter(o => o.value !== "." && !isNaN(parseFloat(o.value)))
+        .slice(-60)
+        .map(o => ({ t: o.date, v: parseFloat(o.value) }));
+      setRateData({ base: parse(bd), quote: parse(qd) });
+      setRateLoading(false);
+    }).catch(() => setRateLoading(false));
+  }, [activeTab, ratePair, rateData]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const priceColor = summary ? (summary.dayPct >= 0 ? "#3fb950" : "#f85149") : "#3fb950";
+  const decimals = item.ticker === "DX=F" ? 2 : 4;
+
+  const renderOverview = () => (
+    <div>
+      <div className="flex items-baseline gap-3 mb-3">
+        <span className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:26 }}>
+          {summary ? summary.cur.toLocaleString("en-US", { minimumFractionDigits:decimals, maximumFractionDigits:decimals }) : "—"}
+        </span>
+        {summary && (
+          <span className="font-mono" style={{ color:priceColor, fontSize:13 }}>
+            {summary.dayPct >= 0 ? "▲" : "▼"} {Math.abs(summary.dayPct).toFixed(3)}%
+          </span>
+        )}
+      </div>
+      <div style={{ height:200, marginBottom:10 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={chartData} margin={{ top:4, right:2, bottom:0, left:0 }}>
+            <defs>
+              <linearGradient id={"fxg_" + item.ticker.replace(/[^a-z0-9]/gi,"")} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor={priceColor} stopOpacity={0.2} />
+                <stop offset="95%" stopColor={priceColor} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="t"
+              tickFormatter={t => { const d = new Date(t*1000); return (d.getMonth()+1)+"/"+(d.getDate()); }}
+              tick={{ fill:"#484f58", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }} tickLine={false} axisLine={false} interval={35} />
+            <YAxis domain={["auto","auto"]} hide />
+            <Tooltip
+              contentStyle={{ background:"#161b22", border:"1px solid #30363d", borderRadius:4, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" }}
+              labelFormatter={t => new Date(t*1000).toLocaleDateString()}
+              formatter={v => v != null ? [v.toFixed(decimals), "Rate"] : ["—", "Rate"]} />
+            <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5}
+              fill={"url(#fxg_"+item.ticker.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+      {summary && (
+        <div className="grid mb-3" style={{ gridTemplateColumns:"repeat(3,1fr)", gap:"4px 12px" }}>
+          {[
+            ["Prev Close", summary.prev.toFixed(decimals)],
+            ["1M Return",  (summary.m1Pct>=0?"+":"")+summary.m1Pct.toFixed(2)+"%"],
+            ["YTD Return", (summary.ytdPct>=0?"+":"")+summary.ytdPct.toFixed(2)+"%"],
+          ].map(([k,v]) => (
+            <div key={k}>
+              <div className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>{k}</div>
+              <div className="font-mono" style={{ color:"#e6edf3", fontSize:11 }}>{v}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      <RelatedLinks itemId={item.id} onOpen={onOpen} />
+    </div>
+  );
+
+  const renderRateDiff = () => {
+    if (rateLoading) return <div className="flex items-center justify-center py-8 font-mono" style={{ color:"#7d8590", fontSize:11 }}>Loading rate data…</div>;
+    if (!rateData) return <div className="font-mono" style={{ color:"#484f58", fontSize:11 }}>Rate data unavailable.</div>;
+    const baseLatest  = rateData.base[rateData.base.length - 1];
+    const quoteLatest = rateData.quote[rateData.quote.length - 1];
+    const diff = baseLatest && quoteLatest ? (baseLatest.v - quoteLatest.v) : null;
+
+    // Build differential series aligned by approximate date
+    const diffSeries = rateData.base.map(b => {
+      const qMatch = rateData.quote.reduce((best, q) => {
+        const db = Math.abs(new Date(b.t) - new Date(best.t));
+        const dq = Math.abs(new Date(b.t) - new Date(q.t));
+        return dq < db ? q : best;
+      }, rateData.quote[0] || { t:"", v:0 });
+      return { t: b.t, base: b.v, quote: qMatch.v, diff: +(b.v - qMatch.v).toFixed(3) };
+    });
+
+    return (
+      <div className="flex flex-col gap-3">
+        {ratePair?.description && (
+          <div className="font-mono" style={{ color:"#8b949e", fontSize:11, lineHeight:1.6 }}>{ratePair.description}</div>
+        )}
+        <div className="grid" style={{ gridTemplateColumns:"1fr 1fr 1fr", gap:"4px 12px" }}>
+          {[
+            [ratePair.baseLabel,  baseLatest  ? baseLatest.v.toFixed(2)+"%"  : "—", "#3fb950"],
+            [ratePair.quoteLabel, quoteLatest ? quoteLatest.v.toFixed(2)+"%" : "—", "#58a6ff"],
+            ["Differential",      diff != null ? (diff>=0?"+":"")+diff.toFixed(2)+"%" : "—", diff != null ? clr(diff) : "#7d8590"],
+          ].map(([k,v,c]) => (
+            <div key={k} className="p-2" style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4 }}>
+              <div className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>{k}</div>
+              <div className="font-mono font-bold" style={{ color:c, fontSize:16 }}>{v}</div>
+            </div>
+          ))}
+        </div>
+        <div>
+          <div className="font-mono mb-1.5" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>Rate differential (base minus quote)</div>
+          <div style={{ height:140 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={diffSeries} margin={{ top:4, right:2, bottom:0, left:0 }}>
+                <defs>
+                  <linearGradient id={"rdi_"+item.ticker.replace(/[^a-z0-9]/gi,"")} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#bc8cff" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#bc8cff" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="t" tick={{ fill:"#484f58", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }} tickLine={false} axisLine={false} interval={11} />
+                <YAxis domain={["auto","auto"]} hide />
+                <ReferenceLine y={0} stroke="#30363d" strokeDasharray="3 3" />
+                <Tooltip
+                  contentStyle={{ background:"#161b22", border:"1px solid #30363d", borderRadius:4, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" }}
+                  formatter={(v,n) => [v?.toFixed(2)+"%", n==="diff" ? "Spread" : n==="base" ? ratePair.baseLabel : ratePair.quoteLabel]} />
+                <Area type="monotone" dataKey="diff" stroke="#bc8cff" strokeWidth={1.5} fill={"url(#rdi_"+item.ticker.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        <div>
+          <div className="font-mono mb-1.5" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>Individual rates</div>
+          <div style={{ height:130 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={diffSeries} margin={{ top:4, right:2, bottom:0, left:0 }}>
+                <XAxis dataKey="t" tick={{ fill:"#484f58", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }} tickLine={false} axisLine={false} interval={11} />
+                <YAxis domain={["auto","auto"]} hide />
+                <Tooltip
+                  contentStyle={{ background:"#161b22", border:"1px solid #30363d", borderRadius:4, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" }}
+                  formatter={(v,n) => [v?.toFixed(2)+"%", n==="base" ? ratePair.baseLabel : ratePair.quoteLabel]} />
+                <Area type="monotone" dataKey="base"  stroke="#3fb950" strokeWidth={1.5} fill="none" dot={false} isAnimationActive={false} />
+                <Area type="monotone" dataKey="quote" stroke="#58a6ff" strokeWidth={1.5} fill="none" dot={false} isAnimationActive={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex gap-4 mt-1">
+            <span className="font-mono" style={{ color:"#3fb950", fontSize:10 }}>— {ratePair.baseLabel} ({ratePair.base})</span>
+            <span className="font-mono" style={{ color:"#58a6ff", fontSize:10 }}>— {ratePair.quoteLabel} ({ratePair.quote})</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderIntelligence = () => {
+    if (!intel) return (
+      <div className="font-mono" style={{ color:"#484f58", fontSize:11 }}>No intelligence data available.</div>
+    );
+    return (
+      <div className="flex flex-col gap-4">
+        <div>
+          <div className="font-mono mb-1" style={{ color:"#3fb950", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>What it is</div>
+          <div className="font-mono" style={{ color:"#8b949e", fontSize:11, lineHeight:1.6 }}>{intel.whatItIs}</div>
+        </div>
+        <div>
+          <div className="font-mono mb-1" style={{ color:"#3fb950", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Why it matters</div>
+          <div className="font-mono" style={{ color:"#8b949e", fontSize:11, lineHeight:1.6 }}>{intel.whyItMatters}</div>
+        </div>
+        <div>
+          <div className="font-mono mb-2" style={{ color:"#3fb950", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key drivers</div>
+          <div className="flex flex-col gap-1.5">
+            {intel.drivers.map((d, i) => (
+              <div key={i} className="flex gap-2 items-start">
+                <span style={{ color:"#3fb950", fontSize:9, marginTop:2, flexShrink:0 }}>▸</span>
+                <span className="font-mono" style={{ color:"#8b949e", fontSize:11, lineHeight:1.5 }}>{d}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        {intel.relationships && (
+          <div>
+            <div className="font-mono mb-2" style={{ color:"#3fb950", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Market relationships</div>
+            <div className="flex flex-col gap-1">
+              {intel.relationships.map(r => (
+                <button key={r.id} onClick={() => onOpen(RESEARCH_CATALOG.find(c => c.id === r.id) || { id:r.id, label:r.label, type:"macro", series:r.id, category:"Macro" })}
+                  className="flex items-center gap-2 text-left p-2"
+                  style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4, cursor:"pointer" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="#30363d"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor="#21262d"}>
+                  <span className="font-mono font-bold" style={{ color:RB_TYPE_COLOR[RESEARCH_CATALOG.find(c=>c.id===r.id)?.type||"fx"]||"#3fb950", fontSize:11, minWidth:80 }}>{r.label}</span>
+                  <span className="font-mono" style={{ color:"#484f58", fontSize:10 }}>{r.note}</span>
+                </button>
+              ))}
             </div>
           </div>
-          <div style={{ marginBottom:8 }}>
-            <ResearchMiniChart data={chartData} color={summary?.dayPct >= 0 ? "#3fb950" : "#f85149"} height={110} />
-          </div>
-          {summary && (
-            <div className="grid mb-2" style={{ gridTemplateColumns:"1fr 1fr", gap:"4px 8px" }}>
-              {[
-                ["Prev Close", (isFX?"":"$") + summary.prev.toFixed(decimals)],
-                ["1M Return",  fmt.pct(summary.m1Pct)],
-              ].map(([k, v]) => (
-                <div key={k}>
-                  <div className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>{k}</div>
-                  <div className="font-mono" style={{ color:"#e6edf3", fontSize:11 }}>{v}</div>
+        )}
+        {intel.centralBanks && (
+          <div>
+            <div className="font-mono mb-2" style={{ color:"#3fb950", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Central banks</div>
+            <div className="flex flex-col gap-1.5">
+              {intel.centralBanks.map((cb, i) => (
+                <div key={i} className="p-2" style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4 }}>
+                  <div className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:11 }}>{cb.name}</div>
+                  <div className="font-mono" style={{ color:"#484f58", fontSize:10 }}>{cb.rate}</div>
                 </div>
               ))}
             </div>
-          )}
-          <RelatedLinks itemId={item.id} onOpen={onOpen} />
-        </>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <ResearchPanelShell title={item.label} subtitle={item.ticker} badge="FX" onClose={onClose}>
+      <div className="flex gap-1 mb-3" style={{ borderBottom:"1px solid #21262d", paddingBottom:8, flexShrink:0 }}>
+        {TABS.map(t => (
+          <button key={t} onClick={() => setActiveTab(t)} className="font-mono"
+            style={{ background:"none", border:"none", padding:"3px 10px", fontSize:10, cursor:"pointer",
+              color: activeTab===t ? "#e6edf3" : "#484f58",
+              borderBottom: activeTab===t ? "2px solid #3fb950" : "2px solid transparent",
+              transition:"color 0.15s" }}>
+            {t}
+          </button>
+        ))}
+      </div>
+      {loading ? (
+        <div className="flex items-center justify-center flex-1 font-mono" style={{ color:"#7d8590", fontSize:11 }}>Loading…</div>
+      ) : (
+        <div style={{ overflowY:"auto", flex:1 }}>
+          {activeTab === "Overview"          && renderOverview()}
+          {activeTab === "Rate Differential" && renderRateDiff()}
+          {activeTab === "Intelligence"      && renderIntelligence()}
+        </div>
       )}
     </ResearchPanelShell>
   );
 }
 
 function MacroResearchPanel({ item, onClose, onOpen }) {
+  const TABS = ["Trend", "Context"];
+  const [activeTab, setActiveTab] = useState("Trend");
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const intel = ENTITY_INTEL[item.series] || null;
 
   useEffect(() => {
     setLoading(true);
+    setActiveTab("Trend");
+    setData([]);
     fetch("/api/fred?series=" + item.series)
       .then(r => r.json())
       .then(d => {
         const obs = (d.observations || [])
           .filter(o => o.value !== "." && !isNaN(parseFloat(o.value)))
-          .slice(-60)
+          .slice(-120)
           .map(o => ({ t: o.date, v: parseFloat(o.value) }));
         setData(obs);
         setLoading(false);
       }).catch(() => setLoading(false));
   }, [item.series]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const latest = data[data.length - 1];
-  const prev   = data[data.length - 2];
+  const latest  = data[data.length - 1];
+  const prev    = data[data.length - 2];
   const yearAgo = data[Math.max(0, data.length - 13)];
-  const yoyPct = latest && yearAgo && yearAgo.v !== 0 ? ((latest.v - yearAgo.v) / Math.abs(yearAgo.v)) * 100 : null;
-  const mom = latest && prev ? latest.v - prev.v : null;
+  const yoyPct  = latest && yearAgo && yearAgo.v !== 0 ? ((latest.v - yearAgo.v) / Math.abs(yearAgo.v)) * 100 : null;
+  const mom     = latest && prev ? latest.v - prev.v : null;
+  const hi      = data.length ? Math.max(...data.map(d => d.v)) : null;
+
+  const renderTrend = () => (
+    <div>
+      <div className="flex items-baseline gap-3 mb-1">
+        <span className="font-mono font-bold" style={{ color:"#bc8cff", fontSize:28 }}>{latest?.v?.toFixed(2)}</span>
+        <div className="flex flex-col">
+          {yoyPct != null && <span className="font-mono" style={{ color:clr(yoyPct), fontSize:11 }}>YoY {yoyPct >= 0 ? "+" : ""}{yoyPct.toFixed(2)}%</span>}
+          {mom    != null && <span className="font-mono" style={{ color:clr(mom),    fontSize:10 }}>Chg {mom >= 0 ? "+" : ""}{mom.toFixed(3)}</span>}
+        </div>
+      </div>
+      <div className="font-mono mb-3" style={{ color:"#484f58", fontSize:10 }}>As of {latest?.t}</div>
+      <div style={{ height:220, marginBottom:12 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top:4, right:2, bottom:0, left:0 }}>
+            <defs>
+              <linearGradient id={"mcrg_"+item.series} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor="#bc8cff" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#bc8cff" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="t" tick={{ fill:"#484f58", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }} tickLine={false} axisLine={false} interval={23} />
+            <YAxis domain={["auto","auto"]} hide />
+            <ReferenceLine y={0} stroke="#30363d" strokeDasharray="3 3" />
+            <Tooltip
+              contentStyle={{ background:"#161b22", border:"1px solid #30363d", borderRadius:4, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" }}
+              formatter={v => [v?.toFixed(3), item.label]} />
+            <Area type="monotone" dataKey="v" stroke="#bc8cff" strokeWidth={1.5} fill={"url(#mcrg_"+item.series+")"} dot={false} isAnimationActive={false} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="grid mb-3" style={{ gridTemplateColumns:"repeat(4,1fr)", gap:"4px 8px" }}>
+        {[
+          ["Latest",   latest?.v?.toFixed(3)  || "—"],
+          ["Previous", prev?.v?.toFixed(3)    || "—"],
+          ["1Y Ago",   yearAgo?.v?.toFixed(3) || "—"],
+          ["10Y High", hi != null ? hi.toFixed(3) : "—"],
+        ].map(([k,v]) => (
+          <div key={k}>
+            <div className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>{k}</div>
+            <div className="font-mono" style={{ color:"#e6edf3", fontSize:11 }}>{v}</div>
+          </div>
+        ))}
+      </div>
+      <RelatedLinks itemId={item.id} onOpen={onOpen} />
+    </div>
+  );
+
+  const renderContext = () => {
+    if (!intel) return (
+      <div className="font-mono" style={{ color:"#484f58", fontSize:11 }}>No context data available for this series.</div>
+    );
+    return (
+      <div className="flex flex-col gap-4">
+        <div>
+          <div className="font-mono mb-1" style={{ color:"#bc8cff", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>What it is</div>
+          <div className="font-mono" style={{ color:"#8b949e", fontSize:11, lineHeight:1.6 }}>{intel.whatItIs}</div>
+        </div>
+        <div>
+          <div className="font-mono mb-1" style={{ color:"#bc8cff", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Why it matters</div>
+          <div className="font-mono" style={{ color:"#8b949e", fontSize:11, lineHeight:1.6 }}>{intel.whyItMatters}</div>
+        </div>
+        <div>
+          <div className="font-mono mb-2" style={{ color:"#bc8cff", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key drivers</div>
+          <div className="flex flex-col gap-1.5">
+            {intel.drivers.map((d, i) => (
+              <div key={i} className="flex gap-2 items-start">
+                <span style={{ color:"#bc8cff", fontSize:9, marginTop:2, flexShrink:0 }}>▸</span>
+                <span className="font-mono" style={{ color:"#8b949e", fontSize:11, lineHeight:1.5 }}>{d}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        {intel.relationships && (
+          <div>
+            <div className="font-mono mb-2" style={{ color:"#bc8cff", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Related indicators</div>
+            <div className="flex flex-col gap-1">
+              {intel.relationships.map(r => (
+                <button key={r.id} onClick={() => onOpen(RESEARCH_CATALOG.find(c => c.id === r.id) || { id:r.id, label:r.label, type:"macro", series:r.id, category:"Macro" })}
+                  className="flex items-center gap-2 text-left p-2"
+                  style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4, cursor:"pointer" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="#30363d"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor="#21262d"}>
+                  <span className="font-mono font-bold" style={{ color:RB_TYPE_COLOR[RESEARCH_CATALOG.find(c=>c.id===r.id)?.type||"macro"]||"#bc8cff", fontSize:11, minWidth:80 }}>{r.label}</span>
+                  <span className="font-mono" style={{ color:"#484f58", fontSize:10 }}>{r.note}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <ResearchPanelShell title={item.label} subtitle={item.series} badge="Macro" onClose={onClose}>
+      <div className="flex gap-1 mb-3" style={{ borderBottom:"1px solid #21262d", paddingBottom:8, flexShrink:0 }}>
+        {TABS.map(t => (
+          <button key={t} onClick={() => setActiveTab(t)} className="font-mono"
+            style={{ background:"none", border:"none", padding:"3px 10px", fontSize:10, cursor:"pointer",
+              color: activeTab===t ? "#e6edf3" : "#484f58",
+              borderBottom: activeTab===t ? "2px solid #bc8cff" : "2px solid transparent",
+              transition:"color 0.15s" }}>
+            {t}
+          </button>
+        ))}
+      </div>
       {loading ? (
         <div className="flex items-center justify-center flex-1 font-mono" style={{ color:"#7d8590", fontSize:11 }}>Loading…</div>
       ) : !data.length ? (
         <div className="flex items-center justify-center flex-1 font-mono" style={{ color:"#f85149", fontSize:11 }}>No data available</div>
       ) : (
-        <>
-          <div className="flex items-baseline justify-between mb-0.5">
-            <span className="font-mono font-bold" style={{ color:"#bc8cff", fontSize:24 }}>{latest?.v?.toFixed(2)}</span>
-            <div className="flex flex-col items-end">
-              {yoyPct != null && <span className="font-mono" style={{ color:clr(yoyPct), fontSize:11 }}>YoY {fmt.pct(yoyPct)}</span>}
-              {mom != null && <span className="font-mono" style={{ color:clr(mom), fontSize:10 }}>MoM {mom >= 0 ? "+" : ""}{mom.toFixed(2)}</span>}
-            </div>
-          </div>
-          <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:10 }}>As of {latest?.t}</div>
-          <div style={{ flex:1, marginBottom:6 }}>
-            <ResearchMiniChart data={data} color="#bc8cff" height={120} />
-          </div>
-          <div className="grid mb-2" style={{ gridTemplateColumns:"1fr 1fr", gap:"4px 8px" }}>
-            {[
-              ["Previous",   prev?.v?.toFixed(2) || "—"],
-              ["1Y Ago",     yearAgo?.v?.toFixed(2) || "—"],
-            ].map(([k, v]) => (
-              <div key={k}>
-                <div className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>{k}</div>
-                <div className="font-mono" style={{ color:"#e6edf3", fontSize:11 }}>{v}</div>
-              </div>
-            ))}
-          </div>
-          <RelatedLinks itemId={item.id} onOpen={onOpen} />
-        </>
+        <div style={{ overflowY:"auto", flex:1 }}>
+          {activeTab === "Trend"   && renderTrend()}
+          {activeTab === "Context" && renderContext()}
+        </div>
       )}
     </ResearchPanelShell>
   );
@@ -4307,8 +5260,8 @@ function ResearchPanel({ item, onClose, onOpen }) {
     );
   }
   switch (item.type) {
-    case "commodity": return <MarketResearchPanel  item={item} onClose={onClose} onOpen={onOpen} />;
-    case "fx":        return <MarketResearchPanel  item={item} onClose={onClose} onOpen={onOpen} />;
+    case "commodity": return <CommodityResearchPanel item={item} onClose={onClose} onOpen={onOpen} />;
+    case "fx":        return <FXResearchPanel        item={item} onClose={onClose} onOpen={onOpen} />;
     case "macro":     return <MacroResearchPanel   item={item} onClose={onClose} onOpen={onOpen} />;
     case "topic":     return <TopicResearchPanel   item={item} onClose={onClose} onOpen={onOpen} />;
     default:          return null;
