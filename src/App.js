@@ -4010,8 +4010,8 @@ function RelatedLinks({ itemId, onOpen }) {
   );
 }
 
-// ── Mock tear-sheet data (keyed by ticker) ───────────────────────────────────
-const MOCK_RESEARCH_DATA = {
+// eslint-disable-next-line no-unused-vars
+const MOCK_RESEARCH_DATA_UNUSED = {
   _default: {
     flow: {
       suppliers: [
@@ -4124,99 +4124,9 @@ const MOCK_RESEARCH_DATA = {
     },
   },
 };
-function getMockData(ticker) {
-  return MOCK_RESEARCH_DATA[ticker] || MOCK_RESEARCH_DATA["_default"];
-}
-
-// ── Sankey Flow Chart (pure SVG, no extra deps) ───────────────────────────────
-function SankeyFlowChart({ suppliers, segments, companyLabel }) {
-  const W = 620, H = 300;
-  const nodeW = 110, nodeH = 28, cx = W / 2;
-  const companyBox = { x: cx - 55, y: H/2 - 18, w: 110, h: 36 };
-
-  const gap = 10;
-  const leftCount = suppliers.length;
-  const leftTotalH = leftCount * nodeH + (leftCount - 1) * gap;
-  const leftStartY = (H - leftTotalH) / 2;
-
-  const rightCount = segments.length;
-  const rightTotalH = rightCount * nodeH + (rightCount - 1) * gap;
-  const rightStartY = (H - rightTotalH) / 2;
-
-  const leftNodes = suppliers.map((s, i) => ({
-    ...s, x: 8, y: leftStartY + i * (nodeH + gap), w: nodeW, h: nodeH,
-  }));
-  const rightNodes = segments.map((s, i) => ({
-    ...s, x: W - nodeW - 8, y: rightStartY + i * (nodeH + gap), w: nodeW, h: nodeH,
-  }));
-
-  function cubicPath(x1, y1, x2, y2) {
-    const mx = (x1 + x2) / 2;
-    return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
-  }
-
-  return (
-    <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display:"block", overflow:"visible" }}>
-      {/* Left → company links */}
-      {leftNodes.map(n => {
-        const x1 = n.x + n.w, y1 = n.y + n.h / 2;
-        const x2 = companyBox.x, y2 = companyBox.y + companyBox.h / 2;
-        const thick = Math.max(1, (n.pct / 100) * 22);
-        return (
-          <path key={n.id} d={cubicPath(x1, y1, x2, y2)}
-            fill="none" stroke={n.color} strokeWidth={thick} strokeOpacity={0.22} />
-        );
-      })}
-      {/* company → right links */}
-      {rightNodes.map(n => {
-        const x1 = companyBox.x + companyBox.w, y1 = companyBox.y + companyBox.h / 2;
-        const x2 = n.x, y2 = n.y + n.h / 2;
-        const thick = Math.max(1, (n.pct / 100) * 22);
-        return (
-          <path key={n.id} d={cubicPath(x1, y1, x2, y2)}
-            fill="none" stroke={n.color} strokeWidth={thick} strokeOpacity={0.22} />
-        );
-      })}
-      {/* Left nodes */}
-      {leftNodes.map(n => (
-        <g key={n.id}>
-          <rect x={n.x} y={n.y} width={n.w} height={n.h} rx={5}
-            fill="rgba(88,166,255,0.07)" stroke="rgba(88,166,255,0.25)" strokeWidth={1} />
-          <text x={n.x + 8} y={n.y + n.h/2} dominantBaseline="middle"
-            fill="#8b949e" fontSize={10} fontFamily="'IBM Plex Mono',monospace">{n.label}</text>
-          <text x={n.x + n.w - 6} y={n.y + n.h/2} dominantBaseline="middle" textAnchor="end"
-            fill="#58a6ff" fontSize={9} fontFamily="'IBM Plex Mono',monospace">{n.pct}%</text>
-        </g>
-      ))}
-      {/* Company node */}
-      <rect x={companyBox.x} y={companyBox.y} width={companyBox.w} height={companyBox.h} rx={8}
-        fill="rgba(88,166,255,0.12)" stroke="rgba(88,166,255,0.45)" strokeWidth={1.5} />
-      <text x={cx} y={H/2} dominantBaseline="middle" textAnchor="middle"
-        fill="#e6edf3" fontSize={11} fontWeight="bold" fontFamily="'IBM Plex Mono',monospace">
-        {companyLabel}
-      </text>
-      {/* Right nodes */}
-      {rightNodes.map(n => (
-        <g key={n.id}>
-          <rect x={n.x} y={n.y} width={n.w} height={n.h} rx={5}
-            fill="rgba(63,185,80,0.07)" stroke="rgba(63,185,80,0.22)" strokeWidth={1} />
-          <text x={n.x + 6} y={n.y + n.h/2} dominantBaseline="middle"
-            fill="#3fb950" fontSize={9} fontFamily="'IBM Plex Mono',monospace">{n.pct}%</text>
-          <text x={n.x + n.w - 6} y={n.y + n.h/2} dominantBaseline="middle" textAnchor="end"
-            fill="#8b949e" fontSize={10} fontFamily="'IBM Plex Mono',monospace">{n.label}</text>
-        </g>
-      ))}
-      {/* Column labels */}
-      <text x={8 + nodeW/2} y={8} textAnchor="middle" fill="#484f58" fontSize={8}
-        fontFamily="'IBM Plex Mono',monospace" textTransform="uppercase">KEY SUPPLIERS</text>
-      <text x={W - nodeW/2 - 8} y={8} textAnchor="middle" fill="#484f58" fontSize={8}
-        fontFamily="'IBM Plex Mono',monospace">REVENUE SEGMENTS</text>
-    </svg>
-  );
-}
 
 function EquityResearchPanel({ item, onClose, onOpen }) {
-  const TABS = ["Overview","Flow","Options","Insiders","Financials","Valuation","News","Peers"];
+  const TABS = ["Overview","Financials","Valuation","News","Peers"];
   const [activeTab, setActiveTab] = useState("Overview");
   const [quote, setQuote]         = useState(null);
   const [profile, setProfile]     = useState(null);
@@ -4231,7 +4141,6 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
   const [peerQ, setPeerQ]         = useState({});
   const [peerM, setPeerM]         = useState({});
   const loadedTabs = useRef(new Set(["Overview"]));
-  const mock = getMockData(item.ticker);
 
   // ── Base load ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -4325,211 +4234,6 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
   const pct52 = m["52WeekHigh"] && m["52WeekLow"] && quote?.c
     ? Math.min(100, Math.max(0, ((quote.c - m["52WeekLow"]) / (m["52WeekHigh"] - m["52WeekLow"])) * 100))
     : null;
-
-  // ── New tear-sheet renderers ──────────────────────────────────────────────
-  const renderFlow = () => {
-    const { suppliers, segments, blockTrades } = mock.flow;
-    const ticker = profile?.ticker || item.ticker;
-    return (
-      <div className="flex flex-col gap-5">
-        {/* Sankey */}
-        <div style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.16)", borderRadius:10, padding:"16px 12px 10px" }}>
-          <div className="font-mono mb-3" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.09em" }}>
-            Supply Chain &amp; Revenue Flow
-          </div>
-          <SankeyFlowChart suppliers={suppliers} segments={segments} companyLabel={ticker} />
-        </div>
-
-        {/* Block trades */}
-        <div style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.16)", borderRadius:10, padding:14 }}>
-          <div className="font-mono mb-3" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.09em" }}>
-            Notable Block Trades · Today
-          </div>
-          <table style={{ width:"100%", borderCollapse:"collapse" }}>
-            <thead>
-              <tr>{["Side","Contract","Expiry","Volume","Premium","Note"].map((h,i) => (
-                <th key={h} className="font-mono pb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", fontWeight:"normal", textAlign:i===0?"left":"right", paddingRight:i===5?0:12 }}>{h}</th>
-              ))}</tr>
-            </thead>
-            <tbody>
-              {blockTrades.map((t,i) => (
-                <tr key={i} style={{ borderTop:"1px solid rgba(99,110,123,0.08)" }}>
-                  <td className="font-mono py-1.5" style={{ color:t.side==="BUY"?"#3fb950":"#f85149", fontSize:10, fontWeight:"bold" }}>{t.side}</td>
-                  <td className="font-mono py-1.5 text-right" style={{ color:"#e6edf3", fontSize:10, paddingRight:12 }}>{t.strike}</td>
-                  <td className="font-mono py-1.5 text-right" style={{ color:"#7d8590", fontSize:10, paddingRight:12 }}>{t.expiry}</td>
-                  <td className="font-mono py-1.5 text-right" style={{ color:"#8b949e", fontSize:10, paddingRight:12 }}>{t.size.toLocaleString()}</td>
-                  <td className="font-mono py-1.5 text-right" style={{ color:"#e3b341", fontSize:10, paddingRight:12 }}>{t.premium}</td>
-                  <td className="font-mono py-1.5 text-right" style={{ color:"#484f58", fontSize:9 }}>{t.note}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  };
-
-  const renderOptions = () => {
-    const { putCallRatio, putCallTrend, ivTermStructure, unusualActivity } = mock.options;
-    const pcSentiment = putCallRatio < 0.7 ? "Bullish" : putCallRatio > 1.0 ? "Bearish" : "Neutral";
-    const pcColor = putCallRatio < 0.7 ? "#3fb950" : putCallRatio > 1.0 ? "#f85149" : "#e3b341";
-    const pcMax = Math.max(...putCallTrend) * 1.05;
-    return (
-      <div className="flex flex-col gap-4">
-        {/* Bento top row: P/C ratio + IV term structure */}
-        <div className="grid gap-4" style={{ gridTemplateColumns:"220px 1fr" }}>
-          {/* Put/Call ratio */}
-          <div style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.16)", borderRadius:10, padding:14 }}>
-            <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.09em" }}>Put / Call Ratio</div>
-            <div className="font-mono" style={{ color:pcColor, fontSize:34, fontWeight:"bold", lineHeight:1 }}>{putCallRatio.toFixed(2)}</div>
-            <div className="font-mono mt-1" style={{ color:pcColor, fontSize:10 }}>{pcSentiment}</div>
-            <div className="mt-3">
-              <div className="font-mono mb-1" style={{ color:"#484f58", fontSize:8 }}>6-SESSION TREND</div>
-              <div style={{ display:"flex", alignItems:"flex-end", gap:3, height:40 }}>
-                {putCallTrend.map((v,i) => {
-                  const h = Math.round((v / pcMax) * 38);
-                  const isLast = i === putCallTrend.length - 1;
-                  return (
-                    <div key={i} style={{ flex:1, height:h, background: isLast ? pcColor : "rgba(99,110,123,0.20)", borderRadius:"2px 2px 0 0" }} />
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* IV Term Structure */}
-          <div style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.16)", borderRadius:10, padding:14 }}>
-            <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.09em" }}>Implied Volatility Term Structure</div>
-            <div style={{ height:140 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={ivTermStructure} margin={{ top:4, right:4, bottom:0, left:0 }} barSize={22}>
-                  <XAxis dataKey="expiry" tick={{ fill:"#484f58", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }} tickLine={false} axisLine={false} />
-                  <YAxis domain={["auto","auto"]} tick={{ fill:"#484f58", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }} tickLine={false} axisLine={false} tickFormatter={v=>v+"%"} width={32} />
-                  <Tooltip contentStyle={{ background:"#1c2230", border:"1px solid rgba(99,110,123,0.28)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }}
-                    formatter={v=>[v.toFixed(1)+"%","IV"]} />
-                  <Bar dataKey="iv" radius={[3,3,0,0]}
-                    fill="url(#ivGrad)"
-                  />
-                  <defs>
-                    <linearGradient id="ivGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%"   stopColor="#58a6ff" stopOpacity={0.85} />
-                      <stop offset="100%" stopColor="#58a6ff" stopOpacity={0.30} />
-                    </linearGradient>
-                  </defs>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-
-        {/* Unusual options activity */}
-        <div style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.16)", borderRadius:10, padding:14 }}>
-          <div className="font-mono mb-3" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.09em" }}>
-            Unusual Options Activity · Today
-          </div>
-          <table style={{ width:"100%", borderCollapse:"collapse" }}>
-            <thead>
-              <tr>{["Time","Type","Strike","Expiry","Volume","OI","Premium","Signal"].map((h,i) => (
-                <th key={h} className="font-mono pb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", fontWeight:"normal", textAlign:i===0?"left":"right", paddingRight:i===7?0:10 }}>{h}</th>
-              ))}</tr>
-            </thead>
-            <tbody>
-              {unusualActivity.map((u,i) => {
-                const isCall = u.type === "CALL";
-                const typeColor = isCall ? "#3fb950" : "#f85149";
-                const sigColor  = u.sentiment === "Bullish" ? "#3fb950" : "#f85149";
-                return (
-                  <tr key={i} style={{ borderTop:"1px solid rgba(99,110,123,0.08)" }}>
-                    <td className="font-mono py-1.5" style={{ color:"#484f58", fontSize:9 }}>{u.time}</td>
-                    <td className="font-mono py-1.5 text-right" style={{ color:typeColor, fontSize:10, fontWeight:"bold", paddingRight:10 }}>{u.type}</td>
-                    <td className="font-mono py-1.5 text-right" style={{ color:"#e6edf3", fontSize:10, paddingRight:10 }}>{u.strike}</td>
-                    <td className="font-mono py-1.5 text-right" style={{ color:"#7d8590", fontSize:10, paddingRight:10 }}>{u.expiry}</td>
-                    <td className="font-mono py-1.5 text-right" style={{ color:"#8b949e", fontSize:10, paddingRight:10 }}>{u.vol.toLocaleString()}</td>
-                    <td className="font-mono py-1.5 text-right" style={{ color:"#484f58", fontSize:10, paddingRight:10 }}>{u.oi.toLocaleString()}</td>
-                    <td className="font-mono py-1.5 text-right" style={{ color:"#e3b341", fontSize:10, paddingRight:10 }}>{u.premium}</td>
-                    <td className="font-mono py-1.5 text-right">
-                      <span style={{ background: u.sentiment==="Bullish"?"rgba(63,185,80,0.12)":"rgba(248,81,73,0.12)", color:sigColor, borderRadius:20, padding:"2px 8px", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }}>
-                        {u.sentiment}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  };
-
-  const renderInsiders = () => {
-    const { transactions, institutionalHolders } = mock.insiders;
-    return (
-      <div className="flex flex-col gap-4">
-        {/* Insider transactions */}
-        <div style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.16)", borderRadius:10, padding:14 }}>
-          <div className="font-mono mb-3" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.09em" }}>
-            Insider Transactions · Last 12 Months
-          </div>
-          <table style={{ width:"100%", borderCollapse:"collapse" }}>
-            <thead>
-              <tr>{["Date","Name","Title","Type","Shares","Price","Value"].map((h,i) => (
-                <th key={h} className="font-mono pb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", fontWeight:"normal", textAlign:i===0||i===1||i===2?"left":"right", paddingRight:i===6?0:10 }}>{h}</th>
-              ))}</tr>
-            </thead>
-            <tbody>
-              {transactions.map((t,i) => {
-                const isBuy = t.type === "BUY";
-                return (
-                  <tr key={i} style={{ borderTop:"1px solid rgba(99,110,123,0.08)" }}>
-                    <td className="font-mono py-1.5" style={{ color:"#484f58", fontSize:9, paddingRight:10 }}>{t.date}</td>
-                    <td className="font-mono py-1.5" style={{ color:"#e6edf3", fontSize:10, paddingRight:10 }}>{t.name}</td>
-                    <td className="font-mono py-1.5" style={{ color:"#7d8590", fontSize:9, paddingRight:10 }}>{t.title}</td>
-                    <td className="font-mono py-1.5 text-right" style={{ paddingRight:10 }}>
-                      <span style={{ background:isBuy?"rgba(63,185,80,0.12)":"rgba(248,81,73,0.10)", color:isBuy?"#3fb950":"#f85149", borderRadius:20, padding:"2px 8px", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }}>
-                        {t.type}
-                      </span>
-                    </td>
-                    <td className="font-mono py-1.5 text-right" style={{ color:"#8b949e", fontSize:10, paddingRight:10 }}>{t.shares.toLocaleString()}</td>
-                    <td className="font-mono py-1.5 text-right" style={{ color:"#8b949e", fontSize:10, paddingRight:10 }}>${fmtN(t.price)}</td>
-                    <td className="font-mono py-1.5 text-right" style={{ color: isBuy?"#3fb950":"#f85149", fontSize:10, fontWeight:"bold" }}>${t.value}M</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Institutional holders */}
-        <div style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.16)", borderRadius:10, padding:14 }}>
-          <div className="font-mono mb-3" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.09em" }}>
-            Top Institutional Holders
-          </div>
-          <table style={{ width:"100%", borderCollapse:"collapse" }}>
-            <thead>
-              <tr>{["Institution","Shares Held","% Owned","QoQ Change"].map((h,i) => (
-                <th key={h} className="font-mono pb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", fontWeight:"normal", textAlign:i===0?"left":"right", paddingRight:i===3?0:14 }}>{h}</th>
-              ))}</tr>
-            </thead>
-            <tbody>
-              {institutionalHolders.map((h,i) => {
-                const chgColor = h.changePct > 0 ? "#3fb950" : h.changePct < 0 ? "#f85149" : "#484f58";
-                const chgStr = h.changePct === 0 ? "—" : (h.changePct > 0 ? "▲ +" : "▼ ") + h.changePct.toFixed(1) + "%";
-                return (
-                  <tr key={i} style={{ borderTop:"1px solid rgba(99,110,123,0.08)" }}>
-                    <td className="font-mono py-1.5" style={{ color:"#e6edf3", fontSize:10, paddingRight:14 }}>{h.name}</td>
-                    <td className="font-mono py-1.5 text-right" style={{ color:"#8b949e", fontSize:10, paddingRight:14 }}>{h.shares}</td>
-                    <td className="font-mono py-1.5 text-right" style={{ color:"#7d8590", fontSize:10, paddingRight:14 }}>{h.pctOwned.toFixed(2)}%</td>
-                    <td className="font-mono py-1.5 text-right" style={{ color:chgColor, fontSize:10, fontWeight: h.changePct!==0?"bold":"normal" }}>{chgStr}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  };
 
   // ── Tab renderers ─────────────────────────────────────────────────────────
   const renderOverview = () => (
@@ -4972,29 +4676,20 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
       </div>
       {/* Tab nav */}
       <div className="flex px-4" style={{ borderBottom:"1px solid rgba(99,110,123,0.12)", flexShrink:0, overflowX:"auto" }}>
-        {TABS.map(t => {
-          const isNew = t === "Flow" || t === "Options" || t === "Insiders";
-          return (
-            <button key={t} onClick={() => setActiveTab(t)} className="font-mono"
-              style={{ background:"none", border:"none", borderBottom:activeTab===t?"2px solid #58a6ff":"2px solid transparent",
-                color:activeTab===t?"#e6edf3":"#7d8590", fontSize:11, padding:"8px 12px", cursor:"pointer", transition:"color 0.15s",
-                whiteSpace:"nowrap", flexShrink:0, position:"relative" }}>
-              {t}
-              {isNew && activeTab!==t && (
-                <span style={{ position:"absolute", top:6, right:3, width:5, height:5, background:"#58a6ff", borderRadius:"50%" }} />
-              )}
-            </button>
-          );
-        })}
+        {TABS.map(t => (
+          <button key={t} onClick={() => setActiveTab(t)} className="font-mono"
+            style={{ background:"none", border:"none", borderBottom:activeTab===t?"2px solid #58a6ff":"2px solid transparent",
+              color:activeTab===t?"#e6edf3":"#7d8590", fontSize:11, padding:"8px 12px", cursor:"pointer", transition:"color 0.15s",
+              whiteSpace:"nowrap", flexShrink:0 }}>
+            {t}
+          </button>
+        ))}
       </div>
       {/* Content */}
       <div className="flex-1 p-4" style={{ overflowY:"auto" }}>
         {loadingBase
           ? <div className="flex items-center justify-center font-mono" style={{ height:200, color:"#7d8590", fontSize:11 }}>Loading…</div>
           : activeTab==="Overview"   ? renderOverview()
-          : activeTab==="Flow"       ? renderFlow()
-          : activeTab==="Options"    ? renderOptions()
-          : activeTab==="Insiders"   ? renderInsiders()
           : activeTab==="Financials" ? renderFinancials()
           : activeTab==="Valuation"  ? renderValuation()
           : activeTab==="News"       ? renderNews()
