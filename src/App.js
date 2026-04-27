@@ -52,200 +52,287 @@ function GlobalStyles() {
   return (
     <style>{`
       @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
-      
+
+      /* ── Design tokens ────────────────────────────────────────── */
+      :root {
+        --bg:        #0d1117;
+        --surface-0: #0d1117;
+        --surface-1: #161b22;
+        --surface-2: #1c2230;
+        --surface-3: #21262d;
+
+        --border-subtle: rgba(99,110,123,0.10);
+        --border:        rgba(99,110,123,0.20);
+        --border-hover:  rgba(99,110,123,0.35);
+        --border-active: rgba(88,166,255,0.45);
+        --border-solid:  #21262d;
+
+        --text-1: #e6edf3;
+        --text-2: #8b949e;
+        --text-3: #484f58;
+
+        --blue:   #58a6ff;  --blue-dim:  rgba(88,166,255,0.12);
+        --green:  #3fb950;  --green-dim: rgba(63,185,80,0.12);
+        --red:    #f85149;  --red-dim:   rgba(248,81,73,0.12);
+        --yellow: #e3b341;
+        --purple: #bc8cff;
+        --orange: #f0883e;
+
+        --r-xs: 4px;
+        --r-sm: 6px;
+        --r:    10px;
+        --r-lg: 14px;
+        --r-xl: 20px;
+
+        --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
+        --shadow-sm: 0 1px 4px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.03);
+        --shadow:    0 4px 16px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.04);
+        --shadow-lg: 0 8px 32px rgba(0,0,0,0.50), inset 0 1px 0 rgba(255,255,255,0.05);
+        --shadow-blue: 0 0 0 3px rgba(88,166,255,0.14);
+        --shadow-glow: 0 0 0 3px rgba(88,166,255,0.14), 0 4px 16px rgba(0,0,0,0.4);
+
+        --ease:     cubic-bezier(0.4, 0, 0.2, 1);
+        --ease-out: cubic-bezier(0, 0, 0.2, 1);
+        --t-xs:   0.10s cubic-bezier(0.4, 0, 0.2, 1);
+        --t-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        --t:      0.20s cubic-bezier(0.4, 0, 0.2, 1);
+        --t-slow: 0.30s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
       * { box-sizing: border-box; }
-      
+
       body {
-        background: #0d1117;
-        color: #cdd6f4;
+        background: var(--bg);
+        color: var(--text-1);
         font-family: 'IBM Plex Mono', monospace;
       }
 
       ::-webkit-scrollbar { width: 4px; height: 4px; }
-      ::-webkit-scrollbar-track { background: #0d1117; }
-      ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
-      ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(99,110,123,0.28); border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(99,110,123,0.48); }
 
+      /* ── Core panel ─────────────────────────────────────────── */
       .terminal-glow {
-        box-shadow: none;
+        box-shadow: var(--shadow);
       }
 
       .terminal-panel {
-        background: #161b22 !important;
-        border: 1px solid #21262d !important;
-        border-radius: 4px !important;
+        background: var(--surface-1) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--r) !important;
+        box-shadow: var(--shadow-sm) !important;
         position: relative;
       }
 
+      /* ── Typography ─────────────────────────────────────────── */
       .terminal-header {
-        color: #7d8590 !important;
+        color: var(--text-3) !important;
         font-family: 'IBM Plex Mono', monospace !important;
         letter-spacing: 0.08em !important;
         font-size: 10px !important;
         text-transform: uppercase !important;
         font-weight: 500 !important;
       }
-
       .terminal-value {
-        color: #e6edf3 !important;
+        color: var(--text-1) !important;
         font-family: 'IBM Plex Mono', monospace !important;
       }
-
       .terminal-muted {
-        color: #484f58 !important;
+        color: var(--text-3) !important;
         font-family: 'IBM Plex Mono', monospace !important;
       }
 
+      /* ── Navigation ─────────────────────────────────────────── */
       .terminal-nav {
-        background: #010409 !important;
-        border-bottom: 1px solid #21262d !important;
+        background: rgba(10,14,20,0.97) !important;
+        border-bottom: 1px solid var(--border) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
       }
-
       .terminal-nav button {
         font-family: 'IBM Plex Mono', monospace !important;
         letter-spacing: 0.05em !important;
+        border-radius: var(--r-sm) !important;
+        transition: color var(--t-fast), background var(--t-fast) !important;
       }
-
       .terminal-nav button:hover {
-        color: #e6edf3 !important;
-        background: #21262d !important;
+        color: var(--text-1) !important;
+        background: rgba(99,110,123,0.10) !important;
       }
-
       .terminal-active {
-        color: #58a6ff !important;
-        border-bottom-color: #1f6feb !important;
+        color: var(--blue) !important;
+        border-bottom-color: var(--blue) !important;
       }
 
       .ticker-tape {
-        background: #010409 !important;
-        border-bottom: 1px solid #21262d !important;
+        background: rgba(7,10,16,0.98) !important;
+        border-bottom: 1px solid var(--border) !important;
       }
-
       .top-nav {
-        background: #010409 !important;
-        border-bottom: 1px solid #21262d !important;
+        background: rgba(7,10,16,0.98) !important;
+        border-bottom: 1px solid var(--border) !important;
+      }
+      .status-bar {
+        background: rgba(7,10,16,0.98) !important;
+        border-top: 1px solid var(--border) !important;
+        color: var(--text-3) !important;
       }
 
+      /* ── Search ─────────────────────────────────────────────── */
       .search-box {
-        background: #0d1117 !important;
-        border: 1px solid #30363d !important;
-        border-radius: 6px !important;
+        background: var(--surface-0) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--r) !important;
+        transition: border-color var(--t-fast), box-shadow var(--t-fast) !important;
       }
-
       .search-box:focus-within {
-        border-color: #1f6feb !important;
+        border-color: var(--border-active) !important;
+        box-shadow: var(--shadow-blue) !important;
       }
 
       input {
         font-family: 'IBM Plex Mono', monospace !important;
-        color: #e6edf3 !important;
+        color: var(--text-1) !important;
       }
+      input::placeholder { color: var(--text-3) !important; }
+      button { font-family: 'IBM Plex Mono', monospace !important; cursor: pointer; }
 
-      input::placeholder {
-        color: #484f58 !important;
-      }
-
-      button {
-        font-family: 'IBM Plex Mono', monospace !important;
-        cursor: pointer;
-      }
-
-      .status-bar {
-        background: #010409 !important;
-        border-top: 1px solid #21262d !important;
-        color: #484f58 !important;
-      }
-
+      /* ── Data rows ──────────────────────────────────────────── */
       .metric-row {
-        border-bottom: 1px solid #21262d !important;
+        border-bottom: 1px solid var(--border-subtle) !important;
+        transition: background var(--t-fast) !important;
       }
+      .metric-row:hover { background: rgba(255,255,255,0.018) !important; }
 
+      .watchlist-row { transition: background var(--t-fast) !important; }
+      .watchlist-row:hover { background: rgba(255,255,255,0.022) !important; }
+
+      .holding-row { transition: background var(--t-fast) !important; }
+      .holding-row:hover { background: rgba(255,255,255,0.022) !important; }
+
+      tr { transition: background var(--t-fast); }
+      tr:hover td { background: rgba(255,255,255,0.018) !important; }
+
+      /* ── Interactive cards ──────────────────────────────────── */
       .crypto-card {
-        background: #0d1117 !important;
-        border: 1px solid #21262d !important;
-        border-radius: 4px !important;
-        transition: all 0.15s !important;
+        background: var(--surface-0) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--r) !important;
+        transition: border-color var(--t), box-shadow var(--t), transform var(--t) !important;
+        box-shadow: var(--shadow-sm) !important;
       }
-
       .crypto-card:hover {
-        border-color: #30363d !important;
+        border-color: var(--border-hover) !important;
+        box-shadow: var(--shadow) !important;
+        transform: translateY(-2px) !important;
       }
-
       .crypto-card.active {
-        border-color: #1f6feb !important;
-        background: #0c2044 !important;
+        border-color: var(--border-active) !important;
+        background: rgba(31,111,235,0.08) !important;
+        box-shadow: var(--shadow-glow) !important;
       }
 
       .tf-button {
         font-family: 'IBM Plex Mono', monospace !important;
         font-size: 10px !important;
+        border-radius: var(--r-sm) !important;
+        transition: all var(--t-fast) !important;
       }
-
+      .tf-button:hover { background: rgba(99,110,123,0.09) !important; }
       .tf-button.active {
-        background: #0c2044 !important;
-        color: #58a6ff !important;
+        background: rgba(31,111,235,0.14) !important;
+        color: var(--blue) !important;
+        box-shadow: inset 0 0 0 1px rgba(88,166,255,0.28) !important;
       }
 
       .news-card {
-        border: 1px solid #21262d !important;
-        border-radius: 4px !important;
-        transition: border-color 0.15s !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--r) !important;
+        transition: border-color var(--t), background var(--t),
+                    box-shadow var(--t), transform var(--t) !important;
       }
-
       .news-card:hover {
-        border-color: #30363d !important;
-        background: #161b22 !important;
-      }
-
-      .watchlist-row:hover {
-        background: #161b22 !important;
+        border-color: var(--border-hover) !important;
+        background: var(--surface-2) !important;
+        box-shadow: var(--shadow) !important;
+        transform: translateY(-1px) !important;
       }
 
       .eye-card {
-        background: #0d1117 !important;
-        border: 1px solid #21262d !important;
-        border-radius: 4px !important;
-        transition: all 0.15s !important;
+        background: var(--surface-0) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--r) !important;
+        transition: border-color var(--t), background var(--t),
+                    box-shadow var(--t), transform var(--t) !important;
+        box-shadow: var(--shadow-sm) !important;
       }
-
       .eye-card:hover {
-        border-color: #1f6feb !important;
-        background: #0c2044 !important;
+        border-color: var(--border-active) !important;
+        background: rgba(88,166,255,0.05) !important;
+        box-shadow: var(--shadow-glow) !important;
+        transform: translateY(-3px) !important;
+      }
+      .eye-card.active {
+        border-color: var(--border-active) !important;
+        background: rgba(31,111,235,0.08) !important;
+        box-shadow: var(--shadow-glow) !important;
       }
 
+      /* ── Branding ────────────────────────────────────────────── */
       .logo-text {
         font-family: 'IBM Plex Sans', sans-serif !important;
         font-weight: 600 !important;
-        color: #e6edf3 !important;
+        color: var(--text-1) !important;
         letter-spacing: 0.15em !important;
       }
 
       .live-dot {
-        background: #3fb950 !important;
-        box-shadow: none !important;
+        background: var(--green) !important;
+        box-shadow: 0 0 5px rgba(63,185,80,0.55) !important;
+        animation: live-pulse 2.4s ease-in-out infinite !important;
+      }
+      @keyframes live-pulse {
+        0%, 100% { box-shadow: 0 0 4px rgba(63,185,80,0.45); }
+        50%       { box-shadow: 0 0 9px rgba(63,185,80,0.80); }
       }
 
-      .positive { color: #3fb950 !important; }
-      .negative { color: #f85149 !important; }
+      .positive { color: var(--green) !important; }
+      .negative { color: var(--red)   !important; }
 
       .coming-soon-badge {
-        border-color: #30363d !important;
-        color: #7d8590 !important;
+        border-color: var(--border) !important;
+        color: var(--text-2) !important;
+        border-radius: var(--r-sm) !important;
       }
-
       .feature-badge {
-        border-color: #21262d !important;
-        color: #484f58 !important;
+        border-color: var(--border-subtle) !important;
+        color: var(--text-3) !important;
+        border-radius: var(--r-sm) !important;
       }
 
-      .holding-row:hover {
-        background: #0d1117 !important;
-      }
-
+      /* ── Form focus ──────────────────────────────────────────── */
       .pf-input:focus {
-        border-color: #1f6feb !important;
+        border-color: var(--border-active) !important;
+        box-shadow: var(--shadow-blue) !important;
         outline: none !important;
       }
+
+      /* ── Utility animations ──────────────────────────────────── */
+      @keyframes fade-up {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: translateY(0);   }
+      }
+      .fade-up { animation: fade-up 0.22s var(--ease) both; }
+
+      /* Smooth page-level entries */
+      @keyframes fade-in {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+
+      /* Recharts tooltip polish */
+      .recharts-tooltip-wrapper { filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5)) !important; }
     `}</style>
   );
 }
@@ -740,7 +827,7 @@ function SupplyChainDashboard({ onOpenResearch }) {
             return (
               <div key={s.id} className="p-2 rounded" onClick={() => onOpenResearch && onOpenResearch(researchItem)}
                 style={{ background: "#0d1117", border: "1px solid #1c2128", cursor: onOpenResearch ? "pointer" : "default" }}
-                onMouseEnter={e => { if (onOpenResearch) e.currentTarget.style.borderColor="#30363d"; }}
+                onMouseEnter={e => { if (onOpenResearch) e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"; }}
                 onMouseLeave={e => { if (onOpenResearch) e.currentTarget.style.borderColor="#1c2128"; }}>
                 <div className="flex items-center justify-between mb-0.5">
                   <div>
@@ -943,7 +1030,7 @@ function TechnicalAnalysis({ ticker }) {
               <CartesianGrid strokeDasharray="3 3" stroke="#21262d" vertical={false} />
               <XAxis dataKey="date" tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={xi} />
               <YAxis domain={[minP, maxP]} tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} tickFormatter={v => "$" + v.toFixed(0)} width={52} />
-              <Tooltip contentStyle={{ background: "#161b22", border: "1px solid #30363d", borderRadius: 4, fontSize: 10, fontFamily: "monospace" }} labelStyle={{ color: "#7d8590" }} />
+              <Tooltip contentStyle={{ background:"#1c2230", border:"1px solid rgba(99,110,123,0.28)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }} labelStyle={{ color: "#7d8590" }} />
               <Area type="monotone" dataKey="bbUpper" stroke="#e3b341" strokeWidth={1} strokeDasharray="3 3" fill="none" dot={false} name="BB Upper" />
               <Area type="monotone" dataKey="bbLower" stroke="#e3b341" strokeWidth={1} strokeDasharray="3 3" fill="none" dot={false} name="BB Lower" />
               <Area type="monotone" dataKey="bbMiddle" stroke="#7d8590" strokeWidth={1} fill="none" dot={false} name="BB Middle" />
@@ -1015,7 +1102,7 @@ function TechnicalAnalysis({ ticker }) {
               const bullPct = Math.round(bull/total*100);
               return (
                 <div>
-                  <div className="flex gap-1 mb-2" style={{ height: 8, borderRadius: 4, overflow: "hidden" }}>
+                  <div className="flex gap-1 mb-2" style={{ height: 8, borderRadius: 10, overflow: "hidden" }}>
                     <div style={{ width: bullPct + "%", background: "#3fb950", transition: "width 0.3s" }} />
                     <div style={{ width: (100-bullPct) + "%", background: "#f85149" }} />
                   </div>
@@ -1041,7 +1128,7 @@ function TechnicalAnalysis({ ticker }) {
               <CartesianGrid strokeDasharray="3 3" stroke="#21262d" vertical={false} />
               <XAxis dataKey="date" tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={xi} />
               <YAxis domain={[0, 100]} tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} width={30} />
-              <Tooltip contentStyle={{ background: "#161b22", border: "1px solid #30363d", borderRadius: 4, fontSize: 10, fontFamily: "monospace" }} labelStyle={{ color: "#7d8590" }} />
+              <Tooltip contentStyle={{ background:"#1c2230", border:"1px solid rgba(99,110,123,0.28)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }} labelStyle={{ color: "#7d8590" }} />
               <ReferenceLine y={70} stroke="#f85149" strokeDasharray="3 3" strokeWidth={1} />
               <ReferenceLine y={30} stroke="#3fb950" strokeDasharray="3 3" strokeWidth={1} />
               <Area type="monotone" dataKey="rsi" stroke="#58a6ff" strokeWidth={1.5} fill="rgba(88,166,255,0.05)" dot={false} name="RSI" />
@@ -1058,7 +1145,7 @@ function TechnicalAnalysis({ ticker }) {
               <CartesianGrid strokeDasharray="3 3" stroke="#21262d" vertical={false} />
               <XAxis dataKey="date" tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={xi} />
               <YAxis tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} width={40} />
-              <Tooltip contentStyle={{ background: "#161b22", border: "1px solid #30363d", borderRadius: 4, fontSize: 10, fontFamily: "monospace" }} labelStyle={{ color: "#7d8590" }} />
+              <Tooltip contentStyle={{ background:"#1c2230", border:"1px solid rgba(99,110,123,0.28)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }} labelStyle={{ color: "#7d8590" }} />
               <ReferenceLine y={0} stroke="#30363d" strokeWidth={1} />
               <Bar dataKey="histogram" name="Histogram" radius={[1,1,0,0]}>
                 {data.map((d, i) => (
@@ -1311,14 +1398,14 @@ function GeopoliticalEvents({ onOpenResearch }) {
     <div className="flex flex-col" style={{ height:"100%", overflow:"hidden" }}>
 
       {/* ── Filter bar ── */}
-      <div className="px-4 py-2 flex items-center gap-3 flex-wrap" style={{ borderBottom:"1px solid #21262d", background:"#010409", flexShrink:0 }}>
-        <span className="font-mono" style={{ background:"#0c2044", color:"#58a6ff", border:"1px solid #58a6ff33", borderRadius:3, padding:"2px 8px", fontSize:10 }}>● LIVE</span>
+      <div className="px-4 py-2 flex items-center gap-3 flex-wrap" style={{ borderBottom:"1px solid rgba(99,110,123,0.12)", background:"#010409", flexShrink:0 }}>
+        <span className="font-mono" style={{ background:"#0c2044", color:"#58a6ff", border:"1px solid #58a6ff33", borderRadius:6, padding:"2px 8px", fontSize:10 }}>● LIVE</span>
 
         <div className="flex items-center gap-1">
           <span className="font-mono" style={{ color:"#484f58", fontSize:9 }}>IMPACT:</span>
           {["All","High","Medium","Low"].map(v => (
             <button key={v} onClick={() => setFilterImpact(v)} className="font-mono"
-              style={{ padding:"2px 8px", fontSize:10, borderRadius:3, border:"1px solid", cursor:"pointer",
+              style={{ padding:"2px 8px", fontSize:10, borderRadius:6, border:"1px solid", cursor:"pointer",
                 background: filterImpact===v ? (GEO_IMPACT_COLOR[v]||"#21262d")+"22" : "transparent",
                 borderColor: filterImpact===v ? (GEO_IMPACT_COLOR[v]||"#58a6ff") : "#21262d",
                 color: filterImpact===v ? (GEO_IMPACT_COLOR[v]||"#58a6ff") : "#7d8590" }}>
@@ -1333,7 +1420,7 @@ function GeopoliticalEvents({ onOpenResearch }) {
             const cfg = GEO_CATEGORIES[v];
             return (
               <button key={v} onClick={() => setFilterCat(v)} className="font-mono"
-                style={{ padding:"2px 8px", fontSize:10, borderRadius:3, border:"1px solid", cursor:"pointer",
+                style={{ padding:"2px 8px", fontSize:10, borderRadius:6, border:"1px solid", cursor:"pointer",
                   background: filterCat===v ? (cfg?.bg||"#21262d") : "transparent",
                   borderColor: filterCat===v ? (cfg?.color||"#58a6ff") : "#21262d",
                   color: filterCat===v ? (cfg?.color||"#58a6ff") : "#7d8590" }}>
@@ -1347,7 +1434,7 @@ function GeopoliticalEvents({ onOpenResearch }) {
           <span className="font-mono" style={{ color:"#484f58", fontSize:9 }}>TIME:</span>
           {["1H","6H","24H"].map(v => (
             <button key={v} onClick={() => setFilterTime(v)} className="font-mono"
-              style={{ padding:"2px 8px", fontSize:10, borderRadius:3, border:"1px solid", cursor:"pointer",
+              style={{ padding:"2px 8px", fontSize:10, borderRadius:6, border:"1px solid", cursor:"pointer",
                 background: filterTime===v ? "#0c2044" : "transparent",
                 borderColor: filterTime===v ? "#58a6ff" : "#21262d",
                 color: filterTime===v ? "#58a6ff" : "#7d8590" }}>
@@ -1357,7 +1444,7 @@ function GeopoliticalEvents({ onOpenResearch }) {
         </div>
 
         <button onClick={fetchEvents} disabled={loading} className="font-mono"
-          style={{ padding:"2px 10px", fontSize:10, borderRadius:3, border:"1px solid #30363d", background:"transparent", color:loading?"#7d8590":"#58a6ff", cursor:loading?"wait":"pointer", marginLeft:"auto" }}>
+          style={{ padding:"2px 10px", fontSize:10, borderRadius:6, border:"1px solid #30363d", background:"transparent", color:loading?"#7d8590":"#58a6ff", cursor:loading?"wait":"pointer", marginLeft:"auto" }}>
           {loading ? "⟳ Updating…" : "⟳ Refresh"}
         </button>
         {lastRefresh && (
@@ -1384,7 +1471,7 @@ function GeopoliticalEvents({ onOpenResearch }) {
             const isNew      = ageSec < 1800 && !isBreaking;
             return (
               <div key={event.id} onClick={() => setSelected(event)}
-                style={{ borderBottom:"1px solid #161b22", borderLeft:"3px solid " + (isSelected ? cfg.color : GEO_IMPACT_COLOR[event.impact]),
+                style={{ borderBottom:"1px solid rgba(99,110,123,0.07)", borderLeft:"3px solid " + (isSelected ? cfg.color : GEO_IMPACT_COLOR[event.impact]),
                   background: isSelected ? cfg.bg : "transparent", padding:"10px 14px", cursor:"pointer", transition:"background 0.15s" }}
                 onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background="#0d1117"; }}
                 onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background="transparent"; }}>
@@ -1408,7 +1495,7 @@ function GeopoliticalEvents({ onOpenResearch }) {
 
                 <div className="flex flex-wrap gap-1 items-center">
                   {event.assets.slice(0,3).map(a => (
-                    <span key={a.id} className="font-mono" style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:2, padding:"1px 6px", fontSize:9, color:"#7d8590" }}>
+                    <span key={a.id} className="font-mono" style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:2, padding:"1px 6px", fontSize:9, color:"#7d8590" }}>
                       {a.label}
                     </span>
                   ))}
@@ -1435,9 +1522,9 @@ function GeopoliticalEvents({ onOpenResearch }) {
               <div>
                 {/* Badges */}
                 <div className="flex items-center gap-2 mb-4 flex-wrap">
-                  {isBreaking && <span className="font-mono" style={{ background:"#f8514922", border:"1px solid #f85149", borderRadius:3, padding:"3px 10px", fontSize:10, color:"#f85149" }}>⚡ BREAKING</span>}
-                  <span className="font-mono" style={{ background:cfg.bg, border:"1px solid "+cfg.color, borderRadius:3, padding:"3px 10px", fontSize:10, color:cfg.color }}>{selected.category.toUpperCase()}</span>
-                  <span className="font-mono" style={{ border:"1px solid "+GEO_IMPACT_COLOR[selected.impact], borderRadius:3, padding:"3px 10px", fontSize:10, color:GEO_IMPACT_COLOR[selected.impact] }}>{selected.impact.toUpperCase()} IMPACT</span>
+                  {isBreaking && <span className="font-mono" style={{ background:"#f8514922", border:"1px solid #f85149", borderRadius:6, padding:"3px 10px", fontSize:10, color:"#f85149" }}>⚡ BREAKING</span>}
+                  <span className="font-mono" style={{ background:cfg.bg, border:"1px solid "+cfg.color, borderRadius:6, padding:"3px 10px", fontSize:10, color:cfg.color }}>{selected.category.toUpperCase()}</span>
+                  <span className="font-mono" style={{ border:"1px solid "+GEO_IMPACT_COLOR[selected.impact], borderRadius:6, padding:"3px 10px", fontSize:10, color:GEO_IMPACT_COLOR[selected.impact] }}>{selected.impact.toUpperCase()} IMPACT</span>
                   <span className="font-mono ml-auto" style={{ color:"#7d8590", fontSize:10 }}>{selected.source} · {geoTimeAgo(selected.datetime)}</span>
                 </div>
 
@@ -1449,14 +1536,14 @@ function GeopoliticalEvents({ onOpenResearch }) {
                   <div className="flex items-center gap-2 mb-4 flex-wrap">
                     <span className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>Region:</span>
                     {selected.regions.map(r => (
-                      <span key={r} className="font-mono" style={{ background:"#21262d", borderRadius:3, padding:"2px 8px", fontSize:11, color:"#7d8590" }}>{r}</span>
+                      <span key={r} className="font-mono" style={{ background:"#21262d", borderRadius:6, padding:"2px 8px", fontSize:11, color:"#7d8590" }}>{r}</span>
                     ))}
                   </div>
                 )}
 
                 {/* Summary */}
                 {selected.summary && (
-                  <div className="mb-4 p-3" style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4 }}>
+                  <div className="mb-4 p-3" style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:4 }}>
                     <div className="font-mono mb-1.5" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Summary</div>
                     <p className="font-mono leading-relaxed" style={{ color:"#7d8590", fontSize:12 }}>{selected.summary}</p>
                   </div>
@@ -1469,7 +1556,7 @@ function GeopoliticalEvents({ onOpenResearch }) {
                 </div>
 
                 {/* Signal + link row */}
-                <div className="flex items-center gap-4 mb-4 p-3" style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4 }}>
+                <div className="flex items-center gap-4 mb-4 p-3" style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:4 }}>
                   <div>
                     <div className="font-mono mb-1" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>Directional Signal</div>
                     <div className="font-mono font-bold" style={{ color:GEO_SIGNAL_COLOR[selected.signal], fontSize:18 }}>
@@ -1479,7 +1566,7 @@ function GeopoliticalEvents({ onOpenResearch }) {
                   <div className="ml-auto flex gap-2">
                     <a href={selected.url} target="_blank" rel="noopener noreferrer"
                       className="font-mono"
-                      style={{ background:"#1f6feb", borderRadius:4, padding:"7px 14px", color:"#fff", fontSize:11, textDecoration:"none" }}>
+                      style={{ background:"#1f6feb", borderRadius:10, padding:"7px 14px", color:"#fff", fontSize:11, textDecoration:"none" }}>
                       Full Article ↗
                     </a>
                   </div>
@@ -1495,9 +1582,9 @@ function GeopoliticalEvents({ onOpenResearch }) {
                       <button key={a.id}
                         onClick={() => onOpenResearch && onOpenResearch(a)}
                         className="font-mono"
-                        style={{ background:"#0d1117", border:"1px solid #30363d", borderRadius:4, padding:"7px 14px", fontSize:12, color:GEO_ASSET_COLOR[a.type]||"#7d8590", cursor:onOpenResearch?"pointer":"default", transition:"all 0.15s" }}
+                        style={{ background:"#0d1117", border:"1px solid #30363d", borderRadius:10, padding:"7px 14px", fontSize:12, color:GEO_ASSET_COLOR[a.type]||"#7d8590", cursor:onOpenResearch?"pointer":"default", transition:"all 0.15s" }}
                         onMouseEnter={e => { if (onOpenResearch) { e.currentTarget.style.borderColor=cfg.color; e.currentTarget.style.background=cfg.bg; } }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor="#30363d"; e.currentTarget.style.background="#0d1117"; }}>
+                        onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"; e.currentTarget.style.background="#0d1117"; }}>
                         {a.label}{onOpenResearch ? " ↗" : ""}
                       </button>
                     ))}
@@ -1515,7 +1602,7 @@ function GeopoliticalEvents({ onOpenResearch }) {
                     ["Regions",   selected.regions.length ? selected.regions.map(r => r.split(" ").slice(1).join(" ")).join(", ") : "Global"],
                     ["Published", geoTimeAgo(selected.datetime)],
                   ].map(([k, v]) => (
-                    <div key={k} className="p-2" style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4 }}>
+                    <div key={k} className="p-2" style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:4 }}>
                       <div className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>{k}</div>
                       <div className="font-mono" style={{ color:"#e6edf3", fontSize:11 }}>{v}</div>
                     </div>
@@ -1970,7 +2057,7 @@ function GlobalIntelligenceGlobe({ onOpenResearch }) {
           )}
           <button onClick={() => setSelected(null)}
             className="text-xs font-mono px-2 py-1 rounded"
-            style={{ background:"transparent", border:"1px solid #21262d", color:"#484f58", cursor:"pointer" }}>
+            style={{ background:"transparent", border:"1px solid rgba(99,110,123,0.18)", color:"#484f58", cursor:"pointer" }}>
             ✕ Close
           </button>
         </div>
@@ -2560,7 +2647,7 @@ function AnalystData({ ticker }) {
         <div className="terminal-header mb-2">📊 Analyst Ratings</div>
         {!data ? <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Loading...</div> : (
           <div>
-            <div className="flex gap-1 mb-2" style={{ height: 8, borderRadius: 4, overflow: "hidden" }}>
+            <div className="flex gap-1 mb-2" style={{ height: 8, borderRadius: 10, overflow: "hidden" }}>
               <div style={{ width: bullPct + "%", background: "#3fb950" }} />
               <div style={{ width: holdPct + "%", background: "#e3b341" }} />
               <div style={{ width: bearPct + "%", background: "#f85149" }} />
@@ -2834,7 +2921,7 @@ function TopNav({ ticker, setTicker, quote, loading, onSettingsClick }) {
           <span style={{ color: "#e6edf3", fontWeight: 700, fontSize: 14 }}>{ticker}</span>
           <span style={{ color: "#e6edf3", fontSize: 16, fontWeight: 600 }}>${fmt.price(quote.c)}</span>
           <span className="flex items-center gap-1" style={{ color: clr(quote.dp), background: bg(quote.dp),
-            fontSize: 12, padding: "2px 8px", borderRadius: 4 }}>
+            fontSize: 12, padding: "2px 8px", borderRadius: 10 }}>
             {quote.dp >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
             {fmt.change(quote.d)} ({fmt.pct(quote.dp)})
           </span>
@@ -2958,7 +3045,7 @@ function useOHLC(ticker, tf) {
 function ChartTypeBtn({ value, active, onClick, children }) {
   return (
     <button onClick={() => onClick(value)} className="font-mono"
-      style={{ padding:"2px 8px", fontSize:10, borderRadius:3, border:"1px solid",
+      style={{ padding:"2px 8px", fontSize:10, borderRadius:6, border:"1px solid",
         background: active ? "#0c2044" : "transparent",
         borderColor: active ? "#58a6ff" : "#21262d",
         color: active ? "#58a6ff" : "#7d8590", cursor:"pointer" }}>
@@ -2983,7 +3070,7 @@ function UniversalChart({ ticker, height = 220, showVolume = false, colorUp = "#
   const maxP = data.length ? Math.max(...allHighs) * 1.0005 : 0;
   const xi   = Math.max(1, Math.floor(data.length / 6));
   const gradId = "ucg_" + ticker.replace(/[^a-z0-9]/gi, "") + "_" + tf;
-  const tooltipStyle = { background:"#0d1117", border:"1px solid #21262d", borderRadius:4, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" };
+  const tooltipStyle = { background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" };
   const tickStyle    = { fill:"#484f58", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" };
   const fmt2 = v => v != null ? prefix + (+v).toFixed(decimals) : "—";
 
@@ -3049,7 +3136,7 @@ function UniversalChart({ ticker, height = 220, showVolume = false, colorUp = "#
         <div className="flex items-center gap-2">
           {label && <span className="font-mono" style={{ color:"#7d8590", fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em" }}>{label}</span>}
           {data.length > 0 && (
-            <span className="font-mono" style={{ fontSize:10, color:lc, background:lc+"18", border:"1px solid "+lc+"33", borderRadius:3, padding:"1px 6px" }}>
+            <span className="font-mono" style={{ fontSize:10, color:lc, background:lc+"18", border:"1px solid "+lc+"33", borderRadius:6, padding:"1px 6px" }}>
               {chg >= 0 ? "+" : ""}{fmt2(chg)} ({pct >= 0 ? "+" : ""}{pct.toFixed(2)}%) {tf}
             </span>
           )}
@@ -3062,7 +3149,7 @@ function UniversalChart({ ticker, height = 220, showVolume = false, colorUp = "#
             <ChartTypeBtn value="candle" active={chartType==="candle"} onClick={setChartType}>Candle</ChartTypeBtn>
           </div>
           {/* Timeframe */}
-          <div className="flex overflow-hidden rounded" style={{ border:"1px solid #21262d" }}>
+          <div className="flex overflow-hidden rounded" style={{ border:"1px solid rgba(99,110,123,0.18)" }}>
             {TIMEFRAMES.map(t => (
               <button key={t} onClick={() => setTf(t)} className="font-mono"
                 style={{ padding:"2px 8px", fontSize:10, background:tf===t?"#0c2044":"transparent", color:tf===t?"#58a6ff":"#7d8590", borderRight:"1px solid #21262d", cursor:"pointer" }}>
@@ -3250,7 +3337,7 @@ function FinancialStatements({ ticker }) {
               {tabs.map(t => <button key={t.key} onClick={()=>setTab(t.key)} className="px-3 py-1 text-xs font-mono border-b-2 transition-colors" style={{ borderBottomColor: tab===t.key?"#58a6ff":"transparent", color: tab===t.key?"#58a6ff":"#7d8590", background:"transparent" }}>{t.label}</button>)}
             </div>
           </div>
-          <button onClick={() => setExpanded(false)} style={{ color: "#7d8590", background: "#161b22", border: "1px solid #30363d", borderRadius: 4, padding: "4px 12px", cursor: "pointer", fontSize: 12, fontFamily: "monospace" }}>✕ Close</button>
+          <button onClick={() => setExpanded(false)} style={{ color: "#7d8590", background: "#161b22", border: "1px solid #30363d", borderRadius: 10, padding: "4px 12px", cursor: "pointer", fontSize: 12, fontFamily: "monospace" }}>✕ Close</button>
         </div>
         <div className="flex-1 overflow-auto p-4">
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontFamily: "monospace" }}>
@@ -3596,22 +3683,25 @@ const RB_TYPE_COLOR = { equity:"#58a6ff", commodity:"#e3b341", fx:"#3fb950", mac
 
 function ResearchPanelShell({ title, subtitle, badge, onClose, children }) {
   return (
-    <div className="terminal-panel terminal-glow flex flex-col" style={{ minHeight: 340 }}>
-      <div className="flex items-center justify-between px-3 pt-3 pb-2" style={{ borderBottom:"1px solid #21262d", flexShrink:0 }}>
-        <div className="flex items-center gap-2 min-w-0">
+    <div className="terminal-panel terminal-glow flex flex-col" style={{ minHeight: 360 }}>
+      <div className="flex items-center justify-between px-4 pt-3.5 pb-3" style={{ borderBottom:"1px solid rgba(99,110,123,0.12)", flexShrink:0 }}>
+        <div className="flex items-center gap-2.5 min-w-0">
           <div className="min-w-0">
-            <div className="font-mono font-bold truncate" style={{ color:"#e6edf3", fontSize:13 }}>{title}</div>
-            {subtitle && <div className="font-mono truncate" style={{ color:"#7d8590", fontSize:10 }}>{subtitle}</div>}
+            <div className="font-mono font-bold truncate" style={{ color:"#e6edf3", fontSize:14, letterSpacing:"-0.01em" }}>{title}</div>
+            {subtitle && <div className="font-mono truncate" style={{ color:"#484f58", fontSize:9, marginTop:1 }}>{subtitle}</div>}
           </div>
           {badge && (
-            <span className="font-mono" style={{ background:"#21262d", border:"1px solid #30363d", borderRadius:3, padding:"1px 6px", fontSize:9, color:"#7d8590", textTransform:"uppercase", letterSpacing:"0.05em", flexShrink:0 }}>
+            <span className="font-mono" style={{ background:"rgba(99,110,123,0.10)", border:"1px solid rgba(99,110,123,0.20)", borderRadius:20, padding:"2px 8px", fontSize:9, color:"#7d8590", textTransform:"uppercase", letterSpacing:"0.06em", flexShrink:0 }}>
               {badge}
             </span>
           )}
         </div>
-        <button onClick={onClose} style={{ color:"#7d8590", background:"none", border:"none", cursor:"pointer", fontSize:14, marginLeft:8, flexShrink:0 }}>✕</button>
+        <button onClick={onClose}
+          style={{ color:"#484f58", background:"rgba(99,110,123,0.08)", border:"none", cursor:"pointer", fontSize:12, marginLeft:8, flexShrink:0, width:24, height:24, borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.15s" }}
+          onMouseEnter={e => { e.currentTarget.style.background="rgba(99,110,123,0.18)"; e.currentTarget.style.color="#8b949e"; }}
+          onMouseLeave={e => { e.currentTarget.style.background="rgba(99,110,123,0.08)"; e.currentTarget.style.color="#484f58"; }}>✕</button>
       </div>
-      <div className="flex flex-col flex-1 p-3">{children}</div>
+      <div className="flex flex-col flex-1 p-4">{children}</div>
     </div>
   );
 }
@@ -3620,14 +3710,14 @@ function RelatedLinks({ itemId, onOpen }) {
   const links = RELATED_MAP[itemId] || [];
   if (!links.length) return null;
   return (
-    <div className="mt-auto pt-2" style={{ borderTop:"1px solid #21262d" }}>
-      <div className="font-mono mb-1.5" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Related</div>
-      <div className="flex flex-wrap gap-1">
+    <div className="mt-auto pt-3" style={{ borderTop:"1px solid rgba(99,110,123,0.10)" }}>
+      <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Related</div>
+      <div className="flex flex-wrap gap-1.5">
         {links.map(link => (
           <button key={link.id} onClick={() => onOpen(link)} className="font-mono"
-            style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:3, padding:"2px 7px", fontSize:10, color:RB_TYPE_COLOR[link.type]||"#7d8590", cursor:"pointer" }}
-            onMouseEnter={e => e.currentTarget.style.borderColor="#30363d"}
-            onMouseLeave={e => e.currentTarget.style.borderColor="#21262d"}>
+            style={{ background:"rgba(99,110,123,0.07)", border:"1px solid rgba(99,110,123,0.16)", borderRadius:20, padding:"3px 10px", fontSize:10, color:RB_TYPE_COLOR[link.type]||"#7d8590", cursor:"pointer", transition:"all 0.15s cubic-bezier(0.4,0,0.2,1)" }}
+            onMouseEnter={e => { e.currentTarget.style.background="rgba(99,110,123,0.15)"; e.currentTarget.style.borderColor="rgba(99,110,123,0.35)"; e.currentTarget.style.transform="translateY(-1px)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background="rgba(99,110,123,0.07)"; e.currentTarget.style.borderColor="rgba(99,110,123,0.16)"; e.currentTarget.style.transform="translateY(0)"; }}>
             {link.label}
           </button>
         ))}
@@ -3752,7 +3842,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
       {/* Company info strip */}
       {profile && (
         <div className="flex items-center gap-2 mb-3 flex-wrap">
-          {profile.logo && <img src={profile.logo} alt="" style={{ height:20, width:20, objectFit:"contain", borderRadius:3, background:"#161b22", padding:2 }} />}
+          {profile.logo && <img src={profile.logo} alt="" style={{ height:20, width:20, objectFit:"contain", borderRadius:6, background:"#161b22", padding:2 }} />}
           {profile.finnhubIndustry && <span className="font-mono" style={{ color:"#7d8590", fontSize:10 }}>{profile.finnhubIndustry}</span>}
           {profile.exchange         && <span className="font-mono" style={{ color:"#484f58", fontSize:10 }}>· {profile.exchange}</span>}
           {profile.country          && <span className="font-mono" style={{ color:"#484f58", fontSize:10 }}>· {profile.country}</span>}
@@ -3786,7 +3876,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
                     tick={{ fill:"#484f58", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }} tickLine={false} axisLine={false} interval={35} />
                   <YAxis domain={["auto","auto"]} hide />
                   <Tooltip
-                    contentStyle={{ background:"#161b22", border:"1px solid #30363d", borderRadius:4, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" }}
+                    contentStyle={{ background:"#1c2230", border:"1px solid rgba(99,110,123,0.28)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }}
                     labelFormatter={t => new Date(t*1000).toLocaleDateString()}
                     formatter={(v,n) => [v != null ? "$"+v.toFixed(2) : "—", n==="v" ? "Price" : "MA 50"]} />
                   <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5} fill={"url(#eqg_"+item.ticker.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false} />
@@ -3825,7 +3915,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
         {/* Right: key stats */}
         <div>
           <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Statistics</div>
-          <div style={{ borderTop:"1px solid #21262d" }}>
+          <div style={{ borderTop:"1px solid rgba(99,110,123,0.12)" }}>
             {[
               ["Market Cap",      fmtMktCap(m.marketCapitalization)],
               ["P/E (TTM)",       fmtX(m.peBasicExclExtraTTM)],
@@ -3843,7 +3933,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
               ["Avg Vol (10D)",   m["10DayAverageTradingVolume"] != null ? (m["10DayAverageTradingVolume"]).toFixed(2)+"M" : "—"],
               ["Shares Out.",     m.shareOutstanding != null ? fmtMktCap(m.shareOutstanding) : "—"],
             ].map(([k,v]) => (
-              <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid #161b22" }}>
+              <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid rgba(99,110,123,0.07)" }}>
                 <span style={{ color:"#7d8590", fontSize:10 }}>{k}</span>
                 <span style={{ color:"#e6edf3", fontSize:10 }}>{v || "—"}</span>
               </div>
@@ -3924,7 +4014,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
             ["EPS Growth (3Y CAGR)", m.epsGrowth3Y],
             ["EPS Growth (5Y CAGR)", m.epsGrowth5Y],
           ].map(([k,v]) => (
-            <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid #161b22" }}>
+            <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid rgba(99,110,123,0.07)" }}>
               <span style={{ color:"#7d8590", fontSize:10 }}>{k}</span>
               <span style={{ color:clrM(v), fontSize:10 }}>{fmtGr(v)}</span>
             </div>
@@ -3942,7 +4032,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
             ["FCF/Share (TTM)",   m.freeCashFlowPerShareTTM != null ? "$"+fmtN(m.freeCashFlowPerShareTTM) : "—"],
             ["Net Int. Coverage", fmtN(m.netInterestCoverageAnnual)],
           ].map(([k,v]) => (
-            <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid #161b22" }}>
+            <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid rgba(99,110,123,0.07)" }}>
               <span style={{ color:"#7d8590", fontSize:10 }}>{k}</span>
               <span style={{ color:"#e6edf3", fontSize:10 }}>{v}</span>
             </div>
@@ -4026,7 +4116,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
             ["EV/FCF (Ann.)",      fmtX(m["currentEv/freeCashFlowAnnual"])],
             ["EV/FCF (TTM)",       fmtX(m["currentEv/freeCashFlowTTM"])],
           ].map(([k,v]) => (
-            <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid #161b22" }}>
+            <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid rgba(99,110,123,0.07)" }}>
               <span style={{ color:"#7d8590", fontSize:10 }}>{k}</span>
               <span style={{ color:"#e6edf3", fontSize:10 }}>{v}</span>
             </div>
@@ -4076,7 +4166,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
                 <span>Low ${fmtN(ptLow)}</span>
                 <span>High ${fmtN(ptHigh)}</span>
               </div>
-              <div style={{ position:"relative", height:6, background:"#21262d", borderRadius:3, marginBottom:10 }}>
+              <div style={{ position:"relative", height:6, background:"#21262d", borderRadius:6, marginBottom:10 }}>
                 {ptBarPct != null && (
                   <div style={{ position:"absolute", left:ptBarPct+"%", top:-4, width:12, height:14, borderRadius:2, background:"#58a6ff", transform:"translateX(-50%)", border:"2px solid #010409", zIndex:2 }} title={"Current: $"+fmt.price(cur)} />
                 )}
@@ -4112,8 +4202,8 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
           const timeStr = dAgo===0?"Today":dAgo===1?"Yesterday":dAgo!=null?dAgo+"d ago":"";
           return (
             <a key={i} href={n.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
-              <div className="p-3" style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4 }}
-                onMouseEnter={e=>e.currentTarget.style.borderColor="#30363d"}
+              <div className="p-3" style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:4 }}
+                onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"}
                 onMouseLeave={e=>e.currentTarget.style.borderColor="#21262d"}>
                 <div className="flex items-start justify-between gap-3 mb-1">
                   <span className="font-mono" style={{ color:"#e6edf3", fontSize:11, lineHeight:1.5 }}>{n.headline}</span>
@@ -4149,7 +4239,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
           </thead>
           <tbody>
             {allRows.map(({ ticker, q, pm, isSelf }) => (
-              <tr key={ticker} style={{ borderTop:"1px solid #21262d", background:isSelf?"#0d1117":"transparent" }}>
+              <tr key={ticker} style={{ borderTop:"1px solid rgba(99,110,123,0.12)", background:isSelf?"#0d1117":"transparent" }}>
                 <td className="font-mono py-2" style={{ color:isSelf?"#58a6ff":"#e6edf3", fontSize:11, fontWeight:isSelf?"bold":"normal" }}>
                   {ticker}
                   {!isSelf && <button onClick={()=>onOpen({id:ticker,label:ticker,type:"equity",ticker,category:"Equities"})}
@@ -4176,17 +4266,17 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
   return (
     <div className="terminal-panel terminal-glow flex flex-col" style={{ minHeight:520 }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-3 pb-0" style={{ borderBottom:"1px solid #21262d", flexShrink:0 }}>
+      <div className="flex items-center justify-between px-4 pt-3 pb-0" style={{ borderBottom:"1px solid rgba(99,110,123,0.12)", flexShrink:0 }}>
         <div className="flex items-center gap-3 flex-wrap">
           <span className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:15 }}>{item.ticker}</span>
           <span className="font-mono" style={{ color:"#7d8590", fontSize:12 }}>{profile?.name || item.label}</span>
-          <span className="font-mono" style={{ background:"#21262d", border:"1px solid #30363d", borderRadius:3, padding:"1px 6px", fontSize:9, color:"#58a6ff", textTransform:"uppercase" }}>Equity</span>
+          <span className="font-mono" style={{ background:"#21262d", border:"1px solid #30363d", borderRadius:6, padding:"1px 6px", fontSize:9, color:"#58a6ff", textTransform:"uppercase" }}>Equity</span>
           {loadingBase && <span className="font-mono" style={{ color:"#484f58", fontSize:9 }}>Loading…</span>}
         </div>
         <button onClick={onClose} style={{ color:"#7d8590", background:"none", border:"none", cursor:"pointer", fontSize:14, marginLeft:8 }}>✕</button>
       </div>
       {/* Tab nav */}
-      <div className="flex px-4" style={{ borderBottom:"1px solid #21262d", flexShrink:0 }}>
+      <div className="flex px-4" style={{ borderBottom:"1px solid rgba(99,110,123,0.12)", flexShrink:0 }}>
         {TABS.map(t => (
           <button key={t} onClick={() => setActiveTab(t)} className="font-mono"
             style={{ background:"none", border:"none", borderBottom:activeTab===t?"2px solid #58a6ff":"2px solid transparent",
@@ -4250,10 +4340,10 @@ function IntelCard({ intel, accentColor = "#e3b341" }) {
 
 function ResearchTabBar({ tabs, active, onSelect }) {
   return (
-    <div className="flex gap-1 mb-3" style={{ borderBottom:"1px solid #21262d", paddingBottom:8, flexShrink:0 }}>
+    <div className="flex gap-1 mb-3" style={{ borderBottom:"1px solid rgba(99,110,123,0.12)", paddingBottom:8, flexShrink:0 }}>
       {tabs.map(tab => (
         <button key={tab} onClick={() => onSelect(tab)} className="font-mono"
-          style={{ background: active===tab ? "#21262d" : "transparent", border:"none", cursor:"pointer", padding:"2px 10px", fontSize:10, borderRadius:3, color: active===tab ? "#e6edf3" : "#7d8590" }}>
+          style={{ background: active===tab ? "#21262d" : "transparent", border:"none", cursor:"pointer", padding:"2px 10px", fontSize:10, borderRadius:6, color: active===tab ? "#e6edf3" : "#7d8590" }}>
           {tab}
         </button>
       ))}
@@ -4323,7 +4413,7 @@ function CommodityResearchPanel({ item, onClose, onOpen }) {
               </defs>
               <XAxis dataKey="t" tickFormatter={t=>{const d=new Date(t*1000);return(d.getMonth()+1)+"/"+d.getDate();}} tick={{fill:"#484f58",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={35}/>
               <YAxis domain={["auto","auto"]} hide/>
-              <Tooltip contentStyle={{background:"#161b22",border:"1px solid #30363d",borderRadius:4,fontSize:10,fontFamily:"'IBM Plex Mono',monospace"}} labelFormatter={t=>new Date(t*1000).toLocaleDateString()} formatter={v=>["$"+v?.toFixed(dp),"Price"]}/>
+              <Tooltip contentStyle={{background:"#1c2230",border:"1px solid rgba(99,110,123,0.28)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} labelFormatter={t=>new Date(t*1000).toLocaleDateString()} formatter={v=>["$"+v?.toFixed(dp),"Price"]}/>
               <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5} fill={"url(#cmg_"+item.id.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
             </AreaChart>
           </ResponsiveContainer>
@@ -4347,7 +4437,7 @@ function CommodityResearchPanel({ item, onClose, onOpen }) {
       {summary && (
         <div className="grid mb-4" style={{ gridTemplateColumns:"repeat(4,1fr)", gap:"4px 8px" }}>
           {[["1D",summary.dayPct],["1M",summary.m1Pct],["3M",summary.m3Pct],["YTD",summary.ytdPct]].map(([label,val])=>(
-            <div key={label} style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4, padding:"6px 8px" }}>
+            <div key={label} style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:10, padding:"6px 8px" }}>
               <div className="font-mono" style={{ color:"#484f58", fontSize:9 }}>{label}</div>
               <div className="font-mono font-bold" style={{ color:clr(val), fontSize:13 }}>{fmt.pct(val)}</div>
             </div>
@@ -4363,9 +4453,9 @@ function CommodityResearchPanel({ item, onClose, onOpen }) {
   ) : (
     <div>
       <div className="font-mono mb-3" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Producers / Supply Sources</div>
-      <div style={{ borderTop:"1px solid #21262d" }}>
+      <div style={{ borderTop:"1px solid rgba(99,110,123,0.12)" }}>
         {intel.producers.map((p,i) => (
-          <div key={i} className="flex items-start justify-between py-2.5" style={{ borderBottom:"1px solid #161b22" }}>
+          <div key={i} className="flex items-start justify-between py-2.5" style={{ borderBottom:"1px solid rgba(99,110,123,0.07)" }}>
             <div>
               <div className="font-mono" style={{ color:"#e6edf3", fontSize:11 }}>{p.name}</div>
               <div className="font-mono" style={{ color:"#7d8590", fontSize:9 }}>{p.note}</div>
@@ -4467,7 +4557,7 @@ function FXResearchPanel({ item, onClose, onOpen }) {
               </defs>
               <XAxis dataKey="t" tickFormatter={t=>{const d=new Date(t*1000);return(d.getMonth()+1)+"/"+d.getDate();}} tick={{fill:"#484f58",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={35}/>
               <YAxis domain={["auto","auto"]} hide/>
-              <Tooltip contentStyle={{background:"#161b22",border:"1px solid #30363d",borderRadius:4,fontSize:10,fontFamily:"'IBM Plex Mono',monospace"}} labelFormatter={t=>new Date(t*1000).toLocaleDateString()} formatter={v=>[v?.toFixed(dp),"Rate"]}/>
+              <Tooltip contentStyle={{background:"#1c2230",border:"1px solid rgba(99,110,123,0.28)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} labelFormatter={t=>new Date(t*1000).toLocaleDateString()} formatter={v=>[v?.toFixed(dp),"Rate"]}/>
               <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5} fill={"url(#fxg_"+item.id.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
             </AreaChart>
           </ResponsiveContainer>
@@ -4491,7 +4581,7 @@ function FXResearchPanel({ item, onClose, onOpen }) {
       {summary && (
         <div className="grid mb-4" style={{ gridTemplateColumns:"repeat(3,1fr)", gap:"4px 8px" }}>
           {[["1D",summary.dayPct],["1M",summary.m1Pct],["3M",summary.m3Pct]].map(([label,val])=>(
-            <div key={label} style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4, padding:"6px 8px" }}>
+            <div key={label} style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:10, padding:"6px 8px" }}>
               <div className="font-mono" style={{ color:"#484f58", fontSize:9 }}>{label}</div>
               <div className="font-mono font-bold" style={{ color:clr(val), fontSize:13 }}>{fmt.pct(val)}</div>
             </div>
@@ -4526,7 +4616,7 @@ function FXResearchPanel({ item, onClose, onOpen }) {
         <div className="grid mb-4" style={{ gridTemplateColumns:"1fr 1fr", gap:8 }}>
           {[{ label:pair.baseLabel, val:baseLatest?.v, color:"#58a6ff", date:baseLatest?.t },
             { label:pair.quoteLabel||"N/A", val:quoteLatest?.v, color:"#e3b341", date:quoteLatest?.t }].map(({label,val,color,date})=>(
-            <div key={label} style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:6, padding:"10px 12px" }}>
+            <div key={label} style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:6, padding:"10px 12px" }}>
               <div className="font-mono mb-1" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>{label}</div>
               <div className="font-mono font-bold" style={{ color, fontSize:20 }}>{val!=null?val.toFixed(2)+"%":"—"}</div>
               {date && <div className="font-mono" style={{ color:"#484f58", fontSize:9 }}>as of {date}</div>}
@@ -4535,7 +4625,7 @@ function FXResearchPanel({ item, onClose, onOpen }) {
         </div>
 
         {diff != null && (
-          <div className="mb-4 p-3" style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:6 }}>
+          <div className="mb-4 p-3" style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:6 }}>
             <div className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>Differential (USD minus {pair.quoteCCY})</div>
             <div className="font-mono font-bold" style={{ color:diff>=0?"#58a6ff":"#e3b341", fontSize:20 }}>{diff>=0?"+":""}{diff} pp</div>
             <div className="font-mono mt-0.5" style={{ color:"#7d8590", fontSize:10 }}>
@@ -4559,7 +4649,7 @@ function FXResearchPanel({ item, onClose, onOpen }) {
                   <XAxis dataKey="t" tick={{fill:"#484f58",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={11}/>
                   <YAxis domain={["auto","auto"]} hide/>
                   <ReferenceLine y={0} stroke="#30363d" strokeDasharray="3 3"/>
-                  <Tooltip contentStyle={{background:"#161b22",border:"1px solid #30363d",borderRadius:4,fontSize:10,fontFamily:"'IBM Plex Mono',monospace"}} formatter={v=>[v?.toFixed(2)+"pp","Differential"]}/>
+                  <Tooltip contentStyle={{background:"#1c2230",border:"1px solid rgba(99,110,123,0.28)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} formatter={v=>[v?.toFixed(2)+"pp","Differential"]}/>
                   <Area type="monotone" dataKey="diff" stroke="#58a6ff" strokeWidth={1.5} fill={"url(#rdg_"+item.id.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
                 </AreaChart>
               </ResponsiveContainer>
@@ -4634,7 +4724,7 @@ function MacroResearchPanel({ item, onClose, onOpen }) {
       <div className="font-mono mb-3" style={{ color:"#484f58", fontSize:10 }}>As of {latest?.t}</div>
 
       {trend != null && (
-        <div className="flex items-center gap-2 mb-3 px-2 py-1.5" style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4 }}>
+        <div className="flex items-center gap-2 mb-3 px-2 py-1.5" style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:4 }}>
           <span className="font-mono" style={{ color:Math.abs(trend)<0.01?"#7d8590":trend>0?"#3fb950":"#f85149", fontSize:14 }}>
             {Math.abs(trend)<0.01?"→":trend>0?"↗":"↘"}
           </span>
@@ -4656,7 +4746,7 @@ function MacroResearchPanel({ item, onClose, onOpen }) {
             </defs>
             <XAxis dataKey="t" tick={{fill:"#484f58",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={11}/>
             <YAxis domain={["auto","auto"]} hide/>
-            <Tooltip contentStyle={{background:"#161b22",border:"1px solid #30363d",borderRadius:4,fontSize:10,fontFamily:"'IBM Plex Mono',monospace"}} formatter={v=>[v?.toFixed(2),item.label]}/>
+            <Tooltip contentStyle={{background:"#1c2230",border:"1px solid rgba(99,110,123,0.28)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} formatter={v=>[v?.toFixed(2),item.label]}/>
             <Area type="monotone" dataKey="v" stroke="#bc8cff" strokeWidth={1.5} fill={"url(#mcg_"+item.series.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
           </AreaChart>
         </ResponsiveContainer>
@@ -4733,8 +4823,8 @@ function TopicResearchPanel({ item, onClose, onOpen }) {
               return (
                 <button key={m.id} onClick={() => onOpen({ id:m.id, label:m.label, type:"macro", series:m.series, category:"Macro" })}
                   className="text-left p-2"
-                  style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4, cursor:"pointer", transition:"border-color 0.15s" }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor="#30363d"}
+                  style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:10, cursor:"pointer", transition:"border-color 0.15s" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"}
                   onMouseLeave={e => e.currentTarget.style.borderColor="#21262d"}>
                   <div className="font-mono" style={{ color:"#7d8590", fontSize:9, textTransform:"uppercase" }}>{m.label}</div>
                   <div className="font-mono font-bold" style={{ color:"#bc8cff", fontSize:16 }}>
@@ -4749,13 +4839,13 @@ function TopicResearchPanel({ item, onClose, onOpen }) {
               );
             })}
           </div>
-          <div style={{ borderTop:"1px solid #21262d", paddingTop:8, marginBottom:4 }}>
+          <div style={{ borderTop:"1px solid rgba(99,110,123,0.12)", paddingTop:8, marginBottom:4 }}>
             <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Related Assets</div>
             <div className="flex flex-wrap gap-1.5">
               {cfg.assets.map(a => (
                 <button key={a.id} onClick={() => onOpen(a)} className="font-mono"
-                  style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:3, padding:"3px 8px", fontSize:11, color:RB_TYPE_COLOR[a.type]||"#7d8590", cursor:"pointer" }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor="#30363d"}
+                  style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:6, padding:"3px 8px", fontSize:11, color:RB_TYPE_COLOR[a.type]||"#7d8590", cursor:"pointer" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"}
                   onMouseLeave={e => e.currentTarget.style.borderColor="#21262d"}>
                   {a.label}
                 </button>
@@ -4812,8 +4902,8 @@ function ResearchHomeDashboard({ onOpen }) {
                 if (!item) return null;
                 return (
                   <button key={id} onClick={() => onOpen(item)} className="text-left font-mono px-2 py-1.5"
-                    style={{ background:"transparent", border:"1px solid #21262d", borderRadius:4, color:"#e6edf3", fontSize:12, cursor:"pointer", transition:"all 0.15s" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor="#30363d"; e.currentTarget.style.background="#0d1117"; }}
+                    style={{ background:"transparent", border:"1px solid rgba(99,110,123,0.18)", borderRadius:10, color:"#e6edf3", fontSize:12, cursor:"pointer", transition:"all 0.15s" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"; e.currentTarget.style.background="#0d1117"; }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor="#21262d"; e.currentTarget.style.background="transparent"; }}>
                     <span style={{ color }}>{item.label}</span>
                     <span style={{ color:"#484f58", marginLeft:8, fontSize:10 }}>{item.id}</span>
@@ -4906,7 +4996,7 @@ function ResearchBrowser({ pendingItem, onPendingConsumed }) {
   return (
     <div className="flex flex-col flex-1" style={{ height:"calc(100vh - 90px)", overflow:"hidden" }}>
       {/* ── Search bar ── */}
-      <div className="px-4 py-3" style={{ borderBottom:"1px solid #21262d", background:"#010409", flexShrink:0 }}>
+      <div className="px-4 py-3" style={{ borderBottom:"1px solid rgba(99,110,123,0.12)", background:"#010409", flexShrink:0 }}>
         <div style={{ position:"relative", maxWidth:680 }}>
           <div className="flex items-center gap-2 px-3 py-2"
             style={{ background:"#161b22", border:"1px solid " + (searchFocused ? "#1f6feb" : "#30363d"), borderRadius:6 }}
@@ -4960,8 +5050,8 @@ function ResearchBrowser({ pendingItem, onPendingConsumed }) {
               <span className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>Recent:</span>
               {recentSearches.map(r => (
                 <button key={r.id} onClick={() => openPanel(r)} className="font-mono"
-                  style={{ background:"#161b22", border:"1px solid #21262d", borderRadius:3, padding:"2px 8px", color:RB_TYPE_COLOR[r.type]||"#7d8590", fontSize:10, cursor:"pointer" }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor="#30363d"}
+                  style={{ background:"#161b22", border:"1px solid rgba(99,110,123,0.18)", borderRadius:6, padding:"2px 8px", color:RB_TYPE_COLOR[r.type]||"#7d8590", fontSize:10, cursor:"pointer" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"}
                   onMouseLeave={e => e.currentTarget.style.borderColor="#21262d"}>
                   {r.label}
                 </button>
@@ -5087,7 +5177,7 @@ function PortfolioTracker() {
     { label: "Total Return", value: totalCost > 0 ? fmt.pct(totalPnlPct) : "—", color: totalCost > 0 ? clr(totalPnlPct) : "#7d8590" },
   ];
 
-  const inputStyle = { background: "#0d1117", border: "1px solid #30363d", borderRadius: 4, color: "#e6edf3", fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, padding: "6px 8px", width: "100%" };
+  const inputStyle = { background: "#0d1117", border: "1px solid #30363d", borderRadius: 10, color: "#e6edf3", fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, padding: "6px 8px", width: "100%" };
 
   return (
     <div className="flex flex-col flex-1" style={{ height: "calc(100vh - 90px)", overflow: "hidden" }}>
@@ -5109,7 +5199,7 @@ function PortfolioTracker() {
             <span className="terminal-header">💼 Holdings ({holdings.length})</span>
             <button onClick={refreshQuotes} disabled={loadingQuotes}
               className="text-xs font-mono px-2 py-1"
-              style={{ border: "1px solid #30363d", borderRadius: 4, background: "transparent", color: loadingQuotes ? "#7d8590" : "#58a6ff", cursor: loadingQuotes ? "wait" : "pointer" }}>
+              style={{ border: "1px solid #30363d", borderRadius: 10, background: "transparent", color: loadingQuotes ? "#7d8590" : "#58a6ff", cursor: loadingQuotes ? "wait" : "pointer" }}>
               {loadingQuotes ? "⟳ Updating..." : "⟳ Refresh"}
             </button>
           </div>
@@ -5222,7 +5312,7 @@ function PortfolioTracker() {
               {formError && <div className="font-mono" style={{ color: "#f85149", fontSize: 11 }}>{formError}</div>}
               <button onClick={addHolding}
                 className="font-mono font-semibold py-2 mt-1"
-                style={{ background: "#1f6feb", border: "none", borderRadius: 4, color: "#fff", cursor: "pointer", fontSize: 12, letterSpacing: "0.05em" }}>
+                style={{ background: "#1f6feb", border: "none", borderRadius: 10, color: "#fff", cursor: "pointer", fontSize: 12, letterSpacing: "0.05em" }}>
                 ADD POSITION
               </button>
               <div className="font-mono" style={{ color: "#484f58", fontSize: 10 }}>
@@ -5600,11 +5690,11 @@ function CountryDashboard({ country, onOpenResearch }) {
           {/* All Indices */}
           <div className="terminal-panel p-3">
             <div className="font-mono mb-3" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Market Indices</div>
-            <div style={{ borderTop:"1px solid #21262d" }}>
+            <div style={{ borderTop:"1px solid rgba(99,110,123,0.12)" }}>
               {country.indices.map(idx => {
                 const d = indexData[idx.ticker];
                 return (
-                  <div key={idx.ticker} className="flex items-center justify-between py-2" style={{ borderBottom:"1px solid #161b22" }}>
+                  <div key={idx.ticker} className="flex items-center justify-between py-2" style={{ borderBottom:"1px solid rgba(99,110,123,0.07)" }}>
                     <div>
                       <div className="font-mono" style={{ color:"#e6edf3", fontSize:11 }}>{idx.label}</div>
                       <div className="font-mono" style={{ color:"#484f58", fontSize:9 }}>{idx.ticker}</div>
@@ -5635,8 +5725,8 @@ function CountryDashboard({ country, onOpenResearch }) {
                     <button key={m.series}
                       onClick={() => onOpenResearch({ id:m.series, label:m.label, type:"macro", series:m.series, category:"Macro" })}
                       className="text-left p-2"
-                      style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4, cursor:"pointer" }}
-                      onMouseEnter={e => e.currentTarget.style.borderColor="#30363d"}
+                      style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:10, cursor:"pointer" }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"}
                       onMouseLeave={e => e.currentTarget.style.borderColor="#21262d"}>
                       <div className="font-mono" style={{ color:"#7d8590", fontSize:9, textTransform:"uppercase" }}>{m.label}</div>
                       <div className="font-mono font-bold" style={{ color:"#bc8cff", fontSize:18 }}>
@@ -5659,8 +5749,8 @@ function CountryDashboard({ country, onOpenResearch }) {
                 <button key={c.id}
                   onClick={() => onOpenResearch({ id:c.id, label:c.label, type:"commodity", ticker:c.id, category:"Commodities" })}
                   className="flex items-center justify-between py-2 px-2 text-left"
-                  style={{ background:"#0d1117", border:"1px solid #21262d", borderRadius:4, cursor:"pointer" }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor="#30363d"}
+                  style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:10, cursor:"pointer" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"}
                   onMouseLeave={e => e.currentTarget.style.borderColor="#21262d"}>
                   <div className="flex items-center gap-2">
                     <span className="font-mono" style={{ color:"#e3b341", fontSize:11 }}>{c.label}</span>
@@ -5679,14 +5769,14 @@ function CountryDashboard({ country, onOpenResearch }) {
           {/* Key Companies */}
           <div className="terminal-panel p-3">
             <div className="font-mono mb-3" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Companies</div>
-            <div style={{ borderTop:"1px solid #21262d" }}>
+            <div style={{ borderTop:"1px solid rgba(99,110,123,0.12)" }}>
               {country.topStocks.map(s => {
                 const d = stockData[s.ticker];
                 return (
                   <button key={s.ticker}
                     onClick={() => onOpenResearch({ id:s.ticker, label:s.label, type:"equity", ticker:s.ticker, category:"Equities" })}
                     className="w-full flex items-center justify-between py-2 px-1 text-left"
-                    style={{ borderBottom:"1px solid #161b22", cursor:"pointer", background:"transparent" }}
+                    style={{ borderBottom:"1px solid rgba(99,110,123,0.07)", cursor:"pointer", background:"transparent" }}
                     onMouseEnter={e => e.currentTarget.style.background="#0d1117"}
                     onMouseLeave={e => e.currentTarget.style.background="transparent"}>
                     <div>
@@ -5745,12 +5835,12 @@ function GlobalMarketsModule({ onOpenResearch }) {
   return (
     <div className="flex flex-col flex-1" style={{ overflow:"hidden" }}>
       {/* ── Country selector bar ── */}
-      <div className="flex items-center gap-2 px-4 py-2 flex-wrap" style={{ borderBottom:"1px solid #21262d", flexShrink:0 }}>
+      <div className="flex items-center gap-2 px-4 py-2 flex-wrap" style={{ borderBottom:"1px solid rgba(99,110,123,0.12)", flexShrink:0 }}>
         <span className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", marginRight:4 }}>Markets:</span>
         {countries.map(c => (
           <button key={c.id} onClick={() => setSelected(c.id)} className="font-mono"
             style={{
-              borderRadius:4, border:"1px solid", padding:"3px 10px", fontSize:10, cursor:"pointer",
+              borderRadius:10, border:"1px solid", padding:"3px 10px", fontSize:10, cursor:"pointer",
               borderColor: selected===c.id ? c.accentColor : "#21262d",
               color:        selected===c.id ? c.accentColor : "#7d8590",
               background:   selected===c.id ? c.accentColor+"18" : "transparent",
