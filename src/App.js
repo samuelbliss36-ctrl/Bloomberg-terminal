@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from "react";
 import { AreaChart, Area, BarChart, Bar, Line, Cell, ReferenceLine, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart } from "recharts";
-import { Search, Settings, RefreshCw, Zap, ArrowUpRight, ArrowDownRight, Newspaper, Building2, DollarSign, BarChart2, Activity, Star } from "lucide-react";
+import { Search, Settings, RefreshCw, Zap, ArrowUpRight, ArrowDownRight, Building2, BarChart2, Activity, Star } from "lucide-react";
 
 const FINNHUB_KEY = process.env.REACT_APP_FINNHUB_KEY;
 const BASE = "https://finnhub.io/api/v1";
@@ -51,7 +51,7 @@ const WATCHLIST = ["SPY", "QQQ", "MSFT", "NVDA", "TSLA", "GOOGL", "AMZN", "META"
 function GlobalStyles() {
   return (
     <style>{`
-      @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
 
       /* ── Design tokens ────────────────────────────────────────── */
       :root {
@@ -333,6 +333,283 @@ function GlobalStyles() {
 
       /* Recharts tooltip polish */
       .recharts-tooltip-wrapper { filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5)) !important; }
+
+      /* ── App shell grid ──────────────────────────────────────── */
+      .app-shell {
+        display: grid !important;
+        grid-template-areas:
+          "topbar  topbar  topbar"
+          "sidebar main    right"
+          "status  status  status" !important;
+        grid-template-rows: 40px 1fr 22px !important;
+        grid-template-columns: var(--sidebar-w, 48px) 1fr 260px !important;
+        height: 100vh !important;
+        overflow: hidden !important;
+        transition: grid-template-columns 0.22s var(--ease) !important;
+      }
+      .app-shell.sidebar-open {
+        --sidebar-w: 180px !important;
+      }
+
+      /* ── Global top bar ──────────────────────────────────────── */
+      .global-topbar {
+        grid-area: topbar !important;
+        background: rgba(7,10,16,0.98) !important;
+        border-bottom: 1px solid var(--border) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0 !important;
+        padding: 0 12px !important;
+        z-index: 100 !important;
+        flex-shrink: 0 !important;
+      }
+
+      /* ── Left sidebar ────────────────────────────────────────── */
+      .app-sidebar {
+        grid-area: sidebar !important;
+        background: rgba(7,10,16,0.98) !important;
+        border-right: 1px solid var(--border) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        z-index: 50 !important;
+      }
+      .sidebar-item {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        padding: 9px 14px !important;
+        cursor: pointer !important;
+        border-left: 2px solid transparent !important;
+        transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        font-family: 'Inter', 'IBM Plex Sans', sans-serif !important;
+        font-size: 12px !important;
+        font-weight: 500 !important;
+        color: var(--text-2) !important;
+        text-decoration: none !important;
+        border-radius: 0 !important;
+      }
+      .sidebar-item:hover {
+        background: rgba(99,110,123,0.09) !important;
+        color: var(--text-1) !important;
+      }
+      .sidebar-item.active {
+        border-left-color: var(--blue) !important;
+        color: var(--blue) !important;
+        background: rgba(88,166,255,0.07) !important;
+      }
+      .sidebar-icon {
+        font-size: 15px !important;
+        flex-shrink: 0 !important;
+        width: 20px !important;
+        text-align: center !important;
+      }
+      .sidebar-label {
+        opacity: 0 !important;
+        transition: opacity 0.18s var(--ease) !important;
+        pointer-events: none !important;
+        font-size: 12px !important;
+      }
+      .app-shell.sidebar-open .sidebar-label {
+        opacity: 1 !important;
+      }
+
+      /* ── Main content ────────────────────────────────────────── */
+      .app-main {
+        grid-area: main !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+      }
+
+      /* ── Right panel ─────────────────────────────────────────── */
+      .app-right {
+        grid-area: right !important;
+        background: rgba(7,10,16,0.98) !important;
+        border-left: 1px solid var(--border) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+      }
+      .right-section-header {
+        font-family: 'Inter', sans-serif !important;
+        font-size: 10px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.09em !important;
+        color: var(--text-3) !important;
+        padding: 8px 12px 6px !important;
+        border-bottom: 1px solid var(--border-subtle) !important;
+      }
+
+      /* ── Asset view tiers ────────────────────────────────────── */
+      .asset-hero {
+        flex-shrink: 0 !important;
+        padding: 12px 14px 10px !important;
+        border-bottom: 1px solid var(--border-subtle) !important;
+      }
+      .asset-ticker-name {
+        font-family: 'Inter', sans-serif !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        color: var(--text-2) !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
+      }
+      .asset-price {
+        font-family: 'IBM Plex Mono', monospace !important;
+        font-size: 28px !important;
+        font-weight: 600 !important;
+        color: var(--text-1) !important;
+        letter-spacing: -0.02em !important;
+        line-height: 1 !important;
+      }
+      .asset-change {
+        font-family: 'IBM Plex Mono', monospace !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+      }
+      .asset-metrics-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        border-bottom: 1px solid var(--border-subtle) !important;
+        flex-shrink: 0 !important;
+      }
+      .metric-cell {
+        padding: 7px 12px !important;
+        border-right: 1px solid var(--border-subtle) !important;
+        border-bottom: 1px solid var(--border-subtle) !important;
+      }
+      .metric-cell:nth-child(4n) { border-right: none !important; }
+      .metric-cell-label {
+        font-family: 'Inter', sans-serif !important;
+        font-size: 9px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.08em !important;
+        color: var(--text-3) !important;
+        margin-bottom: 2px !important;
+      }
+      .metric-cell-value {
+        font-family: 'IBM Plex Mono', monospace !important;
+        font-size: 11px !important;
+        font-weight: 500 !important;
+        color: var(--text-1) !important;
+      }
+      .asset-tabs-bar {
+        display: flex !important;
+        border-bottom: 1px solid var(--border-subtle) !important;
+        flex-shrink: 0 !important;
+        overflow-x: auto !important;
+        padding: 0 4px !important;
+      }
+      .asset-tab-btn {
+        font-family: 'Inter', sans-serif !important;
+        font-size: 11px !important;
+        font-weight: 500 !important;
+        padding: 7px 14px !important;
+        background: none !important;
+        border: none !important;
+        border-bottom: 2px solid transparent !important;
+        color: var(--text-2) !important;
+        cursor: pointer !important;
+        white-space: nowrap !important;
+        transition: color var(--t-fast), border-color var(--t-fast) !important;
+        flex-shrink: 0 !important;
+      }
+      .asset-tab-btn:hover { color: var(--text-1) !important; }
+      .asset-tab-btn.active {
+        color: var(--blue) !important;
+        border-bottom-color: var(--blue) !important;
+      }
+      .asset-tab-content {
+        flex: 1 !important;
+        overflow-y: auto !important;
+        padding: 10px 14px !important;
+      }
+
+      /* ── Dense data tables ───────────────────────────────────── */
+      .dense-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-family: 'IBM Plex Mono', monospace !important;
+        font-size: 11px !important;
+      }
+      .dense-table thead tr {
+        position: sticky !important;
+        top: -10px !important;
+        z-index: 10 !important;
+        background: var(--bg) !important;
+      }
+      .dense-table th {
+        font-family: 'Inter', sans-serif !important;
+        font-size: 9px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.08em !important;
+        color: var(--text-3) !important;
+        padding: 5px 8px 6px !important;
+        border-bottom: 1px solid var(--border-subtle) !important;
+        text-align: right !important;
+      }
+      .dense-table th:first-child { text-align: left !important; }
+      .dense-table td {
+        padding: 4px 8px !important;
+        border-bottom: 1px solid rgba(99,110,123,0.06) !important;
+        color: var(--text-1) !important;
+        text-align: right !important;
+      }
+      .dense-table td:first-child { text-align: left !important; }
+      .dense-table tr:hover td { background: rgba(255,255,255,0.02) !important; }
+
+      /* ── Order ticket ────────────────────────────────────────── */
+      .order-ticket-input {
+        width: 100% !important;
+        background: var(--surface-2) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--r-sm) !important;
+        color: var(--text-1) !important;
+        font-family: 'IBM Plex Mono', monospace !important;
+        font-size: 12px !important;
+        padding: 5px 8px !important;
+        outline: none !important;
+        transition: border-color var(--t-fast) !important;
+      }
+      .order-ticket-input:focus {
+        border-color: var(--border-active) !important;
+        box-shadow: var(--shadow-blue) !important;
+      }
+
+      /* ── TF range buttons ────────────────────────────────────── */
+      .tf-btn-group {
+        display: flex !important;
+        gap: 2px !important;
+        padding: 2px !important;
+        background: var(--surface-2) !important;
+        border-radius: var(--r-sm) !important;
+      }
+      .tf-btn {
+        font-family: 'Inter', sans-serif !important;
+        font-size: 10px !important;
+        font-weight: 600 !important;
+        padding: 3px 8px !important;
+        border: none !important;
+        border-radius: 4px !important;
+        background: transparent !important;
+        color: var(--text-2) !important;
+        cursor: pointer !important;
+        transition: all var(--t-fast) !important;
+      }
+      .tf-btn:hover { color: var(--text-1) !important; background: rgba(99,110,123,0.12) !important; }
+      .tf-btn.active {
+        background: var(--surface-3) !important;
+        color: var(--text-1) !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important;
+      }
     `}</style>
   );
 }
@@ -2845,6 +3122,7 @@ function PeerComparison({ ticker, metrics, quote }) {
   );
 }
 
+// eslint-disable-next-line no-unused-vars
 const TickerTape = memo(function TickerTape({ tapeData }) {
   const ref = useRef(null);
   useEffect(() => {
@@ -2878,6 +3156,7 @@ const TickerTape = memo(function TickerTape({ tapeData }) {
   );
 });
 
+// eslint-disable-next-line no-unused-vars
 function TopNav({ ticker, setTicker, quote, loading, onSettingsClick }) {
   const [input, setInput] = useState(ticker);
   const [focused, setFocused] = useState(false);
@@ -3188,10 +3467,12 @@ function UniversalChart({ ticker, height = 220, showVolume = false, colorUp = "#
   );
 }
 
+// eslint-disable-next-line no-unused-vars
 function PriceChart({ ticker }) {
   return <UniversalChart ticker={ticker} height={200} showVolume defaultTf="3M" label="Price Chart" />;
 }
 
+// eslint-disable-next-line no-unused-vars
 function KeyMetrics({ quote, metrics }) {
   if (!quote || !metrics) return <div className="text-gray-600 text-xs font-mono animate-pulse">Loading metrics...</div>;
   const m = metrics.metric || {};
@@ -3219,6 +3500,7 @@ function KeyMetrics({ quote, metrics }) {
   );
 }
 
+// eslint-disable-next-line no-unused-vars
 function CompanyProfile({ profile }) {
   if (!profile) return <div className="text-gray-600 text-xs font-mono animate-pulse">Loading profile...</div>;
   return (
@@ -3250,6 +3532,7 @@ function getSentiment(headline) {
   return "neutral";
 }
 
+// eslint-disable-next-line no-unused-vars
 function NewsFeed({ news }) {
   if (!news) return <div className="text-gray-600 text-xs font-mono animate-pulse">Loading news...</div>;
   return (
@@ -3383,6 +3666,7 @@ function FinancialStatements({ ticker }) {
   );
 }
 
+// eslint-disable-next-line no-unused-vars
 function QuickStats({ quote, metrics }) {
   if (!quote) return <div className="text-gray-600 text-xs font-mono animate-pulse">Loading...</div>;
   const m = metrics?.metric || {};
@@ -5778,6 +6062,7 @@ function PortfolioTracker() {
   );
 }
 
+// eslint-disable-next-line no-unused-vars
 const Panel = ({ children, className = "", style = {} }) => <div className={"terminal-panel terminal-glow p-3 flex flex-col " + className} style={style}>{children}</div>;
 
 function MarketSessionBadges() {
@@ -6275,11 +6560,643 @@ function GlobalMarketsModule({ onOpenResearch }) {
   );
 }
 
+// ─── NAV ITEMS config ─────────────────────────────────────────────────────────
+const NAV_ITEMS = [
+  { key:"financial",   icon:"📈", label:"Financial"   },
+  { key:"commodities", icon:"🛢", label:"Commodities" },
+  { key:"crypto",      icon:"₿",  label:"Crypto"      },
+  { key:"supplychain", icon:"📉", label:"Macro"       },
+  { key:"technical",   icon:"📊", label:"Technical"   },
+  { key:"eye",         icon:"👁",  label:"Eye of Sauron"},
+  { key:"fx",          icon:"💱", label:"FX"          },
+  { key:"markets",     icon:"🌍", label:"Markets"     },
+  { key:"portfolio",   icon:"💼", label:"Portfolio"   },
+  { key:"research",    icon:"🔬", label:"Research"    },
+];
+
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
+function SidebarNav({ activePage, setActivePage, isOpen, onToggle }) {
+  return (
+    <div className="app-sidebar" style={{ justifyContent:"space-between" }}>
+      <div>
+        {/* Toggle button */}
+        <button onClick={onToggle}
+          style={{ width:"100%", padding:"10px 0", background:"none", border:"none", borderBottom:"1px solid rgba(99,110,123,0.10)",
+            color:"#484f58", fontSize:14, cursor:"pointer", transition:"color 0.15s" }}
+          onMouseEnter={e=>e.currentTarget.style.color="#8b949e"}
+          onMouseLeave={e=>e.currentTarget.style.color="#484f58"}>
+          {isOpen ? "◂" : "▸"}
+        </button>
+        {NAV_ITEMS.map(item => (
+          <button key={item.key}
+            className={"sidebar-item" + (activePage===item.key ? " active" : "")}
+            onClick={() => setActivePage(item.key)}>
+            <span className="sidebar-icon">{item.icon}</span>
+            <span className="sidebar-label">{item.label}</span>
+          </button>
+        ))}
+      </div>
+      {/* Bottom: settings */}
+      <div style={{ borderTop:"1px solid rgba(99,110,123,0.10)" }}>
+        <button className="sidebar-item" onClick={() => setActivePage("settings")}>
+          <span className="sidebar-icon">⚙</span>
+          <span className="sidebar-label">Settings</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── GLOBAL TOP BAR ───────────────────────────────────────────────────────────
+function GlobalTopBar({ ticker, setTicker, tapeData, quote, loading }) {
+  const [input, setInput] = useState(ticker);
+  const [focused, setFocused] = useState(false);
+  const tapeRef = useRef(null);
+
+  useEffect(() => { setInput(ticker); }, [ticker]);
+
+  // Animate ticker tape inside topbar
+  useEffect(() => {
+    const el = tapeRef.current;
+    if (!el || !tapeData.length) return;
+    let x = 0;
+    const speed = 0.35;
+    let raf;
+    const animate = () => {
+      x -= speed;
+      if (x < -el.scrollWidth / 2) x = 0;
+      el.style.transform = "translateX(" + x + "px)";
+      raf = requestAnimationFrame(animate);
+    };
+    raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
+  }, [tapeData]);
+
+  const tapeItems = useMemo(() => [...tapeData, ...tapeData], [tapeData]);
+  const up = quote?.dp >= 0;
+
+  return (
+    <div className="global-topbar">
+      {/* Logo */}
+      <div style={{ display:"flex", alignItems:"center", gap:7, flexShrink:0, paddingRight:12, borderRight:"1px solid rgba(99,110,123,0.12)", marginRight:12 }}>
+        <Zap size={13} style={{ color:"#58a6ff" }} />
+        <span style={{ fontFamily:"'Inter',sans-serif", fontWeight:700, fontSize:12, color:"#e6edf3", letterSpacing:"0.12em" }}>OMNES</span>
+      </div>
+
+      {/* Inline ticker tape */}
+      <div style={{ flex:1, overflow:"hidden", height:"100%", display:"flex", alignItems:"center", minWidth:0, maskImage:"linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)" }}>
+        <div ref={tapeRef} style={{ display:"flex", alignItems:"center", gap:20, whiteSpace:"nowrap", willChange:"transform" }}>
+          {tapeItems.map((t, i) => (
+            <span key={i} style={{ display:"flex", alignItems:"center", gap:5 }}>
+              <span style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:10, color:"#7d8590" }}>{t.symbol}</span>
+              <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"#e6edf3" }}>${fmt.price(t.price)}</span>
+              <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:clr(t.changePct) }}>
+                {t.changePct >= 0 ? "▲" : "▼"}{Math.abs(t.changePct||0).toFixed(2)}%
+              </span>
+              <span style={{ color:"rgba(99,110,123,0.3)", marginLeft:6 }}>|</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Search */}
+      <div style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 8px", background:"#0d1117",
+          border:"1px solid"+(focused?"rgba(88,166,255,0.45)":"rgba(99,110,123,0.22)"), borderRadius:8,
+          transition:"border-color 0.15s, box-shadow 0.15s", boxShadow:focused?"0 0 0 3px rgba(88,166,255,0.14)":"none",
+          marginLeft:12, flexShrink:0, minWidth:180 }}>
+        <Search size={11} style={{ color:"#484f58", flexShrink:0 }} />
+        <input value={input}
+          onChange={e => setInput(e.target.value.toUpperCase())}
+          onKeyDown={e => { if (e.key==="Enter") setTicker(input.trim()); }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder="Symbol…"
+          style={{ background:"none", border:"none", outline:"none", width:100, fontSize:11, color:"#e6edf3", fontFamily:"'IBM Plex Mono',monospace" }} />
+        {loading && <span style={{ color:"#484f58", fontSize:9 }}>…</span>}
+      </div>
+
+      {/* Live quote strip */}
+      {quote && (
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginLeft:12, flexShrink:0 }}>
+          <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:600, fontSize:12, color:"#e6edf3" }}>${fmt.price(quote.c)}</span>
+          <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:up?"#3fb950":"#f85149" }}>
+            {up?"+":""}{fmt.price(quote.d)} ({fmt.pct(quote.dp||0)})
+          </span>
+        </div>
+      )}
+
+      {/* Clock */}
+      <TopBarClock />
+    </div>
+  );
+}
+
+function TopBarClock() {
+  const [t, setT] = useState(() => new Date().toLocaleTimeString("en-US", { hour:"2-digit", minute:"2-digit" }));
+  useEffect(() => {
+    const iv = setInterval(() => setT(new Date().toLocaleTimeString("en-US", { hour:"2-digit", minute:"2-digit" })), 15000);
+    return () => clearInterval(iv);
+  }, []);
+  return (
+    <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"#484f58", marginLeft:12, flexShrink:0 }}>{t}</span>
+  );
+}
+
+// ─── RIGHT PANEL (Watchlist + Order Ticket) ───────────────────────────────────
+function RightPanelShell({ tapeData, onSelectTicker, earnings, activeTicker }) {
+  const [side, setSide] = useState("BUY");
+  const [qty, setQty] = useState("");
+  const [orderType, setOrderType] = useState("MKT");
+  const [limitPx, setLimitPx] = useState("");
+  const [orderMsg, setOrderMsg] = useState(null);
+
+  const handleOrder = () => {
+    if (!qty || isNaN(qty) || +qty <= 0) { setOrderMsg({ type:"error", text:"Enter valid quantity" }); return; }
+    setOrderMsg({ type:"ok", text: side + " " + qty + " " + activeTicker + " @ " + (orderType==="MKT"?"MKT":("$"+limitPx)) + " — Simulated ✓" });
+    setTimeout(() => setOrderMsg(null), 3500);
+    setQty(""); setLimitPx("");
+  };
+
+  return (
+    <div className="app-right">
+      {/* Watchlist */}
+      <div className="right-section-header" style={{ display:"flex", alignItems:"center", gap:6 }}>
+        <Star size={10} style={{ color:"#e3b341" }} />  Watchlist
+      </div>
+      <div style={{ flex:1, overflowY:"auto", minHeight:0 }}>
+        {tapeData.length === 0 && (
+          <div style={{ padding:"12px 12px", fontFamily:"'IBM Plex Mono',monospace", color:"#484f58", fontSize:10 }}>Loading…</div>
+        )}
+        {tapeData.map(t => (
+          <button key={t.symbol} onClick={() => onSelectTicker(t.symbol)}
+            style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center",
+              padding:"7px 12px", background: activeTicker===t.symbol?"rgba(88,166,255,0.06)":"transparent",
+              border:"none", borderBottom:"1px solid rgba(99,110,123,0.07)", cursor:"pointer",
+              transition:"background 0.12s" }}
+            onMouseEnter={e=>{if(activeTicker!==t.symbol) e.currentTarget.style.background="rgba(255,255,255,0.025)"}}
+            onMouseLeave={e=>{if(activeTicker!==t.symbol) e.currentTarget.style.background="transparent"}}>
+            <span style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:11,
+              color: activeTicker===t.symbol?"#58a6ff":"#e6edf3" }}>{t.symbol}</span>
+            <div style={{ textAlign:"right" }}>
+              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"#e6edf3" }}>${fmt.price(t.price)}</div>
+              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:clr(t.changePct) }}>
+                {t.changePct>=0?"▲":"▼"}{Math.abs(t.changePct||0).toFixed(2)}%
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Events */}
+      {earnings && (
+        <>
+          <div className="right-section-header">📅  Upcoming Events</div>
+          <div style={{ padding:"4px 0 6px", borderBottom:"1px solid rgba(99,110,123,0.10)" }}>
+            <EventsCalendar earnings={earnings} />
+          </div>
+        </>
+      )}
+
+      {/* Order Ticket */}
+      <div className="right-section-header">🎫  Order Ticket</div>
+      <div style={{ padding:"10px 12px", flexShrink:0 }}>
+        {/* BUY / SELL toggle */}
+        <div style={{ display:"flex", marginBottom:8, background:"#0d1117", borderRadius:6, padding:2, border:"1px solid rgba(99,110,123,0.16)" }}>
+          {["BUY","SELL"].map(s => (
+            <button key={s} onClick={() => setSide(s)}
+              style={{ flex:1, padding:"5px 0", border:"none", borderRadius:4, fontFamily:"'Inter',sans-serif",
+                fontSize:11, fontWeight:700, cursor:"pointer", transition:"all 0.15s",
+                background: side===s ? (s==="BUY"?"rgba(63,185,80,0.18)":"rgba(248,81,73,0.16)") : "transparent",
+                color: side===s ? (s==="BUY"?"#3fb950":"#f85149") : "#484f58" }}>
+              {s}
+            </button>
+          ))}
+        </div>
+        {/* Ticker display */}
+        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"#58a6ff", fontWeight:700, marginBottom:6, textAlign:"center" }}>
+          {activeTicker}
+        </div>
+        {/* Qty */}
+        <div style={{ marginBottom:6 }}>
+          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600, color:"#484f58", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:3 }}>Quantity</div>
+          <input className="order-ticket-input" type="number" placeholder="0" value={qty}
+            onChange={e => setQty(e.target.value)} min="1" step="1" />
+        </div>
+        {/* Order type */}
+        <div style={{ marginBottom:6 }}>
+          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600, color:"#484f58", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:3 }}>Type</div>
+          <select className="order-ticket-input" value={orderType} onChange={e => setOrderType(e.target.value)}
+            style={{ appearance:"none", cursor:"pointer" }}>
+            <option value="MKT">Market</option>
+            <option value="LMT">Limit</option>
+            <option value="STP">Stop</option>
+          </select>
+        </div>
+        {orderType !== "MKT" && (
+          <div style={{ marginBottom:6 }}>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600, color:"#484f58", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:3 }}>Price</div>
+            <input className="order-ticket-input" type="number" placeholder="0.00" value={limitPx}
+              onChange={e => setLimitPx(e.target.value)} step="0.01" />
+          </div>
+        )}
+        <button onClick={handleOrder}
+          style={{ width:"100%", padding:"7px 0", border:"none", borderRadius:6, fontFamily:"'Inter',sans-serif",
+            fontSize:11, fontWeight:700, cursor:"pointer", letterSpacing:"0.06em", marginTop:2,
+            background: side==="BUY"?"#238636":"#b62324", color:"#fff", transition:"opacity 0.15s" }}
+          onMouseEnter={e=>e.currentTarget.style.opacity="0.85"}
+          onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
+          PLACE {side} ORDER
+        </button>
+        {orderMsg && (
+          <div style={{ marginTop:6, fontFamily:"'IBM Plex Mono',monospace", fontSize:10, textAlign:"center",
+            color: orderMsg.type==="ok"?"#3fb950":"#f85149" }}>
+            {orderMsg.text}
+          </div>
+        )}
+        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:"#484f58", textAlign:"center", marginTop:6 }}>
+          Simulated — paper trading only
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── ASSET VIEW (Financial module 3-tier layout) ──────────────────────────────
+function AssetView({ ticker, quote, metrics, profile, news }) {
+  const [activeTab, setActiveTab] = useState("News");
+  const [chartRange, setChartRange] = useState("1Y");
+  const [chartData, setChartData] = useState([]);
+  const [histData, setHistData] = useState(null);
+  const tabsLoaded = useRef(new Set());
+
+  const TABS = ["News","Options","Financials","Analyst","Peers","Profile","Historical"];
+  const RANGES = ["1D","5D","1M","3M","6M","1Y","5Y"];
+  const rangeMap = { "1D":"1d", "5D":"5d", "1M":"1mo", "3M":"3mo", "6M":"6mo", "1Y":"1y", "5Y":"5y" };
+  const intMap =  { "1D":"5m","5D":"15m","1M":"1d","3M":"1d","6M":"1d","1Y":"1wk","5Y":"1mo" };
+
+  const up = quote?.dp >= 0;
+  const priceColor = up ? "#3fb950" : "#f85149";
+  const m = metrics?.metric || {};
+
+  // Fetch chart data when ticker or range changes
+  useEffect(() => {
+    const range = rangeMap[chartRange] || "1y";
+    const interval = intMap[chartRange] || "1wk";
+    fetchChart(ticker, range, interval).then(d => {
+      const result = d?.chart?.result?.[0];
+      if (!result) return;
+      const ts = result.timestamp || [];
+      const closes = result.indicators?.quote?.[0]?.close || [];
+      setChartData(ts.map((t,i) => ({ t, v: closes[i] != null ? +closes[i].toFixed(2) : null })).filter(d => d.v != null));
+    }).catch(() => {});
+  }, [ticker, chartRange]); // eslint-disable-line
+
+  // Lazy-load Historical tab
+  useEffect(() => {
+    if (activeTab !== "Historical" || tabsLoaded.current.has("Historical")) return;
+    tabsLoaded.current.add("Historical");
+    fetchChart(ticker, "3mo", "1d").then(d => {
+      const result = d?.chart?.result?.[0];
+      if (!result) { setHistData([]); return; }
+      const ts = result.timestamp || [];
+      const q0 = result.indicators?.quote?.[0] || {};
+      const rows = ts.map((t, i) => ({
+        date: new Date(t*1000).toLocaleDateString("en-US",{month:"short",day:"2-digit",year:"numeric"}),
+        open:  q0.open?.[i]?.toFixed(2),
+        high:  q0.high?.[i]?.toFixed(2),
+        low:   q0.low?.[i]?.toFixed(2),
+        close: q0.close?.[i]?.toFixed(2),
+        vol:   q0.volume?.[i],
+      })).filter(r => r.close).reverse();
+      setHistData(rows);
+    }).catch(() => setHistData([]));
+  }, [activeTab, ticker]); // eslint-disable-line
+
+  // Quick helpers
+  const fmtRange = (lo, hi) => lo && hi ? `$${fmtN(lo)} – $${fmtN(hi)}` : "—";
+
+  const metricsGrid = [
+    { label:"Open",        value: quote?.o != null ? "$"+fmt.price(quote.o) : "—" },
+    { label:"Day Range",   value: fmtRange(quote?.l, quote?.h) },
+    { label:"Volume",      value: quote?.v != null ? fmt.volume(quote.v) : "—" },
+    { label:"Market Cap",  value: fmtMktCap(m.marketCapitalization) },
+    { label:"52W Range",   value: fmtRange(m["52WeekLow"], m["52WeekHigh"]) },
+    { label:"Avg Vol 10D", value: m["10DayAverageTradingVolume"] != null ? (m["10DayAverageTradingVolume"]).toFixed(1)+"M" : "—" },
+    { label:"P/E (TTM)",   value: fmtX(m.peBasicExclExtraTTM) },
+    { label:"EPS (TTM)",   value: m.epsBasicExclExtraItemsTTM != null ? "$"+fmtN(m.epsBasicExclExtraItemsTTM) : "—" },
+  ];
+
+  // ── Tab content renderers ─────────────────────────────────────────────────
+  const renderNews = () => {
+    if (!news) return <div style={{ color:"#484f58", fontFamily:"'IBM Plex Mono',monospace", fontSize:10 }}>Loading news…</div>;
+    if (!news.length) return <div style={{ color:"#484f58", fontFamily:"'IBM Plex Mono',monospace", fontSize:10 }}>No recent news</div>;
+    return (
+      <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+        {news.slice(0,14).map((n,i) => {
+          const ts = n.datetime ? new Date(n.datetime*1000) : null;
+          const ago = ts ? Math.floor((Date.now()-ts)/86400000) : null;
+          return (
+            <a key={i} href={n.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
+              <div className="news-card" style={{ padding:"8px 10px", background:"#0d1117" }}
+                onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"}
+                onMouseLeave={e=>e.currentTarget.style.borderColor=""}>
+                <div style={{ display:"flex", justifyContent:"space-between", gap:10, marginBottom:3 }}>
+                  <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:500, color:"#e6edf3", lineHeight:1.4 }}>{n.headline}</span>
+                  <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:"#484f58", flexShrink:0 }}>
+                    {ago===0?"Today":ago===1?"1d ago":ago!=null?ago+"d ago":""}
+                  </span>
+                </div>
+                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:"#58a6ff" }}>{n.source}</span>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderOptions = () => {
+    // Mock options chain — structured, realistic
+    const strikes = [175,177.5,180,182.5,185,187.5,190,192.5,195,197.5,200];
+    const spotPrice = quote?.c || 185;
+    const mockChain = strikes.map(k => {
+      const itm = k < spotPrice;
+      const dist = Math.abs(k - spotPrice) / spotPrice;
+      const callIV = (0.22 + dist * 0.4 + Math.random()*0.02).toFixed(3);
+      const putIV  = (0.24 + dist * 0.38 + Math.random()*0.02).toFixed(3);
+      const callBid  = Math.max(0, spotPrice - k + 2 + Math.random()*2).toFixed(2);
+      const callAsk  = (+callBid + 0.05 + Math.random()*0.1).toFixed(2);
+      const putBid   = Math.max(0, k - spotPrice + 2 + Math.random()*2).toFixed(2);
+      const putAsk   = (+putBid + 0.05 + Math.random()*0.1).toFixed(2);
+      return { strike:k, itm, callIV, putIV, callBid, callAsk, putBid, putAsk,
+        callOI: Math.floor(Math.random()*12000+500),
+        putOI:  Math.floor(Math.random()*9000+300),
+        callVol: Math.floor(Math.random()*3000+100),
+        putVol:  Math.floor(Math.random()*2500+80),
+      };
+    });
+    return (
+      <div>
+        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:"#484f58", marginBottom:8, display:"flex", gap:12, alignItems:"center" }}>
+          <span>Expiry: <strong style={{ color:"#e3b341" }}>May 17, 2025</strong></span>
+          <span>Spot: <strong style={{ color:"#e6edf3" }}>${fmt.price(spotPrice)}</strong></span>
+          <span style={{ color:"#484f58" }}>· Mock data · for UI demonstration</span>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr auto 1fr", gap:0 }}>
+          {/* CALLS header */}
+          <table className="dense-table">
+            <thead><tr>
+              <th style={{ textAlign:"left" }}>IV</th><th>Bid</th><th>Ask</th><th>OI</th><th>Vol</th>
+            </tr></thead>
+            <tbody>
+              {mockChain.map(r => (
+                <tr key={r.strike} style={{ background: r.itm?"rgba(63,185,80,0.04)":"transparent" }}>
+                  <td style={{ color:"#7d8590", textAlign:"left" }}>{(+r.callIV*100).toFixed(1)}%</td>
+                  <td style={{ color:"#3fb950" }}>${r.callBid}</td>
+                  <td style={{ color:"#f85149" }}>${r.callAsk}</td>
+                  <td style={{ color:"#484f58" }}>{r.callOI.toLocaleString()}</td>
+                  <td style={{ color:"#7d8590" }}>{r.callVol.toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {/* Strike column */}
+          <div style={{ display:"flex", flexDirection:"column", justifyContent:"stretch" }}>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.08em", color:"#484f58", padding:"5px 14px 6px", borderBottom:"1px solid rgba(99,110,123,0.08)", textAlign:"center" }}>STRIKE</div>
+            {mockChain.map(r => (
+              <div key={r.strike} style={{ padding:"4px 14px", borderBottom:"1px solid rgba(99,110,123,0.06)", fontFamily:"'IBM Plex Mono',monospace", fontSize:11, fontWeight:700, color: Math.abs(r.strike-spotPrice)<1.5?"#58a6ff":"#8b949e", textAlign:"center", background: Math.abs(r.strike-spotPrice)<1.5?"rgba(88,166,255,0.08)":"transparent" }}>
+                {r.strike.toFixed(1)}
+              </div>
+            ))}
+          </div>
+          {/* PUTS */}
+          <table className="dense-table">
+            <thead><tr>
+              <th>Bid</th><th>Ask</th><th>OI</th><th>Vol</th><th style={{ textAlign:"right" }}>IV</th>
+            </tr></thead>
+            <tbody>
+              {mockChain.map(r => (
+                <tr key={r.strike} style={{ background: !r.itm?"rgba(248,81,73,0.04)":"transparent" }}>
+                  <td style={{ color:"#3fb950" }}>${r.putBid}</td>
+                  <td style={{ color:"#f85149" }}>${r.putAsk}</td>
+                  <td style={{ color:"#484f58" }}>{r.putOI.toLocaleString()}</td>
+                  <td style={{ color:"#7d8590" }}>{r.putVol.toLocaleString()}</td>
+                  <td style={{ color:"#7d8590", textAlign:"right" }}>{(+r.putIV*100).toFixed(1)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:"#484f58", marginTop:10, textAlign:"center" }}>
+          Calls (ITM highlighted green) · ATM in blue · Puts (ITM highlighted red)
+        </div>
+      </div>
+    );
+  };
+
+  const renderFinancials = () => {
+    const rows = [
+      ["Gross Margin (Ann.)", fmtMgn(m.grossMarginAnnual), fmtMgn(m.grossMarginTTM)],
+      ["Operating Margin",   fmtMgn(m.operatingMarginAnnual), fmtMgn(m.operatingMarginTTM)],
+      ["Net Margin",         fmtMgn(m.netMarginAnnual), fmtMgn(m.netMarginTTM)],
+      ["ROE",                fmtMgn(m.roeRfy), fmtMgn(m.roeTTM)],
+      ["ROA",                fmtMgn(m.roaRfy), fmtMgn(m.roaTTM)],
+      ["ROIC",               fmtMgn(m.roiAnnual), fmtMgn(m.roiTTM)],
+      ["Rev Growth QoQ YoY", fmtGr(m.revenueGrowthQuarterlyYoy), fmtGr(m.revenueGrowthTTMYoy)],
+      ["EPS Growth QoQ YoY", fmtGr(m.epsGrowthQuarterlyYoy), fmtGr(m.epsGrowthTTMYoy)],
+      ["Current Ratio",      fmtN(m.currentRatioAnnual), "—"],
+      ["Quick Ratio",        fmtN(m.quickRatioAnnual), "—"],
+      ["Debt / Equity",      fmtN(m["totalDebt/totalEquityAnnual"]), "—"],
+      ["EV/EBITDA (Ann.)",   fmtX(m.evEbitdaAnnual), fmtX(m.evEbitdaTTM)],
+      ["P/E",                fmtX(m.peBasicExclExtraTTM), fmtX(m.peNormalizedAnnual)],
+    ];
+    return (
+      <table className="dense-table">
+        <thead><tr>
+          <th style={{ textAlign:"left" }}>Metric</th>
+          <th>Annual</th>
+          <th>TTM</th>
+        </tr></thead>
+        <tbody>
+          {rows.map(([k,a,t]) => (
+            <tr key={k}>
+              <td style={{ color:"#7d8590", textAlign:"left" }}>{k}</td>
+              <td style={{ color: a!=="—"?clrM2(a):"#484f58" }}>{a||"—"}</td>
+              <td style={{ color: t!=="—"?clrM2(t):"#484f58" }}>{t||"—"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
+
+  const renderProfile = () => {
+    if (!profile || !profile.name) return <div style={{ color:"#484f58", fontFamily:"'IBM Plex Mono',monospace", fontSize:10 }}>Loading profile…</div>;
+    const fields = [
+      ["Full Name",    profile.name],
+      ["Industry",     profile.finnhubIndustry],
+      ["Exchange",     profile.exchange],
+      ["Country",      profile.country],
+      ["Currency",     profile.currency],
+      ["IPO Date",     profile.ipo],
+      ["Website",      profile.weburl],
+      ["Shares Out.",  profile.shareOutstanding != null ? profile.shareOutstanding.toFixed(2)+"M" : null],
+    ];
+    return (
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 24px" }}>
+        <div>
+          {profile.logo && <img src={profile.logo} alt="" style={{ height:36, width:36, objectFit:"contain", borderRadius:8, background:"#161b22", padding:4, marginBottom:12 }} />}
+          <p style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:"#8b949e", lineHeight:1.7, marginBottom:12 }}>{profile.description}</p>
+        </div>
+        <table className="dense-table" style={{ alignSelf:"start" }}>
+          <tbody>
+            {fields.filter(([,v])=>v).map(([k,v]) => (
+              <tr key={k}>
+                <td style={{ color:"#484f58", textAlign:"left" }}>{k}</td>
+                <td style={{ color:"#e6edf3" }}>
+                  {k==="Website"
+                    ? <a href={v} target="_blank" rel="noopener noreferrer" style={{ color:"#58a6ff", textDecoration:"none" }}>{v.replace(/^https?:\/\//,"").replace(/\/$/,"")}</a>
+                    : v}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  const renderHistorical = () => {
+    if (!histData) return <div style={{ color:"#484f58", fontFamily:"'IBM Plex Mono',monospace", fontSize:10 }}>Loading…</div>;
+    if (!histData.length) return <div style={{ color:"#484f58", fontFamily:"'IBM Plex Mono',monospace", fontSize:10 }}>No data</div>;
+    return (
+      <table className="dense-table">
+        <thead>
+          <tr>
+            <th style={{ textAlign:"left" }}>Date</th>
+            <th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Volume</th>
+          </tr>
+        </thead>
+        <tbody>
+          {histData.map((r,i) => {
+            const dayUp = +r.close >= +r.open;
+            return (
+              <tr key={i}>
+                <td style={{ color:"#7d8590", textAlign:"left" }}>{r.date}</td>
+                <td>${r.open}</td>
+                <td style={{ color:"#3fb950" }}>${r.high}</td>
+                <td style={{ color:"#f85149" }}>${r.low}</td>
+                <td style={{ color: dayUp?"#3fb950":"#f85149", fontWeight:600 }}>${r.close}</td>
+                <td style={{ color:"#484f58" }}>{r.vol ? fmt.volume(r.vol) : "—"}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    );
+  };
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", height:"100%", overflow:"hidden" }}>
+      {/* TIER 1: Price Hero */}
+      <div className="asset-hero">
+        <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12, flexWrap:"wrap" }}>
+          <div>
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
+              {profile?.logo && <img src={profile.logo} alt="" style={{ height:18, width:18, objectFit:"contain", borderRadius:4, background:"#161b22", padding:1 }} />}
+              <span className="asset-ticker-name">{ticker}</span>
+              <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:"#7d8590" }}>{profile?.name}</span>
+              {profile?.exchange && <span style={{ fontFamily:"'Inter',sans-serif", fontSize:9, background:"#21262d", color:"#7d8590", borderRadius:4, padding:"1px 5px" }}>{profile.exchange}</span>}
+            </div>
+            <div style={{ display:"flex", alignItems:"baseline", gap:10 }}>
+              <span className="asset-price">{quote?.c != null ? "$"+fmt.price(quote.c) : "—"}</span>
+              {quote?.d != null && (
+                <span className="asset-change" style={{ color:priceColor }}>
+                  {up?"+":""}{fmt.price(quote.d)} ({fmt.pct(quote.dp||0)})
+                </span>
+              )}
+            </div>
+          </div>
+          {/* TF range buttons */}
+          <div className="tf-btn-group">
+            {RANGES.map(r => (
+              <button key={r} className={"tf-btn"+(chartRange===r?" active":"")} onClick={() => setChartRange(r)}>{r}</button>
+            ))}
+          </div>
+        </div>
+        {/* Chart */}
+        {chartData.length > 0 && (
+          <div style={{ height:180, marginTop:8 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top:4, right:0, bottom:0, left:0 }}>
+                <defs>
+                  <linearGradient id={"avg_"+ticker.replace(/[^a-z0-9]/gi,"")} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor={priceColor} stopOpacity={0.18}/>
+                    <stop offset="95%" stopColor={priceColor} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="t" hide />
+                <YAxis domain={["auto","auto"]} hide />
+                <Tooltip contentStyle={{ background:"#1c2230", border:"1px solid rgba(99,110,123,0.28)", borderRadius:8, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" }}
+                  labelFormatter={t => new Date(t*1000).toLocaleDateString()}
+                  formatter={v=>["$"+v?.toFixed(2),"Price"]} />
+                <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5}
+                  fill={"url(#avg_"+ticker.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+
+      {/* TIER 2: At-a-Glance Metrics */}
+      <div className="asset-metrics-grid">
+        {metricsGrid.map(({ label, value }) => (
+          <div key={label} className="metric-cell">
+            <div className="metric-cell-label">{label}</div>
+            <div className="metric-cell-value">{value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* TIER 3: Tabbed Workspace */}
+      <div className="asset-tabs-bar">
+        {TABS.map(t => (
+          <button key={t} className={"asset-tab-btn"+(activeTab===t?" active":"")} onClick={() => setActiveTab(t)}>
+            {t}
+          </button>
+        ))}
+      </div>
+      <div className="asset-tab-content">
+        {activeTab==="News"       && renderNews()}
+        {activeTab==="Options"    && renderOptions()}
+        {activeTab==="Financials" && (
+          <div className="flex flex-col gap-4">
+            {renderFinancials()}
+            <FinancialStatements ticker={ticker} />
+          </div>
+        )}
+        {activeTab==="Analyst"    && <AnalystData ticker={ticker} />}
+        {activeTab==="Peers"      && <PeerComparison ticker={ticker} metrics={metrics} quote={quote} />}
+        {activeTab==="Profile"    && renderProfile()}
+        {activeTab==="Historical" && renderHistorical()}
+      </div>
+    </div>
+  );
+}
+
+// Helper for coloring margin/ratio values
+function clrM2(v) {
+  if (typeof v !== "string") return "#e6edf3";
+  const n = parseFloat(v);
+  if (isNaN(n)) return "#e6edf3";
+  if (v.includes("%")) return n > 0 ? "#3fb950" : "#f85149";
+  return "#e6edf3";
+}
+
 export default function App() {
   const [activePage, setActivePage] = useState("financial");
-  const [subPage, setSubPage] = useState("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settings, setSettings] = useState(() => ({ showTickerTape: true, ...loadSettings() }));
-  const [showSettings, setShowSettings] = useState(false);
   const [ticker, setTicker] = useState("AAPL");
   const [quote, setQuote] = useState(null);
   const [metrics, setMetrics] = useState(null);
@@ -6333,143 +7250,83 @@ export default function App() {
     fetchTape();
   }, []);
 
+  const openResearch = (item) => { setPendingResearchItem(item); setActivePage("research"); };
+
   return (
-    <div className="min-h-screen bg-black text-gray-100 flex flex-col" style={{ fontFamily: "'IBM Plex Mono', monospace", background: "#0d1117" }}>
+    <div className={"app-shell" + (sidebarOpen ? " sidebar-open" : "")} style={{ fontFamily:"'Inter','IBM Plex Sans',sans-serif", background:"#0d1117", color:"#e6edf3" }}>
       <GlobalStyles />
-      {settings.showTickerTape && <TickerTape tapeData={tapeData} />}
-      {showSettings && (
-        <div style={{ position: "fixed", top: 48, right: 16, zIndex: 1000, background: "#161b22", border: "1px solid #30363d", borderRadius: 6, padding: 16, minWidth: 260, boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
-          <div className="flex items-center justify-between mb-3">
-            <span className="terminal-header">⚙ Settings</span>
-            <button onClick={() => setShowSettings(false)} style={{ color: "#7d8590", background: "none", border: "none", cursor: "pointer", fontSize: 16 }}>✕</button>
-          </div>
-          <div style={{ borderTop: "1px solid #21262d", paddingTop: 12 }}>
-            <div className="flex items-center justify-between py-2">
-              <div>
-                <div className="text-xs font-mono" style={{ color: "#e6edf3" }}>Ticker Tape</div>
-                <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Scrolling price bar at top</div>
+
+      {/* ── Global Top Bar ─────────────────────────────────── */}
+      <GlobalTopBar
+        ticker={ticker}
+        setTicker={t => { setTicker(t); setActivePage("financial"); }}
+        tapeData={tapeData}
+        quote={activePage==="financial" ? quote : null}
+        loading={loading}
+      />
+
+      {/* ── Left Sidebar ───────────────────────────────────── */}
+      <SidebarNav
+        activePage={activePage}
+        setActivePage={setActivePage}
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(o => !o)}
+      />
+
+      {/* ── Main Content ───────────────────────────────────── */}
+      <div className="app-main">
+        {activePage === "financial" && (
+          <AssetView
+            ticker={ticker}
+            quote={quote}
+            metrics={metrics}
+            profile={profile}
+            news={news}
+          />
+        )}
+        {activePage === "commodities"  && <CommoditiesDashboard />}
+        {activePage === "crypto"       && <CryptoDashboard />}
+        {activePage === "supplychain"  && <SupplyChainDashboard onOpenResearch={openResearch} />}
+        {activePage === "fx"           && <FXDashboard onOpenResearch={openResearch} />}
+        {activePage === "technical"    && <TechnicalAnalysis ticker={ticker} />}
+        {activePage === "eye"          && <EyeOfSauron onOpenResearch={openResearch} />}
+        {activePage === "markets"      && <GlobalMarketsModule onOpenResearch={openResearch} />}
+        {activePage === "portfolio"    && <PortfolioTracker />}
+        {activePage === "research"     && <ResearchBrowser pendingItem={pendingResearchItem} onPendingConsumed={() => setPendingResearchItem(null)} />}
+        {activePage === "settings" && (
+          <div style={{ padding:24, maxWidth:480 }}>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:13, color:"#e6edf3", marginBottom:16 }}>Settings</div>
+            <div style={{ background:"#161b22", border:"1px solid rgba(99,110,123,0.18)", borderRadius:10, padding:16 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <div>
+                  <div style={{ fontFamily:"'Inter',sans-serif", fontSize:12, color:"#e6edf3", fontWeight:500 }}>Ticker Tape</div>
+                  <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:"#7d8590" }}>Scrolling prices in top bar</div>
+                </div>
+                <button onClick={() => setSettings(s => { const n={...s, showTickerTape:!s.showTickerTape}; saveSettings(n); return n; })}
+                  style={{ width:40, height:22, borderRadius:11, border:"none", cursor:"pointer", background:settings.showTickerTape?"#1f6feb":"#30363d", position:"relative", transition:"background 0.2s" }}>
+                  <div style={{ position:"absolute", top:3, left:settings.showTickerTape?21:3, width:16, height:16, borderRadius:"50%", background:"#fff", transition:"left 0.2s" }} />
+                </button>
               </div>
-              <button
-                onClick={() => setSettings(s => { const n = { ...s, showTickerTape: !s.showTickerTape }; saveSettings(n); return n; })}
-                style={{
-                  width: 40, height: 22, borderRadius: 11, border: "none", cursor: "pointer",
-                  background: settings.showTickerTape ? "#1f6feb" : "#30363d",
-                  position: "relative", transition: "background 0.2s"
-                }}>
-                <div style={{
-                  position: "absolute", top: 3, left: settings.showTickerTape ? 21 : 3,
-                  width: 16, height: 16, borderRadius: "50%", background: "#fff",
-                  transition: "left 0.2s"
-                }} />
-              </button>
             </div>
-          </div>
-        </div>
-      )}
-      <div className="terminal-nav flex items-center gap-0 px-4">
-        {[
-          { key: "financial", label: "📈 Financial" },
-          { key: "commodities", label: "🛢 Commodities" },
-          { key: "crypto", label: "₿ Crypto" },
-          { key: "supplychain", label: "📉 Macro" },
-          { key: "technical", label: "📊 Technical" },
-          { key: "eye", label: "👁 Eye of Sauron" },
-          { key: "fx", label: "💱 FX" },
-          { key: "markets", label: "🌍 Markets" },
-          { key: "portfolio", label: "💼 Portfolio" },
-          { key: "research", label: "🔬 Research" },
-        ].map(p => (
-          <button key={p.key} onClick={() => setActivePage(p.key)}
-            className="px-5 py-2.5 text-xs font-mono font-semibold tracking-wider uppercase transition-colors border-b-2"
-            style={{ borderBottomColor: activePage === p.key ? "#60a5fa" : "transparent", color: activePage === p.key ? "#60a5fa" : "#6b7280", background: "transparent" }}>
-            {p.label}
-          </button>
-        ))}
-      </div>
-      <TopNav ticker={ticker} setTicker={setTicker} quote={quote} loading={loading} onSettingsClick={() => setShowSettings(!showSettings)} />
-      {activePage === "commodities" && <CommoditiesDashboard />}
-      {activePage === "crypto" && <CryptoDashboard />}
-      {activePage === "supplychain" && <SupplyChainDashboard onOpenResearch={item => { setPendingResearchItem(item); setActivePage("research"); }} />}
-      {activePage === "fx" && <FXDashboard onOpenResearch={item => { setPendingResearchItem(item); setActivePage("research"); }} />}
-      {activePage === "technical" && <TechnicalAnalysis ticker={ticker} />}
-
-      {activePage === "eye" && <EyeOfSauron onOpenResearch={item => { setPendingResearchItem(item); setActivePage("research"); }} />}
-      {activePage === "markets" && <GlobalMarketsModule onOpenResearch={item => { setPendingResearchItem(item); setActivePage("research"); }} />}
-      {activePage === "portfolio" && <PortfolioTracker />}
-      {activePage === "research" && <ResearchBrowser pendingItem={pendingResearchItem} onPendingConsumed={() => setPendingResearchItem(null)} />}
-
-      {activePage === "financial" && <div className="flex flex-col flex-1" style={{ overflow: "hidden" }}>
-        <div className="flex items-center gap-0 px-3 pt-2" style={{ borderBottom: "1px solid #21262d" }}>
-          {[["overview", "📊 Overview"], ["peers", "🔍 Peer Comparison"]].map(([k, l]) => (
-            <button key={k} onClick={() => setSubPage(k)}
-              className="px-4 py-2 text-xs font-mono transition-colors border-b-2"
-              style={{ borderBottomColor: subPage === k ? "#58a6ff" : "transparent", color: subPage === k ? "#58a6ff" : "#7d8590", background: "transparent" }}>
-              {l}
-            </button>
-          ))}
-        </div>
-        {subPage === "peers" && (
-          <div className="flex-1 p-2" style={{ overflow: "hidden" }}>
-            <PeerComparison ticker={ticker} metrics={metrics} quote={quote} />
           </div>
         )}
-        {subPage === "overview" && <div className="flex-1 p-2 grid gap-2" style={{ gridTemplateColumns: "1fr 210px 210px 190px", gridTemplateRows: "300px 220px 200px", height: "calc(100vh - 90px)", overflow: "hidden" }}>
-
-        <Panel style={{ gridColumn: "1/2", gridRow: "1/2", overflow: "hidden" }}>
-          <div className="flex items-center gap-1.5 mb-1"><span className="terminal-header"><Activity size={11} /></span><span className="terminal-header">{ticker} · Price Chart</span></div>
-          <div style={{ height: 255, minHeight: 255 }}><PriceChart ticker={ticker} /></div>
-        </Panel>
-
-        <Panel style={{ gridColumn: "2/3", gridRow: "1/2", overflowY: "auto" }}>
-          <KeyMetrics quote={quote} metrics={metrics} />
-        </Panel>
-
-        <Panel style={{ gridColumn: "3/4", gridRow: "1/2", overflowY: "auto" }}>
-          <QuickStats quote={quote} metrics={metrics} />
-        </Panel>
-
-        <Panel style={{ gridColumn: "4/5", gridRow: "1/3", overflowY: "auto" }}>
-          <div className="flex items-center gap-1.5 mb-2"><span className="terminal-header"><Star size={11} /></span><span className="terminal-header">Watchlist</span></div>
-          {tapeData.map(t => (
-            <div key={t.symbol} className="watchlist-row flex justify-between items-center py-1 border-b cursor-pointer px-1 rounded" style={{ borderColor: "#21262d" }} onClick={()=>setTicker(t.symbol)}>
-              <span className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{t.symbol}</span>
-              <div className="flex flex-col items-end">
-                <span className="text-xs font-mono" style={{ color: "#e6edf3" }}>${fmt.price(t.price)}</span>
-                <span className="text-xs font-mono" style={{color:clr(t.changePct)}}>{t.changePct>=0?"▲":"▼"}{Math.abs(t.changePct||0).toFixed(2)}%</span>
-              </div>
-            </div>
-          ))}
-          <div className="mt-3 mb-1"><span className="terminal-header">Events</span></div>
-          <EventsCalendar earnings={earnings} />
-        </Panel>
-
-        <Panel style={{ gridColumn: "1/2", gridRow: "2/3", overflow: "hidden" }}>
-          <div className="flex items-center gap-1.5 mb-1"><span className="terminal-header"><DollarSign size={11} /></span><span className="terminal-header">Financial Statements</span></div>
-          <div style={{ overflowY: "auto", height: 185 }}><FinancialStatements ticker={ticker} /></div>
-        </Panel>
-
-        <Panel style={{ gridColumn: "2/4", gridRow: "2/3", overflowY: "auto" }}>
-          <AnalystData ticker={ticker} />
-        </Panel>
-
-        <Panel style={{ gridColumn: "1/3", gridRow: "3/4", overflowY: "auto" }}>
-          <div className="flex items-center gap-1.5 mb-1"><span className="terminal-header"><Newspaper size={11} /></span><span className="terminal-header">News & Sentiment</span></div>
-          <NewsFeed news={news} />
-        </Panel>
-
-        <Panel style={{ gridColumn: "3/5", gridRow: "3/4", overflowY: "auto" }}>
-          <CompanyProfile profile={profile} />
-        </Panel>
-
       </div>
-      }
-      </div>
-      }
-      <div className="status-bar flex items-center gap-4 px-4 py-1.5 text-xs font-mono">
+
+      {/* ── Right Panel ────────────────────────────────────── */}
+      <RightPanelShell
+        tapeData={tapeData}
+        onSelectTicker={t => { setTicker(t); setActivePage("financial"); }}
+        earnings={earnings}
+        activeTicker={ticker}
+      />
+
+      {/* ── Status Bar ─────────────────────────────────────── */}
+      <div className="status-bar" style={{ gridArea:"status", display:"flex", alignItems:"center", gap:16, padding:"0 12px", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }}>
+        <div style={{ width:6, height:6, borderRadius:"50%", background:"#3fb950", boxShadow:"0 0 6px rgba(63,185,80,0.6)" }} />
         <span>OMNES VIDENTES · LIVE DATA</span>
-        <span style={{ color:"#21262d" }}>|</span>
+        <span style={{ color:"rgba(99,110,123,0.3)" }}>|</span>
         <MarketSessionBadges />
-        <span className="ml-auto">Last Updated: {statusTime}</span>
+        <span style={{ marginLeft:"auto" }}>{statusTime}</span>
       </div>
     </div>
   );
