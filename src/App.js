@@ -41,8 +41,8 @@ const fmt = {
   large: (v) => { if (!v) return "N/A"; if (v >= 1e12) return "$" + (v/1e12).toFixed(2) + "T"; if (v >= 1e9) return "$" + (v/1e9).toFixed(2) + "B"; if (v >= 1e6) return "$" + (v/1e6).toFixed(2) + "M"; return "$" + v?.toLocaleString(); },
   volume: (v) => { if (!v) return "N/A"; if (v >= 1e6) return (v/1e6).toFixed(2) + "M"; if (v >= 1e3) return (v/1e3).toFixed(1) + "K"; return v?.toString(); },
 };
-const clr = (v) => (v >= 0 ? "#3fb950" : "#f85149");
-const bg = (v) => (v >= 0 ? "rgba(63,185,80,0.1)" : "rgba(248,81,73,0.1)");
+const clr = (v) => (v >= 0 ? "#059669" : "#e11d48");
+const bg = (v) => (v >= 0 ? "rgba(5,150,105,0.10)" : "rgba(225,29,72,0.10)");
 const delay = (ms) => new Promise(r => setTimeout(r, ms));
 
 const WATCHLIST = ["SPY", "QQQ", "MSFT", "NVDA", "TSLA", "GOOGL", "AMZN", "META"];
@@ -53,30 +53,30 @@ function GlobalStyles() {
     <style>{`
       @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
 
-      /* ── Design tokens ────────────────────────────────────────── */
+      /* ── Design tokens (light theme) ─────────────────────────── */
       :root {
-        --bg:        #0d1117;
-        --surface-0: #0d1117;
-        --surface-1: #161b22;
-        --surface-2: #1c2230;
-        --surface-3: #21262d;
+        --bg:        #f8fafc;
+        --surface-0: #f8fafc;
+        --surface-1: #ffffff;
+        --surface-2: #f1f5f9;
+        --surface-3: #e2e8f0;
 
-        --border-subtle: rgba(99,110,123,0.10);
-        --border:        rgba(99,110,123,0.20);
-        --border-hover:  rgba(99,110,123,0.35);
-        --border-active: rgba(88,166,255,0.45);
-        --border-solid:  #21262d;
+        --border-subtle: rgba(15,23,42,0.06);
+        --border:        rgba(15,23,42,0.10);
+        --border-hover:  rgba(15,23,42,0.20);
+        --border-active: rgba(37,99,235,0.50);
+        --border-solid:  #e2e8f0;
 
-        --text-1: #e6edf3;
-        --text-2: #8b949e;
-        --text-3: #484f58;
+        --text-1: #0f172a;
+        --text-2: #475569;
+        --text-3: #64748b;
 
-        --blue:   #58a6ff;  --blue-dim:  rgba(88,166,255,0.12);
-        --green:  #3fb950;  --green-dim: rgba(63,185,80,0.12);
-        --red:    #f85149;  --red-dim:   rgba(248,81,73,0.12);
-        --yellow: #e3b341;
-        --purple: #bc8cff;
-        --orange: #f0883e;
+        --blue:   #2563eb;  --blue-dim:  rgba(37,99,235,0.10);
+        --green:  #059669;  --green-dim: rgba(5,150,105,0.10);
+        --red:    #e11d48;  --red-dim:   rgba(225,29,72,0.10);
+        --yellow: #b45309;
+        --purple: #7c3aed;
+        --orange: #ea580c;
 
         --r-xs: 4px;
         --r-sm: 6px;
@@ -84,12 +84,12 @@ function GlobalStyles() {
         --r-lg: 14px;
         --r-xl: 20px;
 
-        --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
-        --shadow-sm: 0 1px 4px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.03);
-        --shadow:    0 4px 16px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.04);
-        --shadow-lg: 0 8px 32px rgba(0,0,0,0.50), inset 0 1px 0 rgba(255,255,255,0.05);
-        --shadow-blue: 0 0 0 3px rgba(88,166,255,0.14);
-        --shadow-glow: 0 0 0 3px rgba(88,166,255,0.14), 0 4px 16px rgba(0,0,0,0.4);
+        --shadow-xs: 0 1px 2px rgba(15,23,42,0.06);
+        --shadow-sm: 0 1px 3px rgba(15,23,42,0.08), 0 1px 2px rgba(15,23,42,0.04);
+        --shadow:    0 4px 12px rgba(15,23,42,0.08), 0 2px 4px rgba(15,23,42,0.04);
+        --shadow-lg: 0 10px 28px rgba(15,23,42,0.12), 0 4px 8px rgba(15,23,42,0.06);
+        --shadow-blue: 0 0 0 3px rgba(37,99,235,0.18);
+        --shadow-glow: 0 0 0 3px rgba(37,99,235,0.18), 0 4px 12px rgba(15,23,42,0.10);
 
         --ease:     cubic-bezier(0.4, 0, 0.2, 1);
         --ease-out: cubic-bezier(0, 0, 0.2, 1);
@@ -109,8 +109,8 @@ function GlobalStyles() {
 
       ::-webkit-scrollbar { width: 4px; height: 4px; }
       ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: rgba(99,110,123,0.28); border-radius: 4px; }
-      ::-webkit-scrollbar-thumb:hover { background: rgba(99,110,123,0.48); }
+      ::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.18); border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,0.28); }
 
       /* ── Core panel ─────────────────────────────────────────── */
       .terminal-glow {
@@ -145,7 +145,7 @@ function GlobalStyles() {
 
       /* ── Navigation ─────────────────────────────────────────── */
       .terminal-nav {
-        background: rgba(10,14,20,0.97) !important;
+        background: rgba(255,255,255,0.97) !important;
         border-bottom: 1px solid var(--border) !important;
         backdrop-filter: blur(16px) !important;
         -webkit-backdrop-filter: blur(16px) !important;
@@ -158,7 +158,7 @@ function GlobalStyles() {
       }
       .terminal-nav button:hover {
         color: var(--text-1) !important;
-        background: rgba(99,110,123,0.10) !important;
+        background: rgba(15,23,42,0.05) !important;
       }
       .terminal-active {
         color: var(--blue) !important;
@@ -166,22 +166,22 @@ function GlobalStyles() {
       }
 
       .ticker-tape {
-        background: rgba(7,10,16,0.98) !important;
+        background: rgba(255,255,255,0.97) !important;
         border-bottom: 1px solid var(--border) !important;
       }
       .top-nav {
-        background: rgba(7,10,16,0.98) !important;
+        background: rgba(255,255,255,0.97) !important;
         border-bottom: 1px solid var(--border) !important;
       }
       .status-bar {
-        background: rgba(7,10,16,0.98) !important;
+        background: rgba(241,245,249,0.98) !important;
         border-top: 1px solid var(--border) !important;
         color: var(--text-3) !important;
       }
 
       /* ── Search ─────────────────────────────────────────────── */
       .search-box {
-        background: var(--surface-0) !important;
+        background: var(--surface-1) !important;
         border: 1px solid var(--border) !important;
         border-radius: var(--r) !important;
         transition: border-color var(--t-fast), box-shadow var(--t-fast) !important;
@@ -194,6 +194,7 @@ function GlobalStyles() {
       input {
         font-family: 'IBM Plex Mono', monospace !important;
         color: var(--text-1) !important;
+        background: transparent !important;
       }
       input::placeholder { color: var(--text-3) !important; }
       button { font-family: 'IBM Plex Mono', monospace !important; cursor: pointer; }
@@ -203,20 +204,20 @@ function GlobalStyles() {
         border-bottom: 1px solid var(--border-subtle) !important;
         transition: background var(--t-fast) !important;
       }
-      .metric-row:hover { background: rgba(255,255,255,0.018) !important; }
+      .metric-row:hover { background: rgba(15,23,42,0.025) !important; }
 
       .watchlist-row { transition: background var(--t-fast) !important; }
-      .watchlist-row:hover { background: rgba(255,255,255,0.022) !important; }
+      .watchlist-row:hover { background: rgba(15,23,42,0.03) !important; }
 
       .holding-row { transition: background var(--t-fast) !important; }
-      .holding-row:hover { background: rgba(255,255,255,0.022) !important; }
+      .holding-row:hover { background: rgba(15,23,42,0.03) !important; }
 
       tr { transition: background var(--t-fast); }
-      tr:hover td { background: rgba(255,255,255,0.018) !important; }
+      tr:hover td { background: rgba(15,23,42,0.025) !important; }
 
       /* ── Interactive cards ──────────────────────────────────── */
       .crypto-card {
-        background: var(--surface-0) !important;
+        background: var(--surface-1) !important;
         border: 1px solid var(--border) !important;
         border-radius: var(--r) !important;
         transition: border-color var(--t), box-shadow var(--t), transform var(--t) !important;
@@ -229,7 +230,7 @@ function GlobalStyles() {
       }
       .crypto-card.active {
         border-color: var(--border-active) !important;
-        background: rgba(31,111,235,0.08) !important;
+        background: rgba(37,99,235,0.06) !important;
         box-shadow: var(--shadow-glow) !important;
       }
 
@@ -239,16 +240,17 @@ function GlobalStyles() {
         border-radius: var(--r-sm) !important;
         transition: all var(--t-fast) !important;
       }
-      .tf-button:hover { background: rgba(99,110,123,0.09) !important; }
+      .tf-button:hover { background: rgba(15,23,42,0.06) !important; }
       .tf-button.active {
-        background: rgba(31,111,235,0.14) !important;
+        background: rgba(37,99,235,0.10) !important;
         color: var(--blue) !important;
-        box-shadow: inset 0 0 0 1px rgba(88,166,255,0.28) !important;
+        box-shadow: inset 0 0 0 1px rgba(37,99,235,0.30) !important;
       }
 
       .news-card {
         border: 1px solid var(--border) !important;
         border-radius: var(--r) !important;
+        background: var(--surface-1) !important;
         transition: border-color var(--t), background var(--t),
                     box-shadow var(--t), transform var(--t) !important;
       }
@@ -260,7 +262,7 @@ function GlobalStyles() {
       }
 
       .eye-card {
-        background: var(--surface-0) !important;
+        background: var(--surface-1) !important;
         border: 1px solid var(--border) !important;
         border-radius: var(--r) !important;
         transition: border-color var(--t), background var(--t),
@@ -269,13 +271,13 @@ function GlobalStyles() {
       }
       .eye-card:hover {
         border-color: var(--border-active) !important;
-        background: rgba(88,166,255,0.05) !important;
+        background: rgba(37,99,235,0.04) !important;
         box-shadow: var(--shadow-glow) !important;
         transform: translateY(-3px) !important;
       }
       .eye-card.active {
         border-color: var(--border-active) !important;
-        background: rgba(31,111,235,0.08) !important;
+        background: rgba(37,99,235,0.06) !important;
         box-shadow: var(--shadow-glow) !important;
       }
 
@@ -289,12 +291,12 @@ function GlobalStyles() {
 
       .live-dot {
         background: var(--green) !important;
-        box-shadow: 0 0 5px rgba(63,185,80,0.55) !important;
+        box-shadow: 0 0 5px rgba(5,150,105,0.50) !important;
         animation: live-pulse 2.4s ease-in-out infinite !important;
       }
       @keyframes live-pulse {
-        0%, 100% { box-shadow: 0 0 4px rgba(63,185,80,0.45); }
-        50%       { box-shadow: 0 0 9px rgba(63,185,80,0.80); }
+        0%, 100% { box-shadow: 0 0 4px rgba(5,150,105,0.40); }
+        50%       { box-shadow: 0 0 9px rgba(5,150,105,0.70); }
       }
 
       .positive { color: var(--green) !important; }
@@ -332,7 +334,7 @@ function GlobalStyles() {
       }
 
       /* Recharts tooltip polish */
-      .recharts-tooltip-wrapper { filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5)) !important; }
+      .recharts-tooltip-wrapper { filter: drop-shadow(0 4px 12px rgba(15,23,42,0.12)) !important; }
 
       /* ── App shell grid ──────────────────────────────────────── */
       .app-shell {
@@ -354,7 +356,7 @@ function GlobalStyles() {
       /* ── Global top bar ──────────────────────────────────────── */
       .global-topbar {
         grid-area: topbar !important;
-        background: rgba(7,10,16,0.98) !important;
+        background: rgba(255,255,255,0.98) !important;
         border-bottom: 1px solid var(--border) !important;
         backdrop-filter: blur(20px) !important;
         -webkit-backdrop-filter: blur(20px) !important;
@@ -369,7 +371,7 @@ function GlobalStyles() {
       /* ── Left sidebar ────────────────────────────────────────── */
       .app-sidebar {
         grid-area: sidebar !important;
-        background: rgba(7,10,16,0.98) !important;
+        background: rgba(255,255,255,0.98) !important;
         border-right: 1px solid var(--border) !important;
         display: flex !important;
         flex-direction: column !important;
@@ -394,13 +396,13 @@ function GlobalStyles() {
         border-radius: 0 !important;
       }
       .sidebar-item:hover {
-        background: rgba(99,110,123,0.09) !important;
+        background: rgba(15,23,42,0.05) !important;
         color: var(--text-1) !important;
       }
       .sidebar-item.active {
         border-left-color: var(--blue) !important;
         color: var(--blue) !important;
-        background: rgba(88,166,255,0.07) !important;
+        background: rgba(37,99,235,0.07) !important;
       }
       .sidebar-icon {
         font-size: 15px !important;
@@ -429,7 +431,7 @@ function GlobalStyles() {
       /* ── Right panel ─────────────────────────────────────────── */
       .app-right {
         grid-area: right !important;
-        background: rgba(7,10,16,0.98) !important;
+        background: rgba(248,250,252,0.98) !important;
         border-left: 1px solid var(--border) !important;
         display: flex !important;
         flex-direction: column !important;
@@ -559,12 +561,12 @@ function GlobalStyles() {
       .dense-table th:first-child { text-align: left !important; }
       .dense-table td {
         padding: 4px 8px !important;
-        border-bottom: 1px solid rgba(99,110,123,0.06) !important;
+        border-bottom: 1px solid rgba(15,23,42,0.05) !important;
         color: var(--text-1) !important;
         text-align: right !important;
       }
       .dense-table td:first-child { text-align: left !important; }
-      .dense-table tr:hover td { background: rgba(255,255,255,0.02) !important; }
+      .dense-table tr:hover td { background: rgba(15,23,42,0.025) !important; }
 
       /* ── Order ticket ────────────────────────────────────────── */
       .order-ticket-input {
@@ -604,11 +606,11 @@ function GlobalStyles() {
         cursor: pointer !important;
         transition: all var(--t-fast) !important;
       }
-      .tf-btn:hover { color: var(--text-1) !important; background: rgba(99,110,123,0.12) !important; }
+      .tf-btn:hover { color: var(--text-1) !important; background: rgba(15,23,42,0.07) !important; }
       .tf-btn.active {
-        background: var(--surface-3) !important;
-        color: var(--text-1) !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important;
+        background: var(--surface-1) !important;
+        color: var(--blue) !important;
+        box-shadow: var(--shadow-sm) !important;
       }
     `}</style>
   );
@@ -663,7 +665,7 @@ function CommoditiesDashboard() {
           {categories.map(cat => (
             <button key={cat} onClick={() => setCategory(cat)}
               className="px-3 py-1 text-xs font-mono border rounded transition-colors"
-              style={{ borderColor: category === cat ? "#58a6ff" : "#21262d", color: category === cat ? "#58a6ff" : "#7d8590", background: category === cat ? "#0c2044" : "transparent" }}>
+              style={{ borderColor: category === cat ? "#2563eb" : "#e2e8f0", color: category === cat ? "#2563eb" : "#64748b", background: category === cat ? "#eff6ff" : "transparent" }}>
               {cat}
             </button>
           ))}
@@ -675,15 +677,15 @@ function CommoditiesDashboard() {
             return (
               <div key={c.ticker} onClick={() => setActive(c.ticker)}
                 className="flex items-center justify-between p-2 rounded cursor-pointer transition-colors"
-                style={{ background: isActive ? "#0c2044" : "transparent", border: "1px solid", borderColor: isActive ? "#58a6ff44" : "#1c2128" }}>
+                style={{ background: isActive ? "#eff6ff" : "transparent", border: "1px solid", borderColor: isActive ? "#2563eb33" : "#e2e8f0" }}>
                 <div>
-                  <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#58a6ff" : "#e6edf3" }}>{c.label}</div>
-                  <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{c.symbol} · {c.unit}</div>
+                  <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#2563eb" : "#0f172a" }}>{c.label}</div>
+                  <div className="text-xs font-mono" style={{ color: "#64748b" }}>{c.symbol} · {c.unit}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
+                  <div className="text-xs font-mono font-bold" style={{ color: "#0f172a" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
                   {d && (
-                    <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#58a6ff" : "#f85149" }}>
+                    <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#2563eb" : "#e11d48" }}>
                       {d.changePct >= 0 ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
                     </div>
                   )}
@@ -696,9 +698,9 @@ function CommoditiesDashboard() {
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "2/3", gridRow: "1/2" }}>
         <div className="flex items-center gap-2 mb-1">
           <span className="terminal-header">{activeCommodity?.label}</span>
-          <span className="font-mono" style={{ color:"#484f58", fontSize:9 }}>{activeCommodity?.unit}</span>
+          <span className="font-mono" style={{ color:"#64748b", fontSize:9 }}>{activeCommodity?.unit}</span>
           {prices[active]?.price && (
-            <span className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:14, marginLeft:4 }}>${fmt.price(prices[active].price)}</span>
+            <span className="font-mono font-bold" style={{ color:"#0f172a", fontSize:14, marginLeft:4 }}>${fmt.price(prices[active].price)}</span>
           )}
           {prices[active]?.changePct != null && (
             <span className="font-mono" style={{ color:clr(prices[active].changePct), fontSize:11 }}>
@@ -718,10 +720,10 @@ function CommoditiesDashboard() {
             return (
               <div key={c.ticker} onClick={() => { setActive(c.ticker); setCategory(c.category); }}
                 className="p-2 rounded cursor-pointer transition-colors"
-                style={{ background: "#0d1117", border: "1px solid #1c2128" }}>
-                <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{c.symbol}</div>
-                <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
-                {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#58a6ff" : "#f85149" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
+                style={{ background: "#f8fafc", border: "1px solid #1c2128" }}>
+                <div className="text-xs font-mono" style={{ color: "#64748b" }}>{c.symbol}</div>
+                <div className="text-xs font-mono font-bold" style={{ color: "#0f172a" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
+                {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#2563eb" : "#e11d48" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
               </div>
             );
           })}
@@ -779,18 +781,18 @@ function CryptoDashboard() {
             return (
               <div key={c.ticker} onClick={() => setActive(c.ticker)}
                 className="flex items-center justify-between p-2 rounded cursor-pointer transition-colors"
-                style={{ background: isActive ? "#0c2044" : "transparent", border: "1px solid", borderColor: isActive ? "#58a6ff44" : "#1c2128" }}>
+                style={{ background: isActive ? "#eff6ff" : "transparent", border: "1px solid", borderColor: isActive ? "#2563eb33" : "#e2e8f0" }}>
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded flex items-center justify-center text-xs font-mono font-bold"
-                    style={{ background: "#1c2128", color: isActive ? "#58a6ff" : "#7d8590" }}>{c.symbol.slice(0,1)}</div>
+                    style={{ background: "#e2e8f0", color: isActive ? "#2563eb" : "#64748b" }}>{c.symbol.slice(0,1)}</div>
                   <div>
-                    <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#58a6ff" : "#e6edf3" }}>{c.label}</div>
-                    <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{c.symbol}</div>
+                    <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#2563eb" : "#0f172a" }}>{c.label}</div>
+                    <div className="text-xs font-mono" style={{ color: "#64748b" }}>{c.symbol}</div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{d?.price ? "$" + fmt.price(d.price) : "..."}</div>
-                  {d?.changePct != null && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#58a6ff" : "#f85149" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
+                  <div className="text-xs font-mono font-bold" style={{ color: "#0f172a" }}>{d?.price ? "$" + fmt.price(d.price) : "..."}</div>
+                  {d?.changePct != null && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#2563eb" : "#e11d48" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
                 </div>
               </div>
             );
@@ -801,7 +803,7 @@ function CryptoDashboard() {
       <div className="terminal-panel terminal-glow p-3 flex flex-col" style={{ gridColumn: "2/3", gridRow: "1/2" }}>
         <div className="flex items-center gap-3 mb-2">
           <span className="terminal-header">{activeCoin?.label} ({activeCoin?.symbol})</span>
-          {prices[active]?.price && <span className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:18 }}>${fmt.price(prices[active].price)}</span>}
+          {prices[active]?.price && <span className="font-mono font-bold" style={{ color:"#0f172a", fontSize:18 }}>${fmt.price(prices[active].price)}</span>}
           {prices[active]?.changePct != null && <span className="font-mono" style={{ color:clr(prices[active].changePct), fontSize:12 }}>{prices[active].changePct>=0?"▲":"▼"}{Math.abs(prices[active].changePct).toFixed(2)}%</span>}
         </div>
         <div style={{ flex:1, minHeight:280 }}>
@@ -817,10 +819,10 @@ function CryptoDashboard() {
             return (
               <div key={c.ticker} onClick={() => setActive(c.ticker)}
                 className="p-2 rounded cursor-pointer"
-                style={{ background: "#0d1117", border: "1px solid #1c2128" }}>
-                <div className="text-xs font-mono font-bold" style={{ color: "#7d8590" }}>{c.symbol}</div>
-                <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{d?.price ? "$" + fmt.price(d.price) : "..."}</div>
-                {d?.changePct != null && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#58a6ff" : "#f85149" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
+                style={{ background: "#f8fafc", border: "1px solid #1c2128" }}>
+                <div className="text-xs font-mono font-bold" style={{ color: "#64748b" }}>{c.symbol}</div>
+                <div className="text-xs font-mono font-bold" style={{ color: "#0f172a" }}>{d?.price ? "$" + fmt.price(d.price) : "..."}</div>
+                {d?.changePct != null && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#2563eb" : "#e11d48" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
               </div>
             );
           })}
@@ -914,17 +916,17 @@ function FXDashboard({ onOpenResearch }) {
             return (
               <div key={p.ticker} onClick={() => setActive(p.ticker)}
                 className="flex items-center justify-between p-2 rounded cursor-pointer"
-                style={{ background:isActive?"#0c2044":"transparent", border:"1px solid", borderColor:isActive?"#3fb95044":"#1c2128" }}>
+                style={{ background:isActive?"#eff6ff":"transparent", border:"1px solid", borderColor:isActive?"#05966933":"#e2e8f0" }}>
                 <div>
-                  <div className="text-xs font-mono font-bold" style={{ color:isActive?"#3fb950":"#e6edf3" }}>{p.label}</div>
-                  <div className="text-xs font-mono" style={{ color:"#484f58" }}>{p.region}</div>
+                  <div className="text-xs font-mono font-bold" style={{ color:isActive?"#059669":"#0f172a" }}>{p.label}</div>
+                  <div className="text-xs font-mono" style={{ color:"#64748b" }}>{p.region}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs font-mono font-bold" style={{ color:"#e6edf3" }}>
+                  <div className="text-xs font-mono font-bold" style={{ color:"#0f172a" }}>
                     {d?.price != null ? d.price.toFixed(p.dec) : "…"}
                   </div>
                   {d?.changePct != null && (
-                    <div className="text-xs font-mono" style={{ color:d.changePct>=0?"#3fb950":"#f85149" }}>
+                    <div className="text-xs font-mono" style={{ color:d.changePct>=0?"#059669":"#e11d48" }}>
                       {d.changePct>=0?"▲":"▼"}{Math.abs(d.changePct).toFixed(3)}%
                     </div>
                   )}
@@ -942,7 +944,7 @@ function FXDashboard({ onOpenResearch }) {
             <div className="terminal-header">{activePairCfg?.label} · {activePairCfg?.region}</div>
             {activePrice && (
               <div className="flex items-center gap-3 mt-1">
-                <span className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:22 }}>
+                <span className="font-mono font-bold" style={{ color:"#0f172a", fontSize:22 }}>
                   {activePrice.price != null ? activePrice.price.toFixed(activeDec) : "—"}
                 </span>
                 {activePrice.changePct != null && (
@@ -956,7 +958,7 @@ function FXDashboard({ onOpenResearch }) {
           {onOpenResearch && (
             <button onClick={() => onOpenResearch({ id:active, label:activePairCfg?.label||active, type:"fx", ticker:active, category:"FX" })}
               className="font-mono px-2 py-1 text-xs rounded"
-              style={{ background:"#0c2044", border:"1px solid #3fb95033", color:"#3fb950", cursor:"pointer" }}>
+              style={{ background:"#eff6ff", border:"1px solid #3fb95033", color:"#059669", cursor:"pointer" }}>
               → Research
             </button>
           )}
@@ -971,13 +973,13 @@ function FXDashboard({ onOpenResearch }) {
           {CB_SERIES.map(s => {
             const r = cbRates[s.id];
             return (
-              <div key={s.id} className="p-2 rounded" style={{ background:"#0d1117", border:"1px solid #1c2128" }}>
-                <div className="text-xs font-mono" style={{ color:"#484f58" }}>{s.flag} {s.bank}</div>
-                <div className="font-mono font-bold text-sm mt-0.5" style={{ color:"#e3b341" }}>
+              <div key={s.id} className="p-2 rounded" style={{ background:"#f8fafc", border:"1px solid #1c2128" }}>
+                <div className="text-xs font-mono" style={{ color:"#64748b" }}>{s.flag} {s.bank}</div>
+                <div className="font-mono font-bold text-sm mt-0.5" style={{ color:"#b45309" }}>
                   {r?.value != null ? r.value.toFixed(2) + "%" : "—"}
                 </div>
-                <div className="text-xs font-mono" style={{ color:"#7d8590" }}>{s.label}</div>
-                {r?.date && <div className="text-xs font-mono" style={{ color:"#21262d" }}>As of {r.date}</div>}
+                <div className="text-xs font-mono" style={{ color:"#64748b" }}>{s.label}</div>
+                {r?.date && <div className="text-xs font-mono" style={{ color:"#e2e8f0" }}>As of {r.date}</div>}
               </div>
             );
           })}
@@ -992,14 +994,14 @@ function FXDashboard({ onOpenResearch }) {
             const d = prices[p.ticker];
             const pct = d?.changePct;
             const intensity = pct != null ? Math.min(Math.abs(pct)/0.8, 1) : 0;
-            const bgColor = pct == null ? "#0d1117"
-              : pct >= 0 ? "rgba(63,185,80," + (0.08 + intensity*0.15) + ")"
-              : "rgba(248,81,73," + (0.08 + intensity*0.15) + ")";
+            const bgColor = pct == null ? "#f8fafc"
+              : pct >= 0 ? "rgba(5,150,105," + (0.08 + intensity*0.15) + ")"
+              : "rgba(225,29,72," + (0.08 + intensity*0.15) + ")";
             return (
               <div key={p.ticker} onClick={() => setActive(p.ticker)} className="p-2 rounded cursor-pointer"
-                style={{ background:bgColor, border:"1px solid", borderColor:active===p.ticker?"#3fb95066":"#1c2128" }}>
-                <div className="text-xs font-mono font-bold" style={{ color:"#e6edf3" }}>{p.label}</div>
-                <div className="text-xs font-mono" style={{ color:pct==null?"#7d8590":clr(pct) }}>
+                style={{ background:bgColor, border:"1px solid", borderColor:active===p.ticker?"#05966955":"#e2e8f0" }}>
+                <div className="text-xs font-mono font-bold" style={{ color:"#0f172a" }}>{p.label}</div>
+                <div className="text-xs font-mono" style={{ color:pct==null?"#64748b":clr(pct) }}>
                   {pct != null ? (pct>=0?"▲":"▼") + Math.abs(pct).toFixed(3)+"%" : "…"}
                 </div>
               </div>
@@ -1086,7 +1088,7 @@ function SupplyChainDashboard({ onOpenResearch }) {
 
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/2", gridRow: "1/3", overflowY: "auto" }}>
         <div className="terminal-header mb-1">📊 Macro Indicators</div>
-        <div className="text-xs font-mono mb-3" style={{ color: "#7d8590" }}>Monthly published figures</div>
+        <div className="text-xs font-mono mb-3" style={{ color: "#64748b" }}>Monthly published figures</div>
         <div className="flex flex-col gap-1">
           {FRED_SERIES.map(s => {
             const d = fredData[s.id];
@@ -1099,25 +1101,25 @@ function SupplyChainDashboard({ onOpenResearch }) {
               : val.toFixed(2) + s.suffix
               : "Loading...";
             const chgDisplay = chg != null ? (chg >= 0 ? "+" : "") + chg.toFixed(2) + s.suffix : "—";
-            const chgColor = chg == null ? "#7d8590" : chg >= 0 ? "#58a6ff" : "#f85149";
+            const chgColor = chg == null ? "#64748b" : chg >= 0 ? "#2563eb" : "#e11d48";
             const researchItem = { id: s.id, label: s.label, type: "macro", series: s.id, category: "Macro" };
             return (
               <div key={s.id} className="p-2 rounded" onClick={() => onOpenResearch && onOpenResearch(researchItem)}
-                style={{ background: "#0d1117", border: "1px solid #1c2128", cursor: onOpenResearch ? "pointer" : "default" }}
-                onMouseEnter={e => { if (onOpenResearch) e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"; }}
-                onMouseLeave={e => { if (onOpenResearch) e.currentTarget.style.borderColor="#1c2128"; }}>
+                style={{ background: "#f8fafc", border: "1px solid #1c2128", cursor: onOpenResearch ? "pointer" : "default" }}
+                onMouseEnter={e => { if (onOpenResearch) e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"; }}
+                onMouseLeave={e => { if (onOpenResearch) e.currentTarget.style.borderColor="#e2e8f0"; }}>
                 <div className="flex items-center justify-between mb-0.5">
                   <div>
-                    <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{s.label}</div>
-                    <div className="text-xs font-mono" style={{ color: "#21262d" }}>{s.src} · {s.freq}</div>
+                    <div className="text-xs font-mono font-bold" style={{ color: "#0f172a" }}>{s.label}</div>
+                    <div className="text-xs font-mono" style={{ color: "#e2e8f0" }}>{s.src} · {s.freq}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs font-mono font-bold" style={{ color: "#e3b341" }}>{display}</div>
+                    <div className="text-xs font-mono font-bold" style={{ color: "#b45309" }}>{display}</div>
                     <div className="text-xs font-mono" style={{ color: chgColor }}>{chgDisplay}</div>
                   </div>
                 </div>
-                <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{s.note}</div>
-                {d?.date && <div className="text-xs font-mono" style={{ color: "#21262d" }}>As of {d.date}</div>}
+                <div className="text-xs font-mono" style={{ color: "#64748b" }}>{s.note}</div>
+                {d?.date && <div className="text-xs font-mono" style={{ color: "#e2e8f0" }}>As of {d.date}</div>}
               </div>
             );
           })}
@@ -1131,15 +1133,15 @@ function SupplyChainDashboard({ onOpenResearch }) {
             return (
               <div key={c.ticker} onClick={() => setActive(c.ticker)}
                 className="p-2 rounded cursor-pointer transition-colors"
-                style={{ background: isActive ? "#0c2044" : "#0d1117", border: "1px solid", borderColor: isActive ? "#58a6ff44" : "#1c2128" }}>
+                style={{ background: isActive ? "#eff6ff" : "#f8fafc", border: "1px solid", borderColor: isActive ? "#2563eb33" : "#e2e8f0" }}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#58a6ff" : "#e6edf3" }}>{c.label}</div>
-                    <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{c.desc}</div>
+                    <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#2563eb" : "#0f172a" }}>{c.label}</div>
+                    <div className="text-xs font-mono" style={{ color: "#64748b" }}>{c.desc}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{d ? (d.price > 100 ? d.price.toFixed(0) : d.price.toFixed(2)) : "..."}</div>
-                    {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#58a6ff" : "#f85149" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
+                    <div className="text-xs font-mono font-bold" style={{ color: "#0f172a" }}>{d ? (d.price > 100 ? d.price.toFixed(0) : d.price.toFixed(2)) : "..."}</div>
+                    {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#2563eb" : "#e11d48" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
                   </div>
                 </div>
               </div>
@@ -1151,10 +1153,10 @@ function SupplyChainDashboard({ onOpenResearch }) {
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "2/3", gridRow: "1/2" }}>
         <div className="mb-2">
           <div className="terminal-header">{activeIndex?.label}</div>
-          <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{activeIndex?.desc}</div>
+          <div className="text-xs font-mono" style={{ color: "#64748b" }}>{activeIndex?.desc}</div>
           {prices[active] && (
             <div className="flex items-center gap-3 mt-1">
-              <span className="font-mono font-bold" style={{ color: "#e6edf3", fontSize: 20 }}>
+              <span className="font-mono font-bold" style={{ color: "#0f172a", fontSize: 20 }}>
                 {prices[active]?.price > 100 ? prices[active]?.price?.toFixed(0) : prices[active]?.price?.toFixed(2)}
               </span>
               <span className="text-xs font-mono" style={{ color: clr(prices[active]?.changePct) }}>
@@ -1271,7 +1273,7 @@ function TechnicalAnalysis({ ticker }) {
   const lastBBU = data[data.length-1]?.bbUpper;
   const lastBBL = data[data.length-1]?.bbLower;
 
-  const rsiColor = lastRSI > 70 ? "#f85149" : lastRSI < 30 ? "#3fb950" : "#e6edf3";
+  const rsiColor = lastRSI > 70 ? "#e11d48" : lastRSI < 30 ? "#059669" : "#0f172a";
   const rsiLabel = lastRSI > 70 ? "OVERBOUGHT" : lastRSI < 30 ? "OVERSOLD" : "NEUTRAL";
   const macdSignal = lastMACD > lastSignal ? "BULLISH" : "BEARISH";
   const bbSignal = lastClose > lastBBU ? "OVERBOUGHT" : lastClose < lastBBL ? "OVERSOLD" : "NEUTRAL";
@@ -1291,27 +1293,27 @@ function TechnicalAnalysis({ ticker }) {
           <div className="flex gap-1">
             {Object.keys(TF_RANGE).map(t => (
               <button key={t} onClick={() => setTf(t)} className="px-2 py-0.5 text-xs font-mono rounded transition-colors"
-                style={{ background: tf === t ? "#1f6feb22" : "transparent", color: tf === t ? "#58a6ff" : "#7d8590", border: "1px solid " + (tf === t ? "#1f6feb" : "#30363d") }}>{t}</button>
+                style={{ background: tf === t ? "#2563eb18" : "transparent", color: tf === t ? "#2563eb" : "#64748b", border: "1px solid " + (tf === t ? "#2563eb" : "#cbd5e1") }}>{t}</button>
             ))}
           </div>
         </div>
-        {loading ? <div className="flex items-center justify-center h-48 text-xs font-mono animate-pulse" style={{ color: "#7d8590" }}>Loading...</div> : (
+        {loading ? <div className="flex items-center justify-center h-48 text-xs font-mono animate-pulse" style={{ color: "#64748b" }}>Loading...</div> : (
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="techGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#58a6ff" stopOpacity={0.1} />
-                  <stop offset="95%" stopColor="#58a6ff" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1} />
+                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#21262d" vertical={false} />
-              <XAxis dataKey="date" tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={xi} />
-              <YAxis domain={[minP, maxP]} tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} tickFormatter={v => "$" + v.toFixed(0)} width={52} />
-              <Tooltip contentStyle={{ background:"#1c2230", border:"1px solid rgba(99,110,123,0.28)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }} labelStyle={{ color: "#7d8590" }} />
-              <Area type="monotone" dataKey="bbUpper" stroke="#e3b341" strokeWidth={1} strokeDasharray="3 3" fill="none" dot={false} name="BB Upper" />
-              <Area type="monotone" dataKey="bbLower" stroke="#e3b341" strokeWidth={1} strokeDasharray="3 3" fill="none" dot={false} name="BB Lower" />
-              <Area type="monotone" dataKey="bbMiddle" stroke="#7d8590" strokeWidth={1} fill="none" dot={false} name="BB Middle" />
-              <Area type="monotone" dataKey="close" stroke="#58a6ff" strokeWidth={1.5} fill="url(#techGrad)" dot={false} name="Price" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+              <XAxis dataKey="date" tick={{ fill: "#64748b", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={xi} />
+              <YAxis domain={[minP, maxP]} tick={{ fill: "#64748b", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} tickFormatter={v => "$" + v.toFixed(0)} width={52} />
+              <Tooltip contentStyle={{ background:"#f1f5f9", border:"1px solid rgba(15,23,42,0.18)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }} labelStyle={{ color: "#64748b" }} />
+              <Area type="monotone" dataKey="bbUpper" stroke="#b45309" strokeWidth={1} strokeDasharray="3 3" fill="none" dot={false} name="BB Upper" />
+              <Area type="monotone" dataKey="bbLower" stroke="#b45309" strokeWidth={1} strokeDasharray="3 3" fill="none" dot={false} name="BB Lower" />
+              <Area type="monotone" dataKey="bbMiddle" stroke="#64748b" strokeWidth={1} fill="none" dot={false} name="BB Middle" />
+              <Area type="monotone" dataKey="close" stroke="#2563eb" strokeWidth={1.5} fill="url(#techGrad)" dot={false} name="Price" />
             </AreaChart>
           </ResponsiveContainer>
         )}
@@ -1320,53 +1322,53 @@ function TechnicalAnalysis({ ticker }) {
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "2/3", gridRow: "1/3" }}>
         <div className="terminal-header mb-3">📊 Technical Signals</div>
         <div className="flex flex-col gap-3">
-          <div className="p-3 rounded" style={{ background: "#0d1117", border: "1px solid #21262d" }}>
+          <div className="p-3 rounded" style={{ background: "#f8fafc", border: "1px solid #21262d" }}>
             <div className="terminal-header mb-1">RSI (14)</div>
             <div className="text-2xl font-mono font-bold" style={{ color: rsiColor }}>{lastRSI?.toFixed(1) || "—"}</div>
             <div className="text-xs font-mono mt-1" style={{ color: rsiColor }}>{rsiLabel}</div>
-            <div className="relative h-2 rounded-full mt-2" style={{ background: "#21262d" }}>
-              <div style={{ position: "absolute", left: "30%", top: -4, bottom: -4, width: 1, background: "#3fb950" }} />
-              <div style={{ position: "absolute", left: "70%", top: -4, bottom: -4, width: 1, background: "#f85149" }} />
+            <div className="relative h-2 rounded-full mt-2" style={{ background: "#e2e8f0" }}>
+              <div style={{ position: "absolute", left: "30%", top: -4, bottom: -4, width: 1, background: "#059669" }} />
+              <div style={{ position: "absolute", left: "70%", top: -4, bottom: -4, width: 1, background: "#e11d48" }} />
               <div style={{ position: "absolute", left: Math.min(Math.max((lastRSI||50), 0), 100) + "%", top: -3, width: 8, height: 8, borderRadius: "50%", background: rsiColor, transform: "translateX(-50%)" }} />
             </div>
-            <div className="flex justify-between text-xs font-mono mt-1" style={{ color: "#484f58" }}>
+            <div className="flex justify-between text-xs font-mono mt-1" style={{ color: "#64748b" }}>
               <span>0</span><span>30</span><span>70</span><span>100</span>
             </div>
           </div>
 
-          <div className="p-3 rounded" style={{ background: "#0d1117", border: "1px solid #21262d" }}>
+          <div className="p-3 rounded" style={{ background: "#f8fafc", border: "1px solid #21262d" }}>
             <div className="terminal-header mb-1">MACD (12,26,9)</div>
             <div className="flex gap-3">
               <div>
-                <div className="text-xs font-mono" style={{ color: "#7d8590" }}>MACD</div>
-                <div className="text-sm font-mono font-bold" style={{ color: lastMACD >= 0 ? "#3fb950" : "#f85149" }}>{lastMACD?.toFixed(3) || "—"}</div>
+                <div className="text-xs font-mono" style={{ color: "#64748b" }}>MACD</div>
+                <div className="text-sm font-mono font-bold" style={{ color: lastMACD >= 0 ? "#059669" : "#e11d48" }}>{lastMACD?.toFixed(3) || "—"}</div>
               </div>
               <div>
-                <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Signal</div>
-                <div className="text-sm font-mono font-bold" style={{ color: "#e3b341" }}>{lastSignal?.toFixed(3) || "—"}</div>
+                <div className="text-xs font-mono" style={{ color: "#64748b" }}>Signal</div>
+                <div className="text-sm font-mono font-bold" style={{ color: "#b45309" }}>{lastSignal?.toFixed(3) || "—"}</div>
               </div>
             </div>
-            <div className="text-xs font-mono mt-2 px-2 py-1 rounded" style={{ background: lastMACD > lastSignal ? "rgba(63,185,80,0.1)" : "rgba(248,81,73,0.1)", color: lastMACD > lastSignal ? "#3fb950" : "#f85149" }}>
+            <div className="text-xs font-mono mt-2 px-2 py-1 rounded" style={{ background: lastMACD > lastSignal ? "rgba(5,150,105,0.10)" : "rgba(225,29,72,0.10)", color: lastMACD > lastSignal ? "#059669" : "#e11d48" }}>
               {macdSignal} — MACD {lastMACD > lastSignal ? "above" : "below"} signal
             </div>
           </div>
 
-          <div className="p-3 rounded" style={{ background: "#0d1117", border: "1px solid #21262d" }}>
+          <div className="p-3 rounded" style={{ background: "#f8fafc", border: "1px solid #21262d" }}>
             <div className="terminal-header mb-1">Bollinger Bands (20,2)</div>
             <div className="grid grid-cols-3 gap-1 mb-2">
-              {[["Upper", lastBBU, "#e3b341"], ["Middle", lastBBL ? ((lastBBU+lastBBL)/2).toFixed(2) : null, "#7d8590"], ["Lower", lastBBL, "#58a6ff"]].map(([l, v, c]) => (
+              {[["Upper", lastBBU, "#b45309"], ["Middle", lastBBL ? ((lastBBU+lastBBL)/2).toFixed(2) : null, "#64748b"], ["Lower", lastBBL, "#2563eb"]].map(([l, v, c]) => (
                 <div key={l}>
-                  <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{l}</div>
+                  <div className="text-xs font-mono" style={{ color: "#64748b" }}>{l}</div>
                   <div className="text-xs font-mono font-bold" style={{ color: c }}>{v ? "$" + (+v).toFixed(2) : "—"}</div>
                 </div>
               ))}
             </div>
-            <div className="text-xs font-mono px-2 py-1 rounded" style={{ background: bbSignal === "NEUTRAL" ? "rgba(125,133,144,0.1)" : bbSignal === "OVERBOUGHT" ? "rgba(248,81,73,0.1)" : "rgba(63,185,80,0.1)", color: bbSignal === "NEUTRAL" ? "#7d8590" : bbSignal === "OVERBOUGHT" ? "#f85149" : "#3fb950" }}>
+            <div className="text-xs font-mono px-2 py-1 rounded" style={{ background: bbSignal === "NEUTRAL" ? "rgba(125,133,144,0.1)" : bbSignal === "OVERBOUGHT" ? "rgba(225,29,72,0.10)" : "rgba(5,150,105,0.10)", color: bbSignal === "NEUTRAL" ? "#64748b" : bbSignal === "OVERBOUGHT" ? "#e11d48" : "#059669" }}>
               {bbSignal}
             </div>
           </div>
 
-          <div className="p-3 rounded" style={{ background: "#0d1117", border: "1px solid #21262d" }}>
+          <div className="p-3 rounded" style={{ background: "#f8fafc", border: "1px solid #21262d" }}>
             <div className="terminal-header mb-2">Overall Signal</div>
             {(() => {
               let bull = 0, bear = 0;
@@ -1380,14 +1382,14 @@ function TechnicalAnalysis({ ticker }) {
               return (
                 <div>
                   <div className="flex gap-1 mb-2" style={{ height: 8, borderRadius: 10, overflow: "hidden" }}>
-                    <div style={{ width: bullPct + "%", background: "#3fb950", transition: "width 0.3s" }} />
-                    <div style={{ width: (100-bullPct) + "%", background: "#f85149" }} />
+                    <div style={{ width: bullPct + "%", background: "#059669", transition: "width 0.3s" }} />
+                    <div style={{ width: (100-bullPct) + "%", background: "#e11d48" }} />
                   </div>
                   <div className="flex justify-between text-xs font-mono">
-                    <span style={{ color: "#3fb950" }}>Bullish {bullPct}%</span>
-                    <span style={{ color: "#f85149" }}>Bearish {100-bullPct}%</span>
+                    <span style={{ color: "#059669" }}>Bullish {bullPct}%</span>
+                    <span style={{ color: "#e11d48" }}>Bearish {100-bullPct}%</span>
                   </div>
-                  <div className="text-xs font-mono mt-2 font-bold" style={{ color: bullPct > 60 ? "#3fb950" : bullPct < 40 ? "#f85149" : "#e3b341" }}>
+                  <div className="text-xs font-mono mt-2 font-bold" style={{ color: bullPct > 60 ? "#059669" : bullPct < 40 ? "#e11d48" : "#b45309" }}>
                     {bullPct > 60 ? "BUY SIGNAL" : bullPct < 40 ? "SELL SIGNAL" : "NEUTRAL"}
                   </div>
                 </div>
@@ -1399,16 +1401,16 @@ function TechnicalAnalysis({ ticker }) {
 
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/2", gridRow: "2/3" }}>
         <div className="terminal-header mb-2">RSI (14) — Relative Strength Index</div>
-        {loading ? <div className="text-xs font-mono animate-pulse" style={{ color: "#7d8590" }}>Loading...</div> : (
+        {loading ? <div className="text-xs font-mono animate-pulse" style={{ color: "#64748b" }}>Loading...</div> : (
           <ResponsiveContainer width="100%" height={120}>
             <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#21262d" vertical={false} />
-              <XAxis dataKey="date" tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={xi} />
-              <YAxis domain={[0, 100]} tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} width={30} />
-              <Tooltip contentStyle={{ background:"#1c2230", border:"1px solid rgba(99,110,123,0.28)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }} labelStyle={{ color: "#7d8590" }} />
-              <ReferenceLine y={70} stroke="#f85149" strokeDasharray="3 3" strokeWidth={1} />
-              <ReferenceLine y={30} stroke="#3fb950" strokeDasharray="3 3" strokeWidth={1} />
-              <Area type="monotone" dataKey="rsi" stroke="#58a6ff" strokeWidth={1.5} fill="rgba(88,166,255,0.05)" dot={false} name="RSI" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+              <XAxis dataKey="date" tick={{ fill: "#64748b", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={xi} />
+              <YAxis domain={[0, 100]} tick={{ fill: "#64748b", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} width={30} />
+              <Tooltip contentStyle={{ background:"#f1f5f9", border:"1px solid rgba(15,23,42,0.18)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }} labelStyle={{ color: "#64748b" }} />
+              <ReferenceLine y={70} stroke="#e11d48" strokeDasharray="3 3" strokeWidth={1} />
+              <ReferenceLine y={30} stroke="#059669" strokeDasharray="3 3" strokeWidth={1} />
+              <Area type="monotone" dataKey="rsi" stroke="#2563eb" strokeWidth={1.5} fill="rgba(37,99,235,0.05)" dot={false} name="RSI" />
             </AreaChart>
           </ResponsiveContainer>
         )}
@@ -1416,17 +1418,17 @@ function TechnicalAnalysis({ ticker }) {
 
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/2", gridRow: "3/4" }}>
         <div className="terminal-header mb-2">MACD (12,26,9) — Moving Average Convergence Divergence</div>
-        {loading ? <div className="text-xs font-mono animate-pulse" style={{ color: "#7d8590" }}>Loading...</div> : (
+        {loading ? <div className="text-xs font-mono animate-pulse" style={{ color: "#64748b" }}>Loading...</div> : (
           <ResponsiveContainer width="100%" height={120}>
             <BarChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#21262d" vertical={false} />
-              <XAxis dataKey="date" tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={xi} />
-              <YAxis tick={{ fill: "#7d8590", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} width={40} />
-              <Tooltip contentStyle={{ background:"#1c2230", border:"1px solid rgba(99,110,123,0.28)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }} labelStyle={{ color: "#7d8590" }} />
-              <ReferenceLine y={0} stroke="#30363d" strokeWidth={1} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+              <XAxis dataKey="date" tick={{ fill: "#64748b", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} interval={xi} />
+              <YAxis tick={{ fill: "#64748b", fontSize: 9, fontFamily: "monospace" }} tickLine={false} axisLine={false} width={40} />
+              <Tooltip contentStyle={{ background:"#f1f5f9", border:"1px solid rgba(15,23,42,0.18)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }} labelStyle={{ color: "#64748b" }} />
+              <ReferenceLine y={0} stroke="#cbd5e1" strokeWidth={1} />
               <Bar dataKey="histogram" name="Histogram" radius={[1,1,0,0]}>
                 {data.map((d, i) => (
-                  <Cell key={i} fill={d.histogram >= 0 ? "#3fb950" : "#f85149"} />
+                  <Cell key={i} fill={d.histogram >= 0 ? "#059669" : "#e11d48"} />
                 ))}
               </Bar>
             </BarChart>
@@ -1436,13 +1438,13 @@ function TechnicalAnalysis({ ticker }) {
 
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "2/3", gridRow: "3/4" }}>
         <div className="terminal-header mb-2">📖 Indicator Guide</div>
-        <div className="flex flex-col gap-2 text-xs font-mono" style={{ color: "#7d8590" }}>
-          <div><span style={{ color: "#58a6ff" }}>RSI {">"} 70</span> — Overbought, potential sell signal</div>
-          <div><span style={{ color: "#3fb950" }}>RSI {"<"} 30</span> — Oversold, potential buy signal</div>
-          <div><span style={{ color: "#3fb950" }}>MACD above Signal</span> — Bullish momentum</div>
-          <div><span style={{ color: "#f85149" }}>MACD below Signal</span> — Bearish momentum</div>
-          <div><span style={{ color: "#e3b341" }}>BB Upper breach</span> — Overbought condition</div>
-          <div><span style={{ color: "#e3b341" }}>BB Lower breach</span> — Oversold condition</div>
+        <div className="flex flex-col gap-2 text-xs font-mono" style={{ color: "#64748b" }}>
+          <div><span style={{ color: "#2563eb" }}>RSI {">"} 70</span> — Overbought, potential sell signal</div>
+          <div><span style={{ color: "#059669" }}>RSI {"<"} 30</span> — Oversold, potential buy signal</div>
+          <div><span style={{ color: "#059669" }}>MACD above Signal</span> — Bullish momentum</div>
+          <div><span style={{ color: "#e11d48" }}>MACD below Signal</span> — Bearish momentum</div>
+          <div><span style={{ color: "#b45309" }}>BB Upper breach</span> — Overbought condition</div>
+          <div><span style={{ color: "#b45309" }}>BB Lower breach</span> — Oversold condition</div>
         </div>
       </div>
 
@@ -1467,7 +1469,7 @@ const GEO_CATEGORIES = {
       "rate increase","rate decrease","inflation target","fed meeting",
       "rate hold","rate outlook","fed chair","rate cycle","fed pivot",
     ],
-    color: "#bc8cff", bg: "rgba(188,140,255,0.08)",
+    color: "#7c3aed", bg: "rgba(188,140,255,0.08)",
     assets: [
       { id:"DGS10", label:"10Y Treasury", type:"macro",     series:"DGS10", category:"Macro" },
       { id:"SPY",   label:"S&P 500",      type:"equity",    ticker:"SPY",   category:"Indices" },
@@ -1484,7 +1486,7 @@ const GEO_CATEGORIES = {
       "trade tension","economic sanction","trade barrier","trade agreement",
       "trade war","counter-tariff","technology ban","chip ban","export license",
     ],
-    color: "#e3b341", bg: "rgba(227,179,65,0.08)",
+    color: "#b45309", bg: "rgba(227,179,65,0.08)",
     assets: [
       { id:"EURUSD=X", label:"EUR/USD",  type:"fx",        ticker:"EURUSD=X", category:"FX" },
       { id:"HG=F",     label:"Copper",   type:"commodity", ticker:"HG=F",     category:"Commodities" },
@@ -1501,7 +1503,7 @@ const GEO_CATEGORIES = {
       "protest","opposition leader","ballot","polling","vote count","political tension",
       "legislative","parliament","head of state","prime minister","chancellor",
     ],
-    color: "#58a6ff", bg: "rgba(88,166,255,0.08)",
+    color: "#2563eb", bg: "rgba(37,99,235,0.08)",
     assets: [
       { id:"SPY",      label:"S&P 500", type:"equity",    ticker:"SPY",      category:"Indices" },
       { id:"EURUSD=X", label:"EUR/USD", type:"fx",        ticker:"EURUSD=X", category:"FX" },
@@ -1518,7 +1520,7 @@ const GEO_CATEGORIES = {
       "oil demand","gas price","electricity price","oil cut","oil output cut",
       "energy price","gas shortage","fuel price","opec+","oil inventory",
     ],
-    color: "#f0883e", bg: "rgba(240,136,62,0.08)",
+    color: "#ea580c", bg: "rgba(240,136,62,0.08)",
     assets: [
       { id:"CL=F",     label:"Crude Oil (WTI)", type:"commodity", ticker:"CL=F",     category:"Commodities" },
       { id:"NG=F",     label:"Natural Gas",      type:"commodity", ticker:"NG=F",     category:"Commodities" },
@@ -1534,7 +1536,7 @@ const GEO_CATEGORIES = {
       "global shortage","production delay","microchip","fab","foundry","chip maker",
       "wafer","shortage","congestion","cargo","freight","ocean freight",
     ],
-    color: "#3fb950", bg: "rgba(63,185,80,0.08)",
+    color: "#059669", bg: "rgba(5,150,105,0.08)",
     assets: [
       { id:"HG=F", label:"Copper",     type:"commodity", ticker:"HG=F", category:"Commodities" },
       { id:"NVDA", label:"NVIDIA",     type:"equity",    ticker:"NVDA", category:"Equities" },
@@ -1552,7 +1554,7 @@ const GEO_CATEGORIES = {
       "military conflict","armed attack","military base","casualt","hostage",
       "nato forces","peacekeeping","demilitariz","occupied territory","siege",
     ],
-    color: "#f85149", bg: "rgba(248,81,73,0.08)",
+    color: "#e11d48", bg: "rgba(225,29,72,0.08)",
     assets: [
       { id:"GC=F", label:"Gold",             type:"commodity", ticker:"GC=F", category:"Commodities" },
       { id:"CL=F", label:"Crude Oil",         type:"commodity", ticker:"CL=F", category:"Commodities" },
@@ -1573,7 +1575,7 @@ const GEO_REGIONS = {
   "🌎 LatAm":        ["brazil","mexico","argentina","venezuela","chile","colombia","latin america","brazilian real","mexican peso"],
 };
 
-const GEO_ASSET_COLOR = { equity:"#58a6ff", commodity:"#e3b341", fx:"#3fb950", macro:"#bc8cff", topic:"#f0883e" };
+const GEO_ASSET_COLOR = { equity:"#2563eb", commodity:"#b45309", fx:"#059669", macro:"#7c3aed", topic:"#ea580c" };
 
 const BULLISH_WORDS = ["ceasefire","peace deal","diplomatic agreement","de-escalat","easing tension","recovery","stimulus","rate cut","rate cuts","trade deal signed","accord","truce","resolution","normalization"];
 const BEARISH_WORDS = ["invasion","crisis","default","collapse","recession","escalat","new sanction","tariff hike","production cut","blockade","restrict","ultimatum","hostile","military offensive","coup","regime collapse"];
@@ -1621,8 +1623,8 @@ function geoTimeAgo(ts) {
   return Math.floor(s / 86400) + "d ago";
 }
 
-const GEO_IMPACT_COLOR = { High:"#f85149", Medium:"#e3b341", Low:"#3fb950" };
-const GEO_SIGNAL_COLOR = { Bullish:"#3fb950", Bearish:"#f85149", Neutral:"#7d8590" };
+const GEO_IMPACT_COLOR = { High:"#e11d48", Medium:"#b45309", Low:"#059669" };
+const GEO_SIGNAL_COLOR = { Bullish:"#059669", Bearish:"#e11d48", Neutral:"#64748b" };
 const GEO_SIGNAL_ICON  = { Bullish:"▲", Bearish:"▼", Neutral:"◆" };
 
 function GeopoliticalEvents({ onOpenResearch }) {
@@ -1675,32 +1677,32 @@ function GeopoliticalEvents({ onOpenResearch }) {
     <div className="flex flex-col" style={{ height:"100%", overflow:"hidden" }}>
 
       {/* ── Filter bar ── */}
-      <div className="px-4 py-2 flex items-center gap-3 flex-wrap" style={{ borderBottom:"1px solid rgba(99,110,123,0.12)", background:"#010409", flexShrink:0 }}>
-        <span className="font-mono" style={{ background:"#0c2044", color:"#58a6ff", border:"1px solid #58a6ff33", borderRadius:6, padding:"2px 8px", fontSize:10 }}>● LIVE</span>
+      <div className="px-4 py-2 flex items-center gap-3 flex-wrap" style={{ borderBottom:"1px solid rgba(15,23,42,0.09)", background:"#f8fafc", flexShrink:0 }}>
+        <span className="font-mono" style={{ background:"#eff6ff", color:"#2563eb", border:"1px solid #58a6ff33", borderRadius:6, padding:"2px 8px", fontSize:10 }}>● LIVE</span>
 
         <div className="flex items-center gap-1">
-          <span className="font-mono" style={{ color:"#484f58", fontSize:9 }}>IMPACT:</span>
+          <span className="font-mono" style={{ color:"#64748b", fontSize:9 }}>IMPACT:</span>
           {["All","High","Medium","Low"].map(v => (
             <button key={v} onClick={() => setFilterImpact(v)} className="font-mono"
               style={{ padding:"2px 8px", fontSize:10, borderRadius:6, border:"1px solid", cursor:"pointer",
-                background: filterImpact===v ? (GEO_IMPACT_COLOR[v]||"#21262d")+"22" : "transparent",
-                borderColor: filterImpact===v ? (GEO_IMPACT_COLOR[v]||"#58a6ff") : "#21262d",
-                color: filterImpact===v ? (GEO_IMPACT_COLOR[v]||"#58a6ff") : "#7d8590" }}>
+                background: filterImpact===v ? (GEO_IMPACT_COLOR[v]||"#e2e8f0")+"22" : "transparent",
+                borderColor: filterImpact===v ? (GEO_IMPACT_COLOR[v]||"#2563eb") : "#e2e8f0",
+                color: filterImpact===v ? (GEO_IMPACT_COLOR[v]||"#2563eb") : "#64748b" }}>
               {v}
             </button>
           ))}
         </div>
 
         <div className="flex items-center gap-1">
-          <span className="font-mono" style={{ color:"#484f58", fontSize:9 }}>CATEGORY:</span>
+          <span className="font-mono" style={{ color:"#64748b", fontSize:9 }}>CATEGORY:</span>
           {["All",...Object.keys(GEO_CATEGORIES)].map(v => {
             const cfg = GEO_CATEGORIES[v];
             return (
               <button key={v} onClick={() => setFilterCat(v)} className="font-mono"
                 style={{ padding:"2px 8px", fontSize:10, borderRadius:6, border:"1px solid", cursor:"pointer",
-                  background: filterCat===v ? (cfg?.bg||"#21262d") : "transparent",
-                  borderColor: filterCat===v ? (cfg?.color||"#58a6ff") : "#21262d",
-                  color: filterCat===v ? (cfg?.color||"#58a6ff") : "#7d8590" }}>
+                  background: filterCat===v ? (cfg?.bg||"#e2e8f0") : "transparent",
+                  borderColor: filterCat===v ? (cfg?.color||"#2563eb") : "#e2e8f0",
+                  color: filterCat===v ? (cfg?.color||"#2563eb") : "#64748b" }}>
                 {v}
               </button>
             );
@@ -1708,24 +1710,24 @@ function GeopoliticalEvents({ onOpenResearch }) {
         </div>
 
         <div className="flex items-center gap-1">
-          <span className="font-mono" style={{ color:"#484f58", fontSize:9 }}>TIME:</span>
+          <span className="font-mono" style={{ color:"#64748b", fontSize:9 }}>TIME:</span>
           {["1H","6H","24H"].map(v => (
             <button key={v} onClick={() => setFilterTime(v)} className="font-mono"
               style={{ padding:"2px 8px", fontSize:10, borderRadius:6, border:"1px solid", cursor:"pointer",
-                background: filterTime===v ? "#0c2044" : "transparent",
-                borderColor: filterTime===v ? "#58a6ff" : "#21262d",
-                color: filterTime===v ? "#58a6ff" : "#7d8590" }}>
+                background: filterTime===v ? "#eff6ff" : "transparent",
+                borderColor: filterTime===v ? "#2563eb" : "#e2e8f0",
+                color: filterTime===v ? "#2563eb" : "#64748b" }}>
               {v}
             </button>
           ))}
         </div>
 
         <button onClick={fetchEvents} disabled={loading} className="font-mono"
-          style={{ padding:"2px 10px", fontSize:10, borderRadius:6, border:"1px solid #30363d", background:"transparent", color:loading?"#7d8590":"#58a6ff", cursor:loading?"wait":"pointer", marginLeft:"auto" }}>
+          style={{ padding:"2px 10px", fontSize:10, borderRadius:6, border:"1px solid #30363d", background:"transparent", color:loading?"#64748b":"#2563eb", cursor:loading?"wait":"pointer", marginLeft:"auto" }}>
           {loading ? "⟳ Updating…" : "⟳ Refresh"}
         </button>
         {lastRefresh && (
-          <span className="font-mono" style={{ color:"#484f58", fontSize:9 }}>
+          <span className="font-mono" style={{ color:"#64748b", fontSize:9 }}>
             {filtered.length} events · {new Date(lastRefresh).toLocaleTimeString()}
           </span>
         )}
@@ -1737,9 +1739,9 @@ function GeopoliticalEvents({ onOpenResearch }) {
         {/* Left: scrollable event feed */}
         <div style={{ width:460, flexShrink:0, borderRight:"1px solid #21262d", overflowY:"auto" }}>
           {loading && events.length === 0 ? (
-            <div className="flex items-center justify-center p-10 font-mono" style={{ color:"#7d8590", fontSize:12 }}>Fetching intelligence feed…</div>
+            <div className="flex items-center justify-center p-10 font-mono" style={{ color:"#64748b", fontSize:12 }}>Fetching intelligence feed…</div>
           ) : filtered.length === 0 ? (
-            <div className="flex items-center justify-center p-10 font-mono" style={{ color:"#7d8590", fontSize:12 }}>No events match current filters.</div>
+            <div className="flex items-center justify-center p-10 font-mono" style={{ color:"#64748b", fontSize:12 }}>No events match current filters.</div>
           ) : filtered.map(event => {
             const cfg = GEO_CATEGORIES[event.category];
             const isSelected = selected?.id === event.id;
@@ -1748,31 +1750,31 @@ function GeopoliticalEvents({ onOpenResearch }) {
             const isNew      = ageSec < 1800 && !isBreaking;
             return (
               <div key={event.id} onClick={() => setSelected(event)}
-                style={{ borderBottom:"1px solid rgba(99,110,123,0.07)", borderLeft:"3px solid " + (isSelected ? cfg.color : GEO_IMPACT_COLOR[event.impact]),
+                style={{ borderBottom:"1px solid rgba(15,23,42,0.06)", borderLeft:"3px solid " + (isSelected ? cfg.color : GEO_IMPACT_COLOR[event.impact]),
                   background: isSelected ? cfg.bg : "transparent", padding:"10px 14px", cursor:"pointer", transition:"background 0.15s" }}
-                onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background="#0d1117"; }}
+                onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background="#f8fafc"; }}
                 onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background="transparent"; }}>
 
                 <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                  {isBreaking && <span className="font-mono" style={{ background:"#f8514922", border:"1px solid #f85149", borderRadius:2, padding:"0 5px", fontSize:8, color:"#f85149", textTransform:"uppercase" }}>⚡ Breaking</span>}
-                  {isNew      && <span className="font-mono" style={{ background:"#3fb95022", border:"1px solid #3fb950", borderRadius:2, padding:"0 5px", fontSize:8, color:"#3fb950", textTransform:"uppercase" }}>● New</span>}
+                  {isBreaking && <span className="font-mono" style={{ background:"#e11d4822", border:"1px solid #f85149", borderRadius:2, padding:"0 5px", fontSize:8, color:"#e11d48", textTransform:"uppercase" }}>⚡ Breaking</span>}
+                  {isNew      && <span className="font-mono" style={{ background:"#05966918", border:"1px solid #3fb950", borderRadius:2, padding:"0 5px", fontSize:8, color:"#059669", textTransform:"uppercase" }}>● New</span>}
                   <span className="font-mono" style={{ background:cfg.bg, border:"1px solid "+cfg.color+"55", borderRadius:2, padding:"0 6px", fontSize:9, color:cfg.color, textTransform:"uppercase" }}>{event.category}</span>
                   <span className="font-mono" style={{ border:"1px solid "+GEO_IMPACT_COLOR[event.impact]+"44", borderRadius:2, padding:"0 5px", fontSize:9, color:GEO_IMPACT_COLOR[event.impact] }}>{event.impact}</span>
-                  <span className="font-mono ml-auto" style={{ color:"#484f58", fontSize:9 }}>{geoTimeAgo(event.datetime)}</span>
+                  <span className="font-mono ml-auto" style={{ color:"#64748b", fontSize:9 }}>{geoTimeAgo(event.datetime)}</span>
                 </div>
 
-                <div className="font-mono leading-snug mb-1.5" style={{ color:"#e6edf3", fontSize:12, fontWeight:isBreaking?600:400 }}>
+                <div className="font-mono leading-snug mb-1.5" style={{ color:"#0f172a", fontSize:12, fontWeight:isBreaking?600:400 }}>
                   {event.headline}
                 </div>
 
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className="font-mono" style={{ color:"#7d8590", fontSize:10 }}>{event.source}</span>
-                  {event.regions.slice(0,3).map(r => <span key={r} className="font-mono" style={{ color:"#484f58", fontSize:10 }}>{r}</span>)}
+                  <span className="font-mono" style={{ color:"#64748b", fontSize:10 }}>{event.source}</span>
+                  {event.regions.slice(0,3).map(r => <span key={r} className="font-mono" style={{ color:"#64748b", fontSize:10 }}>{r}</span>)}
                 </div>
 
                 <div className="flex flex-wrap gap-1 items-center">
                   {event.assets.slice(0,3).map(a => (
-                    <span key={a.id} className="font-mono" style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:2, padding:"1px 6px", fontSize:9, color:"#7d8590" }}>
+                    <span key={a.id} className="font-mono" style={{ background:"#f8fafc", border:"1px solid rgba(15,23,42,0.12)", borderRadius:2, padding:"1px 6px", fontSize:9, color:"#64748b" }}>
                       {a.label}
                     </span>
                   ))}
@@ -1788,7 +1790,7 @@ function GeopoliticalEvents({ onOpenResearch }) {
         {/* Right: event detail */}
         <div className="flex-1 p-5" style={{ overflowY:"auto" }}>
           {!selected ? (
-            <div className="flex items-center justify-center h-full font-mono" style={{ color:"#484f58", fontSize:12 }}>
+            <div className="flex items-center justify-center h-full font-mono" style={{ color:"#64748b", fontSize:12 }}>
               Select an event to view intelligence detail
             </div>
           ) : (() => {
@@ -1799,43 +1801,43 @@ function GeopoliticalEvents({ onOpenResearch }) {
               <div>
                 {/* Badges */}
                 <div className="flex items-center gap-2 mb-4 flex-wrap">
-                  {isBreaking && <span className="font-mono" style={{ background:"#f8514922", border:"1px solid #f85149", borderRadius:6, padding:"3px 10px", fontSize:10, color:"#f85149" }}>⚡ BREAKING</span>}
+                  {isBreaking && <span className="font-mono" style={{ background:"#e11d4822", border:"1px solid #f85149", borderRadius:6, padding:"3px 10px", fontSize:10, color:"#e11d48" }}>⚡ BREAKING</span>}
                   <span className="font-mono" style={{ background:cfg.bg, border:"1px solid "+cfg.color, borderRadius:6, padding:"3px 10px", fontSize:10, color:cfg.color }}>{selected.category.toUpperCase()}</span>
                   <span className="font-mono" style={{ border:"1px solid "+GEO_IMPACT_COLOR[selected.impact], borderRadius:6, padding:"3px 10px", fontSize:10, color:GEO_IMPACT_COLOR[selected.impact] }}>{selected.impact.toUpperCase()} IMPACT</span>
-                  <span className="font-mono ml-auto" style={{ color:"#7d8590", fontSize:10 }}>{selected.source} · {geoTimeAgo(selected.datetime)}</span>
+                  <span className="font-mono ml-auto" style={{ color:"#64748b", fontSize:10 }}>{selected.source} · {geoTimeAgo(selected.datetime)}</span>
                 </div>
 
                 {/* Headline */}
-                <h2 className="font-mono font-bold leading-snug mb-3" style={{ color:"#e6edf3", fontSize:16 }}>{selected.headline}</h2>
+                <h2 className="font-mono font-bold leading-snug mb-3" style={{ color:"#0f172a", fontSize:16 }}>{selected.headline}</h2>
 
                 {/* Regions */}
                 {selected.regions.length > 0 && (
                   <div className="flex items-center gap-2 mb-4 flex-wrap">
-                    <span className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>Region:</span>
+                    <span className="font-mono" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase" }}>Region:</span>
                     {selected.regions.map(r => (
-                      <span key={r} className="font-mono" style={{ background:"#21262d", borderRadius:6, padding:"2px 8px", fontSize:11, color:"#7d8590" }}>{r}</span>
+                      <span key={r} className="font-mono" style={{ background:"#e2e8f0", borderRadius:6, padding:"2px 8px", fontSize:11, color:"#64748b" }}>{r}</span>
                     ))}
                   </div>
                 )}
 
                 {/* Summary */}
                 {selected.summary && (
-                  <div className="mb-4 p-3" style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:4 }}>
-                    <div className="font-mono mb-1.5" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Summary</div>
-                    <p className="font-mono leading-relaxed" style={{ color:"#7d8590", fontSize:12 }}>{selected.summary}</p>
+                  <div className="mb-4 p-3" style={{ background:"#f8fafc", border:"1px solid rgba(15,23,42,0.12)", borderRadius:4 }}>
+                    <div className="font-mono mb-1.5" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Summary</div>
+                    <p className="font-mono leading-relaxed" style={{ color:"#64748b", fontSize:12 }}>{selected.summary}</p>
                   </div>
                 )}
 
                 {/* Why it matters */}
                 <div className="mb-4 p-3" style={{ background:cfg.bg, border:"1px solid "+cfg.color+"44", borderRadius:4 }}>
                   <div className="font-mono mb-1.5" style={{ color:cfg.color, fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Why It Matters</div>
-                  <p className="font-mono leading-relaxed" style={{ color:"#e6edf3", fontSize:12 }}>{cfg.why}</p>
+                  <p className="font-mono leading-relaxed" style={{ color:"#0f172a", fontSize:12 }}>{cfg.why}</p>
                 </div>
 
                 {/* Signal + link row */}
-                <div className="flex items-center gap-4 mb-4 p-3" style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:4 }}>
+                <div className="flex items-center gap-4 mb-4 p-3" style={{ background:"#f8fafc", border:"1px solid rgba(15,23,42,0.12)", borderRadius:4 }}>
                   <div>
-                    <div className="font-mono mb-1" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>Directional Signal</div>
+                    <div className="font-mono mb-1" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase" }}>Directional Signal</div>
                     <div className="font-mono font-bold" style={{ color:GEO_SIGNAL_COLOR[selected.signal], fontSize:18 }}>
                       {GEO_SIGNAL_ICON[selected.signal]} {selected.signal}
                     </div>
@@ -1843,7 +1845,7 @@ function GeopoliticalEvents({ onOpenResearch }) {
                   <div className="ml-auto flex gap-2">
                     <a href={selected.url} target="_blank" rel="noopener noreferrer"
                       className="font-mono"
-                      style={{ background:"#1f6feb", borderRadius:10, padding:"7px 14px", color:"#fff", fontSize:11, textDecoration:"none" }}>
+                      style={{ background:"#2563eb", borderRadius:10, padding:"7px 14px", color:"#fff", fontSize:11, textDecoration:"none" }}>
                       Full Article ↗
                     </a>
                   </div>
@@ -1851,7 +1853,7 @@ function GeopoliticalEvents({ onOpenResearch }) {
 
                 {/* Impacted assets */}
                 <div className="mb-4">
-                  <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>
+                  <div className="font-mono mb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>
                     Impacted Assets {onOpenResearch ? "— Click to Research" : ""}
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -1859,9 +1861,9 @@ function GeopoliticalEvents({ onOpenResearch }) {
                       <button key={a.id}
                         onClick={() => onOpenResearch && onOpenResearch(a)}
                         className="font-mono"
-                        style={{ background:"#0d1117", border:"1px solid #30363d", borderRadius:10, padding:"7px 14px", fontSize:12, color:GEO_ASSET_COLOR[a.type]||"#7d8590", cursor:onOpenResearch?"pointer":"default", transition:"all 0.15s" }}
+                        style={{ background:"#f8fafc", border:"1px solid #30363d", borderRadius:10, padding:"7px 14px", fontSize:12, color:GEO_ASSET_COLOR[a.type]||"#64748b", cursor:onOpenResearch?"pointer":"default", transition:"all 0.15s" }}
                         onMouseEnter={e => { if (onOpenResearch) { e.currentTarget.style.borderColor=cfg.color; e.currentTarget.style.background=cfg.bg; } }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"; e.currentTarget.style.background="#0d1117"; }}>
+                        onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"; e.currentTarget.style.background="#f8fafc"; }}>
                         {a.label}{onOpenResearch ? " ↗" : ""}
                       </button>
                     ))}
@@ -1869,7 +1871,7 @@ function GeopoliticalEvents({ onOpenResearch }) {
                 </div>
 
                 {/* Intelligence metadata grid */}
-                <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Intelligence Classification</div>
+                <div className="font-mono mb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Intelligence Classification</div>
                 <div className="grid" style={{ gridTemplateColumns:"1fr 1fr 1fr", gap:6 }}>
                   {[
                     ["Category",  selected.category],
@@ -1879,9 +1881,9 @@ function GeopoliticalEvents({ onOpenResearch }) {
                     ["Regions",   selected.regions.length ? selected.regions.map(r => r.split(" ").slice(1).join(" ")).join(", ") : "Global"],
                     ["Published", geoTimeAgo(selected.datetime)],
                   ].map(([k, v]) => (
-                    <div key={k} className="p-2" style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:4 }}>
-                      <div className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>{k}</div>
-                      <div className="font-mono" style={{ color:"#e6edf3", fontSize:11 }}>{v}</div>
+                    <div key={k} className="p-2" style={{ background:"#f8fafc", border:"1px solid rgba(15,23,42,0.12)", borderRadius:4 }}>
+                      <div className="font-mono" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase" }}>{k}</div>
+                      <div className="font-mono" style={{ color:"#0f172a", fontSize:11 }}>{v}</div>
                     </div>
                   ))}
                 </div>
@@ -1902,15 +1904,15 @@ function GeopoliticalEvents({ onOpenResearch }) {
 const ARC_STYLE = {
   oilRoutes:  { color:"rgba(240,165,0,0.85)",   stroke:0.85, altitude:0.18 },
   pipelines:  { color:"rgba(232,93,4,0.90)",    stroke:0.70, altitude:0.04 },
-  seaCables:  { color:"rgba(88,166,255,0.75)",  stroke:0.50, altitude:0.07 },
+  seaCables:  { color:"rgba(37,99,235,0.70)",  stroke:0.50, altitude:0.07 },
   tradeFlows: { color:"rgba(167,139,250,0.75)", stroke:0.65, altitude:0.27 },
 };
 const PT_STYLE = {
-  chokepoints:   { color:"#f85149", r:0.55, alt:0.016 },
-  cableLandings: { color:"#3fb950", r:0.22, alt:0.005 },
+  chokepoints:   { color:"#e11d48", r:0.55, alt:0.016 },
+  cableLandings: { color:"#059669", r:0.22, alt:0.005 },
   majorPorts:    { color:"#06b6d4", r:0.30, alt:0.008 },
   conflictZones: { color:"#ff3333", r:0.70, alt:0.014 },
-  sanctioned:    { color:"#e3b341", r:0.50, alt:0.008 },
+  sanctioned:    { color:"#b45309", r:0.50, alt:0.008 },
 };
 const arcCol = d => ARC_STYLE[d._layer]?.color    || "rgba(255,255,255,0.6)";
 const arcStr = d => ARC_STYLE[d._layer]?.stroke   || 0.5;
@@ -2106,14 +2108,14 @@ const GLOBE_LAYER_CONFIG = {
   // Infrastructure
   oilRoutes:     { label:"Oil Shipping Routes",    icon:"🛢",  color:"#f0a500", cat:"infrastructure", desc:"Major global oil tanker routes",    enabled:true,  count:OIL_ROUTES.length },
   pipelines:     { label:"Pipelines",              icon:"⚡",  color:"#e85d04", cat:"infrastructure", desc:"Major oil and gas pipelines",        enabled:false, count:0 },
-  seaCables:     { label:"Subsea Internet Cables", icon:"🌐",  color:"#58a6ff", cat:"infrastructure", desc:"Global undersea fiber-optic cables", enabled:true,  count:SEA_CABLES.length },
-  cableLandings: { label:"Cable Landing Points",   icon:"📡",  color:"#3fb950", cat:"infrastructure", desc:"Coastal cable terminal stations",    enabled:false, count:0 },
+  seaCables:     { label:"Subsea Internet Cables", icon:"🌐",  color:"#2563eb", cat:"infrastructure", desc:"Global undersea fiber-optic cables", enabled:true,  count:SEA_CABLES.length },
+  cableLandings: { label:"Cable Landing Points",   icon:"📡",  color:"#059669", cat:"infrastructure", desc:"Coastal cable terminal stations",    enabled:false, count:0 },
   // Transportation
   majorPorts:    { label:"Major Ports",            icon:"🚢",  color:"#06b6d4", cat:"transportation", desc:"World's top container & energy ports",enabled:false, count:0 },
   // Geopolitics
-  chokepoints:   { label:"Strategic Chokepoints",  icon:"⚓",  color:"#f85149", cat:"geopolitics",    desc:"Critical maritime chokepoints",      enabled:true,  count:CHOKEPOINTS.length },
+  chokepoints:   { label:"Strategic Chokepoints",  icon:"⚓",  color:"#e11d48", cat:"geopolitics",    desc:"Critical maritime chokepoints",      enabled:true,  count:CHOKEPOINTS.length },
   conflictZones: { label:"Conflict Zones",         icon:"⚔️",  color:"#ff3333", cat:"geopolitics",    desc:"Active conflicts and instability",   enabled:false, count:0 },
-  sanctioned:    { label:"Sanctioned Regions",     icon:"🚫",  color:"#e3b341", cat:"geopolitics",    desc:"Sanctioned countries and embargoes", enabled:false, count:0 },
+  sanctioned:    { label:"Sanctioned Regions",     icon:"🚫",  color:"#b45309", cat:"geopolitics",    desc:"Sanctioned countries and embargoes", enabled:false, count:0 },
   // Markets
   tradeFlows:    { label:"Global Trade Flows",     icon:"📦",  color:"#a78bfa", cat:"markets",        desc:"Major global trade corridors",       enabled:false, count:0 },
 };
@@ -2265,62 +2267,62 @@ function GlobalIntelligenceGlobe({ onOpenResearch }) {
     if (!d) return null;
     const research = resolveResearch(d);
     return (
-      <div className="p-3 rounded mt-3" style={{ background:"#0d1117", border:"1px solid #30363d" }}>
-        <div className="font-mono font-bold text-xs mb-2" style={{ color:"#e6edf3" }}>{d.name}</div>
+      <div className="p-3 rounded mt-3" style={{ background:"#f8fafc", border:"1px solid #30363d" }}>
+        <div className="font-mono font-bold text-xs mb-2" style={{ color:"#0f172a" }}>{d.name}</div>
 
         {d._layer === "chokepoints" && <>
-          <div className="flex gap-1 mb-2 flex-wrap">{badge(d.type,"#e3b341")}{badge(d.importance||"","#7d8590")}</div>
-          <div className="text-xs font-mono mb-1" style={{ color:"#7d8590" }}>Oil flow: <span style={{ color:"#f0a500" }}>{d.oil}</span></div>
-          <div className="text-xs font-mono leading-relaxed" style={{ color:"#484f58" }}>{d.note}</div>
+          <div className="flex gap-1 mb-2 flex-wrap">{badge(d.type,"#b45309")}{badge(d.importance||"","#64748b")}</div>
+          <div className="text-xs font-mono mb-1" style={{ color:"#64748b" }}>Oil flow: <span style={{ color:"#f0a500" }}>{d.oil}</span></div>
+          <div className="text-xs font-mono leading-relaxed" style={{ color:"#64748b" }}>{d.note}</div>
         </>}
 
         {d._layer === "oilRoutes" && <>
-          <div className="flex gap-1 mb-2">{badge("Oil Route","#f0a500")}{badge(d.importance||"","#7d8590")}</div>
-          <div className="text-xs font-mono mb-1" style={{ color:"#7d8590" }}>Region: <span style={{ color:"#e6edf3" }}>{d.region}</span></div>
+          <div className="flex gap-1 mb-2">{badge("Oil Route","#f0a500")}{badge(d.importance||"","#64748b")}</div>
+          <div className="text-xs font-mono mb-1" style={{ color:"#64748b" }}>Region: <span style={{ color:"#0f172a" }}>{d.region}</span></div>
           <div className="text-xs font-mono" style={{ color:"#f0a500" }}>Volume: {d.vol}</div>
         </>}
 
         {d._layer === "pipelines" && <>
-          <div className="flex gap-1 mb-2">{badge(d.type,"#e85d04")}{badge(d.importance||"","#7d8590")}</div>
-          <div className="text-xs font-mono mb-1" style={{ color:"#7d8590" }}>Region: <span style={{ color:"#e6edf3" }}>{d.region}</span></div>
+          <div className="flex gap-1 mb-2">{badge(d.type,"#e85d04")}{badge(d.importance||"","#64748b")}</div>
+          <div className="text-xs font-mono mb-1" style={{ color:"#64748b" }}>Region: <span style={{ color:"#0f172a" }}>{d.region}</span></div>
           <div className="text-xs font-mono" style={{ color:"#e85d04" }}>Volume: {d.vol}</div>
         </>}
 
         {d._layer === "seaCables" && <>
-          <div className="flex gap-1 mb-2">{badge("Subsea Cable","#58a6ff")}</div>
-          <div className="text-xs font-mono mb-1" style={{ color:"#7d8590" }}>Capacity: <span style={{ color:"#58a6ff" }}>{d.capacity}</span></div>
-          <div className="text-xs font-mono leading-relaxed" style={{ color:"#484f58" }}>{d.operators}</div>
+          <div className="flex gap-1 mb-2">{badge("Subsea Cable","#2563eb")}</div>
+          <div className="text-xs font-mono mb-1" style={{ color:"#64748b" }}>Capacity: <span style={{ color:"#2563eb" }}>{d.capacity}</span></div>
+          <div className="text-xs font-mono leading-relaxed" style={{ color:"#64748b" }}>{d.operators}</div>
         </>}
 
         {d._layer === "cableLandings" && <>
-          <div className="flex gap-1 mb-2">{badge("Landing Stn","#3fb950")}</div>
-          <div className="text-xs font-mono mb-1" style={{ color:"#7d8590" }}>Country: <span style={{ color:"#e6edf3" }}>{d.country}</span></div>
-          <div className="text-xs font-mono leading-relaxed" style={{ color:"#3fb950" }}>{d.cables?.join(", ")}</div>
+          <div className="flex gap-1 mb-2">{badge("Landing Stn","#059669")}</div>
+          <div className="text-xs font-mono mb-1" style={{ color:"#64748b" }}>Country: <span style={{ color:"#0f172a" }}>{d.country}</span></div>
+          <div className="text-xs font-mono leading-relaxed" style={{ color:"#059669" }}>{d.cables?.join(", ")}</div>
         </>}
 
         {d._layer === "conflictZones" && <>
-          <div className="flex gap-1 mb-2 flex-wrap">{badge(d.intensity+" Risk","#ff3333")}{badge(d.type,"#7d8590")}</div>
-          <div className="text-xs font-mono mb-1" style={{ color:"#7d8590" }}>Since: <span style={{ color:"#e6edf3" }}>{d.started}</span></div>
-          <div className="text-xs font-mono mb-1" style={{ color:"#f85149" }}>Market impact: {d.impact}</div>
-          <div className="text-xs font-mono leading-relaxed" style={{ color:"#484f58" }}>{d.note}</div>
+          <div className="flex gap-1 mb-2 flex-wrap">{badge(d.intensity+" Risk","#ff3333")}{badge(d.type,"#64748b")}</div>
+          <div className="text-xs font-mono mb-1" style={{ color:"#64748b" }}>Since: <span style={{ color:"#0f172a" }}>{d.started}</span></div>
+          <div className="text-xs font-mono mb-1" style={{ color:"#e11d48" }}>Market impact: {d.impact}</div>
+          <div className="text-xs font-mono leading-relaxed" style={{ color:"#64748b" }}>{d.note}</div>
         </>}
 
         {d._layer === "sanctioned" && <>
-          <div className="flex gap-1 mb-2">{badge("Sanctioned","#e3b341")}</div>
-          <div className="text-xs font-mono mb-1" style={{ color:"#7d8590" }}>Regime: <span style={{ color:"#e3b341" }}>{d.regime}</span></div>
-          <div className="text-xs font-mono mb-1" style={{ color:"#7d8590" }}>Impact: <span style={{ color:"#e6edf3" }}>{d.impact}</span></div>
-          <div className="text-xs font-mono leading-relaxed" style={{ color:"#484f58" }}>{d.note}</div>
+          <div className="flex gap-1 mb-2">{badge("Sanctioned","#b45309")}</div>
+          <div className="text-xs font-mono mb-1" style={{ color:"#64748b" }}>Regime: <span style={{ color:"#b45309" }}>{d.regime}</span></div>
+          <div className="text-xs font-mono mb-1" style={{ color:"#64748b" }}>Impact: <span style={{ color:"#0f172a" }}>{d.impact}</span></div>
+          <div className="text-xs font-mono leading-relaxed" style={{ color:"#64748b" }}>{d.note}</div>
         </>}
 
         {d._layer === "majorPorts" && <>
-          <div className="flex gap-1 mb-2">{badge(d.type,"#06b6d4")}{badge(`Rank #${d.rank}`,"#7d8590")}</div>
-          <div className="text-xs font-mono mb-1" style={{ color:"#7d8590" }}>Country: <span style={{ color:"#e6edf3" }}>{d.country}</span></div>
+          <div className="flex gap-1 mb-2">{badge(d.type,"#06b6d4")}{badge(`Rank #${d.rank}`,"#64748b")}</div>
+          <div className="text-xs font-mono mb-1" style={{ color:"#64748b" }}>Country: <span style={{ color:"#0f172a" }}>{d.country}</span></div>
           <div className="text-xs font-mono" style={{ color:"#06b6d4" }}>Volume: {d.vol}</div>
         </>}
 
         {d._layer === "tradeFlows" && <>
-          <div className="flex gap-1 mb-2">{badge(d.type,"#a78bfa")}{badge(d.importance||"","#7d8590")}</div>
-          <div className="text-xs font-mono mb-1" style={{ color:"#7d8590" }}>Corridor: <span style={{ color:"#e6edf3" }}>{d.region}</span></div>
+          <div className="flex gap-1 mb-2">{badge(d.type,"#a78bfa")}{badge(d.importance||"","#64748b")}</div>
+          <div className="text-xs font-mono mb-1" style={{ color:"#64748b" }}>Corridor: <span style={{ color:"#0f172a" }}>{d.region}</span></div>
           <div className="text-xs font-mono" style={{ color:"#a78bfa" }}>Trade volume: {d.vol}</div>
         </>}
 
@@ -2328,13 +2330,13 @@ function GlobalIntelligenceGlobe({ onOpenResearch }) {
           {research && onOpenResearch && (
             <button onClick={() => onOpenResearch(research)}
               className="text-xs font-mono px-2 py-1 rounded"
-              style={{ background:"#0c2044", border:"1px solid #58a6ff33", color:"#58a6ff", cursor:"pointer" }}>
+              style={{ background:"#eff6ff", border:"1px solid #58a6ff33", color:"#2563eb", cursor:"pointer" }}>
               → Research
             </button>
           )}
           <button onClick={() => setSelected(null)}
             className="text-xs font-mono px-2 py-1 rounded"
-            style={{ background:"transparent", border:"1px solid rgba(99,110,123,0.18)", color:"#484f58", cursor:"pointer" }}>
+            style={{ background:"transparent", border:"1px solid rgba(15,23,42,0.12)", color:"#64748b", cursor:"pointer" }}>
             ✕ Close
           </button>
         </div>
@@ -2369,17 +2371,17 @@ function GlobalIntelligenceGlobe({ onOpenResearch }) {
         {/* Header */}
         <div className="px-3 pt-3 pb-2" style={{ borderBottom:"1px solid #1c2128" }}>
           <div className="terminal-header text-sm mb-1">🌐 Globe Controls</div>
-          <div className="text-xs font-mono" style={{ color:"#484f58" }}>
+          <div className="text-xs font-mono" style={{ color:"#64748b" }}>
             {activeCounts.layers} layer{activeCounts.layers !== 1 ? "s" : ""} · {activeCounts.arcs + activeCounts.points} elements
           </div>
         </div>
 
         {/* Region filter */}
         <div className="px-3 py-2" style={{ borderBottom:"1px solid #1c2128" }}>
-          <div className="text-xs font-mono mb-1.5" style={{ color:"#484f58", textTransform:"uppercase", letterSpacing:"0.07em" }}>Region Focus</div>
+          <div className="text-xs font-mono mb-1.5" style={{ color:"#64748b", textTransform:"uppercase", letterSpacing:"0.07em" }}>Region Focus</div>
           <select value={region} onChange={e => handleRegionChange(e.target.value)}
             className="w-full font-mono text-xs p-1.5 rounded"
-            style={{ background:"#0d1117", border:"1px solid #30363d", color:"#e6edf3", outline:"none", cursor:"pointer" }}>
+            style={{ background:"#f8fafc", border:"1px solid #30363d", color:"#0f172a", outline:"none", cursor:"pointer" }}>
             {Object.entries(GLOBE_REGIONS).map(([key, r]) => (
               <option key={key} value={key}>{r.label}</option>
             ))}
@@ -2388,16 +2390,16 @@ function GlobalIntelligenceGlobe({ onOpenResearch }) {
 
         {/* Importance filter */}
         <div className="px-3 py-2" style={{ borderBottom:"1px solid #1c2128" }}>
-          <div className="text-xs font-mono mb-1.5" style={{ color:"#484f58", textTransform:"uppercase", letterSpacing:"0.07em" }}>Importance</div>
+          <div className="text-xs font-mono mb-1.5" style={{ color:"#64748b", textTransform:"uppercase", letterSpacing:"0.07em" }}>Importance</div>
           <div className="flex gap-1">
             {[["all","All"],["major","Major"],["critical","Critical"]].map(([val, lbl]) => (
               <button key={val} onClick={() => setImportance(val)}
                 className="flex-1 text-xs font-mono py-1 rounded"
                 style={{
-                  background: importance === val ? "#0c2044" : "transparent",
+                  background: importance === val ? "#eff6ff" : "transparent",
                   border:"1px solid",
-                  borderColor: importance === val ? "#58a6ff44" : "#1c2128",
-                  color: importance === val ? "#58a6ff" : "#484f58",
+                  borderColor: importance === val ? "#2563eb33" : "#e2e8f0",
+                  color: importance === val ? "#2563eb" : "#64748b",
                   cursor:"pointer",
                 }}>{lbl}</button>
             ))}
@@ -2418,16 +2420,16 @@ function GlobalIntelligenceGlobe({ onOpenResearch }) {
                   style={{ cursor:"pointer", background:"transparent", border:"none" }}>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs">{cat.icon}</span>
-                    <span className="text-xs font-mono font-bold" style={{ color:"#e6edf3" }}>{cat.label}</span>
+                    <span className="text-xs font-mono font-bold" style={{ color:"#0f172a" }}>{cat.label}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     {counts.active > 0 && (
                       <span className="text-xs font-mono px-1.5 py-0.5 rounded"
-                        style={{ background:"#0c2044", color:"#58a6ff", fontSize:9 }}>
+                        style={{ background:"#eff6ff", color:"#2563eb", fontSize:9 }}>
                         {counts.active}/{counts.total}
                       </span>
                     )}
-                    <span className="text-xs font-mono" style={{ color:"#484f58" }}>{isOpen ? "▾" : "▸"}</span>
+                    <span className="text-xs font-mono" style={{ color:"#64748b" }}>{isOpen ? "▾" : "▸"}</span>
                   </div>
                 </button>
 
@@ -2438,17 +2440,17 @@ function GlobalIntelligenceGlobe({ onOpenResearch }) {
                       <button key={id} onClick={() => toggleLayer(id)}
                         className="w-full flex items-start gap-2 p-2 rounded text-left"
                         style={{
-                          background: layer.enabled ? "#0c2044" : "transparent",
+                          background: layer.enabled ? "#eff6ff" : "transparent",
                           border:"1px solid",
-                          borderColor: layer.enabled ? layer.color+"44" : "#1c2128",
+                          borderColor: layer.enabled ? layer.color+"44" : "#e2e8f0",
                           cursor:"pointer",
                         }}>
-                        <div style={{ width:7, height:7, borderRadius:"50%", background:layer.enabled ? layer.color : "#484f58", flexShrink:0, marginTop:3 }} />
+                        <div style={{ width:7, height:7, borderRadius:"50%", background:layer.enabled ? layer.color : "#64748b", flexShrink:0, marginTop:3 }} />
                         <div>
-                          <div className="font-mono font-bold" style={{ fontSize:11, color:layer.enabled?"#e6edf3":"#7d8590" }}>
+                          <div className="font-mono font-bold" style={{ fontSize:11, color:layer.enabled?"#0f172a":"#64748b" }}>
                             {layer.icon} {layer.label}
                           </div>
-                          <div className="font-mono" style={{ fontSize:9, color:"#484f58", lineHeight:1.4 }}>{layer.desc}</div>
+                          <div className="font-mono" style={{ fontSize:9, color:"#64748b", lineHeight:1.4 }}>{layer.desc}</div>
                         </div>
                       </button>
                     ))}
@@ -2463,16 +2465,16 @@ function GlobalIntelligenceGlobe({ onOpenResearch }) {
             <button onClick={() => toggleCat("soon")}
               className="w-full flex items-center justify-between py-1.5 px-1"
               style={{ cursor:"pointer", background:"transparent", border:"none" }}>
-              <span className="text-xs font-mono font-bold" style={{ color:"#484f58" }}>Coming Soon</span>
-              <span className="text-xs font-mono" style={{ color:"#21262d" }}>{openCats.soon ? "▾" : "▸"}</span>
+              <span className="text-xs font-mono font-bold" style={{ color:"#64748b" }}>Coming Soon</span>
+              <span className="text-xs font-mono" style={{ color:"#e2e8f0" }}>{openCats.soon ? "▾" : "▸"}</span>
             </button>
             {openCats.soon && (
               <div className="flex flex-col gap-1 ml-1">
                 {GLOBE_FUTURE_LAYERS.map(f => (
                   <div key={f.label} className="flex items-center gap-2 p-2 rounded"
                     style={{ border:"1px solid #1c2128", opacity:0.4 }}>
-                    <div style={{ width:7, height:7, borderRadius:"50%", background:"#21262d" }} />
-                    <div className="font-mono" style={{ fontSize:10, color:"#484f58" }}>{f.icon} {f.label}</div>
+                    <div style={{ width:7, height:7, borderRadius:"50%", background:"#e2e8f0" }} />
+                    <div className="font-mono" style={{ fontSize:10, color:"#64748b" }}>{f.icon} {f.label}</div>
                   </div>
                 ))}
               </div>
@@ -2489,11 +2491,11 @@ function GlobalIntelligenceGlobe({ onOpenResearch }) {
       </div>
 
       {/* ── Globe canvas ── */}
-      <div ref={containerRef} className="flex-1 relative" style={{ background:"#050c18" }}>
+      <div ref={containerRef} className="flex-1 relative" style={{ background:"#f8fafc" }}>
         {!GlobeComp ? (
           <div className="flex flex-col items-center justify-center h-full gap-3">
-            <div className="text-xs font-mono animate-pulse" style={{ color:"#7d8590" }}>Initializing WebGL renderer…</div>
-            <div className="text-xs font-mono" style={{ color:"#484f58" }}>Loading globe assets</div>
+            <div className="text-xs font-mono animate-pulse" style={{ color:"#64748b" }}>Initializing WebGL renderer…</div>
+            <div className="text-xs font-mono" style={{ color:"#64748b" }}>Loading globe assets</div>
           </div>
         ) : (
           <GlobeComp
@@ -2541,22 +2543,22 @@ function GlobalIntelligenceGlobe({ onOpenResearch }) {
 
         {/* Status bar */}
         <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-3 py-1.5"
-          style={{ background:"#0d111799", borderTop:"1px solid #1c2128", pointerEvents:"none" }}>
-          <div className="text-xs font-mono" style={{ color: hovered ? "#e6edf3" : "#484f58" }}>
+          style={{ background:"#f8fafc99", borderTop:"1px solid #1c2128", pointerEvents:"none" }}>
+          <div className="text-xs font-mono" style={{ color: hovered ? "#0f172a" : "#64748b" }}>
             {hovered ? hovered.name : "Drag to rotate · Scroll to zoom · Click for detail"}
           </div>
           <div className="flex items-center gap-3">
             {region !== "all" && (
-              <span className="text-xs font-mono" style={{ color:"#58a6ff" }}>
+              <span className="text-xs font-mono" style={{ color:"#2563eb" }}>
                 ◉ {GLOBE_REGIONS[region]?.label}
               </span>
             )}
             {importance !== "all" && (
-              <span className="text-xs font-mono" style={{ color:"#e3b341" }}>
+              <span className="text-xs font-mono" style={{ color:"#b45309" }}>
                 ▲ {importance[0].toUpperCase() + importance.slice(1)} only
               </span>
             )}
-            <span className="text-xs font-mono" style={{ color:"#484f58" }}>
+            <span className="text-xs font-mono" style={{ color:"#64748b" }}>
               {activeCounts.arcs + activeCounts.points} elements
             </span>
           </div>
@@ -2566,7 +2568,7 @@ function GlobalIntelligenceGlobe({ onOpenResearch }) {
         <div className="absolute top-3 right-3 flex flex-col gap-1" style={{ pointerEvents:"none" }}>
           {Object.entries(layers).filter(([,l]) => l.enabled).map(([id, layer]) => (
             <div key={id} className="text-xs font-mono px-2 py-1 rounded flex items-center gap-1.5"
-              style={{ background:"#0d111799", border:`1px solid ${layer.color}33`, color:layer.color }}>
+              style={{ background:"#f8fafc99", border:`1px solid ${layer.color}33`, color:layer.color }}>
               <div style={{ width:6, height:6, borderRadius:"50%", background:layer.color }} />
               {layer.icon} {layer.label}
             </div>
@@ -2607,7 +2609,7 @@ function EyeOfSauron({ onOpenResearch }) {
         <div className="flex items-center gap-3 px-4 py-2" style={{ borderBottom: "1px solid #21262d" }}>
           <button onClick={() => setActive(null)}
             className="text-xs font-mono px-3 py-1 rounded transition-colors"
-            style={{ background: "#0c2044", color: "#58a6ff", border: "1px solid #58a6ff33" }}>
+            style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #58a6ff33" }}>
             ← Back
           </button>
           <span style={{ fontSize: 18 }}>{mod.icon}</span>
@@ -2624,7 +2626,7 @@ function EyeOfSauron({ onOpenResearch }) {
     <div className="flex-1 p-4">
       <div className="mb-4">
         <div className="terminal-header text-lg mb-1">👁 Eye of Sauron</div>
-        <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Global intelligence feeds — click any module to expand</div>
+        <div className="text-xs font-mono" style={{ color: "#64748b" }}>Global intelligence feeds — click any module to expand</div>
       </div>
       <div className="grid gap-3" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
         {MODULES.map(mod => (
@@ -2633,12 +2635,12 @@ function EyeOfSauron({ onOpenResearch }) {
             className="eye-card p-4 transition-all"
             style={{ cursor: mod.tag ? "default" : "pointer", minHeight: 140 }}>
             <div style={{ fontSize: 36 }} className="mb-3">{mod.icon}</div>
-            <div className="font-mono font-bold text-sm mb-1" style={{ color: mod.tag ? "#7d8590" : "#e6edf3" }}>{mod.title}</div>
-            <div className="font-mono text-xs leading-relaxed mb-3" style={{ color: "#7d8590" }}>{mod.desc}</div>
+            <div className="font-mono font-bold text-sm mb-1" style={{ color: mod.tag ? "#64748b" : "#0f172a" }}>{mod.title}</div>
+            <div className="font-mono text-xs leading-relaxed mb-3" style={{ color: "#64748b" }}>{mod.desc}</div>
             {mod.tag ? (
-              <span className="text-xs font-mono px-2 py-1 rounded" style={{ border: "1px solid #7d8590", color: "#58a6ff44" }}>Coming Soon</span>
+              <span className="text-xs font-mono px-2 py-1 rounded" style={{ border: "1px solid #7d8590", color: "#2563eb33" }}>Coming Soon</span>
             ) : (
-              <span className="text-xs font-mono px-2 py-1 rounded" style={{ border: "1px solid #58a6ff33", color: "#58a6ff" }}>● Click to Open</span>
+              <span className="text-xs font-mono px-2 py-1 rounded" style={{ border: "1px solid #58a6ff33", color: "#2563eb" }}>● Click to Open</span>
             )}
           </div>
         ))}
@@ -2652,7 +2654,7 @@ function TankerMap() {
     <div className="flex flex-col" style={{ borderTop: "1px solid #21262d" }}>
       <div className="flex items-center gap-3 px-3 py-2" style={{ borderBottom: "1px solid #21262d" }}>
         <span className="terminal-header">🛢 Live Vessel Tracker — MarineTraffic</span>
-        <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "#0c2044", color: "#58a6ff", border: "1px solid #58a6ff33" }}>● LIVE</span>
+        <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #58a6ff33" }}>● LIVE</span>
       </div>
       <iframe
         src="https://www.marinetraffic.com/en/ais/embed/maptype:0/mmsi:0/vesseltype:80/zoom:4/shownames:true/bgcolor:000000"
@@ -2669,7 +2671,7 @@ function FlightTracker() {
     <div className="flex flex-col" style={{ borderTop: "1px solid #21262d" }}>
       <div className="flex items-center gap-3 px-3 py-2" style={{ borderBottom: "1px solid #21262d" }}>
         <span className="terminal-header">✈️ Live Flight Tracker — FlightRadar24</span>
-        <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "#0c2044", color: "#58a6ff", border: "1px solid #58a6ff33" }}>● LIVE</span>
+        <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #58a6ff33" }}>● LIVE</span>
       </div>
       <iframe
         src="https://globe.adsbexchange.com/?largeMode=1"
@@ -2686,8 +2688,8 @@ function EnergyGrid() {
     <div className="flex flex-col" style={{ borderTop: "1px solid #21262d" }}>
       <div className="flex items-center gap-3 px-3 py-2" style={{ borderBottom: "1px solid #21262d" }}>
         <span className="terminal-header">⚡ Live Energy Grid — Electricity Maps</span>
-        <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "#0c2044", color: "#58a6ff", border: "1px solid #58a6ff33" }}>● LIVE</span>
-        <span className="text-xs font-mono" style={{ color: "#7d8590" }}>Carbon intensity & energy mix by country</span>
+        <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #58a6ff33" }}>● LIVE</span>
+        <span className="text-xs font-mono" style={{ color: "#64748b" }}>Carbon intensity & energy mix by country</span>
       </div>
       <iframe
         src="https://www.eia.gov/electricity/gridmonitor/dashboard/electric_overview/US48/US48"
@@ -2800,14 +2802,14 @@ function WeatherDashboard() {
             return (
               <div key={c.name} onClick={() => setActive(c.name)}
                 className="p-2 rounded cursor-pointer transition-colors"
-                style={{ background: isActive ? "#0c2044" : "#0d1117", border: "1px solid", borderColor: isActive ? "#58a6ff44" : "#1c2128" }}>
+                style={{ background: isActive ? "#eff6ff" : "#f8fafc", border: "1px solid", borderColor: isActive ? "#2563eb33" : "#e2e8f0" }}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-mono font-bold" style={{ color: isActive ? "#58a6ff" : "#e6edf3" }}>{c.flag} {c.name}</span>
+                  <span className="text-xs font-mono font-bold" style={{ color: isActive ? "#2563eb" : "#0f172a" }}>{c.flag} {c.name}</span>
                   <span style={{ fontSize: 16 }}>{wmo(w?.code).icon}</span>
                 </div>
-                <div className="text-lg font-mono font-bold" style={{ color: "#e6edf3" }}>{w ? w.temp + "°C" : "..."}</div>
-                <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{wmo(w?.code).label}</div>
-                <div className="text-xs font-mono" style={{ color: "#7d8590" }}>💨 {w?.wind || "—"} mph</div>
+                <div className="text-lg font-mono font-bold" style={{ color: "#0f172a" }}>{w ? w.temp + "°C" : "..."}</div>
+                <div className="text-xs font-mono" style={{ color: "#64748b" }}>{wmo(w?.code).label}</div>
+                <div className="text-xs font-mono" style={{ color: "#64748b" }}>💨 {w?.wind || "—"} mph</div>
               </div>
             );
           })}
@@ -2823,14 +2825,14 @@ function WeatherDashboard() {
             return (
               <div key={c.name} onClick={() => setActive(c.name)}
                 className="p-2 rounded cursor-pointer transition-colors"
-                style={{ background: isActive ? "#0c2044" : "#0d1117", border: "1px solid", borderColor: isActive ? "#58a6ff44" : "#1c2128" }}>
+                style={{ background: isActive ? "#eff6ff" : "#f8fafc", border: "1px solid", borderColor: isActive ? "#2563eb33" : "#e2e8f0" }}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-mono font-bold" style={{ color: isActive ? "#58a6ff" : "#e6edf3" }}>{c.flag} {c.name}</span>
+                  <span className="text-xs font-mono font-bold" style={{ color: isActive ? "#2563eb" : "#0f172a" }}>{c.flag} {c.name}</span>
                   <span style={{ fontSize: 16 }}>{wmo(w?.code).icon}</span>
                 </div>
-                <div className="text-lg font-mono font-bold" style={{ color: "#e6edf3" }}>{w ? w.temp + "°C" : "..."}</div>
-                <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{wmo(w?.code).label}</div>
-                <div className="text-xs font-mono" style={{ color: "#7d8590" }}>💨 {w?.wind || "—"} mph</div>
+                <div className="text-lg font-mono font-bold" style={{ color: "#0f172a" }}>{w ? w.temp + "°C" : "..."}</div>
+                <div className="text-xs font-mono" style={{ color: "#64748b" }}>{wmo(w?.code).label}</div>
+                <div className="text-xs font-mono" style={{ color: "#64748b" }}>💨 {w?.wind || "—"} mph</div>
               </div>
             );
           })}
@@ -2841,11 +2843,11 @@ function WeatherDashboard() {
         <div className="terminal-header mb-3">{activeCity?.flag} {active} — 7 Day Forecast</div>
         <div className="grid grid-cols-7 gap-1">
           {forecast.slice(0, 7).map((f, i) => (
-            <div key={i} className="flex flex-col items-center p-1.5 rounded" style={{ background: "#0d1117", border: "1px solid #1c2128" }}>
-              <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{f.date.split(",")[0]}</div>
+            <div key={i} className="flex flex-col items-center p-1.5 rounded" style={{ background: "#f8fafc", border: "1px solid #1c2128" }}>
+              <div className="text-xs font-mono" style={{ color: "#64748b" }}>{f.date.split(",")[0]}</div>
               <div style={{ fontSize: 20, margin: "4px 0" }}>{wmo(f.code).icon}</div>
-              <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{f.max}°</div>
-              <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{f.min}°</div>
+              <div className="text-xs font-mono font-bold" style={{ color: "#0f172a" }}>{f.max}°</div>
+              <div className="text-xs font-mono" style={{ color: "#64748b" }}>{f.min}°</div>
             </div>
           ))}
         </div>
@@ -2855,23 +2857,23 @@ function WeatherDashboard() {
         <div className="terminal-header mb-3">⚠️ Market Weather Alerts</div>
         <div className="flex flex-col gap-2">
           {loading ? (
-            <div className="text-xs font-mono animate-pulse" style={{ color: "#7d8590" }}>Loading weather data...</div>
+            <div className="text-xs font-mono animate-pulse" style={{ color: "#64748b" }}>Loading weather data...</div>
           ) : (
             CITIES.map(c => {
               const w = weather[c.name];
               if (!w) return null;
               const alerts = [];
-              if (w.temp > 38) alerts.push({ msg: "Extreme heat may affect energy demand", color: "#f85149" });
+              if (w.temp > 38) alerts.push({ msg: "Extreme heat may affect energy demand", color: "#e11d48" });
               if (w.temp < -10) alerts.push({ msg: "Extreme cold driving heating demand", color: "#4444ff" });
-              if (w.wind > 40) alerts.push({ msg: "High winds may disrupt operations", color: "#e3b341" });
-              if ([95, 99, 82].includes(w.code)) alerts.push({ msg: "Severe storms reported", color: "#f85149" });
+              if (w.wind > 40) alerts.push({ msg: "High winds may disrupt operations", color: "#b45309" });
+              if ([95, 99, 82].includes(w.code)) alerts.push({ msg: "Severe storms reported", color: "#e11d48" });
               if (alerts.length === 0) return null;
               return alerts.map((alert, i) => (
-                <div key={c.name + i} className="flex items-start gap-2 p-2 rounded" style={{ background: "#0d1117", border: "1px solid #1a0a0a" }}>
+                <div key={c.name + i} className="flex items-start gap-2 p-2 rounded" style={{ background: "#f8fafc", border: "1px solid #1a0a0a" }}>
                   <span className="text-xs" style={{ color: alert.color }}>⚠</span>
                   <div>
-                    <div className="text-xs font-mono font-bold" style={{ color: "#e6edf3" }}>{c.flag} {c.name}</div>
-                    <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{alert.msg}</div>
+                    <div className="text-xs font-mono font-bold" style={{ color: "#0f172a" }}>{c.flag} {c.name}</div>
+                    <div className="text-xs font-mono" style={{ color: "#64748b" }}>{alert.msg}</div>
                   </div>
                 </div>
               ));
@@ -2882,7 +2884,7 @@ function WeatherDashboard() {
             if (!w) return true;
             return w.temp <= 38 && w.temp >= -10 && w.wind <= 40 && ![95,99,82].includes(w.code);
           }) && (
-            <div className="text-xs font-mono" style={{ color: "#7d8590" }}>✓ No significant weather alerts across major financial centers</div>
+            <div className="text-xs font-mono" style={{ color: "#64748b" }}>✓ No significant weather alerts across major financial centers</div>
           )}
         </div>
       </div>
@@ -2922,23 +2924,23 @@ function AnalystData({ ticker }) {
       
       <div>
         <div className="terminal-header mb-2">📊 Analyst Ratings</div>
-        {!data ? <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Loading...</div> : (
+        {!data ? <div className="text-xs font-mono" style={{ color: "#64748b" }}>Loading...</div> : (
           <div>
             <div className="flex gap-1 mb-2" style={{ height: 8, borderRadius: 10, overflow: "hidden" }}>
-              <div style={{ width: bullPct + "%", background: "#3fb950" }} />
-              <div style={{ width: holdPct + "%", background: "#e3b341" }} />
-              <div style={{ width: bearPct + "%", background: "#f85149" }} />
+              <div style={{ width: bullPct + "%", background: "#059669" }} />
+              <div style={{ width: holdPct + "%", background: "#b45309" }} />
+              <div style={{ width: bearPct + "%", background: "#e11d48" }} />
             </div>
             <div className="grid grid-cols-3 gap-1">
-              {[["Strong Buy", data.strongBuy, "#3fb950"], ["Buy", data.buy, "#3fb950"], ["Hold", data.hold, "#e3b341"], ["Sell", data.sell, "#f85149"], ["Strong Sell", data.strongSell, "#f85149"]].map(([l, v, c]) => (
-                <div key={l} className="p-1 rounded" style={{ background: "#0d1117", border: "1px solid #21262d" }}>
-                  <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{l}</div>
+              {[["Strong Buy", data.strongBuy, "#059669"], ["Buy", data.buy, "#059669"], ["Hold", data.hold, "#b45309"], ["Sell", data.sell, "#e11d48"], ["Strong Sell", data.strongSell, "#e11d48"]].map(([l, v, c]) => (
+                <div key={l} className="p-1 rounded" style={{ background: "#f8fafc", border: "1px solid #21262d" }}>
+                  <div className="text-xs font-mono" style={{ color: "#64748b" }}>{l}</div>
                   <div className="text-sm font-mono font-bold" style={{ color: c }}>{v}</div>
                 </div>
               ))}
-              <div className="p-1 rounded" style={{ background: "#0d1117", border: "1px solid #21262d" }}>
-                <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Period</div>
-                <div className="text-xs font-mono" style={{ color: "#e6edf3" }}>{data.period}</div>
+              <div className="p-1 rounded" style={{ background: "#f8fafc", border: "1px solid #21262d" }}>
+                <div className="text-xs font-mono" style={{ color: "#64748b" }}>Period</div>
+                <div className="text-xs font-mono" style={{ color: "#0f172a" }}>{data.period}</div>
               </div>
             </div>
           </div>
@@ -2947,12 +2949,12 @@ function AnalystData({ ticker }) {
 
       <div>
         <div className="terminal-header mb-2">🎯 Price Targets</div>
-        {!targets ? <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Loading...</div> : 
-         !targets.targetMean ? <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Not available on free tier</div> : (
+        {!targets ? <div className="text-xs font-mono" style={{ color: "#64748b" }}>Loading...</div> : 
+         !targets.targetMean ? <div className="text-xs font-mono" style={{ color: "#64748b" }}>Not available on free tier</div> : (
           <div className="flex flex-col gap-1">
-            {[["High", targets.targetHigh, "#3fb950"], ["Average", targets.targetMean, "#58a6ff"], ["Low", targets.targetLow, "#f85149"], ["Updated", targets.lastUpdated, "#7d8590"]].map(([l, v, c]) => (
+            {[["High", targets.targetHigh, "#059669"], ["Average", targets.targetMean, "#2563eb"], ["Low", targets.targetLow, "#e11d48"], ["Updated", targets.lastUpdated, "#64748b"]].map(([l, v, c]) => (
               <div key={l} className="flex justify-between py-1" style={{ borderBottom: "1px solid #21262d" }}>
-                <span className="text-xs font-mono" style={{ color: "#7d8590" }}>{l}</span>
+                <span className="text-xs font-mono" style={{ color: "#64748b" }}>{l}</span>
                 <span className="text-xs font-mono font-bold" style={{ color: c }}>{l === "Updated" ? v?.slice(0,10) : v ? "$" + v.toFixed(2) : "N/A"}</span>
               </div>
             ))}
@@ -2962,17 +2964,17 @@ function AnalystData({ ticker }) {
 
       <div style={{ overflowY: "auto" }}>
         <div className="terminal-header mb-2">📈 Earnings Surprises</div>
-        {!earnings ? <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Loading...</div> : (
+        {!earnings ? <div className="text-xs font-mono" style={{ color: "#64748b" }}>Loading...</div> : (
           <div className="flex flex-col gap-1">
             {earnings.map((e, i) => {
               const surprise = e.actual - e.estimate;
               const pct = e.estimate ? (surprise / Math.abs(e.estimate) * 100).toFixed(1) : 0;
               return (
                 <div key={i} className="flex justify-between items-center py-1" style={{ borderBottom: "1px solid #21262d" }}>
-                  <span className="text-xs font-mono" style={{ color: "#7d8590" }}>{e.period}</span>
-                  <span className="text-xs font-mono" style={{ color: "#7d8590" }}>Est: ${e.estimate?.toFixed(2)}</span>
-                  <span className="text-xs font-mono" style={{ color: "#e6edf3" }}>Act: ${e.actual?.toFixed(2)}</span>
-                  <span className="text-xs font-mono font-bold" style={{ color: surprise >= 0 ? "#3fb950" : "#f85149" }}>{surprise >= 0 ? "+" : ""}{pct}%</span>
+                  <span className="text-xs font-mono" style={{ color: "#64748b" }}>{e.period}</span>
+                  <span className="text-xs font-mono" style={{ color: "#64748b" }}>Est: ${e.estimate?.toFixed(2)}</span>
+                  <span className="text-xs font-mono" style={{ color: "#0f172a" }}>Act: ${e.actual?.toFixed(2)}</span>
+                  <span className="text-xs font-mono font-bold" style={{ color: surprise >= 0 ? "#059669" : "#e11d48" }}>{surprise >= 0 ? "+" : ""}{pct}%</span>
                 </div>
               );
             })}
@@ -2982,19 +2984,19 @@ function AnalystData({ ticker }) {
 
       <div style={{ overflowY: "auto" }}>
         <div className="terminal-header mb-2">🏦 Insider Transactions</div>
-        {!insider ? <div className="text-xs font-mono" style={{ color: "#7d8590" }}>Loading...</div> : (
+        {!insider ? <div className="text-xs font-mono" style={{ color: "#64748b" }}>Loading...</div> : (
           <div className="flex flex-col gap-1">
             {insider.map((t, i) => (
               <div key={i} className="flex justify-between items-center py-1" style={{ borderBottom: "1px solid #21262d" }}>
                 <div>
-                  <div className="text-xs font-mono" style={{ color: "#e6edf3" }}>{t.name?.split(" ").slice(-1)[0]}</div>
-                  <div className="text-xs font-mono" style={{ color: "#7d8590" }}>{t.transactionDate}</div>
+                  <div className="text-xs font-mono" style={{ color: "#0f172a" }}>{t.name?.split(" ").slice(-1)[0]}</div>
+                  <div className="text-xs font-mono" style={{ color: "#64748b" }}>{t.transactionDate}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs font-mono font-bold" style={{ color: t.change > 0 ? "#3fb950" : "#f85149" }}>
+                  <div className="text-xs font-mono font-bold" style={{ color: t.change > 0 ? "#059669" : "#e11d48" }}>
                     {t.change > 0 ? "BUY" : "SELL"} {Math.abs(t.change).toLocaleString()}
                   </div>
-                  <div className="text-xs font-mono" style={{ color: "#7d8590" }}>${t.transactionPrice?.toFixed(2)}</div>
+                  <div className="text-xs font-mono" style={{ color: "#64748b" }}>${t.transactionPrice?.toFixed(2)}</div>
                 </div>
               </div>
             ))}
@@ -3077,7 +3079,7 @@ function PeerComparison({ ticker, metrics, quote }) {
   };
 
   if (loading) return (
-    <div className="flex items-center justify-center h-full text-xs font-mono animate-pulse" style={{ color: "#7d8590" }}>
+    <div className="flex items-center justify-center h-full text-xs font-mono animate-pulse" style={{ color: "#64748b" }}>
       Loading peer data...
     </div>
   );
@@ -3086,10 +3088,10 @@ function PeerComparison({ ticker, metrics, quote }) {
     <div style={{ overflowX: "auto", overflowY: "auto", height: "100%" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontFamily: "monospace", minWidth: 600 }}>
         <thead>
-          <tr style={{ position: "sticky", top: 0, background: "#161b22", zIndex: 1 }}>
-            <th style={{ textAlign: "left", padding: "6px 10px", color: "#7d8590", fontWeight: 500, borderBottom: "2px solid #30363d", minWidth: 120 }}>Metric</th>
+          <tr style={{ position: "sticky", top: 0, background: "#ffffff", zIndex: 1 }}>
+            <th style={{ textAlign: "left", padding: "6px 10px", color: "#64748b", fontWeight: 500, borderBottom: "2px solid #30363d", minWidth: 120 }}>Metric</th>
             {allTickers.map(t => (
-              <th key={t} style={{ textAlign: "right", padding: "6px 10px", borderBottom: "2px solid #30363d", minWidth: 90, color: t === ticker ? "#58a6ff" : "#7d8590", fontWeight: t === ticker ? 700 : 500 }}>{t}</th>
+              <th key={t} style={{ textAlign: "right", padding: "6px 10px", borderBottom: "2px solid #30363d", minWidth: 90, color: t === ticker ? "#2563eb" : "#64748b", fontWeight: t === ticker ? 700 : 500 }}>{t}</th>
             ))}
           </tr>
         </thead>
@@ -3098,16 +3100,16 @@ function PeerComparison({ ticker, metrics, quote }) {
             const best = getBest(m, allTickers, allData);
             return (
               <tr key={m.label} style={{ borderBottom: "1px solid #21262d" }}
-                onMouseEnter={e => e.currentTarget.style.background = "#161b22"}
+                onMouseEnter={e => e.currentTarget.style.background = "#ffffff"}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                <td style={{ padding: "5px 10px", color: "#7d8590", fontWeight: 500 }}>{m.label}</td>
+                <td style={{ padding: "5px 10px", color: "#64748b", fontWeight: 500 }}>{m.label}</td>
                 {allTickers.map(t => {
                   const d = allData[t];
                   const val = d ? m.fn(d.quote, d.metrics) : "...";
                   const isBest = best === t;
                   const isMain = t === ticker;
                   return (
-                    <td key={t} style={{ textAlign: "right", padding: "5px 10px", color: isBest ? "#3fb950" : isMain ? "#e6edf3" : "#7d8590", fontWeight: isMain ? 600 : 400, background: isBest ? "rgba(63,185,80,0.05)" : "transparent" }}>
+                    <td key={t} style={{ textAlign: "right", padding: "5px 10px", color: isBest ? "#059669" : isMain ? "#0f172a" : "#64748b", fontWeight: isMain ? 600 : 400, background: isBest ? "rgba(5,150,105,0.05)" : "transparent" }}>
                       {val}
                       {isBest && " ★"}
                     </td>
@@ -3145,10 +3147,10 @@ const TickerTape = memo(function TickerTape({ tapeData }) {
       <div ref={ref} className="flex items-center gap-6 whitespace-nowrap" style={{ paddingTop: 5 }}>
         {items.map((t, i) => (
           <span key={t.symbol + i} className="flex items-center gap-1.5 text-xs font-mono">
-            <span style={{ color: "#7d8590", fontWeight: 600 }}>{t.symbol}</span>
-            <span style={{ color: "#e6edf3" }}>${fmt.price(t.price)}</span>
+            <span style={{ color: "#64748b", fontWeight: 600 }}>{t.symbol}</span>
+            <span style={{ color: "#0f172a" }}>${fmt.price(t.price)}</span>
             <span style={{ color: clr(t.changePct) }}>{t.changePct >= 0 ? "▲" : "▼"}{Math.abs(t.changePct || 0).toFixed(2)}%</span>
-            <span style={{ color: "#21262d", marginLeft: 8 }}>|</span>
+            <span style={{ color: "#e2e8f0", marginLeft: 8 }}>|</span>
           </span>
         ))}
       </div>
@@ -3175,14 +3177,14 @@ function TopNav({ ticker, setTicker, quote, loading, onSettingsClick }) {
     <div className="top-nav flex items-center gap-4 px-4 py-2"
       style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
       <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
-        <Zap size={14} style={{ color: "#58a6ff" }} />
+        <Zap size={14} style={{ color: "#2563eb" }} />
         <span className="logo-text" style={{ fontSize: 12 }}>OMNES VIDENTES</span>
       </div>
 
       <div className="flex items-center gap-2 px-2 py-1.5"
-        style={{ background: "#0d1117", border: "1px solid " + (focused ? "#1f6feb" : "#30363d"),
+        style={{ background: "#f8fafc", border: "1px solid " + (focused ? "#2563eb" : "#cbd5e1"),
           borderRadius: 5, transition: "border-color 0.15s", minWidth: 220, maxWidth: 300 }}>
-        <Search size={11} style={{ color: "#7d8590", flexShrink: 0 }} />
+        <Search size={11} style={{ color: "#64748b", flexShrink: 0 }} />
         <input
           value={input}
           onChange={e => setInput(e.target.value.toUpperCase())}
@@ -3190,38 +3192,38 @@ function TopNav({ ticker, setTicker, quote, loading, onSettingsClick }) {
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           placeholder="Ticker… (Enter to load)"
-          style={{ background: "transparent", border: "none", color: "#e6edf3", fontSize: 12,
+          style={{ background: "transparent", border: "none", color: "#0f172a", fontSize: 12,
             fontFamily: "'IBM Plex Mono', monospace", outline: "none", width: "100%" }}
         />
       </div>
 
       {quote ? (
         <div className="flex items-center gap-3" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
-          <span style={{ color: "#e6edf3", fontWeight: 700, fontSize: 14 }}>{ticker}</span>
-          <span style={{ color: "#e6edf3", fontSize: 16, fontWeight: 600 }}>${fmt.price(quote.c)}</span>
+          <span style={{ color: "#0f172a", fontWeight: 700, fontSize: 14 }}>{ticker}</span>
+          <span style={{ color: "#0f172a", fontSize: 16, fontWeight: 600 }}>${fmt.price(quote.c)}</span>
           <span className="flex items-center gap-1" style={{ color: clr(quote.dp), background: bg(quote.dp),
             fontSize: 12, padding: "2px 8px", borderRadius: 10 }}>
             {quote.dp >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
             {fmt.change(quote.d)} ({fmt.pct(quote.dp)})
           </span>
-          <span style={{ color: "#484f58", fontSize: 11 }}>Vol {fmt.volume(quote.v > 0 ? quote.v : null)}</span>
-          <span style={{ color: "#484f58", fontSize: 11 }}>O {fmt.price(quote.o)}</span>
-          <span style={{ color: "#484f58", fontSize: 11 }}>H {fmt.price(quote.h)}</span>
-          <span style={{ color: "#484f58", fontSize: 11 }}>L {fmt.price(quote.l)}</span>
+          <span style={{ color: "#64748b", fontSize: 11 }}>Vol {fmt.volume(quote.v > 0 ? quote.v : null)}</span>
+          <span style={{ color: "#64748b", fontSize: 11 }}>O {fmt.price(quote.o)}</span>
+          <span style={{ color: "#64748b", fontSize: 11 }}>H {fmt.price(quote.h)}</span>
+          <span style={{ color: "#64748b", fontSize: 11 }}>L {fmt.price(quote.l)}</span>
         </div>
       ) : loading ? (
-        <span style={{ color: "#e3b341", fontSize: 11, fontFamily: "'IBM Plex Mono', monospace" }}>● Loading {ticker}…</span>
+        <span style={{ color: "#b45309", fontSize: 11, fontFamily: "'IBM Plex Mono', monospace" }}>● Loading {ticker}…</span>
       ) : null}
 
       <div className="ml-auto flex items-center gap-3" style={{ flexShrink: 0 }}>
-        <button onClick={handleRefresh} title="Refresh data" style={{ color: "#7d8590", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center" }}>
+        <button onClick={handleRefresh} title="Refresh data" style={{ color: "#64748b", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center" }}>
           <RefreshCw size={13} />
         </button>
-        <button onClick={onSettingsClick} title="Settings" style={{ color: "#7d8590", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center" }}>
+        <button onClick={onSettingsClick} title="Settings" style={{ color: "#64748b", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center" }}>
           <Settings size={13} />
         </button>
-        <div style={{ width: 1, height: 14, background: "#21262d" }} />
-        <span style={{ color: "#484f58", fontSize: 9, fontFamily: "'IBM Plex Mono', monospace", letterSpacing: "0.08em" }}>LIVE</span>
+        <div style={{ width: 1, height: 14, background: "#e2e8f0" }} />
+        <span style={{ color: "#64748b", fontSize: 9, fontFamily: "'IBM Plex Mono', monospace", letterSpacing: "0.08em" }}>LIVE</span>
         <span className="live-dot" style={{ width: 6, height: 6, borderRadius: "50%", display: "inline-block" }} />
       </div>
     </div>
@@ -3242,7 +3244,7 @@ function CandlestickBar(props) {
   if (!payload || payload.open == null) return null;
   const { open, close, high, low } = payload;
   const isUp = close >= open;
-  const color = isUp ? "#3fb950" : "#f85149";
+  const color = isUp ? "#059669" : "#e11d48";
   const bodyTop    = Math.min(open, close);
   const bodyBottom = Math.max(open, close);
   const bodyH = Math.max(1, bodyBottom - bodyTop);
@@ -3268,7 +3270,7 @@ function CandlestickBar(props) {
       <line x1={cx} y1={wickTopPx} x2={cx} y2={wickBottomPx} stroke={color} strokeWidth={1} />
       {/* Body */}
       <rect x={x + 1} y={bodyTopPx} width={Math.max(1, width - 2)} height={bodyH_px}
-        fill={isUp ? "rgba(63,185,80,0.85)" : "rgba(248,81,73,0.85)"}
+        fill={isUp ? "rgba(5,150,105,0.85)" : "rgba(225,29,72,0.85)"}
         stroke={color} strokeWidth={0.5} />
     </g>
   );
@@ -3325,15 +3327,15 @@ function ChartTypeBtn({ value, active, onClick, children }) {
   return (
     <button onClick={() => onClick(value)} className="font-mono"
       style={{ padding:"2px 8px", fontSize:10, borderRadius:6, border:"1px solid",
-        background: active ? "#0c2044" : "transparent",
-        borderColor: active ? "#58a6ff" : "#21262d",
-        color: active ? "#58a6ff" : "#7d8590", cursor:"pointer" }}>
+        background: active ? "#eff6ff" : "transparent",
+        borderColor: active ? "#2563eb" : "#e2e8f0",
+        color: active ? "#2563eb" : "#64748b", cursor:"pointer" }}>
       {children}
     </button>
   );
 }
 
-function UniversalChart({ ticker, height = 220, showVolume = false, colorUp = "#3fb950", colorDown = "#f85149", defaultType = "area", defaultTf = "3M", prefix = "$", decimals = 2, label }) {
+function UniversalChart({ ticker, height = 220, showVolume = false, colorUp = "#059669", colorDown = "#e11d48", defaultType = "area", defaultTf = "3M", prefix = "$", decimals = 2, label }) {
   const [tf,        setTf]        = useState(defaultTf);
   const [chartType, setChartType] = useState(defaultType);
   const { data, loading } = useOHLC(ticker, tf);
@@ -3349,17 +3351,17 @@ function UniversalChart({ ticker, height = 220, showVolume = false, colorUp = "#
   const maxP = data.length ? Math.max(...allHighs) * 1.0005 : 0;
   const xi   = Math.max(1, Math.floor(data.length / 6));
   const gradId = "ucg_" + ticker.replace(/[^a-z0-9]/gi, "") + "_" + tf;
-  const tooltipStyle = { background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" };
-  const tickStyle    = { fill:"#484f58", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" };
+  const tooltipStyle = { background:"#f8fafc", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" };
+  const tickStyle    = { fill:"#64748b", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" };
   const fmt2 = v => v != null ? prefix + (+v).toFixed(decimals) : "—";
 
   const commonAxes = (
     <>
-      <CartesianGrid strokeDasharray="3 3" stroke="#161b22" vertical={false} />
+      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" vertical={false} />
       <XAxis dataKey="date" tick={tickStyle} tickLine={false} axisLine={false} interval={xi} />
       <YAxis domain={[minP, maxP]} tick={tickStyle} tickLine={false} axisLine={false}
         tickFormatter={v => prefix + v.toFixed(decimals <= 2 ? 0 : decimals)} width={decimals > 2 ? 68 : 52} />
-      <Tooltip contentStyle={tooltipStyle} labelStyle={{ color:"#7d8590" }}
+      <Tooltip contentStyle={tooltipStyle} labelStyle={{ color:"#64748b" }}
         formatter={(v, name) => [fmt2(v), name]} />
     </>
   );
@@ -3374,7 +3376,7 @@ function UniversalChart({ ticker, height = 220, showVolume = false, colorUp = "#
             {data.map((d, i) => <Cell key={i} fill={d.close >= d.open ? colorUp : colorDown} />)}
           </Bar>
           {data.some(d => d.sma20) && (
-            <Line type="monotone" dataKey="sma20" stroke="#e3b341" strokeWidth={1} dot={false} isAnimationActive={false} name="SMA 20" connectNulls />
+            <Line type="monotone" dataKey="sma20" stroke="#b45309" strokeWidth={1} dot={false} isAnimationActive={false} name="SMA 20" connectNulls />
           )}
         </ComposedChart>
       );
@@ -3385,7 +3387,7 @@ function UniversalChart({ ticker, height = 220, showVolume = false, colorUp = "#
           {commonAxes}
           <Line type="monotone" dataKey="close" stroke={lc} strokeWidth={1.5} dot={false} isAnimationActive={false} name="Price" />
           {data.some(d => d.sma20) && (
-            <Line type="monotone" dataKey="sma20" stroke="#e3b341" strokeWidth={1} dot={false} isAnimationActive={false} name="SMA 20" connectNulls strokeDasharray="4 2" />
+            <Line type="monotone" dataKey="sma20" stroke="#b45309" strokeWidth={1} dot={false} isAnimationActive={false} name="SMA 20" connectNulls strokeDasharray="4 2" />
           )}
         </ComposedChart>
       );
@@ -3402,7 +3404,7 @@ function UniversalChart({ ticker, height = 220, showVolume = false, colorUp = "#
         {commonAxes}
         <Area type="monotone" dataKey="close" stroke={lc} strokeWidth={1.5} fill={"url(#" + gradId + ")"} dot={false} isAnimationActive={false} name="Price" />
         {data.some(d => d.sma20) && (
-          <Line type="monotone" dataKey="sma20" stroke="#e3b341" strokeWidth={1} dot={false} isAnimationActive={false} name="SMA 20" connectNulls strokeDasharray="4 2" />
+          <Line type="monotone" dataKey="sma20" stroke="#b45309" strokeWidth={1} dot={false} isAnimationActive={false} name="SMA 20" connectNulls strokeDasharray="4 2" />
         )}
       </ComposedChart>
     );
@@ -3413,7 +3415,7 @@ function UniversalChart({ ticker, height = 220, showVolume = false, colorUp = "#
       {/* Controls row */}
       <div className="flex items-center justify-between mb-2 flex-wrap gap-1">
         <div className="flex items-center gap-2">
-          {label && <span className="font-mono" style={{ color:"#7d8590", fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em" }}>{label}</span>}
+          {label && <span className="font-mono" style={{ color:"#64748b", fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em" }}>{label}</span>}
           {data.length > 0 && (
             <span className="font-mono" style={{ fontSize:10, color:lc, background:lc+"18", border:"1px solid "+lc+"33", borderRadius:6, padding:"1px 6px" }}>
               {chg >= 0 ? "+" : ""}{fmt2(chg)} ({pct >= 0 ? "+" : ""}{pct.toFixed(2)}%) {tf}
@@ -3428,10 +3430,10 @@ function UniversalChart({ ticker, height = 220, showVolume = false, colorUp = "#
             <ChartTypeBtn value="candle" active={chartType==="candle"} onClick={setChartType}>Candle</ChartTypeBtn>
           </div>
           {/* Timeframe */}
-          <div className="flex overflow-hidden rounded" style={{ border:"1px solid rgba(99,110,123,0.18)" }}>
+          <div className="flex overflow-hidden rounded" style={{ border:"1px solid rgba(15,23,42,0.12)" }}>
             {TIMEFRAMES.map(t => (
               <button key={t} onClick={() => setTf(t)} className="font-mono"
-                style={{ padding:"2px 8px", fontSize:10, background:tf===t?"#0c2044":"transparent", color:tf===t?"#58a6ff":"#7d8590", borderRight:"1px solid #21262d", cursor:"pointer" }}>
+                style={{ padding:"2px 8px", fontSize:10, background:tf===t?"#eff6ff":"transparent", color:tf===t?"#2563eb":"#64748b", borderRight:"1px solid #21262d", cursor:"pointer" }}>
                 {t}
               </button>
             ))}
@@ -3441,9 +3443,9 @@ function UniversalChart({ ticker, height = 220, showVolume = false, colorUp = "#
       {/* Chart area */}
       <div style={{ flex:1, minHeight: height }}>
         {loading ? (
-          <div className="flex items-center justify-center h-full font-mono" style={{ color:"#484f58", fontSize:11 }}>Loading…</div>
+          <div className="flex items-center justify-center h-full font-mono" style={{ color:"#64748b", fontSize:11 }}>Loading…</div>
         ) : data.length === 0 ? (
-          <div className="flex items-center justify-center h-full font-mono" style={{ color:"#484f58", fontSize:11 }}>No data</div>
+          <div className="flex items-center justify-center h-full font-mono" style={{ color:"#64748b", fontSize:11 }}>No data</div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             {renderChart()}
@@ -3457,7 +3459,7 @@ function UniversalChart({ ticker, height = 220, showVolume = false, colorUp = "#
             <BarChart data={data} margin={{ top:0, right:2, left:0, bottom:0 }}>
               <YAxis hide domain={[0,"auto"]} />
               <Bar dataKey="volume" isAnimationActive={false} radius={[1,1,0,0]}>
-                {data.map((d, i) => <Cell key={i} fill={d.close >= d.open ? "rgba(63,185,80,0.5)" : "rgba(248,81,73,0.5)"} />)}
+                {data.map((d, i) => <Cell key={i} fill={d.close >= d.open ? "rgba(5,150,105,0.50)" : "rgba(225,29,72,0.50)"} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -3521,8 +3523,8 @@ function CompanyProfile({ profile }) {
 }
 
 const sentimentStyle = {
-  bullish: { color: "#3fb950", bg: "rgba(63,185,80,0.1)", label: "BULLISH" },
-  bearish: { color: "#f85149", bg: "rgba(248,81,73,0.1)", label: "BEARISH" },
+  bullish: { color: "#059669", bg: "rgba(5,150,105,0.10)", label: "BULLISH" },
+  bearish: { color: "#e11d48", bg: "rgba(225,29,72,0.10)", label: "BEARISH" },
   neutral: { color: "#9ca3af", bg: "rgba(156,163,175,0.1)", label: "NEUTRAL" },
 };
 function getSentiment(headline) {
@@ -3612,30 +3614,30 @@ function FinancialStatements({ ticker }) {
   const cols = colMap[tab];
   if (expanded) {
     return (
-      <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 2000, background: "#0d1117", display: "flex", flexDirection: "column" }}>
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 2000, background: "#f8fafc", display: "flex", flexDirection: "column" }}>
         <div className="flex items-center justify-between px-4 py-2" style={{ borderBottom: "1px solid #21262d" }}>
           <div className="flex items-center gap-3">
             <span className="terminal-header">📊 Financial Statements — {ticker}</span>
             <div className="flex">
-              {tabs.map(t => <button key={t.key} onClick={()=>setTab(t.key)} className="px-3 py-1 text-xs font-mono border-b-2 transition-colors" style={{ borderBottomColor: tab===t.key?"#58a6ff":"transparent", color: tab===t.key?"#58a6ff":"#7d8590", background:"transparent" }}>{t.label}</button>)}
+              {tabs.map(t => <button key={t.key} onClick={()=>setTab(t.key)} className="px-3 py-1 text-xs font-mono border-b-2 transition-colors" style={{ borderBottomColor: tab===t.key?"#2563eb":"transparent", color: tab===t.key?"#2563eb":"#64748b", background:"transparent" }}>{t.label}</button>)}
             </div>
           </div>
-          <button onClick={() => setExpanded(false)} style={{ color: "#7d8590", background: "#161b22", border: "1px solid #30363d", borderRadius: 10, padding: "4px 12px", cursor: "pointer", fontSize: 12, fontFamily: "monospace" }}>✕ Close</button>
+          <button onClick={() => setExpanded(false)} style={{ color: "#64748b", background: "#ffffff", border: "1px solid #30363d", borderRadius: 10, padding: "4px 12px", cursor: "pointer", fontSize: 12, fontFamily: "monospace" }}>✕ Close</button>
         </div>
         <div className="flex-1 overflow-auto p-4">
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontFamily: "monospace" }}>
             <thead>
-              <tr style={{ position: "sticky", top: 0, background: "#161b22", zIndex: 1 }}>
-                <th style={{ textAlign: "left", padding: "8px 12px", color: "#7d8590", fontWeight: 500, borderBottom: "2px solid #30363d", minWidth: 180 }}>Metric ($B)</th>
-                {rows.map(r => <th key={r.period} style={{ textAlign: "right", padding: "8px 12px", color: "#7d8590", fontWeight: 500, borderBottom: "2px solid #30363d", minWidth: 100 }}>{r.period}</th>)}
+              <tr style={{ position: "sticky", top: 0, background: "#ffffff", zIndex: 1 }}>
+                <th style={{ textAlign: "left", padding: "8px 12px", color: "#64748b", fontWeight: 500, borderBottom: "2px solid #30363d", minWidth: 180 }}>Metric ($B)</th>
+                {rows.map(r => <th key={r.period} style={{ textAlign: "right", padding: "8px 12px", color: "#64748b", fontWeight: 500, borderBottom: "2px solid #30363d", minWidth: 100 }}>{r.period}</th>)}
               </tr>
             </thead>
             <tbody>
               {cols.map(([key, label]) => (
-                <tr key={key} style={{ borderBottom: "1px solid #21262d" }} onMouseEnter={e => e.currentTarget.style.background="#161b22"} onMouseLeave={e => e.currentTarget.style.background="transparent"}>
-                  <td style={{ padding: "7px 12px", color: "#7d8590", fontWeight: 500 }}>{label}</td>
+                <tr key={key} style={{ borderBottom: "1px solid #21262d" }} onMouseEnter={e => e.currentTarget.style.background="#ffffff"} onMouseLeave={e => e.currentTarget.style.background="transparent"}>
+                  <td style={{ padding: "7px 12px", color: "#64748b", fontWeight: 500 }}>{label}</td>
                   {rows.map((r, i) => (
-                    <td key={i} style={{ textAlign: "right", padding: "7px 12px", color: r[key] < 0 ? "#f85149" : "#e6edf3", fontWeight: 500 }}>
+                    <td key={i} style={{ textAlign: "right", padding: "7px 12px", color: r[key] < 0 ? "#e11d48" : "#0f172a", fontWeight: 500 }}>
                       {r[key] < 0 ? "-$" + Math.abs(r[key]).toFixed(2) : "$" + (r[key] || 0).toFixed(2)}
                     </td>
                   ))}
@@ -3650,16 +3652,16 @@ function FinancialStatements({ ticker }) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between border-b mb-2" style={{ borderColor: "#21262d" }}>
+      <div className="flex items-center justify-between border-b mb-2" style={{ borderColor: "#e2e8f0" }}>
         <div className="flex">
-          {tabs.map(t => <button key={t.key} onClick={()=>setTab(t.key)} className="px-3 py-1.5 text-xs font-mono border-b-2 transition-colors" style={{ borderBottomColor: tab===t.key?"#58a6ff":"transparent", color: tab===t.key?"#58a6ff":"#7d8590", background:"transparent" }}>{t.label}</button>)}
+          {tabs.map(t => <button key={t.key} onClick={()=>setTab(t.key)} className="px-3 py-1.5 text-xs font-mono border-b-2 transition-colors" style={{ borderBottomColor: tab===t.key?"#2563eb":"transparent", color: tab===t.key?"#2563eb":"#64748b", background:"transparent" }}>{t.label}</button>)}
         </div>
-        <button onClick={() => setExpanded(true)} style={{ color: "#7d8590", background: "none", border: "none", cursor: "pointer", fontSize: 10, fontFamily: "monospace", padding: "2px 8px" }}>⤢ Expand</button>
+        <button onClick={() => setExpanded(true)} style={{ color: "#64748b", background: "none", border: "none", cursor: "pointer", fontSize: 10, fontFamily: "monospace", padding: "2px 8px" }}>⤢ Expand</button>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs font-mono">
           <thead><tr><th className="text-left text-gray-600 py-1 pr-3 font-normal">Metric ($B)</th>{rows.map(r=><th key={r.period} className="text-right text-gray-500 py-1 px-2 font-normal">{r.period}</th>)}</tr></thead>
-          <tbody>{cols.map(([key,label])=><tr key={key} className="border-t border-gray-800"><td className="text-gray-400 py-1.5 pr-3">{label}</td>{rows.map((r,i)=><td key={i} className="text-right py-1.5 px-2 font-semibold" style={{color:r[key]<0?"#f85149":"#e5e7eb"}}>{r[key]<0?"-$"+Math.abs(r[key]).toFixed(2):"$"+(r[key]||0).toFixed(2)}</td>)}</tr>)}</tbody>
+          <tbody>{cols.map(([key,label])=><tr key={key} className="border-t border-gray-800"><td className="text-gray-400 py-1.5 pr-3">{label}</td>{rows.map((r,i)=><td key={i} className="text-right py-1.5 px-2 font-semibold" style={{color:r[key]<0?"#e11d48":"#e5e7eb"}}>{r[key]<0?"-$"+Math.abs(r[key]).toFixed(2):"$"+(r[key]||0).toFixed(2)}</td>)}</tr>)}</tbody>
         </table>
       </div>
     </div>
@@ -3960,30 +3962,30 @@ const fmtX   = v => v == null || isNaN(v) ? "—" : v.toFixed(1) + "x";
 const fmtN   = (v, d=2) => v == null || isNaN(v) ? "—" : (+v).toFixed(d);
 const fmtMgn = v => v == null || isNaN(v) ? "—" : (+v).toFixed(1) + "%";
 const fmtGr  = v => v == null || isNaN(v) ? "—" : (v >= 0 ? "+" : "") + (+v).toFixed(1) + "%";
-const clrM   = v => v == null ? "#7d8590" : v > 0 ? "#3fb950" : "#f85149";
+const clrM   = v => v == null ? "#64748b" : v > 0 ? "#059669" : "#e11d48";
 
-const RB_TYPE_COLOR = { equity:"#58a6ff", commodity:"#e3b341", fx:"#3fb950", macro:"#bc8cff", topic:"#f0883e" };
+const RB_TYPE_COLOR = { equity:"#2563eb", commodity:"#b45309", fx:"#059669", macro:"#7c3aed", topic:"#ea580c" };
 
 
 function ResearchPanelShell({ title, subtitle, badge, onClose, children }) {
   return (
     <div className="terminal-panel terminal-glow flex flex-col" style={{ minHeight: 360 }}>
-      <div className="flex items-center justify-between px-4 pt-3.5 pb-3" style={{ borderBottom:"1px solid rgba(99,110,123,0.12)", flexShrink:0 }}>
+      <div className="flex items-center justify-between px-4 pt-3.5 pb-3" style={{ borderBottom:"1px solid rgba(15,23,42,0.09)", flexShrink:0 }}>
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="min-w-0">
-            <div className="font-mono font-bold truncate" style={{ color:"#e6edf3", fontSize:14, letterSpacing:"-0.01em" }}>{title}</div>
-            {subtitle && <div className="font-mono truncate" style={{ color:"#484f58", fontSize:9, marginTop:1 }}>{subtitle}</div>}
+            <div className="font-mono font-bold truncate" style={{ color:"#0f172a", fontSize:14, letterSpacing:"-0.01em" }}>{title}</div>
+            {subtitle && <div className="font-mono truncate" style={{ color:"#64748b", fontSize:9, marginTop:1 }}>{subtitle}</div>}
           </div>
           {badge && (
-            <span className="font-mono" style={{ background:"rgba(99,110,123,0.10)", border:"1px solid rgba(99,110,123,0.20)", borderRadius:20, padding:"2px 8px", fontSize:9, color:"#7d8590", textTransform:"uppercase", letterSpacing:"0.06em", flexShrink:0 }}>
+            <span className="font-mono" style={{ background:"rgba(15,23,42,0.08)", border:"1px solid rgba(15,23,42,0.14)", borderRadius:20, padding:"2px 8px", fontSize:9, color:"#64748b", textTransform:"uppercase", letterSpacing:"0.06em", flexShrink:0 }}>
               {badge}
             </span>
           )}
         </div>
         <button onClick={onClose}
-          style={{ color:"#484f58", background:"rgba(99,110,123,0.08)", border:"none", cursor:"pointer", fontSize:12, marginLeft:8, flexShrink:0, width:24, height:24, borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.15s" }}
-          onMouseEnter={e => { e.currentTarget.style.background="rgba(99,110,123,0.18)"; e.currentTarget.style.color="#8b949e"; }}
-          onMouseLeave={e => { e.currentTarget.style.background="rgba(99,110,123,0.08)"; e.currentTarget.style.color="#484f58"; }}>✕</button>
+          style={{ color:"#64748b", background:"rgba(15,23,42,0.07)", border:"none", cursor:"pointer", fontSize:12, marginLeft:8, flexShrink:0, width:24, height:24, borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center", transition:"all 0.15s" }}
+          onMouseEnter={e => { e.currentTarget.style.background="rgba(15,23,42,0.12)"; e.currentTarget.style.color="#475569"; }}
+          onMouseLeave={e => { e.currentTarget.style.background="rgba(15,23,42,0.07)"; e.currentTarget.style.color="#64748b"; }}>✕</button>
       </div>
       <div className="flex flex-col flex-1 p-4">{children}</div>
     </div>
@@ -3994,14 +3996,14 @@ function RelatedLinks({ itemId, onOpen }) {
   const links = RELATED_MAP[itemId] || [];
   if (!links.length) return null;
   return (
-    <div className="mt-auto pt-3" style={{ borderTop:"1px solid rgba(99,110,123,0.10)" }}>
-      <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Related</div>
+    <div className="mt-auto pt-3" style={{ borderTop:"1px solid rgba(15,23,42,0.08)" }}>
+      <div className="font-mono mb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Related</div>
       <div className="flex flex-wrap gap-1.5">
         {links.map(link => (
           <button key={link.id} onClick={() => onOpen(link)} className="font-mono"
-            style={{ background:"rgba(99,110,123,0.07)", border:"1px solid rgba(99,110,123,0.16)", borderRadius:20, padding:"3px 10px", fontSize:10, color:RB_TYPE_COLOR[link.type]||"#7d8590", cursor:"pointer", transition:"all 0.15s cubic-bezier(0.4,0,0.2,1)" }}
-            onMouseEnter={e => { e.currentTarget.style.background="rgba(99,110,123,0.15)"; e.currentTarget.style.borderColor="rgba(99,110,123,0.35)"; e.currentTarget.style.transform="translateY(-1px)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background="rgba(99,110,123,0.07)"; e.currentTarget.style.borderColor="rgba(99,110,123,0.16)"; e.currentTarget.style.transform="translateY(0)"; }}>
+            style={{ background:"rgba(15,23,42,0.06)", border:"1px solid rgba(15,23,42,0.11)", borderRadius:20, padding:"3px 10px", fontSize:10, color:RB_TYPE_COLOR[link.type]||"#64748b", cursor:"pointer", transition:"all 0.15s cubic-bezier(0.4,0,0.2,1)" }}
+            onMouseEnter={e => { e.currentTarget.style.background="rgba(15,23,42,0.10)"; e.currentTarget.style.borderColor="rgba(15,23,42,0.24)"; e.currentTarget.style.transform="translateY(-1px)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background="rgba(15,23,42,0.06)"; e.currentTarget.style.borderColor="rgba(15,23,42,0.11)"; e.currentTarget.style.transform="translateY(0)"; }}>
             {link.label}
           </button>
         ))}
@@ -4015,17 +4017,17 @@ const MOCK_RESEARCH_DATA_UNUSED = {
   _default: {
     flow: {
       suppliers: [
-        { id:"s1", label:"TSMC", pct:38, color:"#58a6ff" },
-        { id:"s2", label:"Samsung", pct:22, color:"#58a6ff" },
-        { id:"s3", label:"Foxconn", pct:28, color:"#58a6ff" },
-        { id:"s4", label:"Murata", pct:12, color:"#58a6ff" },
+        { id:"s1", label:"TSMC", pct:38, color:"#2563eb" },
+        { id:"s2", label:"Samsung", pct:22, color:"#2563eb" },
+        { id:"s3", label:"Foxconn", pct:28, color:"#2563eb" },
+        { id:"s4", label:"Murata", pct:12, color:"#2563eb" },
       ],
       segments: [
-        { id:"r1", label:"Products", pct:52, color:"#3fb950" },
-        { id:"r2", label:"Services", pct:24, color:"#7ee787" },
-        { id:"r3", label:"Wearables", pct:11, color:"#e3b341" },
-        { id:"r4", label:"Mac", pct:8, color:"#ffa657" },
-        { id:"r5", label:"iPad", pct:5, color:"#f0883e" },
+        { id:"r1", label:"Products", pct:52, color:"#059669" },
+        { id:"r2", label:"Services", pct:24, color:"#047857" },
+        { id:"r3", label:"Wearables", pct:11, color:"#b45309" },
+        { id:"r4", label:"Mac", pct:8, color:"#f97316" },
+        { id:"r5", label:"iPad", pct:5, color:"#ea580c" },
       ],
       blockTrades: [
         { side:"BUY",  strike:"$210C", expiry:"May 17", size:4200, premium:"$8.4M", note:"Sweep" },
@@ -4072,17 +4074,17 @@ const MOCK_RESEARCH_DATA_UNUSED = {
   NVDA: {
     flow: {
       suppliers: [
-        { id:"s1", label:"TSMC",        pct:55, color:"#58a6ff" },
-        { id:"s2", label:"SK Hynix",    pct:20, color:"#58a6ff" },
-        { id:"s3", label:"Micron",      pct:15, color:"#58a6ff" },
-        { id:"s4", label:"ASE Group",   pct:10, color:"#58a6ff" },
+        { id:"s1", label:"TSMC",        pct:55, color:"#2563eb" },
+        { id:"s2", label:"SK Hynix",    pct:20, color:"#2563eb" },
+        { id:"s3", label:"Micron",      pct:15, color:"#2563eb" },
+        { id:"s4", label:"ASE Group",   pct:10, color:"#2563eb" },
       ],
       segments: [
-        { id:"r1", label:"Data Center", pct:78, color:"#3fb950" },
-        { id:"r2", label:"Gaming",       pct:11, color:"#7ee787" },
-        { id:"r3", label:"Professional", pct:6,  color:"#e3b341" },
-        { id:"r4", label:"Automotive",   pct:3,  color:"#ffa657" },
-        { id:"r5", label:"OEM/Other",    pct:2,  color:"#f0883e" },
+        { id:"r1", label:"Data Center", pct:78, color:"#059669" },
+        { id:"r2", label:"Gaming",       pct:11, color:"#047857" },
+        { id:"r3", label:"Professional", pct:6,  color:"#b45309" },
+        { id:"r4", label:"Automotive",   pct:3,  color:"#f97316" },
+        { id:"r5", label:"OEM/Other",    pct:2,  color:"#ea580c" },
       ],
       blockTrades: [
         { side:"BUY",  strike:"$950C",  expiry:"May 17", size:3200, premium:"$18.2M", note:"Sweep" },
@@ -4229,7 +4231,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
 
   const m   = metrics || {};
   const up  = quote?.dp >= 0;
-  const priceColor = up ? "#3fb950" : "#f85149";
+  const priceColor = up ? "#059669" : "#e11d48";
 
   const pct52 = m["52WeekHigh"] && m["52WeekLow"] && quote?.c
     ? Math.min(100, Math.max(0, ((quote.c - m["52WeekLow"]) / (m["52WeekHigh"] - m["52WeekLow"])) * 100))
@@ -4241,11 +4243,11 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
       {/* Company info strip */}
       {profile && (
         <div className="flex items-center gap-2 mb-3 flex-wrap">
-          {profile.logo && <img src={profile.logo} alt="" style={{ height:20, width:20, objectFit:"contain", borderRadius:6, background:"#161b22", padding:2 }} />}
-          {profile.finnhubIndustry && <span className="font-mono" style={{ color:"#7d8590", fontSize:10 }}>{profile.finnhubIndustry}</span>}
-          {profile.exchange         && <span className="font-mono" style={{ color:"#484f58", fontSize:10 }}>· {profile.exchange}</span>}
-          {profile.country          && <span className="font-mono" style={{ color:"#484f58", fontSize:10 }}>· {profile.country}</span>}
-          {profile.weburl && <a href={profile.weburl} target="_blank" rel="noopener noreferrer" className="font-mono ml-auto" style={{ color:"#1f6feb", fontSize:10 }}>{profile.weburl.replace(/^https?:\/\//,"").replace(/\/$/,"")}</a>}
+          {profile.logo && <img src={profile.logo} alt="" style={{ height:20, width:20, objectFit:"contain", borderRadius:6, background:"#ffffff", padding:2 }} />}
+          {profile.finnhubIndustry && <span className="font-mono" style={{ color:"#64748b", fontSize:10 }}>{profile.finnhubIndustry}</span>}
+          {profile.exchange         && <span className="font-mono" style={{ color:"#64748b", fontSize:10 }}>· {profile.exchange}</span>}
+          {profile.country          && <span className="font-mono" style={{ color:"#64748b", fontSize:10 }}>· {profile.country}</span>}
+          {profile.weburl && <a href={profile.weburl} target="_blank" rel="noopener noreferrer" className="font-mono ml-auto" style={{ color:"#2563eb", fontSize:10 }}>{profile.weburl.replace(/^https?:\/\//,"").replace(/\/$/,"")}</a>}
         </div>
       )}
 
@@ -4253,7 +4255,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
         {/* Left: price + chart + 52w */}
         <div>
           <div className="flex items-baseline gap-3 mb-2">
-            <span className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:30 }}>${fmt.price(quote?.c)}</span>
+            <span className="font-mono font-bold" style={{ color:"#0f172a", fontSize:30 }}>${fmt.price(quote?.c)}</span>
             <span className="font-mono" style={{ color:priceColor, fontSize:14 }}>
               {quote?.d != null ? fmt.change(quote.d) : ""} ({fmt.pct(quote?.dp || 0)})
             </span>
@@ -4272,14 +4274,14 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
                   </defs>
                   <XAxis dataKey="t"
                     tickFormatter={t => { const d = new Date(t*1000); return (d.getMonth()+1)+"/"+(d.getDate()); }}
-                    tick={{ fill:"#484f58", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }} tickLine={false} axisLine={false} interval={35} />
+                    tick={{ fill:"#64748b", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }} tickLine={false} axisLine={false} interval={35} />
                   <YAxis domain={["auto","auto"]} hide />
                   <Tooltip
-                    contentStyle={{ background:"#1c2230", border:"1px solid rgba(99,110,123,0.28)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }}
+                    contentStyle={{ background:"#f1f5f9", border:"1px solid rgba(15,23,42,0.18)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }}
                     labelFormatter={t => new Date(t*1000).toLocaleDateString()}
                     formatter={(v,n) => [v != null ? "$"+v.toFixed(2) : "—", n==="v" ? "Price" : "MA 50"]} />
                   <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5} fill={"url(#eqg_"+item.ticker.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false} />
-                  <Line type="monotone" dataKey="ma50" stroke="#e3b341" strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} />
+                  <Line type="monotone" dataKey="ma50" stroke="#b45309" strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -4288,14 +4290,14 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
           {/* 52-week range bar */}
           {pct52 != null && (
             <div className="mb-3">
-              <div className="flex justify-between font-mono mb-1.5" style={{ color:"#484f58", fontSize:9 }}>
+              <div className="flex justify-between font-mono mb-1.5" style={{ color:"#64748b", fontSize:9 }}>
                 <span>52W LOW ${fmtN(m["52WeekLow"])}</span>
-                <span style={{ color:"#7d8590" }}>52-WEEK RANGE</span>
+                <span style={{ color:"#64748b" }}>52-WEEK RANGE</span>
                 <span>${fmtN(m["52WeekHigh"])} 52W HIGH</span>
               </div>
-              <div style={{ position:"relative", height:4, background:"#21262d", borderRadius:2 }}>
-                <div style={{ position:"absolute", left:0, width:pct52+"%", height:"100%", background: pct52>70?"#3fb950":pct52<30?"#f85149":"#e3b341", borderRadius:2 }} />
-                <div style={{ position:"absolute", left:pct52+"%", top:-3, width:2, height:10, background:"#e6edf3", borderRadius:1, transform:"translateX(-50%)" }} />
+              <div style={{ position:"relative", height:4, background:"#e2e8f0", borderRadius:2 }}>
+                <div style={{ position:"absolute", left:0, width:pct52+"%", height:"100%", background: pct52>70?"#059669":pct52<30?"#e11d48":"#b45309", borderRadius:2 }} />
+                <div style={{ position:"absolute", left:pct52+"%", top:-3, width:2, height:10, background:"#0f172a", borderRadius:1, transform:"translateX(-50%)" }} />
               </div>
             </div>
           )}
@@ -4303,8 +4305,8 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
           {/* Company description */}
           {profile?.description && (
             <div className="mt-2">
-              <div className="font-mono mb-1" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>About</div>
-              <p className="font-mono" style={{ color:"#7d8590", fontSize:10, lineHeight:1.7, display:"-webkit-box", WebkitLineClamp:3, WebkitBoxOrient:"vertical", overflow:"hidden" }}>
+              <div className="font-mono mb-1" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase" }}>About</div>
+              <p className="font-mono" style={{ color:"#64748b", fontSize:10, lineHeight:1.7, display:"-webkit-box", WebkitLineClamp:3, WebkitBoxOrient:"vertical", overflow:"hidden" }}>
                 {profile.description}
               </p>
             </div>
@@ -4313,8 +4315,8 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
 
         {/* Right: key stats */}
         <div>
-          <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Statistics</div>
-          <div style={{ borderTop:"1px solid rgba(99,110,123,0.12)" }}>
+          <div className="font-mono mb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Statistics</div>
+          <div style={{ borderTop:"1px solid rgba(15,23,42,0.09)" }}>
             {[
               ["Market Cap",      fmtMktCap(m.marketCapitalization)],
               ["P/E (TTM)",       fmtX(m.peBasicExclExtraTTM)],
@@ -4332,9 +4334,9 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
               ["Avg Vol (10D)",   m["10DayAverageTradingVolume"] != null ? (m["10DayAverageTradingVolume"]).toFixed(2)+"M" : "—"],
               ["Shares Out.",     m.shareOutstanding != null ? fmtMktCap(m.shareOutstanding) : "—"],
             ].map(([k,v]) => (
-              <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid rgba(99,110,123,0.07)" }}>
-                <span style={{ color:"#7d8590", fontSize:10 }}>{k}</span>
-                <span style={{ color:"#e6edf3", fontSize:10 }}>{v || "—"}</span>
+              <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid rgba(15,23,42,0.06)" }}>
+                <span style={{ color:"#64748b", fontSize:10 }}>{k}</span>
+                <span style={{ color:"#0f172a", fontSize:10 }}>{v || "—"}</span>
               </div>
             ))}
           </div>
@@ -4349,11 +4351,11 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
       {/* Profitability + Returns */}
       <div className="grid gap-4 mb-4" style={{ gridTemplateColumns:"1fr 1fr" }}>
         <div>
-          <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Profitability</div>
+          <div className="font-mono mb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Profitability</div>
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
             <thead>
               <tr>{["","Annual","TTM"].map((h,i) => (
-                <th key={h} className="font-mono pb-1" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", fontWeight:"normal", textAlign:i===0?"left":"right" }}>{h}</th>
+                <th key={h} className="font-mono pb-1" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", fontWeight:"normal", textAlign:i===0?"left":"right" }}>{h}</th>
               ))}</tr>
             </thead>
             <tbody>
@@ -4364,7 +4366,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
                 ["Pretax Margin",   m.pretaxMarginAnnual,   m.pretaxMarginTTM],
               ].map(([k,ann,ttm]) => (
                 <tr key={k} style={{ borderTop:"1px solid #161b22" }}>
-                  <td className="font-mono py-1.5" style={{ color:"#7d8590", fontSize:10 }}>{k}</td>
+                  <td className="font-mono py-1.5" style={{ color:"#64748b", fontSize:10 }}>{k}</td>
                   <td className="font-mono py-1.5 text-right" style={{ color:clrM(ann), fontSize:10 }}>{fmtMgn(ann)}</td>
                   <td className="font-mono py-1.5 text-right" style={{ color:clrM(ttm), fontSize:10 }}>{fmtMgn(ttm)}</td>
                 </tr>
@@ -4373,11 +4375,11 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
           </table>
         </div>
         <div>
-          <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Returns &amp; Efficiency</div>
+          <div className="font-mono mb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Returns &amp; Efficiency</div>
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
             <thead>
               <tr>{["","Annual","TTM"].map((h,i) => (
-                <th key={h} className="font-mono pb-1" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", fontWeight:"normal", textAlign:i===0?"left":"right" }}>{h}</th>
+                <th key={h} className="font-mono pb-1" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", fontWeight:"normal", textAlign:i===0?"left":"right" }}>{h}</th>
               ))}</tr>
             </thead>
             <tbody>
@@ -4389,7 +4391,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
                 ["Inv. Turnover",  m.inventoryTurnoverAnnual, m.inventoryTurnoverTTM],
               ].map(([k,ann,ttm]) => (
                 <tr key={k} style={{ borderTop:"1px solid #161b22" }}>
-                  <td className="font-mono py-1.5" style={{ color:"#7d8590", fontSize:10 }}>{k}</td>
+                  <td className="font-mono py-1.5" style={{ color:"#64748b", fontSize:10 }}>{k}</td>
                   <td className="font-mono py-1.5 text-right" style={{ color:clrM(ann), fontSize:10 }}>{fmtMgn(ann)}</td>
                   <td className="font-mono py-1.5 text-right" style={{ color:clrM(ttm), fontSize:10 }}>{fmtMgn(ttm)}</td>
                 </tr>
@@ -4402,7 +4404,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
       {/* Growth + Balance Sheet */}
       <div className="grid gap-4 mb-4" style={{ gridTemplateColumns:"1fr 1fr" }}>
         <div>
-          <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Growth</div>
+          <div className="font-mono mb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Growth</div>
           {[
             ["Rev Growth (QoQ YoY)", m.revenueGrowthQuarterlyYoy],
             ["Rev Growth (TTM YoY)", m.revenueGrowthTTMYoy],
@@ -4413,14 +4415,14 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
             ["EPS Growth (3Y CAGR)", m.epsGrowth3Y],
             ["EPS Growth (5Y CAGR)", m.epsGrowth5Y],
           ].map(([k,v]) => (
-            <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid rgba(99,110,123,0.07)" }}>
-              <span style={{ color:"#7d8590", fontSize:10 }}>{k}</span>
+            <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid rgba(15,23,42,0.06)" }}>
+              <span style={{ color:"#64748b", fontSize:10 }}>{k}</span>
               <span style={{ color:clrM(v), fontSize:10 }}>{fmtGr(v)}</span>
             </div>
           ))}
         </div>
         <div>
-          <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Balance Sheet</div>
+          <div className="font-mono mb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Balance Sheet</div>
           {[
             ["Current Ratio",     fmtN(m.currentRatioAnnual)],
             ["Quick Ratio",       fmtN(m.quickRatioAnnual)],
@@ -4431,9 +4433,9 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
             ["FCF/Share (TTM)",   m.freeCashFlowPerShareTTM != null ? "$"+fmtN(m.freeCashFlowPerShareTTM) : "—"],
             ["Net Int. Coverage", fmtN(m.netInterestCoverageAnnual)],
           ].map(([k,v]) => (
-            <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid rgba(99,110,123,0.07)" }}>
-              <span style={{ color:"#7d8590", fontSize:10 }}>{k}</span>
-              <span style={{ color:"#e6edf3", fontSize:10 }}>{v}</span>
+            <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid rgba(15,23,42,0.06)" }}>
+              <span style={{ color:"#64748b", fontSize:10 }}>{k}</span>
+              <span style={{ color:"#0f172a", fontSize:10 }}>{v}</span>
             </div>
           ))}
         </div>
@@ -4441,15 +4443,15 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
 
       {/* Earnings history */}
       {earnings === null ? (
-        <div className="font-mono" style={{ color:"#7d8590", fontSize:10 }}>Loading earnings history…</div>
+        <div className="font-mono" style={{ color:"#64748b", fontSize:10 }}>Loading earnings history…</div>
       ) : earnings.length > 0 ? (
         <div>
-          <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Earnings History (Reported)</div>
+          <div className="font-mono mb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Earnings History (Reported)</div>
           <div style={{ overflowX:"auto" }}>
             <table style={{ width:"100%", borderCollapse:"collapse", minWidth:560 }}>
               <thead>
                 <tr>{["Quarter","Date","EPS Actual","EPS Est.","Surprise","Rev Actual","Rev Est."].map((h,i) => (
-                  <th key={h} className="font-mono pb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", fontWeight:"normal", textAlign:i===0?"left":"right", paddingRight:i===6?0:8 }}>{h}</th>
+                  <th key={h} className="font-mono pb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", fontWeight:"normal", textAlign:i===0?"left":"right", paddingRight:i===6?0:8 }}>{h}</th>
                 ))}</tr>
               </thead>
               <tbody>
@@ -4457,17 +4459,17 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
                   const surp = e.epsActual != null && e.epsEstimate ? ((e.epsActual - e.epsEstimate) / Math.abs(e.epsEstimate)) * 100 : null;
                   return (
                     <tr key={i} style={{ borderTop:"1px solid #161b22" }}>
-                      <td className="font-mono py-1.5" style={{ color:"#7d8590", fontSize:10 }}>Q{e.quarter} {e.year}</td>
-                      <td className="font-mono py-1.5 text-right" style={{ color:"#484f58", fontSize:10, paddingRight:8 }}>{e.date}</td>
-                      <td className="font-mono py-1.5 text-right" style={{ color:"#e6edf3", fontSize:10, paddingRight:8 }}>${fmtN(e.epsActual)}</td>
-                      <td className="font-mono py-1.5 text-right" style={{ color:"#7d8590", fontSize:10, paddingRight:8 }}>${fmtN(e.epsEstimate)}</td>
-                      <td className="font-mono py-1.5 text-right" style={{ color: surp != null ? clr(surp) : "#484f58", fontSize:10, paddingRight:8 }}>
+                      <td className="font-mono py-1.5" style={{ color:"#64748b", fontSize:10 }}>Q{e.quarter} {e.year}</td>
+                      <td className="font-mono py-1.5 text-right" style={{ color:"#64748b", fontSize:10, paddingRight:8 }}>{e.date}</td>
+                      <td className="font-mono py-1.5 text-right" style={{ color:"#0f172a", fontSize:10, paddingRight:8 }}>${fmtN(e.epsActual)}</td>
+                      <td className="font-mono py-1.5 text-right" style={{ color:"#64748b", fontSize:10, paddingRight:8 }}>${fmtN(e.epsEstimate)}</td>
+                      <td className="font-mono py-1.5 text-right" style={{ color: surp != null ? clr(surp) : "#64748b", fontSize:10, paddingRight:8 }}>
                         {surp != null ? (surp>=0?"+":"")+surp.toFixed(1)+"%" : "—"}
                       </td>
-                      <td className="font-mono py-1.5 text-right" style={{ color:"#e6edf3", fontSize:10, paddingRight:8 }}>
+                      <td className="font-mono py-1.5 text-right" style={{ color:"#0f172a", fontSize:10, paddingRight:8 }}>
                         {e.revenueActual != null ? "$"+(e.revenueActual/1e9).toFixed(2)+"B" : "—"}
                       </td>
-                      <td className="font-mono py-1.5 text-right" style={{ color:"#7d8590", fontSize:10 }}>
+                      <td className="font-mono py-1.5 text-right" style={{ color:"#64748b", fontSize:10 }}>
                         {e.revenueEstimate != null ? "$"+(e.revenueEstimate/1e9).toFixed(2)+"B" : "—"}
                       </td>
                     </tr>
@@ -4485,11 +4487,11 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
     const latestRec = recs?.[0];
     const total = latestRec ? latestRec.strongBuy + latestRec.buy + latestRec.hold + latestRec.sell + latestRec.strongSell : 0;
     const segments = latestRec ? [
-      { label:"Strong Buy", v:latestRec.strongBuy,   color:"#3fb950" },
-      { label:"Buy",        v:latestRec.buy,          color:"#7ee787" },
-      { label:"Hold",       v:latestRec.hold,         color:"#e3b341" },
-      { label:"Sell",       v:latestRec.sell,         color:"#ffa198" },
-      { label:"Strong Sell",v:latestRec.strongSell,   color:"#f85149" },
+      { label:"Strong Buy", v:latestRec.strongBuy,   color:"#059669" },
+      { label:"Buy",        v:latestRec.buy,          color:"#047857" },
+      { label:"Hold",       v:latestRec.hold,         color:"#b45309" },
+      { label:"Sell",       v:latestRec.sell,         color:"#be123c" },
+      { label:"Strong Sell",v:latestRec.strongSell,   color:"#e11d48" },
     ] : [];
     const ptLow = pt?.targetLow, ptMean = pt?.targetMean, ptHigh = pt?.targetHigh, ptMed = pt?.targetMedian;
     const cur = quote?.c;
@@ -4500,7 +4502,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
       <div className="grid gap-4" style={{ gridTemplateColumns:"1fr 1fr" }}>
         {/* Multiples */}
         <div>
-          <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Valuation Multiples</div>
+          <div className="font-mono mb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Valuation Multiples</div>
           {[
             ["P/E (TTM)",          fmtX(m.peBasicExclExtraTTM)],
             ["P/E (Normalized)",   fmtX(m.peNormalizedAnnual)],
@@ -4515,9 +4517,9 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
             ["EV/FCF (Ann.)",      fmtX(m["currentEv/freeCashFlowAnnual"])],
             ["EV/FCF (TTM)",       fmtX(m["currentEv/freeCashFlowTTM"])],
           ].map(([k,v]) => (
-            <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid rgba(99,110,123,0.07)" }}>
-              <span style={{ color:"#7d8590", fontSize:10 }}>{k}</span>
-              <span style={{ color:"#e6edf3", fontSize:10 }}>{v}</span>
+            <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid rgba(15,23,42,0.06)" }}>
+              <span style={{ color:"#64748b", fontSize:10 }}>{k}</span>
+              <span style={{ color:"#0f172a", fontSize:10 }}>{v}</span>
             </div>
           ))}
         </div>
@@ -4525,10 +4527,10 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
         {/* Analyst ratings + PT */}
         <div>
           {recs === null ? (
-            <div className="font-mono" style={{ color:"#7d8590", fontSize:10 }}>Loading analyst data…</div>
+            <div className="font-mono" style={{ color:"#64748b", fontSize:10 }}>Loading analyst data…</div>
           ) : latestRec ? (
             <div className="mb-4">
-              <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>
+              <div className="font-mono mb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>
                 Analyst Consensus · {latestRec.period?.slice(0,7)} · {total} analysts
               </div>
               {/* Stacked bar */}
@@ -4541,49 +4543,49 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
                 {segments.map(s => (
                   <div key={s.label} className="flex items-center gap-1 font-mono" style={{ fontSize:10 }}>
                     <div style={{ width:7, height:7, borderRadius:1, background:s.color, flexShrink:0 }} />
-                    <span style={{ color:"#7d8590" }}>{s.label}</span>
-                    <span style={{ color:"#e6edf3", fontWeight:"bold" }}>{s.v}</span>
+                    <span style={{ color:"#64748b" }}>{s.label}</span>
+                    <span style={{ color:"#0f172a", fontWeight:"bold" }}>{s.v}</span>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="font-mono mb-4" style={{ color:"#484f58", fontSize:10 }}>No analyst ratings available</div>
+            <div className="font-mono mb-4" style={{ color:"#64748b", fontSize:10 }}>No analyst ratings available</div>
           )}
 
           {/* Price Target */}
           {pt && cur ? (
             <div>
-              <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Analyst Price Target</div>
+              <div className="font-mono mb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Analyst Price Target</div>
               {upside != null && (
                 <div className="font-mono mb-2" style={{ color:clrM(upside), fontSize:13 }}>
                   {upside>=0?"▲":"▼"} {Math.abs(upside).toFixed(1)}% to mean target
                 </div>
               )}
               {/* PT range bar */}
-              <div className="flex justify-between font-mono mb-1" style={{ fontSize:9, color:"#484f58" }}>
+              <div className="flex justify-between font-mono mb-1" style={{ fontSize:9, color:"#64748b" }}>
                 <span>Low ${fmtN(ptLow)}</span>
                 <span>High ${fmtN(ptHigh)}</span>
               </div>
-              <div style={{ position:"relative", height:6, background:"#21262d", borderRadius:6, marginBottom:10 }}>
+              <div style={{ position:"relative", height:6, background:"#e2e8f0", borderRadius:6, marginBottom:10 }}>
                 {ptBarPct != null && (
-                  <div style={{ position:"absolute", left:ptBarPct+"%", top:-4, width:12, height:14, borderRadius:2, background:"#58a6ff", transform:"translateX(-50%)", border:"2px solid #010409", zIndex:2 }} title={"Current: $"+fmt.price(cur)} />
+                  <div style={{ position:"absolute", left:ptBarPct+"%", top:-4, width:12, height:14, borderRadius:2, background:"#2563eb", transform:"translateX(-50%)", border:"2px solid #010409", zIndex:2 }} title={"Current: $"+fmt.price(cur)} />
                 )}
                 {meanBarPct != null && (
-                  <div style={{ position:"absolute", left:meanBarPct+"%", top:-5, width:2, height:16, background:"#e3b341", transform:"translateX(-50%)", zIndex:1 }} title={"Mean: $"+fmtN(ptMean)} />
+                  <div style={{ position:"absolute", left:meanBarPct+"%", top:-5, width:2, height:16, background:"#b45309", transform:"translateX(-50%)", zIndex:1 }} title={"Mean: $"+fmtN(ptMean)} />
                 )}
               </div>
               <div className="grid" style={{ gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:"4px 0" }}>
                 {[["Low","$"+fmtN(ptLow)],["Mean","$"+fmtN(ptMean)],["Median","$"+fmtN(ptMed)],["High","$"+fmtN(ptHigh)]].map(([l,v]) => (
                   <div key={l} className="font-mono">
-                    <div style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>{l}</div>
-                    <div style={{ color:"#e6edf3", fontSize:12 }}>{v}</div>
+                    <div style={{ color:"#64748b", fontSize:9, textTransform:"uppercase" }}>{l}</div>
+                    <div style={{ color:"#0f172a", fontSize:12 }}>{v}</div>
                   </div>
                 ))}
               </div>
             </div>
           ) : pt === null && recs !== null ? (
-            <div className="font-mono" style={{ color:"#484f58", fontSize:10 }}>No price target available</div>
+            <div className="font-mono" style={{ color:"#64748b", fontSize:10 }}>No price target available</div>
           ) : null}
         </div>
       </div>
@@ -4591,8 +4593,8 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
   };
 
   const renderNews = () => {
-    if (news === null) return <div className="font-mono" style={{ color:"#7d8590", fontSize:10 }}>Loading news…</div>;
-    if (!news.length) return <div className="font-mono" style={{ color:"#484f58", fontSize:10 }}>No recent news found</div>;
+    if (news === null) return <div className="font-mono" style={{ color:"#64748b", fontSize:10 }}>Loading news…</div>;
+    if (!news.length) return <div className="font-mono" style={{ color:"#64748b", fontSize:10 }}>No recent news found</div>;
     return (
       <div className="flex flex-col gap-2">
         {news.map((n,i) => {
@@ -4601,16 +4603,16 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
           const timeStr = dAgo===0?"Today":dAgo===1?"Yesterday":dAgo!=null?dAgo+"d ago":"";
           return (
             <a key={i} href={n.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
-              <div className="p-3" style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:4 }}
-                onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"}
-                onMouseLeave={e=>e.currentTarget.style.borderColor="#21262d"}>
+              <div className="p-3" style={{ background:"#f8fafc", border:"1px solid rgba(15,23,42,0.12)", borderRadius:4 }}
+                onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"}
+                onMouseLeave={e=>e.currentTarget.style.borderColor="#e2e8f0"}>
                 <div className="flex items-start justify-between gap-3 mb-1">
-                  <span className="font-mono" style={{ color:"#e6edf3", fontSize:11, lineHeight:1.5 }}>{n.headline}</span>
-                  <span className="font-mono flex-shrink-0" style={{ color:"#484f58", fontSize:9 }}>{timeStr}</span>
+                  <span className="font-mono" style={{ color:"#0f172a", fontSize:11, lineHeight:1.5 }}>{n.headline}</span>
+                  <span className="font-mono flex-shrink-0" style={{ color:"#64748b", fontSize:9 }}>{timeStr}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  {n.source   && <span className="font-mono" style={{ color:"#58a6ff", fontSize:9 }}>{n.source}</span>}
-                  {n.category && <span className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>{n.category}</span>}
+                  {n.source   && <span className="font-mono" style={{ color:"#2563eb", fontSize:9 }}>{n.source}</span>}
+                  {n.category && <span className="font-mono" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase" }}>{n.category}</span>}
                 </div>
               </div>
             </a>
@@ -4625,31 +4627,31 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
       { ticker:item.ticker, q:quote,  pm:metrics || {}, isSelf:true },
       ...(peers||[]).map(p => ({ ticker:p, q:peerQ[p]||null, pm:peerM[p]||{}, isSelf:false })),
     ];
-    if (peers === null) return <div className="font-mono" style={{ color:"#7d8590", fontSize:10 }}>Loading peers…</div>;
-    if (!peers.length && allRows.length === 1) return <div className="font-mono" style={{ color:"#484f58", fontSize:10 }}>No peer data available</div>;
+    if (peers === null) return <div className="font-mono" style={{ color:"#64748b", fontSize:10 }}>Loading peers…</div>;
+    if (!peers.length && allRows.length === 1) return <div className="font-mono" style={{ color:"#64748b", fontSize:10 }}>No peer data available</div>;
     const cols = ["Ticker","Price","Day %","Mkt Cap","P/E","EV/EBITDA","P/S","Gross Mgn","Net Mgn","ROE","Rev Grw"];
     return (
       <div style={{ overflowX:"auto" }}>
         <table style={{ width:"100%", borderCollapse:"collapse", minWidth:800 }}>
           <thead>
             <tr>{cols.map((h,i) => (
-              <th key={h} className="font-mono pb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", fontWeight:"normal", textAlign:i===0?"left":"right", paddingRight:i===cols.length-1?0:10, whiteSpace:"nowrap" }}>{h}</th>
+              <th key={h} className="font-mono pb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", fontWeight:"normal", textAlign:i===0?"left":"right", paddingRight:i===cols.length-1?0:10, whiteSpace:"nowrap" }}>{h}</th>
             ))}</tr>
           </thead>
           <tbody>
             {allRows.map(({ ticker, q, pm, isSelf }) => (
-              <tr key={ticker} style={{ borderTop:"1px solid rgba(99,110,123,0.12)", background:isSelf?"#0d1117":"transparent" }}>
-                <td className="font-mono py-2" style={{ color:isSelf?"#58a6ff":"#e6edf3", fontSize:11, fontWeight:isSelf?"bold":"normal" }}>
+              <tr key={ticker} style={{ borderTop:"1px solid rgba(15,23,42,0.09)", background:isSelf?"#f8fafc":"transparent" }}>
+                <td className="font-mono py-2" style={{ color:isSelf?"#2563eb":"#0f172a", fontSize:11, fontWeight:isSelf?"bold":"normal" }}>
                   {ticker}
                   {!isSelf && <button onClick={()=>onOpen({id:ticker,label:ticker,type:"equity",ticker,category:"Equities"})}
-                    className="font-mono ml-2" style={{ color:"#1f6feb", background:"none", border:"none", cursor:"pointer", fontSize:9 }}>→</button>}
+                    className="font-mono ml-2" style={{ color:"#2563eb", background:"none", border:"none", cursor:"pointer", fontSize:9 }}>→</button>}
                 </td>
-                <td className="font-mono py-2 text-right" style={{ color:"#e6edf3", fontSize:10, paddingRight:10 }}>{q?.c!=null?"$"+fmt.price(q.c):"—"}</td>
+                <td className="font-mono py-2 text-right" style={{ color:"#0f172a", fontSize:10, paddingRight:10 }}>{q?.c!=null?"$"+fmt.price(q.c):"—"}</td>
                 <td className="font-mono py-2 text-right" style={{ color:clr(q?.dp||0), fontSize:10, paddingRight:10 }}>{q?.dp!=null?fmt.pct(q.dp):"—"}</td>
-                <td className="font-mono py-2 text-right" style={{ color:"#e6edf3", fontSize:10, paddingRight:10 }}>{fmtMktCap(pm.marketCapitalization)}</td>
-                <td className="font-mono py-2 text-right" style={{ color:"#e6edf3", fontSize:10, paddingRight:10 }}>{fmtX(pm.peBasicExclExtraTTM)}</td>
-                <td className="font-mono py-2 text-right" style={{ color:"#e6edf3", fontSize:10, paddingRight:10 }}>{fmtX(pm.evEbitdaTTM)}</td>
-                <td className="font-mono py-2 text-right" style={{ color:"#e6edf3", fontSize:10, paddingRight:10 }}>{fmtX(pm.psAnnual)}</td>
+                <td className="font-mono py-2 text-right" style={{ color:"#0f172a", fontSize:10, paddingRight:10 }}>{fmtMktCap(pm.marketCapitalization)}</td>
+                <td className="font-mono py-2 text-right" style={{ color:"#0f172a", fontSize:10, paddingRight:10 }}>{fmtX(pm.peBasicExclExtraTTM)}</td>
+                <td className="font-mono py-2 text-right" style={{ color:"#0f172a", fontSize:10, paddingRight:10 }}>{fmtX(pm.evEbitdaTTM)}</td>
+                <td className="font-mono py-2 text-right" style={{ color:"#0f172a", fontSize:10, paddingRight:10 }}>{fmtX(pm.psAnnual)}</td>
                 <td className="font-mono py-2 text-right" style={{ color:clrM(pm.grossMarginAnnual), fontSize:10, paddingRight:10 }}>{fmtMgn(pm.grossMarginAnnual)}</td>
                 <td className="font-mono py-2 text-right" style={{ color:clrM(pm.netMarginAnnual), fontSize:10, paddingRight:10 }}>{fmtMgn(pm.netMarginAnnual)}</td>
                 <td className="font-mono py-2 text-right" style={{ color:clrM(pm.roeRfy), fontSize:10, paddingRight:10 }}>{fmtMgn(pm.roeRfy)}</td>
@@ -4665,21 +4667,21 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
   return (
     <div className="terminal-panel terminal-glow flex flex-col" style={{ minHeight:520 }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-3 pb-0" style={{ borderBottom:"1px solid rgba(99,110,123,0.12)", flexShrink:0 }}>
+      <div className="flex items-center justify-between px-4 pt-3 pb-0" style={{ borderBottom:"1px solid rgba(15,23,42,0.09)", flexShrink:0 }}>
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:15 }}>{item.ticker}</span>
-          <span className="font-mono" style={{ color:"#7d8590", fontSize:12 }}>{profile?.name || item.label}</span>
-          <span className="font-mono" style={{ background:"#21262d", border:"1px solid #30363d", borderRadius:6, padding:"1px 6px", fontSize:9, color:"#58a6ff", textTransform:"uppercase" }}>Equity</span>
-          {loadingBase && <span className="font-mono" style={{ color:"#484f58", fontSize:9 }}>Loading…</span>}
+          <span className="font-mono font-bold" style={{ color:"#0f172a", fontSize:15 }}>{item.ticker}</span>
+          <span className="font-mono" style={{ color:"#64748b", fontSize:12 }}>{profile?.name || item.label}</span>
+          <span className="font-mono" style={{ background:"#e2e8f0", border:"1px solid #30363d", borderRadius:6, padding:"1px 6px", fontSize:9, color:"#2563eb", textTransform:"uppercase" }}>Equity</span>
+          {loadingBase && <span className="font-mono" style={{ color:"#64748b", fontSize:9 }}>Loading…</span>}
         </div>
-        <button onClick={onClose} style={{ color:"#7d8590", background:"none", border:"none", cursor:"pointer", fontSize:14, marginLeft:8 }}>✕</button>
+        <button onClick={onClose} style={{ color:"#64748b", background:"none", border:"none", cursor:"pointer", fontSize:14, marginLeft:8 }}>✕</button>
       </div>
       {/* Tab nav */}
-      <div className="flex px-4" style={{ borderBottom:"1px solid rgba(99,110,123,0.12)", flexShrink:0, overflowX:"auto" }}>
+      <div className="flex px-4" style={{ borderBottom:"1px solid rgba(15,23,42,0.09)", flexShrink:0, overflowX:"auto" }}>
         {TABS.map(t => (
           <button key={t} onClick={() => setActiveTab(t)} className="font-mono"
             style={{ background:"none", border:"none", borderBottom:activeTab===t?"2px solid #58a6ff":"2px solid transparent",
-              color:activeTab===t?"#e6edf3":"#7d8590", fontSize:11, padding:"8px 12px", cursor:"pointer", transition:"color 0.15s",
+              color:activeTab===t?"#0f172a":"#64748b", fontSize:11, padding:"8px 12px", cursor:"pointer", transition:"color 0.15s",
               whiteSpace:"nowrap", flexShrink:0 }}>
             {t}
           </button>
@@ -4688,7 +4690,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
       {/* Content */}
       <div className="flex-1 p-4" style={{ overflowY:"auto" }}>
         {loadingBase
-          ? <div className="flex items-center justify-center font-mono" style={{ height:200, color:"#7d8590", fontSize:11 }}>Loading…</div>
+          ? <div className="flex items-center justify-center font-mono" style={{ height:200, color:"#64748b", fontSize:11 }}>Loading…</div>
           : activeTab==="Overview"   ? renderOverview()
           : activeTab==="Financials" ? renderFinancials()
           : activeTab==="Valuation"  ? renderValuation()
@@ -4700,36 +4702,36 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
   );
 }
 
-function IntelCard({ intel, accentColor = "#e3b341" }) {
+function IntelCard({ intel, accentColor = "#b45309" }) {
   if (!intel) return null;
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <div className="font-mono mb-1" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>What It Is</div>
-        <p className="font-mono" style={{ color:"#c9d1d9", fontSize:11, lineHeight:1.7 }}>{intel.whatItIs}</p>
+        <div className="font-mono mb-1" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>What It Is</div>
+        <p className="font-mono" style={{ color:"#1e293b", fontSize:11, lineHeight:1.7 }}>{intel.whatItIs}</p>
       </div>
       <div>
         <div className="font-mono mb-1" style={{ color:accentColor, fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Why It Matters</div>
-        <p className="font-mono" style={{ color:"#c9d1d9", fontSize:11, lineHeight:1.7 }}>{intel.whyItMatters}</p>
+        <p className="font-mono" style={{ color:"#1e293b", fontSize:11, lineHeight:1.7 }}>{intel.whyItMatters}</p>
       </div>
       <div>
-        <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Drivers</div>
+        <div className="font-mono mb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Drivers</div>
         <div className="flex flex-col gap-1">
           {intel.drivers.map((d, i) => (
             <div key={i} className="flex items-start gap-2">
               <span className="font-mono flex-shrink-0" style={{ color:accentColor, fontSize:10 }}>▸</span>
-              <span className="font-mono" style={{ color:"#8b949e", fontSize:10, lineHeight:1.6 }}>{d}</span>
+              <span className="font-mono" style={{ color:"#475569", fontSize:10, lineHeight:1.6 }}>{d}</span>
             </div>
           ))}
         </div>
       </div>
       <div>
-        <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Market Relationships</div>
+        <div className="font-mono mb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Market Relationships</div>
         <div className="flex flex-col gap-1">
           {intel.relationships.map((r, i) => (
             <div key={i} className="flex items-start gap-2">
-              <span className="font-mono flex-shrink-0" style={{ color:"#58a6ff", fontSize:10 }}>↔</span>
-              <span className="font-mono" style={{ color:"#8b949e", fontSize:10, lineHeight:1.6 }}>{r}</span>
+              <span className="font-mono flex-shrink-0" style={{ color:"#2563eb", fontSize:10 }}>↔</span>
+              <span className="font-mono" style={{ color:"#475569", fontSize:10, lineHeight:1.6 }}>{r}</span>
             </div>
           ))}
         </div>
@@ -4740,10 +4742,10 @@ function IntelCard({ intel, accentColor = "#e3b341" }) {
 
 function ResearchTabBar({ tabs, active, onSelect }) {
   return (
-    <div className="flex gap-1 mb-3" style={{ borderBottom:"1px solid rgba(99,110,123,0.12)", paddingBottom:8, flexShrink:0 }}>
+    <div className="flex gap-1 mb-3" style={{ borderBottom:"1px solid rgba(15,23,42,0.09)", paddingBottom:8, flexShrink:0 }}>
       {tabs.map(tab => (
         <button key={tab} onClick={() => onSelect(tab)} className="font-mono"
-          style={{ background: active===tab ? "#21262d" : "transparent", border:"none", cursor:"pointer", padding:"2px 10px", fontSize:10, borderRadius:6, color: active===tab ? "#e6edf3" : "#7d8590" }}>
+          style={{ background: active===tab ? "#e2e8f0" : "transparent", border:"none", cursor:"pointer", padding:"2px 10px", fontSize:10, borderRadius:6, color: active===tab ? "#0f172a" : "#64748b" }}>
           {tab}
         </button>
       ))}
@@ -4783,17 +4785,17 @@ function CommodityResearchPanel({ item, onClose, onOpen }) {
   }, [item.ticker]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const dp = 2;
-  const priceColor = summary ? (summary.dayPct >= 0 ? "#3fb950" : "#f85149") : "#e3b341";
+  const priceColor = summary ? (summary.dayPct >= 0 ? "#059669" : "#e11d48") : "#b45309";
   const pct52 = summary ? Math.min(100, Math.max(0, ((summary.cur - summary.lo52) / (summary.hi52 - summary.lo52)) * 100)) : null;
 
   const renderOverview = () => loading ? (
-    <div className="flex items-center justify-center py-8 font-mono" style={{ color:"#7d8590" }}>Loading…</div>
+    <div className="flex items-center justify-center py-8 font-mono" style={{ color:"#64748b" }}>Loading…</div>
   ) : (
     <div>
       <div className="flex items-baseline justify-between mb-3">
         <div>
-          <span className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:26 }}>${summary?.cur.toLocaleString("en-US",{minimumFractionDigits:dp,maximumFractionDigits:dp})||"—"}</span>
-          {intel?.unit && <span className="font-mono ml-2" style={{ color:"#484f58", fontSize:10 }}>per {intel.unit.split("/")[1]||intel.unit}</span>}
+          <span className="font-mono font-bold" style={{ color:"#0f172a", fontSize:26 }}>${summary?.cur.toLocaleString("en-US",{minimumFractionDigits:dp,maximumFractionDigits:dp})||"—"}</span>
+          {intel?.unit && <span className="font-mono ml-2" style={{ color:"#64748b", fontSize:10 }}>per {intel.unit.split("/")[1]||intel.unit}</span>}
         </div>
         <div className="text-right">
           {summary && <div className="font-mono" style={{ color:clr(summary.dayPct), fontSize:13 }}>Day {fmt.pct(summary.dayPct)}</div>}
@@ -4811,9 +4813,9 @@ function CommodityResearchPanel({ item, onClose, onOpen }) {
                   <stop offset="95%" stopColor={priceColor} stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <XAxis dataKey="t" tickFormatter={t=>{const d=new Date(t*1000);return(d.getMonth()+1)+"/"+d.getDate();}} tick={{fill:"#484f58",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={35}/>
+              <XAxis dataKey="t" tickFormatter={t=>{const d=new Date(t*1000);return(d.getMonth()+1)+"/"+d.getDate();}} tick={{fill:"#64748b",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={35}/>
               <YAxis domain={["auto","auto"]} hide/>
-              <Tooltip contentStyle={{background:"#1c2230",border:"1px solid rgba(99,110,123,0.28)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} labelFormatter={t=>new Date(t*1000).toLocaleDateString()} formatter={v=>["$"+v?.toFixed(dp),"Price"]}/>
+              <Tooltip contentStyle={{background:"#f1f5f9",border:"1px solid rgba(15,23,42,0.18)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} labelFormatter={t=>new Date(t*1000).toLocaleDateString()} formatter={v=>["$"+v?.toFixed(dp),"Price"]}/>
               <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5} fill={"url(#cmg_"+item.id.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
             </AreaChart>
           </ResponsiveContainer>
@@ -4822,14 +4824,14 @@ function CommodityResearchPanel({ item, onClose, onOpen }) {
 
       {pct52 != null && (
         <div className="mb-4">
-          <div className="flex justify-between font-mono mb-1" style={{ color:"#484f58", fontSize:9 }}>
+          <div className="flex justify-between font-mono mb-1" style={{ color:"#64748b", fontSize:9 }}>
             <span>52W LOW ${summary.lo52.toFixed(dp)}</span>
-            <span style={{ color:"#7d8590" }}>52-WEEK RANGE</span>
+            <span style={{ color:"#64748b" }}>52-WEEK RANGE</span>
             <span>${summary.hi52.toFixed(dp)} 52W HIGH</span>
           </div>
-          <div style={{ position:"relative", height:4, background:"#21262d", borderRadius:2 }}>
-            <div style={{ position:"absolute", left:0, width:pct52+"%", height:"100%", background:pct52>70?"#3fb950":pct52<30?"#f85149":"#e3b341", borderRadius:2 }}/>
-            <div style={{ position:"absolute", left:pct52+"%", top:-3, width:2, height:10, background:"#e6edf3", borderRadius:1, transform:"translateX(-50%)" }}/>
+          <div style={{ position:"relative", height:4, background:"#e2e8f0", borderRadius:2 }}>
+            <div style={{ position:"absolute", left:0, width:pct52+"%", height:"100%", background:pct52>70?"#059669":pct52<30?"#e11d48":"#b45309", borderRadius:2 }}/>
+            <div style={{ position:"absolute", left:pct52+"%", top:-3, width:2, height:10, background:"#0f172a", borderRadius:1, transform:"translateX(-50%)" }}/>
           </div>
         </div>
       )}
@@ -4837,8 +4839,8 @@ function CommodityResearchPanel({ item, onClose, onOpen }) {
       {summary && (
         <div className="grid mb-4" style={{ gridTemplateColumns:"repeat(4,1fr)", gap:"4px 8px" }}>
           {[["1D",summary.dayPct],["1M",summary.m1Pct],["3M",summary.m3Pct],["YTD",summary.ytdPct]].map(([label,val])=>(
-            <div key={label} style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:10, padding:"6px 8px" }}>
-              <div className="font-mono" style={{ color:"#484f58", fontSize:9 }}>{label}</div>
+            <div key={label} style={{ background:"#f8fafc", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, padding:"6px 8px" }}>
+              <div className="font-mono" style={{ color:"#64748b", fontSize:9 }}>{label}</div>
               <div className="font-mono font-bold" style={{ color:clr(val), fontSize:13 }}>{fmt.pct(val)}</div>
             </div>
           ))}
@@ -4849,18 +4851,18 @@ function CommodityResearchPanel({ item, onClose, onOpen }) {
   );
 
   const renderProducers = () => !intel?.producers ? (
-    <div className="font-mono py-4" style={{ color:"#484f58" }}>No producer data available.</div>
+    <div className="font-mono py-4" style={{ color:"#64748b" }}>No producer data available.</div>
   ) : (
     <div>
-      <div className="font-mono mb-3" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Producers / Supply Sources</div>
-      <div style={{ borderTop:"1px solid rgba(99,110,123,0.12)" }}>
+      <div className="font-mono mb-3" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Producers / Supply Sources</div>
+      <div style={{ borderTop:"1px solid rgba(15,23,42,0.09)" }}>
         {intel.producers.map((p,i) => (
-          <div key={i} className="flex items-start justify-between py-2.5" style={{ borderBottom:"1px solid rgba(99,110,123,0.07)" }}>
+          <div key={i} className="flex items-start justify-between py-2.5" style={{ borderBottom:"1px solid rgba(15,23,42,0.06)" }}>
             <div>
-              <div className="font-mono" style={{ color:"#e6edf3", fontSize:11 }}>{p.name}</div>
-              <div className="font-mono" style={{ color:"#7d8590", fontSize:9 }}>{p.note}</div>
+              <div className="font-mono" style={{ color:"#0f172a", fontSize:11 }}>{p.name}</div>
+              <div className="font-mono" style={{ color:"#64748b", fontSize:9 }}>{p.note}</div>
             </div>
-            <div className="font-mono" style={{ color:"#e3b341", fontSize:11 }}>{p.share}</div>
+            <div className="font-mono" style={{ color:"#b45309", fontSize:11 }}>{p.share}</div>
           </div>
         ))}
       </div>
@@ -4872,7 +4874,7 @@ function CommodityResearchPanel({ item, onClose, onOpen }) {
     <ResearchPanelShell title={item.label} subtitle={item.ticker} badge="Commodity" onClose={onClose}>
       <ResearchTabBar tabs={TABS} active={activeTab} onSelect={setActiveTab}/>
       {activeTab === "Overview"      && renderOverview()}
-      {activeTab === "Intelligence"  && <div>{intel ? <IntelCard intel={intel} accentColor="#e3b341"/> : <div className="font-mono py-4" style={{color:"#484f58"}}>No data.</div>}<div className="mt-4"><RelatedLinks itemId={item.id} onOpen={onOpen}/></div></div>}
+      {activeTab === "Intelligence"  && <div>{intel ? <IntelCard intel={intel} accentColor="#b45309"/> : <div className="font-mono py-4" style={{color:"#64748b"}}>No data.</div>}<div className="mt-4"><RelatedLinks itemId={item.id} onOpen={onOpen}/></div></div>}
       {activeTab === "Producers"     && renderProducers()}
     </ResearchPanelShell>
   );
@@ -4930,15 +4932,15 @@ function FXResearchPanel({ item, onClose, onOpen }) {
   }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const dp = 4;
-  const priceColor = summary ? (summary.dayPct >= 0 ? "#3fb950" : "#f85149") : "#3fb950";
+  const priceColor = summary ? (summary.dayPct >= 0 ? "#059669" : "#e11d48") : "#059669";
   const pct52 = summary ? Math.min(100, Math.max(0, ((summary.cur-summary.lo52)/(summary.hi52-summary.lo52))*100)) : null;
 
   const renderOverview = () => loading ? (
-    <div className="flex items-center justify-center py-8 font-mono" style={{ color:"#7d8590" }}>Loading…</div>
+    <div className="flex items-center justify-center py-8 font-mono" style={{ color:"#64748b" }}>Loading…</div>
   ) : (
     <div>
       <div className="flex items-baseline justify-between mb-3">
-        <span className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:26 }}>{summary?.cur.toLocaleString("en-US",{minimumFractionDigits:dp,maximumFractionDigits:dp})||"—"}</span>
+        <span className="font-mono font-bold" style={{ color:"#0f172a", fontSize:26 }}>{summary?.cur.toLocaleString("en-US",{minimumFractionDigits:dp,maximumFractionDigits:dp})||"—"}</span>
         <div className="text-right">
           {summary && <div className="font-mono" style={{ color:clr(summary.dayPct), fontSize:13 }}>Day {fmt.pct(summary.dayPct)}</div>}
           {summary && <div className="font-mono" style={{ color:clr(summary.m1Pct), fontSize:10 }}>1M {fmt.pct(summary.m1Pct)}</div>}
@@ -4955,9 +4957,9 @@ function FXResearchPanel({ item, onClose, onOpen }) {
                   <stop offset="95%" stopColor={priceColor} stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <XAxis dataKey="t" tickFormatter={t=>{const d=new Date(t*1000);return(d.getMonth()+1)+"/"+d.getDate();}} tick={{fill:"#484f58",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={35}/>
+              <XAxis dataKey="t" tickFormatter={t=>{const d=new Date(t*1000);return(d.getMonth()+1)+"/"+d.getDate();}} tick={{fill:"#64748b",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={35}/>
               <YAxis domain={["auto","auto"]} hide/>
-              <Tooltip contentStyle={{background:"#1c2230",border:"1px solid rgba(99,110,123,0.28)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} labelFormatter={t=>new Date(t*1000).toLocaleDateString()} formatter={v=>[v?.toFixed(dp),"Rate"]}/>
+              <Tooltip contentStyle={{background:"#f1f5f9",border:"1px solid rgba(15,23,42,0.18)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} labelFormatter={t=>new Date(t*1000).toLocaleDateString()} formatter={v=>[v?.toFixed(dp),"Rate"]}/>
               <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5} fill={"url(#fxg_"+item.id.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
             </AreaChart>
           </ResponsiveContainer>
@@ -4966,14 +4968,14 @@ function FXResearchPanel({ item, onClose, onOpen }) {
 
       {pct52 != null && (
         <div className="mb-4">
-          <div className="flex justify-between font-mono mb-1" style={{ color:"#484f58", fontSize:9 }}>
+          <div className="flex justify-between font-mono mb-1" style={{ color:"#64748b", fontSize:9 }}>
             <span>52W LOW {summary.lo52.toFixed(dp)}</span>
-            <span style={{ color:"#7d8590" }}>52-WEEK RANGE</span>
+            <span style={{ color:"#64748b" }}>52-WEEK RANGE</span>
             <span>{summary.hi52.toFixed(dp)} 52W HIGH</span>
           </div>
-          <div style={{ position:"relative", height:4, background:"#21262d", borderRadius:2 }}>
-            <div style={{ position:"absolute", left:0, width:pct52+"%", height:"100%", background:pct52>70?"#3fb950":pct52<30?"#f85149":"#e3b341", borderRadius:2 }}/>
-            <div style={{ position:"absolute", left:pct52+"%", top:-3, width:2, height:10, background:"#e6edf3", borderRadius:1, transform:"translateX(-50%)" }}/>
+          <div style={{ position:"relative", height:4, background:"#e2e8f0", borderRadius:2 }}>
+            <div style={{ position:"absolute", left:0, width:pct52+"%", height:"100%", background:pct52>70?"#059669":pct52<30?"#e11d48":"#b45309", borderRadius:2 }}/>
+            <div style={{ position:"absolute", left:pct52+"%", top:-3, width:2, height:10, background:"#0f172a", borderRadius:1, transform:"translateX(-50%)" }}/>
           </div>
         </div>
       )}
@@ -4981,8 +4983,8 @@ function FXResearchPanel({ item, onClose, onOpen }) {
       {summary && (
         <div className="grid mb-4" style={{ gridTemplateColumns:"repeat(3,1fr)", gap:"4px 8px" }}>
           {[["1D",summary.dayPct],["1M",summary.m1Pct],["3M",summary.m3Pct]].map(([label,val])=>(
-            <div key={label} style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:10, padding:"6px 8px" }}>
-              <div className="font-mono" style={{ color:"#484f58", fontSize:9 }}>{label}</div>
+            <div key={label} style={{ background:"#f8fafc", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, padding:"6px 8px" }}>
+              <div className="font-mono" style={{ color:"#64748b", fontSize:9 }}>{label}</div>
               <div className="font-mono font-bold" style={{ color:clr(val), fontSize:13 }}>{fmt.pct(val)}</div>
             </div>
           ))}
@@ -4993,8 +4995,8 @@ function FXResearchPanel({ item, onClose, onOpen }) {
   );
 
   const renderRateDiff = () => {
-    if (!pair) return <div className="font-mono py-4" style={{ color:"#484f58" }}>Rate differential data not available for this pair.</div>;
-    if (rateLoading) return <div className="flex items-center justify-center py-8 font-mono" style={{ color:"#7d8590" }}>Loading rates…</div>;
+    if (!pair) return <div className="font-mono py-4" style={{ color:"#64748b" }}>Rate differential data not available for this pair.</div>;
+    if (rateLoading) return <div className="flex items-center justify-center py-8 font-mono" style={{ color:"#64748b" }}>Loading rates…</div>;
 
     const baseLatest  = rateData.base[rateData.base.length-1];
     const quoteLatest = rateData.quote[rateData.quote.length-1];
@@ -5014,21 +5016,21 @@ function FXResearchPanel({ item, onClose, onOpen }) {
     return (
       <div>
         <div className="grid mb-4" style={{ gridTemplateColumns:"1fr 1fr", gap:8 }}>
-          {[{ label:pair.baseLabel, val:baseLatest?.v, color:"#58a6ff", date:baseLatest?.t },
-            { label:pair.quoteLabel||"N/A", val:quoteLatest?.v, color:"#e3b341", date:quoteLatest?.t }].map(({label,val,color,date})=>(
-            <div key={label} style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:6, padding:"10px 12px" }}>
-              <div className="font-mono mb-1" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>{label}</div>
+          {[{ label:pair.baseLabel, val:baseLatest?.v, color:"#2563eb", date:baseLatest?.t },
+            { label:pair.quoteLabel||"N/A", val:quoteLatest?.v, color:"#b45309", date:quoteLatest?.t }].map(({label,val,color,date})=>(
+            <div key={label} style={{ background:"#f8fafc", border:"1px solid rgba(15,23,42,0.12)", borderRadius:6, padding:"10px 12px" }}>
+              <div className="font-mono mb-1" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase" }}>{label}</div>
               <div className="font-mono font-bold" style={{ color, fontSize:20 }}>{val!=null?val.toFixed(2)+"%":"—"}</div>
-              {date && <div className="font-mono" style={{ color:"#484f58", fontSize:9 }}>as of {date}</div>}
+              {date && <div className="font-mono" style={{ color:"#64748b", fontSize:9 }}>as of {date}</div>}
             </div>
           ))}
         </div>
 
         {diff != null && (
-          <div className="mb-4 p-3" style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:6 }}>
-            <div className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>Differential (USD minus {pair.quoteCCY})</div>
-            <div className="font-mono font-bold" style={{ color:diff>=0?"#58a6ff":"#e3b341", fontSize:20 }}>{diff>=0?"+":""}{diff} pp</div>
-            <div className="font-mono mt-0.5" style={{ color:"#7d8590", fontSize:10 }}>
+          <div className="mb-4 p-3" style={{ background:"#f8fafc", border:"1px solid rgba(15,23,42,0.12)", borderRadius:6 }}>
+            <div className="font-mono" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase" }}>Differential (USD minus {pair.quoteCCY})</div>
+            <div className="font-mono font-bold" style={{ color:diff>=0?"#2563eb":"#b45309", fontSize:20 }}>{diff>=0?"+":""}{diff} pp</div>
+            <div className="font-mono mt-0.5" style={{ color:"#64748b", fontSize:10 }}>
               {diff>1?"USD yield premium — supports USD strength":diff<-1?"Foreign yield premium — USD headwind":"Rates near parity"}
             </div>
           </div>
@@ -5036,21 +5038,21 @@ function FXResearchPanel({ item, onClose, onOpen }) {
 
         {diffData.length > 0 && (
           <div>
-            <div className="font-mono mb-1" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>Rate Differential Over Time</div>
+            <div className="font-mono mb-1" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase" }}>Rate Differential Over Time</div>
             <div style={{ height:150, marginBottom:12 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={diffData} margin={{ top:4, right:2, bottom:0, left:0 }}>
                   <defs>
                     <linearGradient id={"rdg_"+item.id.replace(/[^a-z0-9]/gi,"")} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#58a6ff" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="#58a6ff" stopOpacity={0}/>
+                      <stop offset="5%"  stopColor="#2563eb" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="t" tick={{fill:"#484f58",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={11}/>
+                  <XAxis dataKey="t" tick={{fill:"#64748b",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={11}/>
                   <YAxis domain={["auto","auto"]} hide/>
-                  <ReferenceLine y={0} stroke="#30363d" strokeDasharray="3 3"/>
-                  <Tooltip contentStyle={{background:"#1c2230",border:"1px solid rgba(99,110,123,0.28)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} formatter={v=>[v?.toFixed(2)+"pp","Differential"]}/>
-                  <Area type="monotone" dataKey="diff" stroke="#58a6ff" strokeWidth={1.5} fill={"url(#rdg_"+item.id.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
+                  <ReferenceLine y={0} stroke="#cbd5e1" strokeDasharray="3 3"/>
+                  <Tooltip contentStyle={{background:"#f1f5f9",border:"1px solid rgba(15,23,42,0.18)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} formatter={v=>[v?.toFixed(2)+"pp","Differential"]}/>
+                  <Area type="monotone" dataKey="diff" stroke="#2563eb" strokeWidth={1.5} fill={"url(#rdg_"+item.id.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -5066,7 +5068,7 @@ function FXResearchPanel({ item, onClose, onOpen }) {
       <ResearchTabBar tabs={TABS} active={activeTab} onSelect={setActiveTab}/>
       {activeTab === "Overview"          && renderOverview()}
       {activeTab === "Rate Differential" && renderRateDiff()}
-      {activeTab === "Intelligence"      && <div>{intel ? <IntelCard intel={intel} accentColor="#3fb950"/> : <div className="font-mono py-4" style={{color:"#484f58"}}>No data.</div>}<div className="mt-4"><RelatedLinks itemId={item.id} onOpen={onOpen}/></div></div>}
+      {activeTab === "Intelligence"      && <div>{intel ? <IntelCard intel={intel} accentColor="#059669"/> : <div className="font-mono py-4" style={{color:"#64748b"}}>No data.</div>}<div className="mt-4"><RelatedLinks itemId={item.id} onOpen={onOpen}/></div></div>}
     </ResearchPanelShell>
   );
 }
@@ -5109,28 +5111,28 @@ function MacroResearchPanel({ item, onClose, onOpen }) {
   })();
 
   const renderChart = () => loading ? (
-    <div className="flex items-center justify-center py-8 font-mono" style={{ color:"#7d8590" }}>Loading…</div>
+    <div className="flex items-center justify-center py-8 font-mono" style={{ color:"#64748b" }}>Loading…</div>
   ) : !data.length ? (
-    <div className="flex items-center justify-center py-8 font-mono" style={{ color:"#f85149" }}>No data available</div>
+    <div className="flex items-center justify-center py-8 font-mono" style={{ color:"#e11d48" }}>No data available</div>
   ) : (
     <div>
       <div className="flex items-baseline justify-between mb-0.5">
-        <span className="font-mono font-bold" style={{ color:"#bc8cff", fontSize:26 }}>{latest?.v?.toFixed(2)}</span>
+        <span className="font-mono font-bold" style={{ color:"#7c3aed", fontSize:26 }}>{latest?.v?.toFixed(2)}</span>
         <div className="text-right">
           {yoyPct != null && <div className="font-mono" style={{ color:clr(yoyPct), fontSize:11 }}>YoY {fmt.pct(yoyPct)}</div>}
           {mom != null && <div className="font-mono" style={{ color:clr(mom), fontSize:10 }}>MoM {mom>=0?"+":""}{mom.toFixed(2)}</div>}
         </div>
       </div>
-      <div className="font-mono mb-3" style={{ color:"#484f58", fontSize:10 }}>As of {latest?.t}</div>
+      <div className="font-mono mb-3" style={{ color:"#64748b", fontSize:10 }}>As of {latest?.t}</div>
 
       {trend != null && (
-        <div className="flex items-center gap-2 mb-3 px-2 py-1.5" style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:4 }}>
-          <span className="font-mono" style={{ color:Math.abs(trend)<0.01?"#7d8590":trend>0?"#3fb950":"#f85149", fontSize:14 }}>
+        <div className="flex items-center gap-2 mb-3 px-2 py-1.5" style={{ background:"#f8fafc", border:"1px solid rgba(15,23,42,0.12)", borderRadius:4 }}>
+          <span className="font-mono" style={{ color:Math.abs(trend)<0.01?"#64748b":trend>0?"#059669":"#e11d48", fontSize:14 }}>
             {Math.abs(trend)<0.01?"→":trend>0?"↗":"↘"}
           </span>
-          <span className="font-mono" style={{ color:"#7d8590", fontSize:10 }}>
-            12-period trend: <span style={{ color:"#c9d1d9" }}>{trend>0.01?"Rising":trend<-0.01?"Declining":"Flat"}</span>
-            <span style={{ color:"#484f58" }}> ({trend>=0?"+":""}{trend.toFixed(3)}/period)</span>
+          <span className="font-mono" style={{ color:"#64748b", fontSize:10 }}>
+            12-period trend: <span style={{ color:"#1e293b" }}>{trend>0.01?"Rising":trend<-0.01?"Declining":"Flat"}</span>
+            <span style={{ color:"#64748b" }}> ({trend>=0?"+":""}{trend.toFixed(3)}/period)</span>
           </span>
         </div>
       )}
@@ -5140,14 +5142,14 @@ function MacroResearchPanel({ item, onClose, onOpen }) {
           <AreaChart data={data} margin={{ top:4, right:2, bottom:0, left:0 }}>
             <defs>
               <linearGradient id={"mcg_"+item.series.replace(/[^a-z0-9]/gi,"")} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor="#bc8cff" stopOpacity={0.25}/>
-                <stop offset="95%" stopColor="#bc8cff" stopOpacity={0}/>
+                <stop offset="5%"  stopColor="#7c3aed" stopOpacity={0.25}/>
+                <stop offset="95%" stopColor="#7c3aed" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <XAxis dataKey="t" tick={{fill:"#484f58",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={11}/>
+            <XAxis dataKey="t" tick={{fill:"#64748b",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={11}/>
             <YAxis domain={["auto","auto"]} hide/>
-            <Tooltip contentStyle={{background:"#1c2230",border:"1px solid rgba(99,110,123,0.28)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} formatter={v=>[v?.toFixed(2),item.label]}/>
-            <Area type="monotone" dataKey="v" stroke="#bc8cff" strokeWidth={1.5} fill={"url(#mcg_"+item.series.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
+            <Tooltip contentStyle={{background:"#f1f5f9",border:"1px solid rgba(15,23,42,0.18)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} formatter={v=>[v?.toFixed(2),item.label]}/>
+            <Area type="monotone" dataKey="v" stroke="#7c3aed" strokeWidth={1.5} fill={"url(#mcg_"+item.series.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -5159,8 +5161,8 @@ function MacroResearchPanel({ item, onClose, onOpen }) {
           ["5Y Min",    data.length>=12?Math.min(...data.slice(-60).map(d=>d.v)).toFixed(2):"—"],
         ].map(([k,v])=>(
           <div key={k}>
-            <div className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>{k}</div>
-            <div className="font-mono" style={{ color:"#e6edf3", fontSize:11 }}>{v}</div>
+            <div className="font-mono" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase" }}>{k}</div>
+            <div className="font-mono" style={{ color:"#0f172a", fontSize:11 }}>{v}</div>
           </div>
         ))}
       </div>
@@ -5174,7 +5176,7 @@ function MacroResearchPanel({ item, onClose, onOpen }) {
       {activeTab === "Chart"   && renderChart()}
       {activeTab === "Context" && (
         <div>
-          {intel ? <IntelCard intel={intel} accentColor="#bc8cff"/> : <div className="font-mono py-4" style={{color:"#484f58"}}>No context data available.</div>}
+          {intel ? <IntelCard intel={intel} accentColor="#7c3aed"/> : <div className="font-mono py-4" style={{color:"#64748b"}}>No context data available.</div>}
           <div className="mt-4"><RelatedLinks itemId={item.id} onOpen={onOpen}/></div>
         </div>
       )}
@@ -5213,7 +5215,7 @@ function TopicResearchPanel({ item, onClose, onOpen }) {
   return (
     <ResearchPanelShell title={cfg.icon + " " + cfg.title} subtitle={cfg.desc} badge="Topic" onClose={onClose}>
       {loading ? (
-        <div className="flex items-center justify-center flex-1 font-mono" style={{ color:"#7d8590", fontSize:11 }}>Loading…</div>
+        <div className="flex items-center justify-center flex-1 font-mono" style={{ color:"#64748b", fontSize:11 }}>Loading…</div>
       ) : (
         <>
           <div className="grid mb-3" style={{ gridTemplateColumns:"1fr 1fr", gap:6 }}>
@@ -5223,11 +5225,11 @@ function TopicResearchPanel({ item, onClose, onOpen }) {
               return (
                 <button key={m.id} onClick={() => onOpen({ id:m.id, label:m.label, type:"macro", series:m.series, category:"Macro" })}
                   className="text-left p-2"
-                  style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:10, cursor:"pointer", transition:"border-color 0.15s" }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"}
-                  onMouseLeave={e => e.currentTarget.style.borderColor="#21262d"}>
-                  <div className="font-mono" style={{ color:"#7d8590", fontSize:9, textTransform:"uppercase" }}>{m.label}</div>
-                  <div className="font-mono font-bold" style={{ color:"#bc8cff", fontSize:16 }}>
+                  style={{ background:"#f8fafc", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, cursor:"pointer", transition:"border-color 0.15s" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor="#e2e8f0"}>
+                  <div className="font-mono" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase" }}>{m.label}</div>
+                  <div className="font-mono font-bold" style={{ color:"#7c3aed", fontSize:16 }}>
                     {d?.latest != null ? d.latest.toFixed(2) : "—"}
                   </div>
                   {mom != null && (
@@ -5239,14 +5241,14 @@ function TopicResearchPanel({ item, onClose, onOpen }) {
               );
             })}
           </div>
-          <div style={{ borderTop:"1px solid rgba(99,110,123,0.12)", paddingTop:8, marginBottom:4 }}>
-            <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Related Assets</div>
+          <div style={{ borderTop:"1px solid rgba(15,23,42,0.09)", paddingTop:8, marginBottom:4 }}>
+            <div className="font-mono mb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Related Assets</div>
             <div className="flex flex-wrap gap-1.5">
               {cfg.assets.map(a => (
                 <button key={a.id} onClick={() => onOpen(a)} className="font-mono"
-                  style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:6, padding:"3px 8px", fontSize:11, color:RB_TYPE_COLOR[a.type]||"#7d8590", cursor:"pointer" }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"}
-                  onMouseLeave={e => e.currentTarget.style.borderColor="#21262d"}>
+                  style={{ background:"#f8fafc", border:"1px solid rgba(15,23,42,0.12)", borderRadius:6, padding:"3px 8px", fontSize:11, color:RB_TYPE_COLOR[a.type]||"#64748b", cursor:"pointer" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor="#e2e8f0"}>
                   {a.label}
                 </button>
               ))}
@@ -5277,20 +5279,20 @@ function ResearchPanel({ item, onClose, onOpen }) {
 }
 
 const HOME_TILES = [
-  { heading:"Macro",       color:"#bc8cff", ids:["FEDFUNDS","DGS10","T10Y2Y","CPIAUCSL","UNRATE"] },
-  { heading:"Equities",    color:"#58a6ff", ids:["SPY","QQQ","AAPL","NVDA","TSLA"] },
-  { heading:"Commodities", color:"#e3b341", ids:["GC=F","CL=F","SI=F","HG=F","NG=F"] },
-  { heading:"FX",          color:"#3fb950", ids:["EURUSD=X","DX=F","GBPUSD=X","USDJPY=X","USDCNY=X"] },
-  { heading:"Banks",       color:"#58a6ff", ids:["JPM","GS","BAC","MS","C"] },
-  { heading:"Topics",      color:"#f0883e", ids:["topic-inflation","topic-rates","topic-energy","topic-credit"] },
+  { heading:"Macro",       color:"#7c3aed", ids:["FEDFUNDS","DGS10","T10Y2Y","CPIAUCSL","UNRATE"] },
+  { heading:"Equities",    color:"#2563eb", ids:["SPY","QQQ","AAPL","NVDA","TSLA"] },
+  { heading:"Commodities", color:"#b45309", ids:["GC=F","CL=F","SI=F","HG=F","NG=F"] },
+  { heading:"FX",          color:"#059669", ids:["EURUSD=X","DX=F","GBPUSD=X","USDJPY=X","USDCNY=X"] },
+  { heading:"Banks",       color:"#2563eb", ids:["JPM","GS","BAC","MS","C"] },
+  { heading:"Topics",      color:"#ea580c", ids:["topic-inflation","topic-rates","topic-energy","topic-credit"] },
 ];
 
 function ResearchHomeDashboard({ onOpen }) {
   const byId = Object.fromEntries(RESEARCH_CATALOG.map(c => [c.id, c]));
   return (
     <div>
-      <div className="font-mono mb-4" style={{ color:"#484f58", fontSize:11 }}>
-        Search above to open research panels — or start from a quick-access tile below. Press <span style={{ color:"#7d8590" }}>/</span> to focus the search bar.
+      <div className="font-mono mb-4" style={{ color:"#64748b", fontSize:11 }}>
+        Search above to open research panels — or start from a quick-access tile below. Press <span style={{ color:"#64748b" }}>/</span> to focus the search bar.
       </div>
       <div className="grid gap-4" style={{ gridTemplateColumns:"repeat(auto-fill, minmax(260px, 1fr))" }}>
         {HOME_TILES.map(({ heading, color, ids }) => (
@@ -5302,11 +5304,11 @@ function ResearchHomeDashboard({ onOpen }) {
                 if (!item) return null;
                 return (
                   <button key={id} onClick={() => onOpen(item)} className="text-left font-mono px-2 py-1.5"
-                    style={{ background:"transparent", border:"1px solid rgba(99,110,123,0.18)", borderRadius:10, color:"#e6edf3", fontSize:12, cursor:"pointer", transition:"all 0.15s" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"; e.currentTarget.style.background="#0d1117"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor="#21262d"; e.currentTarget.style.background="transparent"; }}>
+                    style={{ background:"transparent", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, color:"#0f172a", fontSize:12, cursor:"pointer", transition:"all 0.15s" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"; e.currentTarget.style.background="#f8fafc"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor="#e2e8f0"; e.currentTarget.style.background="transparent"; }}>
                     <span style={{ color }}>{item.label}</span>
-                    <span style={{ color:"#484f58", marginLeft:8, fontSize:10 }}>{item.id}</span>
+                    <span style={{ color:"#64748b", marginLeft:8, fontSize:10 }}>{item.id}</span>
                   </button>
                 );
               })}
@@ -5396,31 +5398,31 @@ function ResearchBrowser({ pendingItem, onPendingConsumed }) {
   return (
     <div className="flex flex-col flex-1" style={{ height:"calc(100vh - 90px)", overflow:"hidden" }}>
       {/* ── Search bar ── */}
-      <div className="px-4 py-3" style={{ borderBottom:"1px solid rgba(99,110,123,0.12)", background:"#010409", flexShrink:0 }}>
+      <div className="px-4 py-3" style={{ borderBottom:"1px solid rgba(15,23,42,0.09)", background:"#f8fafc", flexShrink:0 }}>
         <div style={{ position:"relative", maxWidth:680 }}>
           <div className="flex items-center gap-2 px-3 py-2"
-            style={{ background:"#161b22", border:"1px solid " + (searchFocused ? "#1f6feb" : "#30363d"), borderRadius:6 }}
+            style={{ background:"#ffffff", border:"1px solid " + (searchFocused ? "#2563eb" : "#cbd5e1"), borderRadius:6 }}
             onFocusCapture={() => setSearchFocused(true)}
             onBlurCapture={() => setSearchFocused(false)}>
-            <Search size={13} style={{ color:"#7d8590", flexShrink:0 }} />
+            <Search size={13} style={{ color:"#64748b", flexShrink:0 }} />
             <input ref={searchRef} value={query}
               onChange={e => { setQuery(e.target.value); setSuggestionIdx(-1); }}
               onKeyDown={handleKeyDown}
               placeholder="Search equities, commodities, FX, macro indicators, topics… (press / to focus)"
-              style={{ background:"transparent", border:"none", color:"#e6edf3", fontSize:12, flex:1, outline:"none", minWidth:0 }} />
+              style={{ background:"transparent", border:"none", color:"#0f172a", fontSize:12, flex:1, outline:"none", minWidth:0 }} />
             {query && (
               <button onClick={() => { setQuery(""); setSuggestions([]); setSuggestionIdx(-1); searchRef.current?.focus(); }}
-                style={{ color:"#7d8590", background:"none", border:"none", cursor:"pointer", flexShrink:0, fontSize:12 }}>✕</button>
+                style={{ color:"#64748b", background:"none", border:"none", cursor:"pointer", flexShrink:0, fontSize:12 }}>✕</button>
             )}
-            <span className="font-mono" style={{ color:"#484f58", fontSize:9, flexShrink:0 }}>/</span>
+            <span className="font-mono" style={{ color:"#64748b", fontSize:9, flexShrink:0 }}>/</span>
           </div>
 
           {/* Dropdown */}
           {suggestions.length > 0 && (
-            <div style={{ position:"absolute", top:"calc(100% + 4px)", left:0, right:0, background:"#161b22", border:"1px solid #30363d", borderRadius:6, zIndex:200, boxShadow:"0 12px 32px rgba(0,0,0,0.6)", overflow:"hidden" }}>
+            <div style={{ position:"absolute", top:"calc(100% + 4px)", left:0, right:0, background:"#ffffff", border:"1px solid #30363d", borderRadius:6, zIndex:200, boxShadow:"0 12px 32px rgba(0,0,0,0.6)", overflow:"hidden" }}>
               {Object.entries(grouped).map(([cat, items]) => (
                 <div key={cat}>
-                  <div style={{ padding:"5px 12px 2px", color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.1em", background:"#0d1117" }}>{cat}</div>
+                  <div style={{ padding:"5px 12px 2px", color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.1em", background:"#f8fafc" }}>{cat}</div>
                   {items.map(item => {
                     const idx = suggestions.indexOf(item);
                     const active = idx === suggestionIdx;
@@ -5428,12 +5430,12 @@ function ResearchBrowser({ pendingItem, onPendingConsumed }) {
                       <div key={item.id}
                         onClick={() => openPanel(item)}
                         onMouseEnter={() => setSuggestionIdx(idx)}
-                        style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"7px 12px", cursor:"pointer", background:active?"#1f2937":"transparent", borderLeft:active?"2px solid #1f6feb":"2px solid transparent" }}>
+                        style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"7px 12px", cursor:"pointer", background:active?"#f1f5f9":"transparent", borderLeft:active?"2px solid #1f6feb":"2px solid transparent" }}>
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-mono font-bold" style={{ color:RB_TYPE_COLOR[item.type]||"#7d8590", fontSize:11, width:80, flexShrink:0 }}>{item.id}</span>
-                          <span className="font-mono truncate" style={{ color:"#e6edf3", fontSize:12 }}>{item.label}</span>
+                          <span className="font-mono font-bold" style={{ color:RB_TYPE_COLOR[item.type]||"#64748b", fontSize:11, width:80, flexShrink:0 }}>{item.id}</span>
+                          <span className="font-mono truncate" style={{ color:"#0f172a", fontSize:12 }}>{item.label}</span>
                         </div>
-                        <span className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", marginLeft:8, flexShrink:0 }}>{item.type}</span>
+                        <span className="font-mono" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", marginLeft:8, flexShrink:0 }}>{item.type}</span>
                       </div>
                     );
                   })}
@@ -5447,12 +5449,12 @@ function ResearchBrowser({ pendingItem, onPendingConsumed }) {
         <div className="flex items-center gap-2 mt-2 flex-wrap">
           {recentSearches.length > 0 && !query && (
             <>
-              <span className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>Recent:</span>
+              <span className="font-mono" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase" }}>Recent:</span>
               {recentSearches.map(r => (
                 <button key={r.id} onClick={() => openPanel(r)} className="font-mono"
-                  style={{ background:"#161b22", border:"1px solid rgba(99,110,123,0.18)", borderRadius:6, padding:"2px 8px", color:RB_TYPE_COLOR[r.type]||"#7d8590", fontSize:10, cursor:"pointer" }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"}
-                  onMouseLeave={e => e.currentTarget.style.borderColor="#21262d"}>
+                  style={{ background:"#ffffff", border:"1px solid rgba(15,23,42,0.12)", borderRadius:6, padding:"2px 8px", color:RB_TYPE_COLOR[r.type]||"#64748b", fontSize:10, cursor:"pointer" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor="#e2e8f0"}>
                   {r.label}
                 </button>
               ))}
@@ -5460,7 +5462,7 @@ function ResearchBrowser({ pendingItem, onPendingConsumed }) {
           )}
           {panels.length > 0 && (
             <button onClick={() => setPanels([])} className="font-mono ml-auto"
-              style={{ color:"#f85149", background:"none", border:"none", cursor:"pointer", fontSize:10 }}>
+              style={{ color:"#e11d48", background:"none", border:"none", cursor:"pointer", fontSize:10 }}>
               Close all ({panels.length})
             </button>
           )}
@@ -5571,13 +5573,13 @@ function PortfolioTracker() {
   const totalPnlPct = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0;
 
   const summaryCards = [
-    { label: "Portfolio Value", value: "$" + totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), color: "#e6edf3" },
+    { label: "Portfolio Value", value: "$" + totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), color: "#0f172a" },
     { label: "Today's P&L", value: (dayPnlTotal >= 0 ? "+" : "") + "$" + Math.abs(dayPnlTotal).toFixed(2), color: clr(dayPnlTotal) },
     { label: "Total P&L", value: (totalPnl >= 0 ? "+" : "") + "$" + Math.abs(totalPnl).toFixed(2), color: clr(totalPnl) },
-    { label: "Total Return", value: totalCost > 0 ? fmt.pct(totalPnlPct) : "—", color: totalCost > 0 ? clr(totalPnlPct) : "#7d8590" },
+    { label: "Total Return", value: totalCost > 0 ? fmt.pct(totalPnlPct) : "—", color: totalCost > 0 ? clr(totalPnlPct) : "#64748b" },
   ];
 
-  const inputStyle = { background: "#0d1117", border: "1px solid #30363d", borderRadius: 10, color: "#e6edf3", fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, padding: "6px 8px", width: "100%" };
+  const inputStyle = { background: "#f8fafc", border: "1px solid #30363d", borderRadius: 10, color: "#0f172a", fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, padding: "6px 8px", width: "100%" };
 
   return (
     <div className="flex flex-col flex-1" style={{ height: "calc(100vh - 90px)", overflow: "hidden" }}>
@@ -5585,7 +5587,7 @@ function PortfolioTracker() {
       <div className="grid gap-2 p-2" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
         {summaryCards.map(({ label, value, color }) => (
           <div key={label} className="terminal-panel p-3">
-            <div className="text-xs font-mono" style={{ color: "#7d8590", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 10 }}>{label}</div>
+            <div className="text-xs font-mono" style={{ color: "#64748b", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 10 }}>{label}</div>
             <div className="font-mono font-bold mt-1" style={{ color, fontSize: 18 }}>{value}</div>
           </div>
         ))}
@@ -5599,13 +5601,13 @@ function PortfolioTracker() {
             <span className="terminal-header">💼 Holdings ({holdings.length})</span>
             <button onClick={refreshQuotes} disabled={loadingQuotes}
               className="text-xs font-mono px-2 py-1"
-              style={{ border: "1px solid #30363d", borderRadius: 10, background: "transparent", color: loadingQuotes ? "#7d8590" : "#58a6ff", cursor: loadingQuotes ? "wait" : "pointer" }}>
+              style={{ border: "1px solid #30363d", borderRadius: 10, background: "transparent", color: loadingQuotes ? "#64748b" : "#2563eb", cursor: loadingQuotes ? "wait" : "pointer" }}>
               {loadingQuotes ? "⟳ Updating..." : "⟳ Refresh"}
             </button>
           </div>
 
           {holdings.length === 0 ? (
-            <div className="flex flex-col items-center justify-center flex-1" style={{ color: "#7d8590" }}>
+            <div className="flex flex-col items-center justify-center flex-1" style={{ color: "#64748b" }}>
               <div className="text-xs font-mono text-center">No positions yet.</div>
               <div className="text-xs font-mono text-center mt-1">Add holdings using the form on the right.</div>
             </div>
@@ -5615,7 +5617,7 @@ function PortfolioTracker() {
                 <tr style={{ borderBottom: "1px solid #30363d" }}>
                   {["Ticker", "Shares", "Avg Cost", "Price", "Mkt Value", "P&L ($)", "Return", "Day Chg", ""].map(h => (
                     <th key={h} className="text-left px-2 py-2"
-                      style={{ color: "#7d8590", fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
+                      style={{ color: "#64748b", fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -5631,29 +5633,29 @@ function PortfolioTracker() {
                   return (
                     <tr key={h.ticker} className="holding-row" style={{ borderBottom: "1px solid #161b22" }}>
                       <td className="px-2 py-2">
-                        <div className="font-mono font-bold" style={{ color: "#58a6ff", fontSize: 12 }}>{h.ticker}</div>
-                        <div className="font-mono" style={{ color: "#7d8590", fontSize: 10 }}>{alloc.toFixed(1)}%</div>
+                        <div className="font-mono font-bold" style={{ color: "#2563eb", fontSize: 12 }}>{h.ticker}</div>
+                        <div className="font-mono" style={{ color: "#64748b", fontSize: 10 }}>{alloc.toFixed(1)}%</div>
                       </td>
-                      <td className="px-2 py-2 font-mono" style={{ color: "#e6edf3", fontSize: 12 }}>{h.shares.toLocaleString()}</td>
-                      <td className="px-2 py-2 font-mono" style={{ color: "#e6edf3", fontSize: 12 }}>${fmt.price(h.avgCost)}</td>
-                      <td className="px-2 py-2 font-mono" style={{ color: price !== null ? "#e6edf3" : "#7d8590", fontSize: 12 }}>
+                      <td className="px-2 py-2 font-mono" style={{ color: "#0f172a", fontSize: 12 }}>{h.shares.toLocaleString()}</td>
+                      <td className="px-2 py-2 font-mono" style={{ color: "#0f172a", fontSize: 12 }}>${fmt.price(h.avgCost)}</td>
+                      <td className="px-2 py-2 font-mono" style={{ color: price !== null ? "#0f172a" : "#64748b", fontSize: 12 }}>
                         {price !== null ? "$" + fmt.price(price) : loadingQuotes ? "…" : "—"}
                       </td>
-                      <td className="px-2 py-2 font-mono" style={{ color: "#e6edf3", fontSize: 12 }}>
+                      <td className="px-2 py-2 font-mono" style={{ color: "#0f172a", fontSize: 12 }}>
                         {mktValue !== null ? "$" + mktValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
                       </td>
-                      <td className="px-2 py-2 font-mono" style={{ color: pnl !== null ? clr(pnl) : "#7d8590", fontSize: 12 }}>
+                      <td className="px-2 py-2 font-mono" style={{ color: pnl !== null ? clr(pnl) : "#64748b", fontSize: 12 }}>
                         {pnl !== null ? (pnl >= 0 ? "+" : "") + "$" + Math.abs(pnl).toFixed(2) : "—"}
                       </td>
-                      <td className="px-2 py-2 font-mono" style={{ color: pnlPct !== null ? clr(pnlPct) : "#7d8590", fontSize: 12 }}>
+                      <td className="px-2 py-2 font-mono" style={{ color: pnlPct !== null ? clr(pnlPct) : "#64748b", fontSize: 12 }}>
                         {pnlPct !== null ? fmt.pct(pnlPct) : "—"}
                       </td>
-                      <td className="px-2 py-2 font-mono" style={{ color: q?.changePct != null ? clr(q.changePct) : "#7d8590", fontSize: 12 }}>
+                      <td className="px-2 py-2 font-mono" style={{ color: q?.changePct != null ? clr(q.changePct) : "#64748b", fontSize: 12 }}>
                         {q?.changePct != null ? fmt.pct(q.changePct) : "—"}
                       </td>
                       <td className="px-2 py-2">
                         <button onClick={() => removeHolding(h.ticker)}
-                          style={{ color: "#f85149", background: "none", border: "none", cursor: "pointer", fontSize: 14, lineHeight: 1 }}>✕</button>
+                          style={{ color: "#e11d48", background: "none", border: "none", cursor: "pointer", fontSize: 14, lineHeight: 1 }}>✕</button>
                       </td>
                     </tr>
                   );
@@ -5662,8 +5664,8 @@ function PortfolioTracker() {
               {holdings.length > 1 && (
                 <tfoot>
                   <tr style={{ borderTop: "1px solid #30363d" }}>
-                    <td className="px-2 py-2 font-mono font-bold" style={{ color: "#7d8590", fontSize: 11 }} colSpan={4}>TOTAL</td>
-                    <td className="px-2 py-2 font-mono font-bold" style={{ color: "#e6edf3", fontSize: 12 }}>
+                    <td className="px-2 py-2 font-mono font-bold" style={{ color: "#64748b", fontSize: 11 }} colSpan={4}>TOTAL</td>
+                    <td className="px-2 py-2 font-mono font-bold" style={{ color: "#0f172a", fontSize: 12 }}>
                       ${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                     <td className="px-2 py-2 font-mono font-bold" style={{ color: clr(totalPnl), fontSize: 12 }}>
@@ -5687,14 +5689,14 @@ function PortfolioTracker() {
             <div className="terminal-header mb-3">+ Add / Update Position</div>
             <div className="flex flex-col gap-2">
               <div>
-                <div className="font-mono mb-1" style={{ color: "#7d8590", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>Ticker</div>
+                <div className="font-mono mb-1" style={{ color: "#64748b", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>Ticker</div>
                 <input className="pf-input" value={form.ticker}
                   onChange={e => setForm(f => ({ ...f, ticker: e.target.value.toUpperCase() }))}
                   onKeyDown={e => e.key === "Enter" && document.getElementById("pf-shares")?.focus()}
                   placeholder="AAPL" style={inputStyle} />
               </div>
               <div>
-                <div className="font-mono mb-1" style={{ color: "#7d8590", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>Shares</div>
+                <div className="font-mono mb-1" style={{ color: "#64748b", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>Shares</div>
                 <input id="pf-shares" className="pf-input" type="number" min="0" step="any"
                   value={form.shares}
                   onChange={e => setForm(f => ({ ...f, shares: e.target.value }))}
@@ -5702,20 +5704,20 @@ function PortfolioTracker() {
                   placeholder="100" style={inputStyle} />
               </div>
               <div>
-                <div className="font-mono mb-1" style={{ color: "#7d8590", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>Avg Cost / Share ($)</div>
+                <div className="font-mono mb-1" style={{ color: "#64748b", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>Avg Cost / Share ($)</div>
                 <input id="pf-cost" className="pf-input" type="number" min="0" step="any"
                   value={form.avgCost}
                   onChange={e => setForm(f => ({ ...f, avgCost: e.target.value }))}
                   onKeyDown={e => e.key === "Enter" && addHolding()}
                   placeholder="150.00" style={inputStyle} />
               </div>
-              {formError && <div className="font-mono" style={{ color: "#f85149", fontSize: 11 }}>{formError}</div>}
+              {formError && <div className="font-mono" style={{ color: "#e11d48", fontSize: 11 }}>{formError}</div>}
               <button onClick={addHolding}
                 className="font-mono font-semibold py-2 mt-1"
-                style={{ background: "#1f6feb", border: "none", borderRadius: 10, color: "#fff", cursor: "pointer", fontSize: 12, letterSpacing: "0.05em" }}>
+                style={{ background: "#2563eb", border: "none", borderRadius: 10, color: "#fff", cursor: "pointer", fontSize: 12, letterSpacing: "0.05em" }}>
                 ADD POSITION
               </button>
-              <div className="font-mono" style={{ color: "#484f58", fontSize: 10 }}>
+              <div className="font-mono" style={{ color: "#64748b", fontSize: 10 }}>
                 Adding an existing ticker averages your cost basis.
               </div>
             </div>
@@ -5738,13 +5740,13 @@ function PortfolioTracker() {
                   return (
                     <div key={h.ticker} className="mb-3">
                       <div className="flex justify-between font-mono mb-1" style={{ fontSize: 11 }}>
-                        <span style={{ color: "#e6edf3" }}>{h.ticker}</span>
-                        <span style={{ color: q?.changePct != null ? clr(q.changePct) : "#7d8590" }}>
+                        <span style={{ color: "#0f172a" }}>{h.ticker}</span>
+                        <span style={{ color: q?.changePct != null ? clr(q.changePct) : "#64748b" }}>
                           {pct.toFixed(1)}%
                         </span>
                       </div>
-                      <div style={{ background: "#21262d", borderRadius: 2, height: 4 }}>
-                        <div style={{ width: pct + "%", height: "100%", background: "#1f6feb", borderRadius: 2, transition: "width 0.4s ease" }} />
+                      <div style={{ background: "#e2e8f0", borderRadius: 2, height: 4 }}>
+                        <div style={{ width: pct + "%", height: "100%", background: "#2563eb", borderRadius: 2, transition: "width 0.4s ease" }} />
                       </div>
                     </div>
                   );
@@ -5787,7 +5789,7 @@ function MarketSessionBadges() {
         const closeMins = s.close.h * 60 + s.close.m;
         const isOpen = localMins >= openMins && localMins < closeMins;
         return (
-          <span key={s.name} className="font-mono" style={{ color: isOpen ? "#3fb950" : "#484f58", fontSize:9 }}>
+          <span key={s.name} className="font-mono" style={{ color: isOpen ? "#059669" : "#64748b", fontSize:9 }}>
             {s.flag} {s.name} {isOpen ? "●" : "○"}
           </span>
         );
@@ -5802,7 +5804,7 @@ function MarketSessionBadges() {
 
 const COUNTRY_CONFIG = {
   CA: {
-    id:"CA", name:"Canada", flag:"🇨🇦", region:"North America", accentColor:"#f85149",
+    id:"CA", name:"Canada", flag:"🇨🇦", region:"North America", accentColor:"#e11d48",
     fxTicker:"CADUSD=X",
     indices:[{ label:"TSX Composite", ticker:"^GSPTSE" },{ label:"TSX 60 ETF", ticker:"XIU.TO" }],
     macro:[
@@ -5831,7 +5833,7 @@ const COUNTRY_CONFIG = {
     },
   },
   UK: {
-    id:"UK", name:"United Kingdom", flag:"🇬🇧", region:"Europe", accentColor:"#58a6ff",
+    id:"UK", name:"United Kingdom", flag:"🇬🇧", region:"Europe", accentColor:"#2563eb",
     fxTicker:"GBPUSD=X",
     indices:[{ label:"FTSE 100", ticker:"^FTSE" },{ label:"FTSE 250", ticker:"^FTMC" }],
     macro:[
@@ -5859,7 +5861,7 @@ const COUNTRY_CONFIG = {
     },
   },
   JP: {
-    id:"JP", name:"Japan", flag:"🇯🇵", region:"Asia-Pacific", accentColor:"#f0883e",
+    id:"JP", name:"Japan", flag:"🇯🇵", region:"Asia-Pacific", accentColor:"#ea580c",
     fxTicker:"USDJPY=X",
     indices:[{ label:"Nikkei 225", ticker:"^N225" },{ label:"TOPIX", ticker:"^TOPX" }],
     macro:[
@@ -5887,7 +5889,7 @@ const COUNTRY_CONFIG = {
     },
   },
   IN: {
-    id:"IN", name:"India", flag:"🇮🇳", region:"Asia-Pacific", accentColor:"#3fb950",
+    id:"IN", name:"India", flag:"🇮🇳", region:"Asia-Pacific", accentColor:"#059669",
     fxTicker:"INRUSD=X",
     indices:[{ label:"Nifty 50", ticker:"^NSEI" },{ label:"BSE Sensex", ticker:"^BSESN" }],
     macro:[
@@ -5912,7 +5914,7 @@ const COUNTRY_CONFIG = {
     },
   },
   CN: {
-    id:"CN", name:"China", flag:"🇨🇳", region:"Asia-Pacific", accentColor:"#f85149",
+    id:"CN", name:"China", flag:"🇨🇳", region:"Asia-Pacific", accentColor:"#e11d48",
     fxTicker:"CNYUSD=X",
     indices:[{ label:"Hang Seng", ticker:"^HSI" },{ label:"SSE Composite", ticker:"000001.SS" }],
     macro:[
@@ -5937,7 +5939,7 @@ const COUNTRY_CONFIG = {
     },
   },
   EU: {
-    id:"EU", name:"Eurozone", flag:"🇪🇺", region:"Europe", accentColor:"#bc8cff",
+    id:"EU", name:"Eurozone", flag:"🇪🇺", region:"Europe", accentColor:"#7c3aed",
     fxTicker:"EURUSD=X",
     indices:[{ label:"EURO STOXX 50", ticker:"^STOXX50E" },{ label:"DAX 40", ticker:"^GDAXI" },{ label:"CAC 40", ticker:"^FCHI" }],
     macro:[
@@ -6060,26 +6062,26 @@ function CountryDashboard({ country, onOpenResearch }) {
         <div className="flex items-center gap-3">
           <span style={{ fontSize:32 }}>{country.flag}</span>
           <div>
-            <div className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:20 }}>{country.name}</div>
-            <div className="font-mono" style={{ color:"#484f58", fontSize:10 }}>{country.region}</div>
+            <div className="font-mono font-bold" style={{ color:"#0f172a", fontSize:20 }}>{country.name}</div>
+            <div className="font-mono" style={{ color:"#64748b", fontSize:10 }}>{country.region}</div>
           </div>
         </div>
         <div className="flex items-center gap-6">
           {mainD && (
             <div className="text-right">
-              <div className="font-mono" style={{ color:"#484f58", fontSize:9 }}>{mainIdx.label}</div>
-              <div className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:18 }}>{fmtPx(mainD.price)}</div>
+              <div className="font-mono" style={{ color:"#64748b", fontSize:9 }}>{mainIdx.label}</div>
+              <div className="font-mono font-bold" style={{ color:"#0f172a", fontSize:18 }}>{fmtPx(mainD.price)}</div>
               {mainD.changePct != null && <div className="font-mono" style={{ color:clr(mainD.changePct), fontSize:11 }}>1D {fmt.pct(mainD.changePct)}</div>}
             </div>
           )}
           {fxData && (
             <div className="text-right" style={{ borderLeft:"1px solid #21262d", paddingLeft:16 }}>
-              <div className="font-mono" style={{ color:"#484f58", fontSize:9 }}>{country.fxTicker.replace("=X","")}</div>
-              <div className="font-mono font-bold" style={{ color:"#3fb950", fontSize:18 }}>{fmtPx(fxData.price, fxDp)}</div>
+              <div className="font-mono" style={{ color:"#64748b", fontSize:9 }}>{country.fxTicker.replace("=X","")}</div>
+              <div className="font-mono font-bold" style={{ color:"#059669", fontSize:18 }}>{fmtPx(fxData.price, fxDp)}</div>
               {fxData.changePct != null && <div className="font-mono" style={{ color:clr(fxData.changePct), fontSize:11 }}>1D {fmt.pct(fxData.changePct)}</div>}
             </div>
           )}
-          {loadingIdx && !mainD && <div className="font-mono" style={{ color:"#484f58", fontSize:11 }}>Loading…</div>}
+          {loadingIdx && !mainD && <div className="font-mono" style={{ color:"#64748b", fontSize:11 }}>Loading…</div>}
         </div>
       </div>
 
@@ -6090,23 +6092,23 @@ function CountryDashboard({ country, onOpenResearch }) {
 
           {/* All Indices */}
           <div className="terminal-panel p-3">
-            <div className="font-mono mb-3" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Market Indices</div>
-            <div style={{ borderTop:"1px solid rgba(99,110,123,0.12)" }}>
+            <div className="font-mono mb-3" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Market Indices</div>
+            <div style={{ borderTop:"1px solid rgba(15,23,42,0.09)" }}>
               {country.indices.map(idx => {
                 const d = indexData[idx.ticker];
                 return (
-                  <div key={idx.ticker} className="flex items-center justify-between py-2" style={{ borderBottom:"1px solid rgba(99,110,123,0.07)" }}>
+                  <div key={idx.ticker} className="flex items-center justify-between py-2" style={{ borderBottom:"1px solid rgba(15,23,42,0.06)" }}>
                     <div>
-                      <div className="font-mono" style={{ color:"#e6edf3", fontSize:11 }}>{idx.label}</div>
-                      <div className="font-mono" style={{ color:"#484f58", fontSize:9 }}>{idx.ticker}</div>
+                      <div className="font-mono" style={{ color:"#0f172a", fontSize:11 }}>{idx.label}</div>
+                      <div className="font-mono" style={{ color:"#64748b", fontSize:9 }}>{idx.ticker}</div>
                     </div>
                     <div className="text-right">
                       {d ? (
                         <>
-                          <div className="font-mono font-bold" style={{ color:"#e6edf3", fontSize:13 }}>{fmtPx(d.price)}</div>
+                          <div className="font-mono font-bold" style={{ color:"#0f172a", fontSize:13 }}>{fmtPx(d.price)}</div>
                           {d.changePct != null && <div className="font-mono" style={{ color:clr(d.changePct), fontSize:10 }}>{fmt.pct(d.changePct)}</div>}
                         </>
-                      ) : <div className="font-mono" style={{ color:"#484f58", fontSize:10 }}>—</div>}
+                      ) : <div className="font-mono" style={{ color:"#64748b", fontSize:10 }}>—</div>}
                     </div>
                   </div>
                 );
@@ -6117,7 +6119,7 @@ function CountryDashboard({ country, onOpenResearch }) {
           {/* Economy */}
           {country.macro?.length > 0 && (
             <div className="terminal-panel p-3">
-              <div className="font-mono mb-3" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Economy</div>
+              <div className="font-mono mb-3" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Economy</div>
               <div className="grid gap-2" style={{ gridTemplateColumns:"1fr 1fr" }}>
                 {country.macro.map(m => {
                   const d = macroData[m.series];
@@ -6126,15 +6128,15 @@ function CountryDashboard({ country, onOpenResearch }) {
                     <button key={m.series}
                       onClick={() => onOpenResearch({ id:m.series, label:m.label, type:"macro", series:m.series, category:"Macro" })}
                       className="text-left p-2"
-                      style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:10, cursor:"pointer" }}
-                      onMouseEnter={e => e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"}
-                      onMouseLeave={e => e.currentTarget.style.borderColor="#21262d"}>
-                      <div className="font-mono" style={{ color:"#7d8590", fontSize:9, textTransform:"uppercase" }}>{m.label}</div>
-                      <div className="font-mono font-bold" style={{ color:"#bc8cff", fontSize:18 }}>
+                      style={{ background:"#f8fafc", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, cursor:"pointer" }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"}
+                      onMouseLeave={e => e.currentTarget.style.borderColor="#e2e8f0"}>
+                      <div className="font-mono" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase" }}>{m.label}</div>
+                      <div className="font-mono font-bold" style={{ color:"#7c3aed", fontSize:18 }}>
                         {d?.latest != null ? d.latest.toFixed(2) : "—"}
                       </div>
                       {mom != null && <div className="font-mono" style={{ color:clr(mom), fontSize:9 }}>{mom>=0?"+":""}{mom.toFixed(2)} chg</div>}
-                      {d?.date && <div className="font-mono" style={{ color:"#484f58", fontSize:9 }}>{d.date}</div>}
+                      {d?.date && <div className="font-mono" style={{ color:"#64748b", fontSize:9 }}>{d.date}</div>}
                     </button>
                   );
                 })}
@@ -6144,20 +6146,20 @@ function CountryDashboard({ country, onOpenResearch }) {
 
           {/* Commodity Exposure */}
           <div className="terminal-panel p-3">
-            <div className="font-mono mb-3" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Commodity Exposure</div>
+            <div className="font-mono mb-3" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Commodity Exposure</div>
             <div className="flex flex-col gap-1.5">
               {country.keyComms.map(c => (
                 <button key={c.id}
                   onClick={() => onOpenResearch({ id:c.id, label:c.label, type:"commodity", ticker:c.id, category:"Commodities" })}
                   className="flex items-center justify-between py-2 px-2 text-left"
-                  style={{ background:"#0d1117", border:"1px solid rgba(99,110,123,0.18)", borderRadius:10, cursor:"pointer" }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"}
-                  onMouseLeave={e => e.currentTarget.style.borderColor="#21262d"}>
+                  style={{ background:"#f8fafc", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, cursor:"pointer" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor="#e2e8f0"}>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono" style={{ color:"#e3b341", fontSize:11 }}>{c.label}</span>
-                    <span className="font-mono" style={{ color:"#484f58", fontSize:9 }}>{c.id}</span>
+                    <span className="font-mono" style={{ color:"#b45309", fontSize:11 }}>{c.label}</span>
+                    <span className="font-mono" style={{ color:"#64748b", fontSize:9 }}>{c.id}</span>
                   </div>
-                  <span className="font-mono" style={{ color:"#7d8590", fontSize:9 }}>{c.note}</span>
+                  <span className="font-mono" style={{ color:"#64748b", fontSize:9 }}>{c.note}</span>
                 </button>
               ))}
             </div>
@@ -6169,28 +6171,28 @@ function CountryDashboard({ country, onOpenResearch }) {
 
           {/* Key Companies */}
           <div className="terminal-panel p-3">
-            <div className="font-mono mb-3" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Companies</div>
-            <div style={{ borderTop:"1px solid rgba(99,110,123,0.12)" }}>
+            <div className="font-mono mb-3" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Companies</div>
+            <div style={{ borderTop:"1px solid rgba(15,23,42,0.09)" }}>
               {country.topStocks.map(s => {
                 const d = stockData[s.ticker];
                 return (
                   <button key={s.ticker}
                     onClick={() => onOpenResearch({ id:s.ticker, label:s.label, type:"equity", ticker:s.ticker, category:"Equities" })}
                     className="w-full flex items-center justify-between py-2 px-1 text-left"
-                    style={{ borderBottom:"1px solid rgba(99,110,123,0.07)", cursor:"pointer", background:"transparent" }}
-                    onMouseEnter={e => e.currentTarget.style.background="#0d1117"}
+                    style={{ borderBottom:"1px solid rgba(15,23,42,0.06)", cursor:"pointer", background:"transparent" }}
+                    onMouseEnter={e => e.currentTarget.style.background="#f8fafc"}
                     onMouseLeave={e => e.currentTarget.style.background="transparent"}>
                     <div>
-                      <div className="font-mono" style={{ color:"#e6edf3", fontSize:11 }}>{s.label}</div>
-                      <div className="font-mono" style={{ color:"#484f58", fontSize:9 }}>{s.ticker} · {s.sector}</div>
+                      <div className="font-mono" style={{ color:"#0f172a", fontSize:11 }}>{s.label}</div>
+                      <div className="font-mono" style={{ color:"#64748b", fontSize:9 }}>{s.ticker} · {s.sector}</div>
                     </div>
                     <div className="text-right">
                       {d ? (
                         <>
-                          <div className="font-mono" style={{ color:"#e6edf3", fontSize:11 }}>{fmtPx(d.price)}</div>
+                          <div className="font-mono" style={{ color:"#0f172a", fontSize:11 }}>{fmtPx(d.price)}</div>
                           {d.changePct != null && <div className="font-mono" style={{ color:clr(d.changePct), fontSize:10 }}>{fmt.pct(d.changePct)}</div>}
                         </>
-                      ) : <div className="font-mono" style={{ color:"#484f58", fontSize:10 }}>—</div>}
+                      ) : <div className="font-mono" style={{ color:"#64748b", fontSize:10 }}>—</div>}
                     </div>
                   </button>
                 );
@@ -6203,22 +6205,22 @@ function CountryDashboard({ country, onOpenResearch }) {
             <div className="font-mono mb-3" style={{ color:country.accentColor, fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>
               Market Intelligence
             </div>
-            <p className="font-mono mb-4" style={{ color:"#c9d1d9", fontSize:10, lineHeight:1.75 }}>{country.insight.summary}</p>
+            <p className="font-mono mb-4" style={{ color:"#1e293b", fontSize:10, lineHeight:1.75 }}>{country.insight.summary}</p>
             <div className="mb-4">
-              <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>Key Drivers</div>
+              <div className="font-mono mb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase" }}>Key Drivers</div>
               {country.insight.drivers.map((d, i) => (
                 <div key={i} className="flex items-start gap-2 mb-1.5">
                   <span className="font-mono flex-shrink-0" style={{ color:country.accentColor, fontSize:10 }}>▸</span>
-                  <span className="font-mono" style={{ color:"#8b949e", fontSize:10, lineHeight:1.6 }}>{d}</span>
+                  <span className="font-mono" style={{ color:"#475569", fontSize:10, lineHeight:1.6 }}>{d}</span>
                 </div>
               ))}
             </div>
             <div>
-              <div className="font-mono mb-2" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase" }}>Key Risks</div>
+              <div className="font-mono mb-2" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase" }}>Key Risks</div>
               {country.insight.risks.map((r, i) => (
                 <div key={i} className="flex items-start gap-2 mb-1.5">
-                  <span className="font-mono flex-shrink-0" style={{ color:"#f85149", fontSize:10 }}>⚠</span>
-                  <span className="font-mono" style={{ color:"#8b949e", fontSize:10, lineHeight:1.6 }}>{r}</span>
+                  <span className="font-mono flex-shrink-0" style={{ color:"#e11d48", fontSize:10 }}>⚠</span>
+                  <span className="font-mono" style={{ color:"#475569", fontSize:10, lineHeight:1.6 }}>{r}</span>
                 </div>
               ))}
             </div>
@@ -6236,14 +6238,14 @@ function GlobalMarketsModule({ onOpenResearch }) {
   return (
     <div className="flex flex-col flex-1" style={{ overflow:"hidden" }}>
       {/* ── Country selector bar ── */}
-      <div className="flex items-center gap-2 px-4 py-2 flex-wrap" style={{ borderBottom:"1px solid rgba(99,110,123,0.12)", flexShrink:0 }}>
-        <span className="font-mono" style={{ color:"#484f58", fontSize:9, textTransform:"uppercase", marginRight:4 }}>Markets:</span>
+      <div className="flex items-center gap-2 px-4 py-2 flex-wrap" style={{ borderBottom:"1px solid rgba(15,23,42,0.09)", flexShrink:0 }}>
+        <span className="font-mono" style={{ color:"#64748b", fontSize:9, textTransform:"uppercase", marginRight:4 }}>Markets:</span>
         {countries.map(c => (
           <button key={c.id} onClick={() => setSelected(c.id)} className="font-mono"
             style={{
               borderRadius:10, border:"1px solid", padding:"3px 10px", fontSize:10, cursor:"pointer",
-              borderColor: selected===c.id ? c.accentColor : "#21262d",
-              color:        selected===c.id ? c.accentColor : "#7d8590",
+              borderColor: selected===c.id ? c.accentColor : "#e2e8f0",
+              color:        selected===c.id ? c.accentColor : "#64748b",
               background:   selected===c.id ? c.accentColor+"18" : "transparent",
             }}>
             {c.flag} {c.name}
@@ -6276,10 +6278,10 @@ function SidebarNav({ activePage, setActivePage, isOpen, onToggle }) {
       <div>
         {/* Toggle button */}
         <button onClick={onToggle}
-          style={{ width:"100%", padding:"10px 0", background:"none", border:"none", borderBottom:"1px solid rgba(99,110,123,0.10)",
-            color:"#484f58", fontSize:14, cursor:"pointer", transition:"color 0.15s" }}
-          onMouseEnter={e=>e.currentTarget.style.color="#8b949e"}
-          onMouseLeave={e=>e.currentTarget.style.color="#484f58"}>
+          style={{ width:"100%", padding:"10px 0", background:"none", border:"none", borderBottom:"1px solid rgba(15,23,42,0.08)",
+            color:"#64748b", fontSize:14, cursor:"pointer", transition:"color 0.15s" }}
+          onMouseEnter={e=>e.currentTarget.style.color="#475569"}
+          onMouseLeave={e=>e.currentTarget.style.color="#64748b"}>
           {isOpen ? "◂" : "▸"}
         </button>
         {NAV_ITEMS.map(item => (
@@ -6292,7 +6294,7 @@ function SidebarNav({ activePage, setActivePage, isOpen, onToggle }) {
         ))}
       </div>
       {/* Bottom: settings */}
-      <div style={{ borderTop:"1px solid rgba(99,110,123,0.10)" }}>
+      <div style={{ borderTop:"1px solid rgba(15,23,42,0.08)" }}>
         <button className="sidebar-item" onClick={() => setActivePage("settings")}>
           <span className="sidebar-icon">⚙</span>
           <span className="sidebar-label">Settings</span>
@@ -6333,9 +6335,9 @@ function GlobalTopBar({ ticker, setTicker, tapeData, quote, loading }) {
   return (
     <div className="global-topbar">
       {/* Logo */}
-      <div style={{ display:"flex", alignItems:"center", gap:7, flexShrink:0, paddingRight:12, borderRight:"1px solid rgba(99,110,123,0.12)", marginRight:12 }}>
-        <Zap size={13} style={{ color:"#58a6ff" }} />
-        <span style={{ fontFamily:"'Inter',sans-serif", fontWeight:700, fontSize:12, color:"#e6edf3", letterSpacing:"0.12em" }}>OMNES</span>
+      <div style={{ display:"flex", alignItems:"center", gap:7, flexShrink:0, paddingRight:12, borderRight:"1px solid rgba(15,23,42,0.09)", marginRight:12 }}>
+        <Zap size={13} style={{ color:"#2563eb" }} />
+        <span style={{ fontFamily:"'Inter',sans-serif", fontWeight:700, fontSize:12, color:"#0f172a", letterSpacing:"0.12em" }}>OMNES</span>
       </div>
 
       {/* Inline ticker tape */}
@@ -6343,38 +6345,38 @@ function GlobalTopBar({ ticker, setTicker, tapeData, quote, loading }) {
         <div ref={tapeRef} style={{ display:"flex", alignItems:"center", gap:20, whiteSpace:"nowrap", willChange:"transform" }}>
           {tapeItems.map((t, i) => (
             <span key={i} style={{ display:"flex", alignItems:"center", gap:5 }}>
-              <span style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:10, color:"#7d8590" }}>{t.symbol}</span>
-              <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"#e6edf3" }}>${fmt.price(t.price)}</span>
+              <span style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:10, color:"#64748b" }}>{t.symbol}</span>
+              <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"#0f172a" }}>${fmt.price(t.price)}</span>
               <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:clr(t.changePct) }}>
                 {t.changePct >= 0 ? "▲" : "▼"}{Math.abs(t.changePct||0).toFixed(2)}%
               </span>
-              <span style={{ color:"rgba(99,110,123,0.3)", marginLeft:6 }}>|</span>
+              <span style={{ color:"rgba(15,23,42,0.20)", marginLeft:6 }}>|</span>
             </span>
           ))}
         </div>
       </div>
 
       {/* Search */}
-      <div style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 8px", background:"#0d1117",
-          border:"1px solid"+(focused?"rgba(88,166,255,0.45)":"rgba(99,110,123,0.22)"), borderRadius:8,
-          transition:"border-color 0.15s, box-shadow 0.15s", boxShadow:focused?"0 0 0 3px rgba(88,166,255,0.14)":"none",
+      <div style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 8px", background:"#f8fafc",
+          border:"1px solid"+(focused?"rgba(37,99,235,0.40)":"rgba(15,23,42,0.16)"), borderRadius:8,
+          transition:"border-color 0.15s, box-shadow 0.15s", boxShadow:focused?"0 0 0 3px rgba(37,99,235,0.12)":"none",
           marginLeft:12, flexShrink:0, minWidth:180 }}>
-        <Search size={11} style={{ color:"#484f58", flexShrink:0 }} />
+        <Search size={11} style={{ color:"#64748b", flexShrink:0 }} />
         <input value={input}
           onChange={e => setInput(e.target.value.toUpperCase())}
           onKeyDown={e => { if (e.key==="Enter") setTicker(input.trim()); }}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           placeholder="Symbol…"
-          style={{ background:"none", border:"none", outline:"none", width:100, fontSize:11, color:"#e6edf3", fontFamily:"'IBM Plex Mono',monospace" }} />
-        {loading && <span style={{ color:"#484f58", fontSize:9 }}>…</span>}
+          style={{ background:"none", border:"none", outline:"none", width:100, fontSize:11, color:"#0f172a", fontFamily:"'IBM Plex Mono',monospace" }} />
+        {loading && <span style={{ color:"#64748b", fontSize:9 }}>…</span>}
       </div>
 
       {/* Live quote strip */}
       {quote && (
         <div style={{ display:"flex", alignItems:"center", gap:8, marginLeft:12, flexShrink:0 }}>
-          <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:600, fontSize:12, color:"#e6edf3" }}>${fmt.price(quote.c)}</span>
-          <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:up?"#3fb950":"#f85149" }}>
+          <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:600, fontSize:12, color:"#0f172a" }}>${fmt.price(quote.c)}</span>
+          <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:up?"#059669":"#e11d48" }}>
             {up?"+":""}{fmt.price(quote.d)} ({fmt.pct(quote.dp||0)})
           </span>
         </div>
@@ -6393,7 +6395,7 @@ function TopBarClock() {
     return () => clearInterval(iv);
   }, []);
   return (
-    <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"#484f58", marginLeft:12, flexShrink:0 }}>{t}</span>
+    <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"#64748b", marginLeft:12, flexShrink:0 }}>{t}</span>
   );
 }
 
@@ -6416,24 +6418,24 @@ function RightPanelShell({ tapeData, onSelectTicker, earnings, activeTicker }) {
     <div className="app-right">
       {/* Watchlist */}
       <div className="right-section-header" style={{ display:"flex", alignItems:"center", gap:6 }}>
-        <Star size={10} style={{ color:"#e3b341" }} />  Watchlist
+        <Star size={10} style={{ color:"#b45309" }} />  Watchlist
       </div>
       <div style={{ flex:1, overflowY:"auto", minHeight:0 }}>
         {tapeData.length === 0 && (
-          <div style={{ padding:"12px 12px", fontFamily:"'IBM Plex Mono',monospace", color:"#484f58", fontSize:10 }}>Loading…</div>
+          <div style={{ padding:"12px 12px", fontFamily:"'IBM Plex Mono',monospace", color:"#64748b", fontSize:10 }}>Loading…</div>
         )}
         {tapeData.map(t => (
           <button key={t.symbol} onClick={() => onSelectTicker(t.symbol)}
             style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center",
-              padding:"7px 12px", background: activeTicker===t.symbol?"rgba(88,166,255,0.06)":"transparent",
-              border:"none", borderBottom:"1px solid rgba(99,110,123,0.07)", cursor:"pointer",
+              padding:"7px 12px", background: activeTicker===t.symbol?"rgba(37,99,235,0.06)":"transparent",
+              border:"none", borderBottom:"1px solid rgba(15,23,42,0.06)", cursor:"pointer",
               transition:"background 0.12s" }}
             onMouseEnter={e=>{if(activeTicker!==t.symbol) e.currentTarget.style.background="rgba(255,255,255,0.025)"}}
             onMouseLeave={e=>{if(activeTicker!==t.symbol) e.currentTarget.style.background="transparent"}}>
             <span style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:11,
-              color: activeTicker===t.symbol?"#58a6ff":"#e6edf3" }}>{t.symbol}</span>
+              color: activeTicker===t.symbol?"#2563eb":"#0f172a" }}>{t.symbol}</span>
             <div style={{ textAlign:"right" }}>
-              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"#e6edf3" }}>${fmt.price(t.price)}</div>
+              <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"#0f172a" }}>${fmt.price(t.price)}</div>
               <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:clr(t.changePct) }}>
                 {t.changePct>=0?"▲":"▼"}{Math.abs(t.changePct||0).toFixed(2)}%
               </div>
@@ -6446,7 +6448,7 @@ function RightPanelShell({ tapeData, onSelectTicker, earnings, activeTicker }) {
       {earnings && (
         <>
           <div className="right-section-header">📅  Upcoming Events</div>
-          <div style={{ padding:"4px 0 6px", borderBottom:"1px solid rgba(99,110,123,0.10)" }}>
+          <div style={{ padding:"4px 0 6px", borderBottom:"1px solid rgba(15,23,42,0.08)" }}>
             <EventsCalendar earnings={earnings} />
           </div>
         </>
@@ -6456,30 +6458,30 @@ function RightPanelShell({ tapeData, onSelectTicker, earnings, activeTicker }) {
       <div className="right-section-header">🎫  Order Ticket</div>
       <div style={{ padding:"10px 12px", flexShrink:0 }}>
         {/* BUY / SELL toggle */}
-        <div style={{ display:"flex", marginBottom:8, background:"#0d1117", borderRadius:6, padding:2, border:"1px solid rgba(99,110,123,0.16)" }}>
+        <div style={{ display:"flex", marginBottom:8, background:"#f8fafc", borderRadius:6, padding:2, border:"1px solid rgba(15,23,42,0.11)" }}>
           {["BUY","SELL"].map(s => (
             <button key={s} onClick={() => setSide(s)}
               style={{ flex:1, padding:"5px 0", border:"none", borderRadius:4, fontFamily:"'Inter',sans-serif",
                 fontSize:11, fontWeight:700, cursor:"pointer", transition:"all 0.15s",
-                background: side===s ? (s==="BUY"?"rgba(63,185,80,0.18)":"rgba(248,81,73,0.16)") : "transparent",
-                color: side===s ? (s==="BUY"?"#3fb950":"#f85149") : "#484f58" }}>
+                background: side===s ? (s==="BUY"?"rgba(5,150,105,0.15)":"rgba(225,29,72,0.14)") : "transparent",
+                color: side===s ? (s==="BUY"?"#059669":"#e11d48") : "#64748b" }}>
               {s}
             </button>
           ))}
         </div>
         {/* Ticker display */}
-        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"#58a6ff", fontWeight:700, marginBottom:6, textAlign:"center" }}>
+        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"#2563eb", fontWeight:700, marginBottom:6, textAlign:"center" }}>
           {activeTicker}
         </div>
         {/* Qty */}
         <div style={{ marginBottom:6 }}>
-          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600, color:"#484f58", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:3 }}>Quantity</div>
+          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600, color:"#64748b", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:3 }}>Quantity</div>
           <input className="order-ticket-input" type="number" placeholder="0" value={qty}
             onChange={e => setQty(e.target.value)} min="1" step="1" />
         </div>
         {/* Order type */}
         <div style={{ marginBottom:6 }}>
-          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600, color:"#484f58", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:3 }}>Type</div>
+          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600, color:"#64748b", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:3 }}>Type</div>
           <select className="order-ticket-input" value={orderType} onChange={e => setOrderType(e.target.value)}
             style={{ appearance:"none", cursor:"pointer" }}>
             <option value="MKT">Market</option>
@@ -6489,7 +6491,7 @@ function RightPanelShell({ tapeData, onSelectTicker, earnings, activeTicker }) {
         </div>
         {orderType !== "MKT" && (
           <div style={{ marginBottom:6 }}>
-            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600, color:"#484f58", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:3 }}>Price</div>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600, color:"#64748b", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:3 }}>Price</div>
             <input className="order-ticket-input" type="number" placeholder="0.00" value={limitPx}
               onChange={e => setLimitPx(e.target.value)} step="0.01" />
           </div>
@@ -6497,18 +6499,18 @@ function RightPanelShell({ tapeData, onSelectTicker, earnings, activeTicker }) {
         <button onClick={handleOrder}
           style={{ width:"100%", padding:"7px 0", border:"none", borderRadius:6, fontFamily:"'Inter',sans-serif",
             fontSize:11, fontWeight:700, cursor:"pointer", letterSpacing:"0.06em", marginTop:2,
-            background: side==="BUY"?"#238636":"#b62324", color:"#fff", transition:"opacity 0.15s" }}
+            background: side==="BUY"?"#059669":"#be123c", color:"#fff", transition:"opacity 0.15s" }}
           onMouseEnter={e=>e.currentTarget.style.opacity="0.85"}
           onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
           PLACE {side} ORDER
         </button>
         {orderMsg && (
           <div style={{ marginTop:6, fontFamily:"'IBM Plex Mono',monospace", fontSize:10, textAlign:"center",
-            color: orderMsg.type==="ok"?"#3fb950":"#f85149" }}>
+            color: orderMsg.type==="ok"?"#059669":"#e11d48" }}>
             {orderMsg.text}
           </div>
         )}
-        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:"#484f58", textAlign:"center", marginTop:6 }}>
+        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:"#64748b", textAlign:"center", marginTop:6 }}>
           Simulated — paper trading only
         </div>
       </div>
@@ -6530,7 +6532,7 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
   const intMap =  { "1D":"5m","5D":"15m","1M":"1d","3M":"1d","6M":"1d","1Y":"1wk","5Y":"1mo" };
 
   const up = quote?.dp >= 0;
-  const priceColor = up ? "#3fb950" : "#f85149";
+  const priceColor = up ? "#059669" : "#e11d48";
   const m = metrics?.metric || {};
 
   // Fetch chart data when ticker or range changes
@@ -6583,8 +6585,8 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
 
   // ── Tab content renderers ─────────────────────────────────────────────────
   const renderNews = () => {
-    if (!news) return <div style={{ color:"#484f58", fontFamily:"'IBM Plex Mono',monospace", fontSize:10 }}>Loading news…</div>;
-    if (!news.length) return <div style={{ color:"#484f58", fontFamily:"'IBM Plex Mono',monospace", fontSize:10 }}>No recent news</div>;
+    if (!news) return <div style={{ color:"#64748b", fontFamily:"'IBM Plex Mono',monospace", fontSize:10 }}>Loading news…</div>;
+    if (!news.length) return <div style={{ color:"#64748b", fontFamily:"'IBM Plex Mono',monospace", fontSize:10 }}>No recent news</div>;
     return (
       <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
         {news.slice(0,14).map((n,i) => {
@@ -6592,16 +6594,16 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
           const ago = ts ? Math.floor((Date.now()-ts)/86400000) : null;
           return (
             <a key={i} href={n.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
-              <div className="news-card" style={{ padding:"8px 10px", background:"#0d1117" }}
-                onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(99,110,123,0.40)"}
+              <div className="news-card" style={{ padding:"8px 10px", background:"#f8fafc" }}
+                onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"}
                 onMouseLeave={e=>e.currentTarget.style.borderColor=""}>
                 <div style={{ display:"flex", justifyContent:"space-between", gap:10, marginBottom:3 }}>
-                  <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:500, color:"#e6edf3", lineHeight:1.4 }}>{n.headline}</span>
-                  <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:"#484f58", flexShrink:0 }}>
+                  <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:500, color:"#0f172a", lineHeight:1.4 }}>{n.headline}</span>
+                  <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:"#64748b", flexShrink:0 }}>
                     {ago===0?"Today":ago===1?"1d ago":ago!=null?ago+"d ago":""}
                   </span>
                 </div>
-                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:"#58a6ff" }}>{n.source}</span>
+                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:"#2563eb" }}>{n.source}</span>
               </div>
             </a>
           );
@@ -6632,10 +6634,10 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
     });
     return (
       <div>
-        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:"#484f58", marginBottom:8, display:"flex", gap:12, alignItems:"center" }}>
-          <span>Expiry: <strong style={{ color:"#e3b341" }}>May 17, 2025</strong></span>
-          <span>Spot: <strong style={{ color:"#e6edf3" }}>${fmt.price(spotPrice)}</strong></span>
-          <span style={{ color:"#484f58" }}>· Mock data · for UI demonstration</span>
+        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:"#64748b", marginBottom:8, display:"flex", gap:12, alignItems:"center" }}>
+          <span>Expiry: <strong style={{ color:"#b45309" }}>May 17, 2025</strong></span>
+          <span>Spot: <strong style={{ color:"#0f172a" }}>${fmt.price(spotPrice)}</strong></span>
+          <span style={{ color:"#64748b" }}>· Mock data · for UI demonstration</span>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr auto 1fr", gap:0 }}>
           {/* CALLS header */}
@@ -6645,21 +6647,21 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
             </tr></thead>
             <tbody>
               {mockChain.map(r => (
-                <tr key={r.strike} style={{ background: r.itm?"rgba(63,185,80,0.04)":"transparent" }}>
-                  <td style={{ color:"#7d8590", textAlign:"left" }}>{(+r.callIV*100).toFixed(1)}%</td>
-                  <td style={{ color:"#3fb950" }}>${r.callBid}</td>
-                  <td style={{ color:"#f85149" }}>${r.callAsk}</td>
-                  <td style={{ color:"#484f58" }}>{r.callOI.toLocaleString()}</td>
-                  <td style={{ color:"#7d8590" }}>{r.callVol.toLocaleString()}</td>
+                <tr key={r.strike} style={{ background: r.itm?"rgba(5,150,105,0.04)":"transparent" }}>
+                  <td style={{ color:"#64748b", textAlign:"left" }}>{(+r.callIV*100).toFixed(1)}%</td>
+                  <td style={{ color:"#059669" }}>${r.callBid}</td>
+                  <td style={{ color:"#e11d48" }}>${r.callAsk}</td>
+                  <td style={{ color:"#64748b" }}>{r.callOI.toLocaleString()}</td>
+                  <td style={{ color:"#64748b" }}>{r.callVol.toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           {/* Strike column */}
           <div style={{ display:"flex", flexDirection:"column", justifyContent:"stretch" }}>
-            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.08em", color:"#484f58", padding:"5px 14px 6px", borderBottom:"1px solid rgba(99,110,123,0.08)", textAlign:"center" }}>STRIKE</div>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.08em", color:"#64748b", padding:"5px 14px 6px", borderBottom:"1px solid rgba(15,23,42,0.07)", textAlign:"center" }}>STRIKE</div>
             {mockChain.map(r => (
-              <div key={r.strike} style={{ padding:"4px 14px", borderBottom:"1px solid rgba(99,110,123,0.06)", fontFamily:"'IBM Plex Mono',monospace", fontSize:11, fontWeight:700, color: Math.abs(r.strike-spotPrice)<1.5?"#58a6ff":"#8b949e", textAlign:"center", background: Math.abs(r.strike-spotPrice)<1.5?"rgba(88,166,255,0.08)":"transparent" }}>
+              <div key={r.strike} style={{ padding:"4px 14px", borderBottom:"1px solid rgba(15,23,42,0.05)", fontFamily:"'IBM Plex Mono',monospace", fontSize:11, fontWeight:700, color: Math.abs(r.strike-spotPrice)<1.5?"#2563eb":"#475569", textAlign:"center", background: Math.abs(r.strike-spotPrice)<1.5?"rgba(37,99,235,0.08)":"transparent" }}>
                 {r.strike.toFixed(1)}
               </div>
             ))}
@@ -6671,18 +6673,18 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
             </tr></thead>
             <tbody>
               {mockChain.map(r => (
-                <tr key={r.strike} style={{ background: !r.itm?"rgba(248,81,73,0.04)":"transparent" }}>
-                  <td style={{ color:"#3fb950" }}>${r.putBid}</td>
-                  <td style={{ color:"#f85149" }}>${r.putAsk}</td>
-                  <td style={{ color:"#484f58" }}>{r.putOI.toLocaleString()}</td>
-                  <td style={{ color:"#7d8590" }}>{r.putVol.toLocaleString()}</td>
-                  <td style={{ color:"#7d8590", textAlign:"right" }}>{(+r.putIV*100).toFixed(1)}%</td>
+                <tr key={r.strike} style={{ background: !r.itm?"rgba(225,29,72,0.04)":"transparent" }}>
+                  <td style={{ color:"#059669" }}>${r.putBid}</td>
+                  <td style={{ color:"#e11d48" }}>${r.putAsk}</td>
+                  <td style={{ color:"#64748b" }}>{r.putOI.toLocaleString()}</td>
+                  <td style={{ color:"#64748b" }}>{r.putVol.toLocaleString()}</td>
+                  <td style={{ color:"#64748b", textAlign:"right" }}>{(+r.putIV*100).toFixed(1)}%</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:"#484f58", marginTop:10, textAlign:"center" }}>
+        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:"#64748b", marginTop:10, textAlign:"center" }}>
           Calls (ITM highlighted green) · ATM in blue · Puts (ITM highlighted red)
         </div>
       </div>
@@ -6715,9 +6717,9 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
         <tbody>
           {rows.map(([k,a,t]) => (
             <tr key={k}>
-              <td style={{ color:"#7d8590", textAlign:"left" }}>{k}</td>
-              <td style={{ color: a!=="—"?clrM2(a):"#484f58" }}>{a||"—"}</td>
-              <td style={{ color: t!=="—"?clrM2(t):"#484f58" }}>{t||"—"}</td>
+              <td style={{ color:"#64748b", textAlign:"left" }}>{k}</td>
+              <td style={{ color: a!=="—"?clrM2(a):"#64748b" }}>{a||"—"}</td>
+              <td style={{ color: t!=="—"?clrM2(t):"#64748b" }}>{t||"—"}</td>
             </tr>
           ))}
         </tbody>
@@ -6726,7 +6728,7 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
   };
 
   const renderProfile = () => {
-    if (!profile || !profile.name) return <div style={{ color:"#484f58", fontFamily:"'IBM Plex Mono',monospace", fontSize:10 }}>Loading profile…</div>;
+    if (!profile || !profile.name) return <div style={{ color:"#64748b", fontFamily:"'IBM Plex Mono',monospace", fontSize:10 }}>Loading profile…</div>;
     const fields = [
       ["Full Name",    profile.name],
       ["Industry",     profile.finnhubIndustry],
@@ -6740,17 +6742,17 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
     return (
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 24px" }}>
         <div>
-          {profile.logo && <img src={profile.logo} alt="" style={{ height:36, width:36, objectFit:"contain", borderRadius:8, background:"#161b22", padding:4, marginBottom:12 }} />}
-          <p style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:"#8b949e", lineHeight:1.7, marginBottom:12 }}>{profile.description}</p>
+          {profile.logo && <img src={profile.logo} alt="" style={{ height:36, width:36, objectFit:"contain", borderRadius:8, background:"#ffffff", padding:4, marginBottom:12 }} />}
+          <p style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:"#475569", lineHeight:1.7, marginBottom:12 }}>{profile.description}</p>
         </div>
         <table className="dense-table" style={{ alignSelf:"start" }}>
           <tbody>
             {fields.filter(([,v])=>v).map(([k,v]) => (
               <tr key={k}>
-                <td style={{ color:"#484f58", textAlign:"left" }}>{k}</td>
-                <td style={{ color:"#e6edf3" }}>
+                <td style={{ color:"#64748b", textAlign:"left" }}>{k}</td>
+                <td style={{ color:"#0f172a" }}>
                   {k==="Website"
-                    ? <a href={v} target="_blank" rel="noopener noreferrer" style={{ color:"#58a6ff", textDecoration:"none" }}>{v.replace(/^https?:\/\//,"").replace(/\/$/,"")}</a>
+                    ? <a href={v} target="_blank" rel="noopener noreferrer" style={{ color:"#2563eb", textDecoration:"none" }}>{v.replace(/^https?:\/\//,"").replace(/\/$/,"")}</a>
                     : v}
                 </td>
               </tr>
@@ -6762,8 +6764,8 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
   };
 
   const renderHistorical = () => {
-    if (!histData) return <div style={{ color:"#484f58", fontFamily:"'IBM Plex Mono',monospace", fontSize:10 }}>Loading…</div>;
-    if (!histData.length) return <div style={{ color:"#484f58", fontFamily:"'IBM Plex Mono',monospace", fontSize:10 }}>No data</div>;
+    if (!histData) return <div style={{ color:"#64748b", fontFamily:"'IBM Plex Mono',monospace", fontSize:10 }}>Loading…</div>;
+    if (!histData.length) return <div style={{ color:"#64748b", fontFamily:"'IBM Plex Mono',monospace", fontSize:10 }}>No data</div>;
     return (
       <table className="dense-table">
         <thead>
@@ -6777,12 +6779,12 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
             const dayUp = +r.close >= +r.open;
             return (
               <tr key={i}>
-                <td style={{ color:"#7d8590", textAlign:"left" }}>{r.date}</td>
+                <td style={{ color:"#64748b", textAlign:"left" }}>{r.date}</td>
                 <td>${r.open}</td>
-                <td style={{ color:"#3fb950" }}>${r.high}</td>
-                <td style={{ color:"#f85149" }}>${r.low}</td>
-                <td style={{ color: dayUp?"#3fb950":"#f85149", fontWeight:600 }}>${r.close}</td>
-                <td style={{ color:"#484f58" }}>{r.vol ? fmt.volume(r.vol) : "—"}</td>
+                <td style={{ color:"#059669" }}>${r.high}</td>
+                <td style={{ color:"#e11d48" }}>${r.low}</td>
+                <td style={{ color: dayUp?"#059669":"#e11d48", fontWeight:600 }}>${r.close}</td>
+                <td style={{ color:"#64748b" }}>{r.vol ? fmt.volume(r.vol) : "—"}</td>
               </tr>
             );
           })}
@@ -6798,10 +6800,10 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
         <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12, flexWrap:"wrap" }}>
           <div>
             <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
-              {profile?.logo && <img src={profile.logo} alt="" style={{ height:18, width:18, objectFit:"contain", borderRadius:4, background:"#161b22", padding:1 }} />}
+              {profile?.logo && <img src={profile.logo} alt="" style={{ height:18, width:18, objectFit:"contain", borderRadius:4, background:"#ffffff", padding:1 }} />}
               <span className="asset-ticker-name">{ticker}</span>
-              <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:"#7d8590" }}>{profile?.name}</span>
-              {profile?.exchange && <span style={{ fontFamily:"'Inter',sans-serif", fontSize:9, background:"#21262d", color:"#7d8590", borderRadius:4, padding:"1px 5px" }}>{profile.exchange}</span>}
+              <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:"#64748b" }}>{profile?.name}</span>
+              {profile?.exchange && <span style={{ fontFamily:"'Inter',sans-serif", fontSize:9, background:"#e2e8f0", color:"#64748b", borderRadius:4, padding:"1px 5px" }}>{profile.exchange}</span>}
             </div>
             <div style={{ display:"flex", alignItems:"baseline", gap:10 }}>
               <span className="asset-price">{quote?.c != null ? "$"+fmt.price(quote.c) : "—"}</span>
@@ -6832,7 +6834,7 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
                 </defs>
                 <XAxis dataKey="t" hide />
                 <YAxis domain={["auto","auto"]} hide />
-                <Tooltip contentStyle={{ background:"#1c2230", border:"1px solid rgba(99,110,123,0.28)", borderRadius:8, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" }}
+                <Tooltip contentStyle={{ background:"#f1f5f9", border:"1px solid rgba(15,23,42,0.18)", borderRadius:8, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" }}
                   labelFormatter={t => new Date(t*1000).toLocaleDateString()}
                   formatter={v=>["$"+v?.toFixed(2),"Price"]} />
                 <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5}
@@ -6881,11 +6883,11 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
 
 // Helper for coloring margin/ratio values
 function clrM2(v) {
-  if (typeof v !== "string") return "#e6edf3";
+  if (typeof v !== "string") return "#0f172a";
   const n = parseFloat(v);
-  if (isNaN(n)) return "#e6edf3";
-  if (v.includes("%")) return n > 0 ? "#3fb950" : "#f85149";
-  return "#e6edf3";
+  if (isNaN(n)) return "#0f172a";
+  if (v.includes("%")) return n > 0 ? "#059669" : "#e11d48";
+  return "#0f172a";
 }
 
 export default function App() {
@@ -6948,7 +6950,7 @@ export default function App() {
   const openResearch = (item) => { setPendingResearchItem(item); setActivePage("research"); };
 
   return (
-    <div className={"app-shell" + (sidebarOpen ? " sidebar-open" : "")} style={{ fontFamily:"'Inter','IBM Plex Sans',sans-serif", background:"#0d1117", color:"#e6edf3" }}>
+    <div className={"app-shell" + (sidebarOpen ? " sidebar-open" : "")} style={{ fontFamily:"'Inter','IBM Plex Sans',sans-serif", background:"#f8fafc", color:"#0f172a" }}>
       <GlobalStyles />
 
       {/* ── Global Top Bar ─────────────────────────────────── */}
@@ -6990,15 +6992,15 @@ export default function App() {
         {activePage === "research"     && <ResearchBrowser pendingItem={pendingResearchItem} onPendingConsumed={() => setPendingResearchItem(null)} />}
         {activePage === "settings" && (
           <div style={{ padding:24, maxWidth:480 }}>
-            <div style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:13, color:"#e6edf3", marginBottom:16 }}>Settings</div>
-            <div style={{ background:"#161b22", border:"1px solid rgba(99,110,123,0.18)", borderRadius:10, padding:16 }}>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:13, color:"#0f172a", marginBottom:16 }}>Settings</div>
+            <div style={{ background:"#ffffff", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, padding:16 }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                 <div>
-                  <div style={{ fontFamily:"'Inter',sans-serif", fontSize:12, color:"#e6edf3", fontWeight:500 }}>Ticker Tape</div>
-                  <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:"#7d8590" }}>Scrolling prices in top bar</div>
+                  <div style={{ fontFamily:"'Inter',sans-serif", fontSize:12, color:"#0f172a", fontWeight:500 }}>Ticker Tape</div>
+                  <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:"#64748b" }}>Scrolling prices in top bar</div>
                 </div>
                 <button onClick={() => setSettings(s => { const n={...s, showTickerTape:!s.showTickerTape}; saveSettings(n); return n; })}
-                  style={{ width:40, height:22, borderRadius:11, border:"none", cursor:"pointer", background:settings.showTickerTape?"#1f6feb":"#30363d", position:"relative", transition:"background 0.2s" }}>
+                  style={{ width:40, height:22, borderRadius:11, border:"none", cursor:"pointer", background:settings.showTickerTape?"#2563eb":"#cbd5e1", position:"relative", transition:"background 0.2s" }}>
                   <div style={{ position:"absolute", top:3, left:settings.showTickerTape?21:3, width:16, height:16, borderRadius:"50%", background:"#fff", transition:"left 0.2s" }} />
                 </button>
               </div>
@@ -7017,9 +7019,9 @@ export default function App() {
 
       {/* ── Status Bar ─────────────────────────────────────── */}
       <div className="status-bar" style={{ gridArea:"status", display:"flex", alignItems:"center", gap:16, padding:"0 12px", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }}>
-        <div style={{ width:6, height:6, borderRadius:"50%", background:"#3fb950", boxShadow:"0 0 6px rgba(63,185,80,0.6)" }} />
+        <div style={{ width:6, height:6, borderRadius:"50%", background:"#059669", boxShadow:"0 0 6px rgba(5,150,105,0.60)" }} />
         <span>OMNES VIDENTES · LIVE DATA</span>
-        <span style={{ color:"rgba(99,110,123,0.3)" }}>|</span>
+        <span style={{ color:"rgba(15,23,42,0.20)" }}>|</span>
         <MarketSessionBadges />
         <span style={{ marginLeft:"auto" }}>{statusTime}</span>
       </div>
