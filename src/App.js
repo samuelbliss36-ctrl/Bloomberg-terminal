@@ -51,102 +51,102 @@ const WATCHLIST = ["SPY", "QQQ", "MSFT", "NVDA", "TSLA", "GOOGL", "AMZN", "META"
 // ─── SCREENER UNIVERSE — approximate fundamentals (as of Q1 2025) ────────────
 const SCREENER_UNIVERSE = [
   // Technology
-  {ticker:"AAPL", name:"Apple Inc",               sector:"Technology",       mktCap:3930, pe:33.4, fwdPe:28.0, revGrowth:4.0,   grossMargin:46.5, netMargin:27.0,  divYield:0.44, beta:1.20, rating:"Buy"       },
-  {ticker:"MSFT", name:"Microsoft Corp",           sector:"Technology",       mktCap:3140, pe:35.2, fwdPe:30.1, revGrowth:16.0,  grossMargin:69.8, netMargin:36.5,  divYield:0.72, beta:0.90, rating:"Strong Buy" },
-  {ticker:"NVDA", name:"NVIDIA Corp",              sector:"Technology",       mktCap:2650, pe:48.2, fwdPe:36.0, revGrowth:122.0, grossMargin:75.0, netMargin:55.0,  divYield:0.03, beta:1.95, rating:"Strong Buy" },
-  {ticker:"AVGO", name:"Broadcom Inc",             sector:"Technology",       mktCap:980,  pe:38.5, fwdPe:28.0, revGrowth:44.0,  grossMargin:68.2, netMargin:25.0,  divYield:1.32, beta:1.20, rating:"Buy"       },
-  {ticker:"ORCL", name:"Oracle Corp",              sector:"Technology",       mktCap:490,  pe:42.0, fwdPe:26.0, revGrowth:17.0,  grossMargin:71.0, netMargin:22.5,  divYield:0.95, beta:0.82, rating:"Buy"       },
-  {ticker:"ADBE", name:"Adobe Inc",                sector:"Technology",       mktCap:195,  pe:26.0, fwdPe:22.0, revGrowth:11.0,  grossMargin:88.0, netMargin:27.0,  divYield:0.00, beta:1.32, rating:"Buy"       },
-  {ticker:"CRM",  name:"Salesforce Inc",           sector:"Technology",       mktCap:285,  pe:48.0, fwdPe:28.0, revGrowth:8.7,   grossMargin:77.0, netMargin:15.0,  divYield:0.60, beta:1.35, rating:"Buy"       },
-  {ticker:"AMD",  name:"Advanced Micro Devices",   sector:"Technology",       mktCap:285,  pe:110.0,fwdPe:27.0, revGrowth:13.5,  grossMargin:51.0, netMargin:5.7,   divYield:0.00, beta:1.90, rating:"Strong Buy" },
-  {ticker:"INTC", name:"Intel Corp",               sector:"Technology",       mktCap:95,   pe:null, fwdPe:null, revGrowth:-8.0,  grossMargin:32.7, netMargin:-16.0, divYield:0.00, beta:1.00, rating:"Hold"      },
-  {ticker:"QCOM", name:"Qualcomm Inc",             sector:"Technology",       mktCap:185,  pe:17.0, fwdPe:14.0, revGrowth:14.0,  grossMargin:56.0, netMargin:26.0,  divYield:2.15, beta:1.35, rating:"Buy"       },
-  {ticker:"TXN",  name:"Texas Instruments",        sector:"Technology",       mktCap:175,  pe:35.0, fwdPe:32.0, revGrowth:-11.0, grossMargin:55.0, netMargin:32.0,  divYield:3.00, beta:1.05, rating:"Hold"      },
-  {ticker:"CSCO", name:"Cisco Systems",            sector:"Technology",       mktCap:215,  pe:18.0, fwdPe:14.0, revGrowth:-6.0,  grossMargin:63.0, netMargin:23.0,  divYield:3.25, beta:0.80, rating:"Hold"      },
-  {ticker:"NOW",  name:"ServiceNow Inc",           sector:"Technology",       mktCap:200,  pe:98.0, fwdPe:45.0, revGrowth:22.0,  grossMargin:79.0, netMargin:15.0,  divYield:0.00, beta:1.10, rating:"Strong Buy" },
-  {ticker:"INTU", name:"Intuit Inc",               sector:"Technology",       mktCap:175,  pe:58.0, fwdPe:34.0, revGrowth:13.0,  grossMargin:79.0, netMargin:17.0,  divYield:0.65, beta:1.25, rating:"Buy"       },
-  {ticker:"AMAT", name:"Applied Materials",        sector:"Technology",       mktCap:155,  pe:22.0, fwdPe:18.0, revGrowth:2.0,   grossMargin:47.5, netMargin:27.0,  divYield:0.90, beta:1.60, rating:"Buy"       },
-  {ticker:"MU",   name:"Micron Technology",        sector:"Technology",       mktCap:110,  pe:25.0, fwdPe:12.0, revGrowth:61.0,  grossMargin:22.6, netMargin:15.0,  divYield:0.45, beta:1.50, rating:"Strong Buy" },
-  {ticker:"IBM",  name:"IBM Corp",                 sector:"Technology",       mktCap:225,  pe:30.0, fwdPe:21.0, revGrowth:3.5,   grossMargin:56.0, netMargin:10.0,  divYield:2.80, beta:0.70, rating:"Hold"      },
+  {ticker:"AAPL", name:"Apple Inc",               sector:"Technology",       mktCap:3930, pe:33.4,  fwdPe:28.0, revGrowth:4.0,   grossMargin:46.5, netMargin:27.0,  divYield:0.44, beta:1.20, rating:"Buy",        roe:160.0, debtToEq:1.79, pb:49.0 },
+  {ticker:"MSFT", name:"Microsoft Corp",           sector:"Technology",       mktCap:3140, pe:35.2,  fwdPe:30.1, revGrowth:16.0,  grossMargin:69.8, netMargin:36.5,  divYield:0.72, beta:0.90, rating:"Strong Buy",  roe:38.0,  debtToEq:0.34, pb:11.5 },
+  {ticker:"NVDA", name:"NVIDIA Corp",              sector:"Technology",       mktCap:2650, pe:48.2,  fwdPe:36.0, revGrowth:122.0, grossMargin:75.0, netMargin:55.0,  divYield:0.03, beta:1.95, rating:"Strong Buy",  roe:123.0, debtToEq:0.42, pb:52.0 },
+  {ticker:"AVGO", name:"Broadcom Inc",             sector:"Technology",       mktCap:980,  pe:38.5,  fwdPe:28.0, revGrowth:44.0,  grossMargin:68.2, netMargin:25.0,  divYield:1.32, beta:1.20, rating:"Buy",         roe:26.0,  debtToEq:1.53, pb:9.0  },
+  {ticker:"ORCL", name:"Oracle Corp",              sector:"Technology",       mktCap:490,  pe:42.0,  fwdPe:26.0, revGrowth:17.0,  grossMargin:71.0, netMargin:22.5,  divYield:0.95, beta:0.82, rating:"Buy",         roe:null,  debtToEq:null, pb:null },
+  {ticker:"ADBE", name:"Adobe Inc",                sector:"Technology",       mktCap:195,  pe:26.0,  fwdPe:22.0, revGrowth:11.0,  grossMargin:88.0, netMargin:27.0,  divYield:0.00, beta:1.32, rating:"Buy",         roe:37.0,  debtToEq:0.55, pb:14.0 },
+  {ticker:"CRM",  name:"Salesforce Inc",           sector:"Technology",       mktCap:285,  pe:48.0,  fwdPe:28.0, revGrowth:8.7,   grossMargin:77.0, netMargin:15.0,  divYield:0.60, beta:1.35, rating:"Buy",         roe:9.0,   debtToEq:0.18, pb:5.0  },
+  {ticker:"AMD",  name:"Advanced Micro Devices",   sector:"Technology",       mktCap:285,  pe:110.0, fwdPe:27.0, revGrowth:13.5,  grossMargin:51.0, netMargin:5.7,   divYield:0.00, beta:1.90, rating:"Strong Buy",  roe:3.0,   debtToEq:0.07, pb:3.5  },
+  {ticker:"INTC", name:"Intel Corp",               sector:"Technology",       mktCap:95,   pe:null,  fwdPe:null, revGrowth:-8.0,  grossMargin:32.7, netMargin:-16.0, divYield:0.00, beta:1.00, rating:"Hold",         roe:-14.0, debtToEq:0.62, pb:0.9  },
+  {ticker:"QCOM", name:"Qualcomm Inc",             sector:"Technology",       mktCap:185,  pe:17.0,  fwdPe:14.0, revGrowth:14.0,  grossMargin:56.0, netMargin:26.0,  divYield:2.15, beta:1.35, rating:"Buy",         roe:38.0,  debtToEq:2.05, pb:8.5  },
+  {ticker:"TXN",  name:"Texas Instruments",        sector:"Technology",       mktCap:175,  pe:35.0,  fwdPe:32.0, revGrowth:-11.0, grossMargin:55.0, netMargin:32.0,  divYield:3.00, beta:1.05, rating:"Hold",         roe:47.0,  debtToEq:1.32, pb:14.0 },
+  {ticker:"CSCO", name:"Cisco Systems",            sector:"Technology",       mktCap:215,  pe:18.0,  fwdPe:14.0, revGrowth:-6.0,  grossMargin:63.0, netMargin:23.0,  divYield:3.25, beta:0.80, rating:"Hold",         roe:26.0,  debtToEq:0.21, pb:6.0  },
+  {ticker:"NOW",  name:"ServiceNow Inc",           sector:"Technology",       mktCap:200,  pe:98.0,  fwdPe:45.0, revGrowth:22.0,  grossMargin:79.0, netMargin:15.0,  divYield:0.00, beta:1.10, rating:"Strong Buy",  roe:12.0,  debtToEq:0.32, pb:14.0 },
+  {ticker:"INTU", name:"Intuit Inc",               sector:"Technology",       mktCap:175,  pe:58.0,  fwdPe:34.0, revGrowth:13.0,  grossMargin:79.0, netMargin:17.0,  divYield:0.65, beta:1.25, rating:"Buy",         roe:17.0,  debtToEq:0.53, pb:12.0 },
+  {ticker:"AMAT", name:"Applied Materials",        sector:"Technology",       mktCap:155,  pe:22.0,  fwdPe:18.0, revGrowth:2.0,   grossMargin:47.5, netMargin:27.0,  divYield:0.90, beta:1.60, rating:"Buy",         roe:42.0,  debtToEq:0.38, pb:10.0 },
+  {ticker:"MU",   name:"Micron Technology",        sector:"Technology",       mktCap:110,  pe:25.0,  fwdPe:12.0, revGrowth:61.0,  grossMargin:22.6, netMargin:15.0,  divYield:0.45, beta:1.50, rating:"Strong Buy",  roe:8.0,   debtToEq:0.30, pb:2.4  },
+  {ticker:"IBM",  name:"IBM Corp",                 sector:"Technology",       mktCap:225,  pe:30.0,  fwdPe:21.0, revGrowth:3.5,   grossMargin:56.0, netMargin:10.0,  divYield:2.80, beta:0.70, rating:"Hold",         roe:25.0,  debtToEq:2.46, pb:9.5  },
   // Healthcare
-  {ticker:"JNJ",  name:"Johnson & Johnson",        sector:"Healthcare",       mktCap:395,  pe:22.0, fwdPe:15.0, revGrowth:3.5,   grossMargin:70.0, netMargin:18.0,  divYield:3.20, beta:0.55, rating:"Buy"       },
-  {ticker:"UNH",  name:"UnitedHealth Group",       sector:"Healthcare",       mktCap:490,  pe:20.0, fwdPe:17.0, revGrowth:8.0,   grossMargin:24.0, netMargin:5.5,   divYield:1.60, beta:0.60, rating:"Strong Buy" },
-  {ticker:"LLY",  name:"Eli Lilly & Co",           sector:"Healthcare",       mktCap:735,  pe:80.0, fwdPe:32.0, revGrowth:32.0,  grossMargin:81.0, netMargin:22.0,  divYield:0.65, beta:0.50, rating:"Strong Buy" },
-  {ticker:"ABBV", name:"AbbVie Inc",               sector:"Healthcare",       mktCap:330,  pe:58.0, fwdPe:16.0, revGrowth:3.7,   grossMargin:69.0, netMargin:9.0,   divYield:3.50, beta:0.60, rating:"Buy"       },
-  {ticker:"MRK",  name:"Merck & Co",               sector:"Healthcare",       mktCap:280,  pe:15.0, fwdPe:12.0, revGrowth:7.5,   grossMargin:76.0, netMargin:27.0,  divYield:2.50, beta:0.50, rating:"Buy"       },
-  {ticker:"TMO",  name:"Thermo Fisher Scientific", sector:"Healthcare",       mktCap:185,  pe:28.0, fwdPe:22.0, revGrowth:1.0,   grossMargin:42.0, netMargin:13.5,  divYield:0.28, beta:0.70, rating:"Buy"       },
-  {ticker:"ABT",  name:"Abbott Laboratories",      sector:"Healthcare",       mktCap:205,  pe:32.0, fwdPe:23.0, revGrowth:4.6,   grossMargin:56.0, netMargin:16.0,  divYield:2.00, beta:0.65, rating:"Buy"       },
-  {ticker:"BMY",  name:"Bristol-Myers Squibb",     sector:"Healthcare",       mktCap:115,  pe:null, fwdPe:7.5,  revGrowth:6.5,   grossMargin:73.0, netMargin:-34.0, divYield:5.50, beta:0.50, rating:"Hold"      },
-  {ticker:"AMGN", name:"Amgen Inc",                sector:"Healthcare",       mktCap:155,  pe:30.0, fwdPe:15.0, revGrowth:19.0,  grossMargin:73.0, netMargin:20.0,  divYield:3.40, beta:0.50, rating:"Hold"      },
-  {ticker:"ISRG", name:"Intuitive Surgical",       sector:"Healthcare",       mktCap:195,  pe:82.0, fwdPe:65.0, revGrowth:16.0,  grossMargin:68.0, netMargin:23.0,  divYield:0.00, beta:0.90, rating:"Buy"       },
+  {ticker:"JNJ",  name:"Johnson & Johnson",        sector:"Healthcare",       mktCap:395,  pe:22.0,  fwdPe:15.0, revGrowth:3.5,   grossMargin:70.0, netMargin:18.0,  divYield:3.20, beta:0.55, rating:"Buy",         roe:23.0,  debtToEq:0.44, pb:5.5  },
+  {ticker:"UNH",  name:"UnitedHealth Group",       sector:"Healthcare",       mktCap:490,  pe:20.0,  fwdPe:17.0, revGrowth:8.0,   grossMargin:24.0, netMargin:5.5,   divYield:1.60, beta:0.60, rating:"Strong Buy",  roe:25.0,  debtToEq:0.63, pb:5.5  },
+  {ticker:"LLY",  name:"Eli Lilly & Co",           sector:"Healthcare",       mktCap:735,  pe:80.0,  fwdPe:32.0, revGrowth:32.0,  grossMargin:81.0, netMargin:22.0,  divYield:0.65, beta:0.50, rating:"Strong Buy",  roe:65.0,  debtToEq:2.30, pb:52.0 },
+  {ticker:"ABBV", name:"AbbVie Inc",               sector:"Healthcare",       mktCap:330,  pe:58.0,  fwdPe:16.0, revGrowth:3.7,   grossMargin:69.0, netMargin:9.0,   divYield:3.50, beta:0.60, rating:"Buy",         roe:null,  debtToEq:null, pb:null },
+  {ticker:"MRK",  name:"Merck & Co",               sector:"Healthcare",       mktCap:280,  pe:15.0,  fwdPe:12.0, revGrowth:7.5,   grossMargin:76.0, netMargin:27.0,  divYield:2.50, beta:0.50, rating:"Buy",         roe:26.0,  debtToEq:1.02, pb:4.5  },
+  {ticker:"TMO",  name:"Thermo Fisher Scientific", sector:"Healthcare",       mktCap:185,  pe:28.0,  fwdPe:22.0, revGrowth:1.0,   grossMargin:42.0, netMargin:13.5,  divYield:0.28, beta:0.70, rating:"Buy",         roe:13.0,  debtToEq:0.73, pb:5.0  },
+  {ticker:"ABT",  name:"Abbott Laboratories",      sector:"Healthcare",       mktCap:205,  pe:32.0,  fwdPe:23.0, revGrowth:4.6,   grossMargin:56.0, netMargin:16.0,  divYield:2.00, beta:0.65, rating:"Buy",         roe:17.0,  debtToEq:0.43, pb:6.0  },
+  {ticker:"BMY",  name:"Bristol-Myers Squibb",     sector:"Healthcare",       mktCap:115,  pe:null,  fwdPe:7.5,  revGrowth:6.5,   grossMargin:73.0, netMargin:-34.0, divYield:5.50, beta:0.50, rating:"Hold",         roe:-20.0, debtToEq:2.15, pb:2.5  },
+  {ticker:"AMGN", name:"Amgen Inc",                sector:"Healthcare",       mktCap:155,  pe:30.0,  fwdPe:15.0, revGrowth:19.0,  grossMargin:73.0, netMargin:20.0,  divYield:3.40, beta:0.50, rating:"Hold",         roe:null,  debtToEq:null, pb:null },
+  {ticker:"ISRG", name:"Intuitive Surgical",       sector:"Healthcare",       mktCap:195,  pe:82.0,  fwdPe:65.0, revGrowth:16.0,  grossMargin:68.0, netMargin:23.0,  divYield:0.00, beta:0.90, rating:"Buy",         roe:17.0,  debtToEq:0.01, pb:14.0 },
   // Financials
-  {ticker:"BRK.B",name:"Berkshire Hathaway",       sector:"Financials",       mktCap:1050, pe:22.0, fwdPe:20.0, revGrowth:20.0,  grossMargin:null, netMargin:14.0,  divYield:0.00, beta:0.85, rating:"Buy"       },
-  {ticker:"JPM",  name:"JPMorgan Chase",           sector:"Financials",       mktCap:755,  pe:13.0, fwdPe:13.5, revGrowth:22.0,  grossMargin:null, netMargin:31.0,  divYield:2.00, beta:1.15, rating:"Buy"       },
-  {ticker:"BAC",  name:"Bank of America",          sector:"Financials",       mktCap:340,  pe:14.5, fwdPe:12.0, revGrowth:3.5,   grossMargin:null, netMargin:22.0,  divYield:2.40, beta:1.30, rating:"Buy"       },
-  {ticker:"WFC",  name:"Wells Fargo",              sector:"Financials",       mktCap:230,  pe:12.0, fwdPe:11.5, revGrowth:1.0,   grossMargin:null, netMargin:20.0,  divYield:2.40, beta:1.20, rating:"Buy"       },
-  {ticker:"GS",   name:"Goldman Sachs",            sector:"Financials",       mktCap:190,  pe:14.5, fwdPe:13.0, revGrowth:16.0,  grossMargin:null, netMargin:25.0,  divYield:2.10, beta:1.40, rating:"Buy"       },
-  {ticker:"MS",   name:"Morgan Stanley",           sector:"Financials",       mktCap:215,  pe:18.0, fwdPe:16.5, revGrowth:13.0,  grossMargin:null, netMargin:14.0,  divYield:3.20, beta:1.25, rating:"Buy"       },
-  {ticker:"BLK",  name:"BlackRock Inc",            sector:"Financials",       mktCap:145,  pe:22.0, fwdPe:20.0, revGrowth:8.5,   grossMargin:null, netMargin:28.0,  divYield:2.70, beta:1.30, rating:"Buy"       },
-  {ticker:"AXP",  name:"American Express",         sector:"Financials",       mktCap:225,  pe:21.0, fwdPe:18.0, revGrowth:10.0,  grossMargin:null, netMargin:17.0,  divYield:1.00, beta:1.20, rating:"Buy"       },
-  {ticker:"V",    name:"Visa Inc",                 sector:"Financials",       mktCap:620,  pe:32.0, fwdPe:27.0, revGrowth:10.0,  grossMargin:80.0, netMargin:52.0,  divYield:0.75, beta:0.95, rating:"Strong Buy" },
-  {ticker:"MA",   name:"Mastercard Inc",           sector:"Financials",       mktCap:510,  pe:38.0, fwdPe:30.0, revGrowth:12.0,  grossMargin:78.0, netMargin:46.0,  divYield:0.55, beta:1.05, rating:"Strong Buy" },
-  {ticker:"C",    name:"Citigroup Inc",            sector:"Financials",       mktCap:130,  pe:14.0, fwdPe:10.0, revGrowth:5.5,   grossMargin:null, netMargin:15.0,  divYield:3.30, beta:1.45, rating:"Buy"       },
+  {ticker:"BRK.B",name:"Berkshire Hathaway",       sector:"Financials",       mktCap:1050, pe:22.0,  fwdPe:20.0, revGrowth:20.0,  grossMargin:null, netMargin:14.0,  divYield:0.00, beta:0.85, rating:"Buy",         roe:12.0,  debtToEq:null, pb:1.7  },
+  {ticker:"JPM",  name:"JPMorgan Chase",           sector:"Financials",       mktCap:755,  pe:13.0,  fwdPe:13.5, revGrowth:22.0,  grossMargin:null, netMargin:31.0,  divYield:2.00, beta:1.15, rating:"Buy",         roe:16.0,  debtToEq:null, pb:2.0  },
+  {ticker:"BAC",  name:"Bank of America",          sector:"Financials",       mktCap:340,  pe:14.5,  fwdPe:12.0, revGrowth:3.5,   grossMargin:null, netMargin:22.0,  divYield:2.40, beta:1.30, rating:"Buy",         roe:10.0,  debtToEq:null, pb:1.2  },
+  {ticker:"WFC",  name:"Wells Fargo",              sector:"Financials",       mktCap:230,  pe:12.0,  fwdPe:11.5, revGrowth:1.0,   grossMargin:null, netMargin:20.0,  divYield:2.40, beta:1.20, rating:"Buy",         roe:11.0,  debtToEq:null, pb:1.4  },
+  {ticker:"GS",   name:"Goldman Sachs",            sector:"Financials",       mktCap:190,  pe:14.5,  fwdPe:13.0, revGrowth:16.0,  grossMargin:null, netMargin:25.0,  divYield:2.10, beta:1.40, rating:"Buy",         roe:12.0,  debtToEq:null, pb:1.8  },
+  {ticker:"MS",   name:"Morgan Stanley",           sector:"Financials",       mktCap:215,  pe:18.0,  fwdPe:16.5, revGrowth:13.0,  grossMargin:null, netMargin:14.0,  divYield:3.20, beta:1.25, rating:"Buy",         roe:14.0,  debtToEq:null, pb:2.1  },
+  {ticker:"BLK",  name:"BlackRock Inc",            sector:"Financials",       mktCap:145,  pe:22.0,  fwdPe:20.0, revGrowth:8.5,   grossMargin:null, netMargin:28.0,  divYield:2.70, beta:1.30, rating:"Buy",         roe:14.0,  debtToEq:0.88, pb:3.4  },
+  {ticker:"AXP",  name:"American Express",         sector:"Financials",       mktCap:225,  pe:21.0,  fwdPe:18.0, revGrowth:10.0,  grossMargin:null, netMargin:17.0,  divYield:1.00, beta:1.20, rating:"Buy",         roe:33.0,  debtToEq:null, pb:7.2  },
+  {ticker:"V",    name:"Visa Inc",                 sector:"Financials",       mktCap:620,  pe:32.0,  fwdPe:27.0, revGrowth:10.0,  grossMargin:80.0, netMargin:52.0,  divYield:0.75, beta:0.95, rating:"Strong Buy",  roe:47.0,  debtToEq:0.51, pb:13.5 },
+  {ticker:"MA",   name:"Mastercard Inc",           sector:"Financials",       mktCap:510,  pe:38.0,  fwdPe:30.0, revGrowth:12.0,  grossMargin:78.0, netMargin:46.0,  divYield:0.55, beta:1.05, rating:"Strong Buy",  roe:180.0, debtToEq:2.01, pb:57.0 },
+  {ticker:"C",    name:"Citigroup Inc",            sector:"Financials",       mktCap:130,  pe:14.0,  fwdPe:10.0, revGrowth:5.5,   grossMargin:null, netMargin:15.0,  divYield:3.30, beta:1.45, rating:"Buy",         roe:6.0,   debtToEq:null, pb:0.7  },
   // Consumer Discretionary
-  {ticker:"AMZN", name:"Amazon.com Inc",           sector:"Consumer Disc.",   mktCap:2090, pe:45.0, fwdPe:33.0, revGrowth:11.0,  grossMargin:48.0, netMargin:9.0,   divYield:0.00, beta:1.55, rating:"Strong Buy" },
-  {ticker:"TSLA", name:"Tesla Inc",                sector:"Consumer Disc.",   mktCap:1200, pe:130.0,fwdPe:95.0, revGrowth:-1.0,  grossMargin:17.9, netMargin:7.3,   divYield:0.00, beta:2.40, rating:"Hold"      },
-  {ticker:"HD",   name:"Home Depot Inc",           sector:"Consumer Disc.",   mktCap:400,  pe:27.0, fwdPe:24.0, revGrowth:-3.0,  grossMargin:33.4, netMargin:10.0,  divYield:2.30, beta:1.05, rating:"Buy"       },
-  {ticker:"MCD",  name:"McDonald's Corp",          sector:"Consumer Disc.",   mktCap:225,  pe:23.0, fwdPe:22.0, revGrowth:2.5,   grossMargin:57.0, netMargin:34.0,  divYield:2.30, beta:0.75, rating:"Buy"       },
-  {ticker:"NKE",  name:"Nike Inc",                 sector:"Consumer Disc.",   mktCap:70,   pe:21.0, fwdPe:18.0, revGrowth:-10.0, grossMargin:44.0, netMargin:7.5,   divYield:2.40, beta:1.05, rating:"Hold"      },
-  {ticker:"LOW",  name:"Lowe's Companies",         sector:"Consumer Disc.",   mktCap:145,  pe:22.0, fwdPe:18.0, revGrowth:-5.0,  grossMargin:33.5, netMargin:8.5,   divYield:2.10, beta:1.10, rating:"Buy"       },
-  {ticker:"BKNG", name:"Booking Holdings",         sector:"Consumer Disc.",   mktCap:175,  pe:22.0, fwdPe:20.0, revGrowth:11.0,  grossMargin:83.0, netMargin:24.0,  divYield:0.80, beta:1.30, rating:"Buy"       },
-  {ticker:"CMG",  name:"Chipotle Mexican Grill",   sector:"Consumer Disc.",   mktCap:78,   pe:50.0, fwdPe:40.0, revGrowth:14.6,  grossMargin:25.2, netMargin:13.0,  divYield:0.00, beta:1.20, rating:"Strong Buy" },
-  {ticker:"SBUX", name:"Starbucks Corp",           sector:"Consumer Disc.",   mktCap:95,   pe:25.0, fwdPe:22.0, revGrowth:-1.0,  grossMargin:27.0, netMargin:10.0,  divYield:3.50, beta:0.90, rating:"Hold"      },
-  {ticker:"TJX",  name:"TJX Companies",            sector:"Consumer Disc.",   mktCap:140,  pe:29.0, fwdPe:26.0, revGrowth:6.0,   grossMargin:30.0, netMargin:8.8,   divYield:1.30, beta:0.90, rating:"Buy"       },
+  {ticker:"AMZN", name:"Amazon.com Inc",           sector:"Consumer Disc.",   mktCap:2090, pe:45.0,  fwdPe:33.0, revGrowth:11.0,  grossMargin:48.0, netMargin:9.0,   divYield:0.00, beta:1.55, rating:"Strong Buy",  roe:19.0,  debtToEq:0.68, pb:9.0  },
+  {ticker:"TSLA", name:"Tesla Inc",                sector:"Consumer Disc.",   mktCap:1200, pe:130.0, fwdPe:95.0, revGrowth:-1.0,  grossMargin:17.9, netMargin:7.3,   divYield:0.00, beta:2.40, rating:"Hold",         roe:9.0,   debtToEq:0.10, pb:12.0 },
+  {ticker:"HD",   name:"Home Depot Inc",           sector:"Consumer Disc.",   mktCap:400,  pe:27.0,  fwdPe:24.0, revGrowth:-3.0,  grossMargin:33.4, netMargin:10.0,  divYield:2.30, beta:1.05, rating:"Buy",         roe:null,  debtToEq:null, pb:null },
+  {ticker:"MCD",  name:"McDonald's Corp",          sector:"Consumer Disc.",   mktCap:225,  pe:23.0,  fwdPe:22.0, revGrowth:2.5,   grossMargin:57.0, netMargin:34.0,  divYield:2.30, beta:0.75, rating:"Buy",         roe:null,  debtToEq:null, pb:null },
+  {ticker:"NKE",  name:"Nike Inc",                 sector:"Consumer Disc.",   mktCap:70,   pe:21.0,  fwdPe:18.0, revGrowth:-10.0, grossMargin:44.0, netMargin:7.5,   divYield:2.40, beta:1.05, rating:"Hold",         roe:16.0,  debtToEq:0.82, pb:4.0  },
+  {ticker:"LOW",  name:"Lowe's Companies",         sector:"Consumer Disc.",   mktCap:145,  pe:22.0,  fwdPe:18.0, revGrowth:-5.0,  grossMargin:33.5, netMargin:8.5,   divYield:2.10, beta:1.10, rating:"Buy",         roe:null,  debtToEq:null, pb:null },
+  {ticker:"BKNG", name:"Booking Holdings",         sector:"Consumer Disc.",   mktCap:175,  pe:22.0,  fwdPe:20.0, revGrowth:11.0,  grossMargin:83.0, netMargin:24.0,  divYield:0.80, beta:1.30, rating:"Buy",         roe:null,  debtToEq:null, pb:null },
+  {ticker:"CMG",  name:"Chipotle Mexican Grill",   sector:"Consumer Disc.",   mktCap:78,   pe:50.0,  fwdPe:40.0, revGrowth:14.6,  grossMargin:25.2, netMargin:13.0,  divYield:0.00, beta:1.20, rating:"Strong Buy",  roe:46.0,  debtToEq:0.73, pb:22.0 },
+  {ticker:"SBUX", name:"Starbucks Corp",           sector:"Consumer Disc.",   mktCap:95,   pe:25.0,  fwdPe:22.0, revGrowth:-1.0,  grossMargin:27.0, netMargin:10.0,  divYield:3.50, beta:0.90, rating:"Hold",         roe:null,  debtToEq:null, pb:null },
+  {ticker:"TJX",  name:"TJX Companies",            sector:"Consumer Disc.",   mktCap:140,  pe:29.0,  fwdPe:26.0, revGrowth:6.0,   grossMargin:30.0, netMargin:8.8,   divYield:1.30, beta:0.90, rating:"Buy",         roe:56.0,  debtToEq:0.62, pb:16.0 },
   // Consumer Staples
-  {ticker:"WMT",  name:"Walmart Inc",              sector:"Consumer Staples", mktCap:770,  pe:37.0, fwdPe:32.0, revGrowth:5.7,   grossMargin:24.7, netMargin:2.5,   divYield:0.90, beta:0.65, rating:"Strong Buy" },
-  {ticker:"PG",   name:"Procter & Gamble",         sector:"Consumer Staples", mktCap:395,  pe:27.0, fwdPe:22.0, revGrowth:3.0,   grossMargin:52.0, netMargin:18.0,  divYield:2.40, beta:0.55, rating:"Buy"       },
-  {ticker:"KO",   name:"The Coca-Cola Co",         sector:"Consumer Staples", mktCap:295,  pe:27.0, fwdPe:22.0, revGrowth:3.0,   grossMargin:60.5, netMargin:23.5,  divYield:3.10, beta:0.55, rating:"Buy"       },
-  {ticker:"PEP",  name:"PepsiCo Inc",              sector:"Consumer Staples", mktCap:195,  pe:23.0, fwdPe:19.0, revGrowth:0.6,   grossMargin:55.0, netMargin:10.0,  divYield:3.70, beta:0.55, rating:"Hold"      },
-  {ticker:"COST", name:"Costco Wholesale",         sector:"Consumer Staples", mktCap:435,  pe:55.0, fwdPe:47.0, revGrowth:5.5,   grossMargin:12.6, netMargin:2.9,   divYield:0.50, beta:0.85, rating:"Buy"       },
-  {ticker:"PM",   name:"Philip Morris Intl",       sector:"Consumer Staples", mktCap:250,  pe:24.0, fwdPe:18.0, revGrowth:9.7,   grossMargin:67.0, netMargin:27.0,  divYield:4.20, beta:0.60, rating:"Buy"       },
-  {ticker:"MO",   name:"Altria Group",             sector:"Consumer Staples", mktCap:90,   pe:10.0, fwdPe:9.5,  revGrowth:-2.0,  grossMargin:62.0, netMargin:46.0,  divYield:8.00, beta:0.50, rating:"Hold"      },
+  {ticker:"WMT",  name:"Walmart Inc",              sector:"Consumer Staples", mktCap:770,  pe:37.0,  fwdPe:32.0, revGrowth:5.7,   grossMargin:24.7, netMargin:2.5,   divYield:0.90, beta:0.65, rating:"Strong Buy",  roe:21.0,  debtToEq:0.65, pb:8.5  },
+  {ticker:"PG",   name:"Procter & Gamble",         sector:"Consumer Staples", mktCap:395,  pe:27.0,  fwdPe:22.0, revGrowth:3.0,   grossMargin:52.0, netMargin:18.0,  divYield:2.40, beta:0.55, rating:"Buy",         roe:33.0,  debtToEq:0.49, pb:8.8  },
+  {ticker:"KO",   name:"The Coca-Cola Co",         sector:"Consumer Staples", mktCap:295,  pe:27.0,  fwdPe:22.0, revGrowth:3.0,   grossMargin:60.5, netMargin:23.5,  divYield:3.10, beta:0.55, rating:"Buy",         roe:39.0,  debtToEq:1.89, pb:11.0 },
+  {ticker:"PEP",  name:"PepsiCo Inc",              sector:"Consumer Staples", mktCap:195,  pe:23.0,  fwdPe:19.0, revGrowth:0.6,   grossMargin:55.0, netMargin:10.0,  divYield:3.70, beta:0.55, rating:"Hold",         roe:50.0,  debtToEq:2.60, pb:11.5 },
+  {ticker:"COST", name:"Costco Wholesale",         sector:"Consumer Staples", mktCap:435,  pe:55.0,  fwdPe:47.0, revGrowth:5.5,   grossMargin:12.6, netMargin:2.9,   divYield:0.50, beta:0.85, rating:"Buy",         roe:30.0,  debtToEq:0.29, pb:16.0 },
+  {ticker:"PM",   name:"Philip Morris Intl",       sector:"Consumer Staples", mktCap:250,  pe:24.0,  fwdPe:18.0, revGrowth:9.7,   grossMargin:67.0, netMargin:27.0,  divYield:4.20, beta:0.60, rating:"Buy",         roe:null,  debtToEq:null, pb:null },
+  {ticker:"MO",   name:"Altria Group",             sector:"Consumer Staples", mktCap:90,   pe:10.0,  fwdPe:9.5,  revGrowth:-2.0,  grossMargin:62.0, netMargin:46.0,  divYield:8.00, beta:0.50, rating:"Hold",         roe:null,  debtToEq:null, pb:null },
   // Communication
-  {ticker:"GOOGL",name:"Alphabet Inc",             sector:"Communication",    mktCap:2050, pe:25.0, fwdPe:20.0, revGrowth:15.0,  grossMargin:57.0, netMargin:28.5,  divYield:0.45, beta:1.10, rating:"Strong Buy" },
-  {ticker:"META", name:"Meta Platforms",           sector:"Communication",    mktCap:1700, pe:27.0, fwdPe:24.0, revGrowth:22.0,  grossMargin:81.5, netMargin:38.0,  divYield:0.35, beta:1.25, rating:"Strong Buy" },
-  {ticker:"NFLX", name:"Netflix Inc",              sector:"Communication",    mktCap:455,  pe:55.0, fwdPe:38.0, revGrowth:16.0,  grossMargin:47.0, netMargin:22.5,  divYield:0.00, beta:1.35, rating:"Strong Buy" },
-  {ticker:"DIS",  name:"Walt Disney Co",           sector:"Communication",    mktCap:190,  pe:55.0, fwdPe:22.0, revGrowth:4.0,   grossMargin:34.0, netMargin:4.5,   divYield:0.80, beta:1.05, rating:"Buy"       },
-  {ticker:"CMCSA",name:"Comcast Corp",             sector:"Communication",    mktCap:140,  pe:11.0, fwdPe:10.0, revGrowth:2.5,   grossMargin:68.0, netMargin:12.5,  divYield:3.50, beta:1.00, rating:"Hold"      },
-  {ticker:"VZ",   name:"Verizon Communications",   sector:"Communication",    mktCap:175,  pe:10.0, fwdPe:9.0,  revGrowth:0.5,   grossMargin:59.0, netMargin:10.0,  divYield:6.30, beta:0.40, rating:"Hold"      },
-  {ticker:"T",    name:"AT&T Inc",                 sector:"Communication",    mktCap:165,  pe:18.0, fwdPe:10.0, revGrowth:1.0,   grossMargin:59.0, netMargin:5.5,   divYield:4.90, beta:0.55, rating:"Hold"      },
+  {ticker:"GOOGL",name:"Alphabet Inc",             sector:"Communication",    mktCap:2050, pe:25.0,  fwdPe:20.0, revGrowth:15.0,  grossMargin:57.0, netMargin:28.5,  divYield:0.45, beta:1.10, rating:"Strong Buy",  roe:31.0,  debtToEq:0.07, pb:7.2  },
+  {ticker:"META", name:"Meta Platforms",           sector:"Communication",    mktCap:1700, pe:27.0,  fwdPe:24.0, revGrowth:22.0,  grossMargin:81.5, netMargin:38.0,  divYield:0.35, beta:1.25, rating:"Strong Buy",  roe:35.0,  debtToEq:0.08, pb:9.5  },
+  {ticker:"NFLX", name:"Netflix Inc",              sector:"Communication",    mktCap:455,  pe:55.0,  fwdPe:38.0, revGrowth:16.0,  grossMargin:47.0, netMargin:22.5,  divYield:0.00, beta:1.35, rating:"Strong Buy",  roe:37.0,  debtToEq:0.68, pb:20.0 },
+  {ticker:"DIS",  name:"Walt Disney Co",           sector:"Communication",    mktCap:190,  pe:55.0,  fwdPe:22.0, revGrowth:4.0,   grossMargin:34.0, netMargin:4.5,   divYield:0.80, beta:1.05, rating:"Buy",         roe:3.5,   debtToEq:0.58, pb:2.0  },
+  {ticker:"CMCSA",name:"Comcast Corp",             sector:"Communication",    mktCap:140,  pe:11.0,  fwdPe:10.0, revGrowth:2.5,   grossMargin:68.0, netMargin:12.5,  divYield:3.50, beta:1.00, rating:"Hold",         roe:16.0,  debtToEq:1.40, pb:2.2  },
+  {ticker:"VZ",   name:"Verizon Communications",   sector:"Communication",    mktCap:175,  pe:10.0,  fwdPe:9.0,  revGrowth:0.5,   grossMargin:59.0, netMargin:10.0,  divYield:6.30, beta:0.40, rating:"Hold",         roe:11.0,  debtToEq:1.82, pb:1.6  },
+  {ticker:"T",    name:"AT&T Inc",                 sector:"Communication",    mktCap:165,  pe:18.0,  fwdPe:10.0, revGrowth:1.0,   grossMargin:59.0, netMargin:5.5,   divYield:4.90, beta:0.55, rating:"Hold",         roe:4.0,   debtToEq:1.58, pb:1.3  },
   // Energy
-  {ticker:"XOM",  name:"Exxon Mobil Corp",         sector:"Energy",           mktCap:520,  pe:14.0, fwdPe:13.5, revGrowth:-5.5,  grossMargin:35.0, netMargin:10.0,  divYield:3.50, beta:0.95, rating:"Buy"       },
-  {ticker:"CVX",  name:"Chevron Corp",             sector:"Energy",           mktCap:285,  pe:14.5, fwdPe:14.0, revGrowth:-10.0, grossMargin:37.0, netMargin:11.0,  divYield:4.30, beta:1.00, rating:"Buy"       },
-  {ticker:"COP",  name:"ConocoPhillips",           sector:"Energy",           mktCap:135,  pe:13.0, fwdPe:12.5, revGrowth:-9.0,  grossMargin:48.0, netMargin:16.0,  divYield:2.80, beta:1.20, rating:"Strong Buy" },
-  {ticker:"SLB",  name:"SLB",                      sector:"Energy",           mktCap:55,   pe:13.0, fwdPe:11.0, revGrowth:10.0,  grossMargin:21.0, netMargin:13.5,  divYield:2.80, beta:1.40, rating:"Buy"       },
-  {ticker:"EOG",  name:"EOG Resources",            sector:"Energy",           mktCap:70,   pe:11.0, fwdPe:10.5, revGrowth:-7.0,  grossMargin:64.0, netMargin:23.0,  divYield:3.30, beta:1.25, rating:"Buy"       },
+  {ticker:"XOM",  name:"Exxon Mobil Corp",         sector:"Energy",           mktCap:520,  pe:14.0,  fwdPe:13.5, revGrowth:-5.5,  grossMargin:35.0, netMargin:10.0,  divYield:3.50, beta:0.95, rating:"Buy",         roe:14.0,  debtToEq:0.18, pb:2.1  },
+  {ticker:"CVX",  name:"Chevron Corp",             sector:"Energy",           mktCap:285,  pe:14.5,  fwdPe:14.0, revGrowth:-10.0, grossMargin:37.0, netMargin:11.0,  divYield:4.30, beta:1.00, rating:"Buy",         roe:11.0,  debtToEq:0.14, pb:1.9  },
+  {ticker:"COP",  name:"ConocoPhillips",           sector:"Energy",           mktCap:135,  pe:13.0,  fwdPe:12.5, revGrowth:-9.0,  grossMargin:48.0, netMargin:16.0,  divYield:2.80, beta:1.20, rating:"Strong Buy",  roe:17.0,  debtToEq:0.42, pb:2.2  },
+  {ticker:"SLB",  name:"SLB",                      sector:"Energy",           mktCap:55,   pe:13.0,  fwdPe:11.0, revGrowth:10.0,  grossMargin:21.0, netMargin:13.5,  divYield:2.80, beta:1.40, rating:"Buy",         roe:17.0,  debtToEq:0.78, pb:2.5  },
+  {ticker:"EOG",  name:"EOG Resources",            sector:"Energy",           mktCap:70,   pe:11.0,  fwdPe:10.5, revGrowth:-7.0,  grossMargin:64.0, netMargin:23.0,  divYield:3.30, beta:1.25, rating:"Buy",         roe:22.0,  debtToEq:0.28, pb:2.8  },
   // Industrials
-  {ticker:"CAT",  name:"Caterpillar Inc",          sector:"Industrials",      mktCap:165,  pe:16.0, fwdPe:16.0, revGrowth:-3.5,  grossMargin:37.8, netMargin:16.0,  divYield:1.70, beta:1.05, rating:"Hold"      },
-  {ticker:"HON",  name:"Honeywell Intl",           sector:"Industrials",      mktCap:130,  pe:22.0, fwdPe:18.0, revGrowth:4.0,   grossMargin:34.0, netMargin:14.0,  divYield:2.30, beta:1.00, rating:"Hold"      },
-  {ticker:"RTX",  name:"RTX Corp",                 sector:"Industrials",      mktCap:175,  pe:40.0, fwdPe:20.0, revGrowth:9.0,   grossMargin:19.0, netMargin:5.5,   divYield:1.90, beta:0.85, rating:"Buy"       },
-  {ticker:"DE",   name:"Deere & Company",          sector:"Industrials",      mktCap:130,  pe:15.0, fwdPe:16.0, revGrowth:-17.0, grossMargin:30.5, netMargin:15.0,  divYield:1.60, beta:1.05, rating:"Hold"      },
-  {ticker:"GE",   name:"GE Aerospace",             sector:"Industrials",      mktCap:250,  pe:36.0, fwdPe:30.0, revGrowth:15.0,  grossMargin:28.0, netMargin:8.0,   divYield:0.70, beta:1.20, rating:"Strong Buy" },
-  {ticker:"LMT",  name:"Lockheed Martin",          sector:"Industrials",      mktCap:105,  pe:18.0, fwdPe:16.0, revGrowth:5.5,   grossMargin:12.5, netMargin:9.5,   divYield:2.70, beta:0.45, rating:"Buy"       },
-  {ticker:"UNP",  name:"Union Pacific Corp",       sector:"Industrials",      mktCap:155,  pe:22.0, fwdPe:20.0, revGrowth:1.0,   grossMargin:52.0, netMargin:27.5,  divYield:2.30, beta:1.00, rating:"Buy"       },
-  {ticker:"UPS",  name:"United Parcel Service",    sector:"Industrials",      mktCap:90,   pe:16.0, fwdPe:14.0, revGrowth:-9.0,  grossMargin:22.0, netMargin:8.0,   divYield:5.50, beta:1.10, rating:"Hold"      },
+  {ticker:"CAT",  name:"Caterpillar Inc",          sector:"Industrials",      mktCap:165,  pe:16.0,  fwdPe:16.0, revGrowth:-3.5,  grossMargin:37.8, netMargin:16.0,  divYield:1.70, beta:1.05, rating:"Hold",         roe:62.0,  debtToEq:2.37, pb:10.5 },
+  {ticker:"HON",  name:"Honeywell Intl",           sector:"Industrials",      mktCap:130,  pe:22.0,  fwdPe:18.0, revGrowth:4.0,   grossMargin:34.0, netMargin:14.0,  divYield:2.30, beta:1.00, rating:"Hold",         roe:29.0,  debtToEq:0.90, pb:8.0  },
+  {ticker:"RTX",  name:"RTX Corp",                 sector:"Industrials",      mktCap:175,  pe:40.0,  fwdPe:20.0, revGrowth:9.0,   grossMargin:19.0, netMargin:5.5,   divYield:1.90, beta:0.85, rating:"Buy",         roe:8.0,   debtToEq:0.80, pb:3.2  },
+  {ticker:"DE",   name:"Deere & Company",          sector:"Industrials",      mktCap:130,  pe:15.0,  fwdPe:16.0, revGrowth:-17.0, grossMargin:30.5, netMargin:15.0,  divYield:1.60, beta:1.05, rating:"Hold",         roe:43.0,  debtToEq:3.18, pb:6.0  },
+  {ticker:"GE",   name:"GE Aerospace",             sector:"Industrials",      mktCap:250,  pe:36.0,  fwdPe:30.0, revGrowth:15.0,  grossMargin:28.0, netMargin:8.0,   divYield:0.70, beta:1.20, rating:"Strong Buy",  roe:17.0,  debtToEq:0.41, pb:9.5  },
+  {ticker:"LMT",  name:"Lockheed Martin",          sector:"Industrials",      mktCap:105,  pe:18.0,  fwdPe:16.0, revGrowth:5.5,   grossMargin:12.5, netMargin:9.5,   divYield:2.70, beta:0.45, rating:"Buy",         roe:null,  debtToEq:null, pb:null },
+  {ticker:"UNP",  name:"Union Pacific Corp",       sector:"Industrials",      mktCap:155,  pe:22.0,  fwdPe:20.0, revGrowth:1.0,   grossMargin:52.0, netMargin:27.5,  divYield:2.30, beta:1.00, rating:"Buy",         roe:50.0,  debtToEq:1.62, pb:11.0 },
+  {ticker:"UPS",  name:"United Parcel Service",    sector:"Industrials",      mktCap:90,   pe:16.0,  fwdPe:14.0, revGrowth:-9.0,  grossMargin:22.0, netMargin:8.0,   divYield:5.50, beta:1.10, rating:"Hold",         roe:62.0,  debtToEq:4.35, pb:9.5  },
   // Materials
-  {ticker:"LIN",  name:"Linde plc",                sector:"Materials",        mktCap:225,  pe:30.0, fwdPe:25.0, revGrowth:-1.0,  grossMargin:43.0, netMargin:20.5,  divYield:1.30, beta:0.85, rating:"Buy"       },
-  {ticker:"APD",  name:"Air Products & Chemicals", sector:"Materials",        mktCap:65,   pe:22.0, fwdPe:20.0, revGrowth:-5.0,  grossMargin:36.0, netMargin:18.0,  divYield:2.90, beta:0.85, rating:"Hold"      },
-  {ticker:"NEM",  name:"Newmont Corp",             sector:"Materials",        mktCap:55,   pe:22.0, fwdPe:14.0, revGrowth:65.0,  grossMargin:40.0, netMargin:8.0,   divYield:2.20, beta:0.50, rating:"Buy"       },
-  {ticker:"FCX",  name:"Freeport-McMoRan",         sector:"Materials",        mktCap:60,   pe:22.0, fwdPe:16.0, revGrowth:3.0,   grossMargin:37.0, netMargin:13.0,  divYield:1.50, beta:1.75, rating:"Buy"       },
+  {ticker:"LIN",  name:"Linde plc",                sector:"Materials",        mktCap:225,  pe:30.0,  fwdPe:25.0, revGrowth:-1.0,  grossMargin:43.0, netMargin:20.5,  divYield:1.30, beta:0.85, rating:"Buy",         roe:16.0,  debtToEq:0.58, pb:6.0  },
+  {ticker:"APD",  name:"Air Products & Chemicals", sector:"Materials",        mktCap:65,   pe:22.0,  fwdPe:20.0, revGrowth:-5.0,  grossMargin:36.0, netMargin:18.0,  divYield:2.90, beta:0.85, rating:"Hold",         roe:14.0,  debtToEq:0.86, pb:4.0  },
+  {ticker:"NEM",  name:"Newmont Corp",             sector:"Materials",        mktCap:55,   pe:22.0,  fwdPe:14.0, revGrowth:65.0,  grossMargin:40.0, netMargin:8.0,   divYield:2.20, beta:0.50, rating:"Buy",         roe:7.0,   debtToEq:0.42, pb:1.8  },
+  {ticker:"FCX",  name:"Freeport-McMoRan",         sector:"Materials",        mktCap:60,   pe:22.0,  fwdPe:16.0, revGrowth:3.0,   grossMargin:37.0, netMargin:13.0,  divYield:1.50, beta:1.75, rating:"Buy",         roe:20.0,  debtToEq:0.58, pb:2.8  },
   // Utilities
-  {ticker:"NEE",  name:"NextEra Energy",           sector:"Utilities",        mktCap:150,  pe:21.0, fwdPe:18.0, revGrowth:1.5,   grossMargin:57.0, netMargin:17.0,  divYield:3.20, beta:0.55, rating:"Buy"       },
-  {ticker:"DUK",  name:"Duke Energy Corp",         sector:"Utilities",        mktCap:90,   pe:20.0, fwdPe:17.5, revGrowth:1.5,   grossMargin:44.0, netMargin:14.5,  divYield:3.90, beta:0.40, rating:"Hold"      },
-  {ticker:"SO",   name:"Southern Company",         sector:"Utilities",        mktCap:90,   pe:22.0, fwdPe:17.5, revGrowth:3.5,   grossMargin:44.0, netMargin:14.0,  divYield:3.70, beta:0.45, rating:"Hold"      },
+  {ticker:"NEE",  name:"NextEra Energy",           sector:"Utilities",        mktCap:150,  pe:21.0,  fwdPe:18.0, revGrowth:1.5,   grossMargin:57.0, netMargin:17.0,  divYield:3.20, beta:0.55, rating:"Buy",         roe:12.0,  debtToEq:1.24, pb:2.5  },
+  {ticker:"DUK",  name:"Duke Energy Corp",         sector:"Utilities",        mktCap:90,   pe:20.0,  fwdPe:17.5, revGrowth:1.5,   grossMargin:44.0, netMargin:14.5,  divYield:3.90, beta:0.40, rating:"Hold",         roe:9.0,   debtToEq:1.44, pb:1.4  },
+  {ticker:"SO",   name:"Southern Company",         sector:"Utilities",        mktCap:90,   pe:22.0,  fwdPe:17.5, revGrowth:3.5,   grossMargin:44.0, netMargin:14.0,  divYield:3.70, beta:0.45, rating:"Hold",         roe:11.0,  debtToEq:1.46, pb:1.5  },
   // Real Estate
-  {ticker:"AMT",  name:"American Tower Corp",      sector:"Real Estate",      mktCap:90,   pe:40.0, fwdPe:36.0, revGrowth:5.5,   grossMargin:72.0, netMargin:14.0,  divYield:3.10, beta:0.75, rating:"Buy"       },
-  {ticker:"PLD",  name:"Prologis Inc",             sector:"Real Estate",      mktCap:100,  pe:32.0, fwdPe:28.0, revGrowth:9.5,   grossMargin:69.0, netMargin:30.0,  divYield:3.30, beta:0.85, rating:"Buy"       },
-  {ticker:"EQIX", name:"Equinix Inc",              sector:"Real Estate",      mktCap:78,   pe:85.0, fwdPe:60.0, revGrowth:7.0,   grossMargin:49.0, netMargin:8.0,   divYield:2.10, beta:0.85, rating:"Buy"       },
-  {ticker:"SPG",  name:"Simon Property Group",     sector:"Real Estate",      mktCap:60,   pe:24.0, fwdPe:22.0, revGrowth:5.0,   grossMargin:77.0, netMargin:24.0,  divYield:5.20, beta:1.30, rating:"Hold"      },
+  {ticker:"AMT",  name:"American Tower Corp",      sector:"Real Estate",      mktCap:90,   pe:40.0,  fwdPe:36.0, revGrowth:5.5,   grossMargin:72.0, netMargin:14.0,  divYield:3.10, beta:0.75, rating:"Buy",         roe:null,  debtToEq:null, pb:null },
+  {ticker:"PLD",  name:"Prologis Inc",             sector:"Real Estate",      mktCap:100,  pe:32.0,  fwdPe:28.0, revGrowth:9.5,   grossMargin:69.0, netMargin:30.0,  divYield:3.30, beta:0.85, rating:"Buy",         roe:7.0,   debtToEq:0.63, pb:3.4  },
+  {ticker:"EQIX", name:"Equinix Inc",              sector:"Real Estate",      mktCap:78,   pe:85.0,  fwdPe:60.0, revGrowth:7.0,   grossMargin:49.0, netMargin:8.0,   divYield:2.10, beta:0.85, rating:"Buy",         roe:4.0,   debtToEq:1.56, pb:6.5  },
+  {ticker:"SPG",  name:"Simon Property Group",     sector:"Real Estate",      mktCap:60,   pe:24.0,  fwdPe:22.0, revGrowth:5.0,   grossMargin:77.0, netMargin:24.0,  divYield:5.20, beta:1.30, rating:"Hold",         roe:null,  debtToEq:null, pb:null },
 ];
 
 const PF_COLORS = ["#2563eb","#059669","#e11d48","#b45309","#7c3aed","#ea580c","#0891b2","#be123c","#047857","#92400e","#78716c","#475569"];
@@ -161,13 +161,16 @@ const RATING_CLR = {
   "Strong Buy":"#059669","Buy":"#2563eb","Hold":"#b45309","Sell":"#e11d48","Strong Sell":"#be123c",
 };
 const SCREENER_PRESETS = [
-  { label:"🚀 High Growth",   f:{ revGrowthMin:"15", grossMarginMin:"40" } },
-  { label:"💎 Value Plays",   f:{ peMax:"15", divYieldMin:"1" } },
-  { label:"💰 Dividend Dogs", f:{ divYieldMin:"3.5" } },
-  { label:"🏔 Mega Caps",     f:{ mktCapTier:"Mega" } },
-  { label:"⚡ Tech Quality",  f:{ sector:"Technology", grossMarginMin:"60" } },
-  { label:"🛡 Low Beta",      f:{ betaMax:"0.6" } },
-  { label:"🏆 Strong Buys",   f:{ rating:"Strong Buy" } },
+  { label:"🚀 High Growth",       f:{ revGrowthMin:"15", grossMarginMin:"40" } },
+  { label:"💎 Value Plays",       f:{ peMax:"15", divYieldMin:"1", profitable:true } },
+  { label:"💰 Dividend Dogs",     f:{ divYieldMin:"3.5" } },
+  { label:"🏔 Mega Caps",         f:{ mktCapTier:"Mega" } },
+  { label:"⚡ Tech Quality",      f:{ sector:"Technology", grossMarginMin:"60" } },
+  { label:"🛡 Low Beta",          f:{ betaMax:"0.6" } },
+  { label:"🏆 Strong Buys",       f:{ rating:"Strong Buy" } },
+  { label:"🏦 Capital Efficient", f:{ roeMin:"20", debtToEqMax:"1.0", profitable:true } },
+  { label:"📖 Deep Value",        f:{ peMax:"15", pbMax:"2.0", profitable:true } },
+  { label:"💪 Quality Growth",    f:{ roeMin:"15", grossMarginMin:"50", revGrowthMin:"10" } },
 ];
 
 
@@ -7055,7 +7058,15 @@ function GlobalMarketsModule({ onOpenResearch }) {
 // ─── NAV ITEMS config ─────────────────────────────────────────────────────────
 // ─── STOCK SCREENER ───────────────────────────────────────────────────────────
 function StockScreener({ onSelectTicker }) {
-  const DEF = { sector:"All", mktCapTier:"All", peMin:"", peMax:"", revGrowthMin:"", grossMarginMin:"", netMarginMin:"", divYieldMin:"", betaMax:"", rating:"All" };
+  const DEF = {
+    sector:"All", mktCapTier:"All", rating:"All",
+    peMin:"", peMax:"", fwdPeMax:"",
+    revGrowthMin:"", revGrowthMax:"",
+    grossMarginMin:"", netMarginMin:"",
+    divYieldMin:"", betaMax:"",
+    roeMin:"", pbMax:"", debtToEqMax:"",
+    profitable:false, paysDividend:false,
+  };
   const [f, setF] = useState(DEF);
   const [sortCol, setSortCol] = useState("mktCap");
   const [sortDir, setSortDir] = useState("desc");
@@ -7075,11 +7086,18 @@ function StockScreener({ onSelectTicker }) {
       if (f.mktCapTier === "Small" && s.mktCap >= 2)   return false;
       if (f.peMin          && (s.pe          == null || s.pe          < +f.peMin))          return false;
       if (f.peMax          && (s.pe          == null || s.pe          > +f.peMax))          return false;
+      if (f.fwdPeMax       && (s.fwdPe       == null || s.fwdPe       > +f.fwdPeMax))       return false;
       if (f.revGrowthMin   && (s.revGrowth   == null || s.revGrowth   < +f.revGrowthMin))   return false;
+      if (f.revGrowthMax   && (s.revGrowth   == null || s.revGrowth   > +f.revGrowthMax))   return false;
       if (f.grossMarginMin && (s.grossMargin == null || s.grossMargin < +f.grossMarginMin)) return false;
       if (f.netMarginMin   && (s.netMargin   == null || s.netMargin   < +f.netMarginMin))   return false;
       if (f.divYieldMin    && (s.divYield    == null || s.divYield    < +f.divYieldMin))    return false;
       if (f.betaMax        && (s.beta        == null || s.beta        > +f.betaMax))        return false;
+      if (f.roeMin         && (s.roe         == null || s.roe         < +f.roeMin))         return false;
+      if (f.pbMax          && (s.pb          == null || s.pb          > +f.pbMax))          return false;
+      if (f.debtToEqMax    && (s.debtToEq    == null || s.debtToEq    > +f.debtToEqMax))    return false;
+      if (f.profitable     && (s.netMargin   == null || s.netMargin   <= 0))                return false;
+      if (f.paysDividend   && (s.divYield    == null || s.divYield    <= 0))                return false;
       if (f.rating !== "All" && s.rating !== f.rating) return false;
       return true;
     }).sort((a, b) => {
@@ -7093,18 +7111,21 @@ function StockScreener({ onSelectTicker }) {
   const CAPS    = ["All","Mega","Large","Mid","Small"];
   const RATINGS = ["All","Strong Buy","Buy","Hold"];
   const COLS = [
-    {key:"ticker",       label:"Ticker",    num:false},
-    {key:"name",         label:"Company",   num:false},
-    {key:"sector",       label:"Sector",    num:false},
-    {key:"mktCap",       label:"Mkt Cap",   num:true },
-    {key:"pe",           label:"P/E",       num:true },
-    {key:"fwdPe",        label:"Fwd P/E",   num:true },
-    {key:"revGrowth",    label:"Rev Grw%",  num:true },
-    {key:"grossMargin",  label:"Gross%",    num:true },
-    {key:"netMargin",    label:"Net%",      num:true },
-    {key:"divYield",     label:"Div%",      num:true },
-    {key:"beta",         label:"Beta",      num:true },
-    {key:"rating",       label:"Rating",    num:false},
+    {key:"ticker",      label:"Ticker",   num:false},
+    {key:"name",        label:"Company",  num:false},
+    {key:"sector",      label:"Sector",   num:false},
+    {key:"mktCap",      label:"Mkt Cap",  num:true },
+    {key:"pe",          label:"P/E",      num:true },
+    {key:"fwdPe",       label:"Fwd P/E",  num:true },
+    {key:"pb",          label:"P/B",      num:true },
+    {key:"revGrowth",   label:"Rev Grw%", num:true },
+    {key:"grossMargin", label:"Gross%",   num:true },
+    {key:"netMargin",   label:"Net%",     num:true },
+    {key:"roe",         label:"ROE%",     num:true },
+    {key:"debtToEq",    label:"D/E",      num:true },
+    {key:"divYield",    label:"Div%",     num:true },
+    {key:"beta",        label:"Beta",     num:true },
+    {key:"rating",      label:"Rating",   num:false},
   ];
 
   const chipRow = (field, options) => options.map(o => {
@@ -7113,23 +7134,40 @@ function StockScreener({ onSelectTicker }) {
     return (
       <button key={o} onClick={() => setFilter(field, o)}
         style={{ padding:"2px 9px", fontSize:10, fontWeight:500, cursor:"pointer", borderRadius:99, whiteSpace:"nowrap",
-          border:`1px solid ${active ? accentColor : "#e2e8f0"}`,
-          background: active ? `${accentColor}18` : "#ffffff",
-          color: active ? accentColor : "#64748b", transition:"all 0.12s" }}>
+          border:`1px solid ${active ? accentColor : "var(--border-solid)"}`,
+          background: active ? `${accentColor}18` : "var(--surface-1)",
+          color: active ? accentColor : "var(--text-3)", transition:"all 0.12s" }}>
         {o}
       </button>
     );
   });
 
-  const numInput = (label, key) => (
+  const boolChip = (field, label) => {
+    const active = f[field];
+    return (
+      <button key={field} onClick={() => setFilter(field, !active)}
+        style={{ padding:"2px 9px", fontSize:10, fontWeight:500, cursor:"pointer", borderRadius:99, whiteSpace:"nowrap",
+          border:`1px solid ${active ? "#059669" : "var(--border-solid)"}`,
+          background: active ? "rgba(5,150,105,0.12)" : "var(--surface-1)",
+          color: active ? "#059669" : "var(--text-3)", transition:"all 0.12s" }}>
+        {active ? "✓ " : ""}{label}
+      </button>
+    );
+  };
+
+  const numInput = (label, key, w=52) => (
     <div style={{ display:"flex", alignItems:"center", gap:4 }}>
       <span style={{ fontSize:10, color:"var(--text-3)", whiteSpace:"nowrap" }}>{label}</span>
       <input type="number" value={f[key]} placeholder="—"
         onChange={e => setFilter(key, e.target.value)}
-        style={{ width:52, padding:"2px 6px", fontSize:11, fontFamily:"'IBM Plex Mono',monospace",
+        style={{ width:w, padding:"2px 6px", fontSize:11, fontFamily:"'IBM Plex Mono',monospace",
           border:"1px solid var(--border-solid)", borderRadius:4, background:"var(--surface-1)", color:"var(--text-1)",
           outline:"none", appearance:"none" }} />
     </div>
+  );
+
+  const grpLabel = txt => (
+    <span style={{ fontSize:9, fontWeight:700, color:"var(--text-3)", letterSpacing:"0.07em", whiteSpace:"nowrap" }}>{txt}</span>
   );
 
   const sortIcon = col => sortCol === col ? (sortDir === "asc" ? " ▲" : " ▼") : "";
@@ -7173,23 +7211,48 @@ function StockScreener({ onSelectTicker }) {
           {chipRow("sector", SECTORS)}
         </div>
 
-        {/* Cap + Rating + numeric inputs */}
+        {/* Cap + Rating + Boolean toggles */}
         <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:12 }}>
           <div style={{ display:"flex", alignItems:"center", gap:3 }}>
-            <span style={{ fontSize:9, fontWeight:700, color:"var(--text-3)", letterSpacing:"0.05em", marginRight:1 }}>CAP</span>
+            {grpLabel("CAP")}
+            <span style={{ marginRight:2 }} />
             {chipRow("mktCapTier", CAPS)}
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:3 }}>
-            <span style={{ fontSize:9, fontWeight:700, color:"var(--text-3)", letterSpacing:"0.05em", marginRight:1 }}>RATING</span>
+            {grpLabel("RATING")}
+            <span style={{ marginRight:2 }} />
             {chipRow("rating", RATINGS)}
           </div>
-          <div style={{ display:"flex", flexWrap:"wrap", gap:8, alignItems:"center" }}>
-            {numInput("P/E ≤",       "peMax")}
-            {numInput("Rev Grw ≥",   "revGrowthMin")}
-            {numInput("Gross Mgn ≥", "grossMarginMin")}
-            {numInput("Net Mgn ≥",   "netMarginMin")}
-            {numInput("Div Yld ≥",   "divYieldMin")}
-            {numInput("Beta ≤",      "betaMax")}
+          <div style={{ display:"flex", alignItems:"center", gap:4 }}>
+            {grpLabel("ONLY")}
+            <span style={{ marginRight:2 }} />
+            {boolChip("profitable",   "Profitable")}
+            {boolChip("paysDividend", "Pays Dividend")}
+          </div>
+        </div>
+
+        {/* Valuation filters */}
+        <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:14 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+            {grpLabel("VALUATION")}
+            {numInput("P/E ≥",      "peMin")}
+            {numInput("P/E ≤",      "peMax")}
+            {numInput("Fwd P/E ≤",  "fwdPeMax")}
+            {numInput("P/B ≤",      "pbMax")}
+          </div>
+          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+            {grpLabel("QUALITY")}
+            {numInput("ROE ≥",      "roeMin")}
+            {numInput("D/E ≤",      "debtToEqMax", 44)}
+            {numInput("Gross ≥",    "grossMarginMin")}
+            {numInput("Net ≥",      "netMarginMin")}
+          </div>
+          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+            {grpLabel("GROWTH / INCOME")}
+            {numInput("Rev ≥",      "revGrowthMin")}
+            {numInput("Rev ≤",      "revGrowthMax")}
+            {numInput("Div ≥",      "divYieldMin")}
+            {numInput("Beta ≤",     "betaMax", 44)}
           </div>
         </div>
       </div>
@@ -7211,22 +7274,25 @@ function StockScreener({ onSelectTicker }) {
           </thead>
           <tbody>
             {results.length === 0 && (
-              <tr><td colSpan={12} style={{ textAlign:"center", padding:"48px", color:"var(--text-3)", fontSize:12 }}>
+              <tr><td colSpan={15} style={{ textAlign:"center", padding:"48px", color:"var(--text-3)", fontSize:12 }}>
                 No stocks match — try adjusting the filters above
               </td></tr>
             )}
             {results.map((s, i) => {
-              const base = i % 2 === 0 ? "#ffffff" : "#f8fafc";
+              const base = i % 2 === 0 ? "var(--surface-1)" : "var(--surface-0)";
+              const mono = { fontFamily:"'IBM Plex Mono',monospace" };
               const fmtN  = v => v == null ? "—" : v.toFixed(1);
               const fmtP  = v => v == null ? "—" : (v > 0 ? "+" : "") + v.toFixed(1) + "%";
               const fmtMC = v => v >= 1000 ? "$" + (v/1000).toFixed(2) + "T" : "$" + v + "B";
+              const roeClr = v => v == null ? "var(--text-3)" : v >= 20 ? "#059669" : v >= 10 ? "#b45309" : v < 0 ? "#e11d48" : "var(--text-1)";
+              const deClr  = v => v == null ? "var(--text-3)" : v >= 4 ? "#e11d48" : v >= 2 ? "#b45309" : v <= 0.5 ? "#059669" : "var(--text-1)";
               return (
                 <tr key={s.ticker + i}
-                  style={{ background:base, borderBottom:"1px solid #f1f5f9", cursor:"pointer", transition:"background 0.1s" }}
+                  style={{ background:base, borderBottom:"1px solid var(--border-solid)", cursor:"pointer", transition:"background 0.1s" }}
                   onClick={() => onSelectTicker(s.ticker)}
-                  onMouseEnter={e => e.currentTarget.style.background = "#eff6ff"}
+                  onMouseEnter={e => e.currentTarget.style.background = "var(--blue-dim)"}
                   onMouseLeave={e => e.currentTarget.style.background = base}>
-                  <td style={{ padding:"5px 10px", fontFamily:"'IBM Plex Mono',monospace", fontWeight:700, color:"#2563eb", whiteSpace:"nowrap" }}>{s.ticker}</td>
+                  <td style={{ padding:"5px 10px", ...mono, fontWeight:700, color:"#2563eb", whiteSpace:"nowrap" }}>{s.ticker}</td>
                   <td style={{ padding:"5px 10px", color:"var(--text-1)", maxWidth:160, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.name}</td>
                   <td style={{ padding:"5px 10px" }}>
                     <span style={{ fontSize:9, fontWeight:600, padding:"1px 6px", borderRadius:99,
@@ -7234,14 +7300,17 @@ function StockScreener({ onSelectTicker }) {
                       {s.sector}
                     </span>
                   </td>
-                  <td style={{ padding:"5px 10px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"var(--text-1)" }}>{fmtMC(s.mktCap)}</td>
-                  <td style={{ padding:"5px 10px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"var(--text-1)" }}>{fmtN(s.pe)}</td>
-                  <td style={{ padding:"5px 10px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"var(--text-3)" }}>{fmtN(s.fwdPe)}</td>
-                  <td style={{ padding:"5px 10px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:s.revGrowth > 0 ? "#059669" : s.revGrowth < 0 ? "#e11d48" : "#0f172a" }}>{fmtP(s.revGrowth)}</td>
-                  <td style={{ padding:"5px 10px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"var(--text-1)" }}>{s.grossMargin == null ? "—" : s.grossMargin.toFixed(1) + "%"}</td>
-                  <td style={{ padding:"5px 10px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:s.netMargin != null && s.netMargin < 0 ? "#e11d48" : "#0f172a" }}>{s.netMargin == null ? "—" : s.netMargin.toFixed(1) + "%"}</td>
-                  <td style={{ padding:"5px 10px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:s.divYield >= 3.5 ? "#059669" : "#0f172a" }}>{s.divYield == null ? "—" : s.divYield.toFixed(2) + "%"}</td>
-                  <td style={{ padding:"5px 10px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"var(--text-1)" }}>{fmtN(s.beta)}</td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", ...mono, color:"var(--text-1)" }}>{fmtMC(s.mktCap)}</td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", ...mono, color:"var(--text-1)" }}>{fmtN(s.pe)}</td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", ...mono, color:"var(--text-3)" }}>{fmtN(s.fwdPe)}</td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", ...mono, color:"var(--text-1)" }}>{s.pb == null ? "—" : s.pb.toFixed(1)}</td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", ...mono, color:s.revGrowth > 0 ? "#059669" : s.revGrowth < 0 ? "#e11d48" : "var(--text-1)" }}>{fmtP(s.revGrowth)}</td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", ...mono, color:"var(--text-1)" }}>{s.grossMargin == null ? "—" : s.grossMargin.toFixed(1) + "%"}</td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", ...mono, color:s.netMargin != null && s.netMargin < 0 ? "#e11d48" : "var(--text-1)" }}>{s.netMargin == null ? "—" : s.netMargin.toFixed(1) + "%"}</td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", ...mono, color:roeClr(s.roe) }}>{s.roe == null ? "—" : s.roe.toFixed(1) + "%"}</td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", ...mono, color:deClr(s.debtToEq) }}>{s.debtToEq == null ? "—" : s.debtToEq.toFixed(2)}</td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", ...mono, color:s.divYield >= 3.5 ? "#059669" : "var(--text-1)" }}>{s.divYield == null ? "—" : s.divYield.toFixed(2) + "%"}</td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", ...mono, color:"var(--text-1)" }}>{fmtN(s.beta)}</td>
                   <td style={{ padding:"5px 10px" }}>
                     <span style={{ fontSize:9, fontWeight:700, padding:"1px 7px", borderRadius:99,
                       background:`${RATING_CLR[s.rating]||"#64748b"}14`, color:RATING_CLR[s.rating]||"#64748b" }}>
