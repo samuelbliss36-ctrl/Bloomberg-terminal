@@ -47,6 +47,126 @@ const delay = (ms) => new Promise(r => setTimeout(r, ms));
 
 const WATCHLIST = ["SPY", "QQQ", "MSFT", "NVDA", "TSLA", "GOOGL", "AMZN", "META"];
 
+// ─── SCREENER UNIVERSE — approximate fundamentals (as of Q1 2025) ────────────
+const SCREENER_UNIVERSE = [
+  // Technology
+  {ticker:"AAPL", name:"Apple Inc",               sector:"Technology",       mktCap:3930, pe:33.4, fwdPe:28.0, revGrowth:4.0,   grossMargin:46.5, netMargin:27.0,  divYield:0.44, beta:1.20, rating:"Buy"       },
+  {ticker:"MSFT", name:"Microsoft Corp",           sector:"Technology",       mktCap:3140, pe:35.2, fwdPe:30.1, revGrowth:16.0,  grossMargin:69.8, netMargin:36.5,  divYield:0.72, beta:0.90, rating:"Strong Buy" },
+  {ticker:"NVDA", name:"NVIDIA Corp",              sector:"Technology",       mktCap:2650, pe:48.2, fwdPe:36.0, revGrowth:122.0, grossMargin:75.0, netMargin:55.0,  divYield:0.03, beta:1.95, rating:"Strong Buy" },
+  {ticker:"AVGO", name:"Broadcom Inc",             sector:"Technology",       mktCap:980,  pe:38.5, fwdPe:28.0, revGrowth:44.0,  grossMargin:68.2, netMargin:25.0,  divYield:1.32, beta:1.20, rating:"Buy"       },
+  {ticker:"ORCL", name:"Oracle Corp",              sector:"Technology",       mktCap:490,  pe:42.0, fwdPe:26.0, revGrowth:17.0,  grossMargin:71.0, netMargin:22.5,  divYield:0.95, beta:0.82, rating:"Buy"       },
+  {ticker:"ADBE", name:"Adobe Inc",                sector:"Technology",       mktCap:195,  pe:26.0, fwdPe:22.0, revGrowth:11.0,  grossMargin:88.0, netMargin:27.0,  divYield:0.00, beta:1.32, rating:"Buy"       },
+  {ticker:"CRM",  name:"Salesforce Inc",           sector:"Technology",       mktCap:285,  pe:48.0, fwdPe:28.0, revGrowth:8.7,   grossMargin:77.0, netMargin:15.0,  divYield:0.60, beta:1.35, rating:"Buy"       },
+  {ticker:"AMD",  name:"Advanced Micro Devices",   sector:"Technology",       mktCap:285,  pe:110.0,fwdPe:27.0, revGrowth:13.5,  grossMargin:51.0, netMargin:5.7,   divYield:0.00, beta:1.90, rating:"Strong Buy" },
+  {ticker:"INTC", name:"Intel Corp",               sector:"Technology",       mktCap:95,   pe:null, fwdPe:null, revGrowth:-8.0,  grossMargin:32.7, netMargin:-16.0, divYield:0.00, beta:1.00, rating:"Hold"      },
+  {ticker:"QCOM", name:"Qualcomm Inc",             sector:"Technology",       mktCap:185,  pe:17.0, fwdPe:14.0, revGrowth:14.0,  grossMargin:56.0, netMargin:26.0,  divYield:2.15, beta:1.35, rating:"Buy"       },
+  {ticker:"TXN",  name:"Texas Instruments",        sector:"Technology",       mktCap:175,  pe:35.0, fwdPe:32.0, revGrowth:-11.0, grossMargin:55.0, netMargin:32.0,  divYield:3.00, beta:1.05, rating:"Hold"      },
+  {ticker:"CSCO", name:"Cisco Systems",            sector:"Technology",       mktCap:215,  pe:18.0, fwdPe:14.0, revGrowth:-6.0,  grossMargin:63.0, netMargin:23.0,  divYield:3.25, beta:0.80, rating:"Hold"      },
+  {ticker:"NOW",  name:"ServiceNow Inc",           sector:"Technology",       mktCap:200,  pe:98.0, fwdPe:45.0, revGrowth:22.0,  grossMargin:79.0, netMargin:15.0,  divYield:0.00, beta:1.10, rating:"Strong Buy" },
+  {ticker:"INTU", name:"Intuit Inc",               sector:"Technology",       mktCap:175,  pe:58.0, fwdPe:34.0, revGrowth:13.0,  grossMargin:79.0, netMargin:17.0,  divYield:0.65, beta:1.25, rating:"Buy"       },
+  {ticker:"AMAT", name:"Applied Materials",        sector:"Technology",       mktCap:155,  pe:22.0, fwdPe:18.0, revGrowth:2.0,   grossMargin:47.5, netMargin:27.0,  divYield:0.90, beta:1.60, rating:"Buy"       },
+  {ticker:"MU",   name:"Micron Technology",        sector:"Technology",       mktCap:110,  pe:25.0, fwdPe:12.0, revGrowth:61.0,  grossMargin:22.6, netMargin:15.0,  divYield:0.45, beta:1.50, rating:"Strong Buy" },
+  {ticker:"IBM",  name:"IBM Corp",                 sector:"Technology",       mktCap:225,  pe:30.0, fwdPe:21.0, revGrowth:3.5,   grossMargin:56.0, netMargin:10.0,  divYield:2.80, beta:0.70, rating:"Hold"      },
+  // Healthcare
+  {ticker:"JNJ",  name:"Johnson & Johnson",        sector:"Healthcare",       mktCap:395,  pe:22.0, fwdPe:15.0, revGrowth:3.5,   grossMargin:70.0, netMargin:18.0,  divYield:3.20, beta:0.55, rating:"Buy"       },
+  {ticker:"UNH",  name:"UnitedHealth Group",       sector:"Healthcare",       mktCap:490,  pe:20.0, fwdPe:17.0, revGrowth:8.0,   grossMargin:24.0, netMargin:5.5,   divYield:1.60, beta:0.60, rating:"Strong Buy" },
+  {ticker:"LLY",  name:"Eli Lilly & Co",           sector:"Healthcare",       mktCap:735,  pe:80.0, fwdPe:32.0, revGrowth:32.0,  grossMargin:81.0, netMargin:22.0,  divYield:0.65, beta:0.50, rating:"Strong Buy" },
+  {ticker:"ABBV", name:"AbbVie Inc",               sector:"Healthcare",       mktCap:330,  pe:58.0, fwdPe:16.0, revGrowth:3.7,   grossMargin:69.0, netMargin:9.0,   divYield:3.50, beta:0.60, rating:"Buy"       },
+  {ticker:"MRK",  name:"Merck & Co",               sector:"Healthcare",       mktCap:280,  pe:15.0, fwdPe:12.0, revGrowth:7.5,   grossMargin:76.0, netMargin:27.0,  divYield:2.50, beta:0.50, rating:"Buy"       },
+  {ticker:"TMO",  name:"Thermo Fisher Scientific", sector:"Healthcare",       mktCap:185,  pe:28.0, fwdPe:22.0, revGrowth:1.0,   grossMargin:42.0, netMargin:13.5,  divYield:0.28, beta:0.70, rating:"Buy"       },
+  {ticker:"ABT",  name:"Abbott Laboratories",      sector:"Healthcare",       mktCap:205,  pe:32.0, fwdPe:23.0, revGrowth:4.6,   grossMargin:56.0, netMargin:16.0,  divYield:2.00, beta:0.65, rating:"Buy"       },
+  {ticker:"BMY",  name:"Bristol-Myers Squibb",     sector:"Healthcare",       mktCap:115,  pe:null, fwdPe:7.5,  revGrowth:6.5,   grossMargin:73.0, netMargin:-34.0, divYield:5.50, beta:0.50, rating:"Hold"      },
+  {ticker:"AMGN", name:"Amgen Inc",                sector:"Healthcare",       mktCap:155,  pe:30.0, fwdPe:15.0, revGrowth:19.0,  grossMargin:73.0, netMargin:20.0,  divYield:3.40, beta:0.50, rating:"Hold"      },
+  {ticker:"ISRG", name:"Intuitive Surgical",       sector:"Healthcare",       mktCap:195,  pe:82.0, fwdPe:65.0, revGrowth:16.0,  grossMargin:68.0, netMargin:23.0,  divYield:0.00, beta:0.90, rating:"Buy"       },
+  // Financials
+  {ticker:"BRK.B",name:"Berkshire Hathaway",       sector:"Financials",       mktCap:1050, pe:22.0, fwdPe:20.0, revGrowth:20.0,  grossMargin:null, netMargin:14.0,  divYield:0.00, beta:0.85, rating:"Buy"       },
+  {ticker:"JPM",  name:"JPMorgan Chase",           sector:"Financials",       mktCap:755,  pe:13.0, fwdPe:13.5, revGrowth:22.0,  grossMargin:null, netMargin:31.0,  divYield:2.00, beta:1.15, rating:"Buy"       },
+  {ticker:"BAC",  name:"Bank of America",          sector:"Financials",       mktCap:340,  pe:14.5, fwdPe:12.0, revGrowth:3.5,   grossMargin:null, netMargin:22.0,  divYield:2.40, beta:1.30, rating:"Buy"       },
+  {ticker:"WFC",  name:"Wells Fargo",              sector:"Financials",       mktCap:230,  pe:12.0, fwdPe:11.5, revGrowth:1.0,   grossMargin:null, netMargin:20.0,  divYield:2.40, beta:1.20, rating:"Buy"       },
+  {ticker:"GS",   name:"Goldman Sachs",            sector:"Financials",       mktCap:190,  pe:14.5, fwdPe:13.0, revGrowth:16.0,  grossMargin:null, netMargin:25.0,  divYield:2.10, beta:1.40, rating:"Buy"       },
+  {ticker:"MS",   name:"Morgan Stanley",           sector:"Financials",       mktCap:215,  pe:18.0, fwdPe:16.5, revGrowth:13.0,  grossMargin:null, netMargin:14.0,  divYield:3.20, beta:1.25, rating:"Buy"       },
+  {ticker:"BLK",  name:"BlackRock Inc",            sector:"Financials",       mktCap:145,  pe:22.0, fwdPe:20.0, revGrowth:8.5,   grossMargin:null, netMargin:28.0,  divYield:2.70, beta:1.30, rating:"Buy"       },
+  {ticker:"AXP",  name:"American Express",         sector:"Financials",       mktCap:225,  pe:21.0, fwdPe:18.0, revGrowth:10.0,  grossMargin:null, netMargin:17.0,  divYield:1.00, beta:1.20, rating:"Buy"       },
+  {ticker:"V",    name:"Visa Inc",                 sector:"Financials",       mktCap:620,  pe:32.0, fwdPe:27.0, revGrowth:10.0,  grossMargin:80.0, netMargin:52.0,  divYield:0.75, beta:0.95, rating:"Strong Buy" },
+  {ticker:"MA",   name:"Mastercard Inc",           sector:"Financials",       mktCap:510,  pe:38.0, fwdPe:30.0, revGrowth:12.0,  grossMargin:78.0, netMargin:46.0,  divYield:0.55, beta:1.05, rating:"Strong Buy" },
+  {ticker:"C",    name:"Citigroup Inc",            sector:"Financials",       mktCap:130,  pe:14.0, fwdPe:10.0, revGrowth:5.5,   grossMargin:null, netMargin:15.0,  divYield:3.30, beta:1.45, rating:"Buy"       },
+  // Consumer Discretionary
+  {ticker:"AMZN", name:"Amazon.com Inc",           sector:"Consumer Disc.",   mktCap:2090, pe:45.0, fwdPe:33.0, revGrowth:11.0,  grossMargin:48.0, netMargin:9.0,   divYield:0.00, beta:1.55, rating:"Strong Buy" },
+  {ticker:"TSLA", name:"Tesla Inc",                sector:"Consumer Disc.",   mktCap:1200, pe:130.0,fwdPe:95.0, revGrowth:-1.0,  grossMargin:17.9, netMargin:7.3,   divYield:0.00, beta:2.40, rating:"Hold"      },
+  {ticker:"HD",   name:"Home Depot Inc",           sector:"Consumer Disc.",   mktCap:400,  pe:27.0, fwdPe:24.0, revGrowth:-3.0,  grossMargin:33.4, netMargin:10.0,  divYield:2.30, beta:1.05, rating:"Buy"       },
+  {ticker:"MCD",  name:"McDonald's Corp",          sector:"Consumer Disc.",   mktCap:225,  pe:23.0, fwdPe:22.0, revGrowth:2.5,   grossMargin:57.0, netMargin:34.0,  divYield:2.30, beta:0.75, rating:"Buy"       },
+  {ticker:"NKE",  name:"Nike Inc",                 sector:"Consumer Disc.",   mktCap:70,   pe:21.0, fwdPe:18.0, revGrowth:-10.0, grossMargin:44.0, netMargin:7.5,   divYield:2.40, beta:1.05, rating:"Hold"      },
+  {ticker:"LOW",  name:"Lowe's Companies",         sector:"Consumer Disc.",   mktCap:145,  pe:22.0, fwdPe:18.0, revGrowth:-5.0,  grossMargin:33.5, netMargin:8.5,   divYield:2.10, beta:1.10, rating:"Buy"       },
+  {ticker:"BKNG", name:"Booking Holdings",         sector:"Consumer Disc.",   mktCap:175,  pe:22.0, fwdPe:20.0, revGrowth:11.0,  grossMargin:83.0, netMargin:24.0,  divYield:0.80, beta:1.30, rating:"Buy"       },
+  {ticker:"CMG",  name:"Chipotle Mexican Grill",   sector:"Consumer Disc.",   mktCap:78,   pe:50.0, fwdPe:40.0, revGrowth:14.6,  grossMargin:25.2, netMargin:13.0,  divYield:0.00, beta:1.20, rating:"Strong Buy" },
+  {ticker:"SBUX", name:"Starbucks Corp",           sector:"Consumer Disc.",   mktCap:95,   pe:25.0, fwdPe:22.0, revGrowth:-1.0,  grossMargin:27.0, netMargin:10.0,  divYield:3.50, beta:0.90, rating:"Hold"      },
+  {ticker:"TJX",  name:"TJX Companies",            sector:"Consumer Disc.",   mktCap:140,  pe:29.0, fwdPe:26.0, revGrowth:6.0,   grossMargin:30.0, netMargin:8.8,   divYield:1.30, beta:0.90, rating:"Buy"       },
+  // Consumer Staples
+  {ticker:"WMT",  name:"Walmart Inc",              sector:"Consumer Staples", mktCap:770,  pe:37.0, fwdPe:32.0, revGrowth:5.7,   grossMargin:24.7, netMargin:2.5,   divYield:0.90, beta:0.65, rating:"Strong Buy" },
+  {ticker:"PG",   name:"Procter & Gamble",         sector:"Consumer Staples", mktCap:395,  pe:27.0, fwdPe:22.0, revGrowth:3.0,   grossMargin:52.0, netMargin:18.0,  divYield:2.40, beta:0.55, rating:"Buy"       },
+  {ticker:"KO",   name:"The Coca-Cola Co",         sector:"Consumer Staples", mktCap:295,  pe:27.0, fwdPe:22.0, revGrowth:3.0,   grossMargin:60.5, netMargin:23.5,  divYield:3.10, beta:0.55, rating:"Buy"       },
+  {ticker:"PEP",  name:"PepsiCo Inc",              sector:"Consumer Staples", mktCap:195,  pe:23.0, fwdPe:19.0, revGrowth:0.6,   grossMargin:55.0, netMargin:10.0,  divYield:3.70, beta:0.55, rating:"Hold"      },
+  {ticker:"COST", name:"Costco Wholesale",         sector:"Consumer Staples", mktCap:435,  pe:55.0, fwdPe:47.0, revGrowth:5.5,   grossMargin:12.6, netMargin:2.9,   divYield:0.50, beta:0.85, rating:"Buy"       },
+  {ticker:"PM",   name:"Philip Morris Intl",       sector:"Consumer Staples", mktCap:250,  pe:24.0, fwdPe:18.0, revGrowth:9.7,   grossMargin:67.0, netMargin:27.0,  divYield:4.20, beta:0.60, rating:"Buy"       },
+  {ticker:"MO",   name:"Altria Group",             sector:"Consumer Staples", mktCap:90,   pe:10.0, fwdPe:9.5,  revGrowth:-2.0,  grossMargin:62.0, netMargin:46.0,  divYield:8.00, beta:0.50, rating:"Hold"      },
+  // Communication
+  {ticker:"GOOGL",name:"Alphabet Inc",             sector:"Communication",    mktCap:2050, pe:25.0, fwdPe:20.0, revGrowth:15.0,  grossMargin:57.0, netMargin:28.5,  divYield:0.45, beta:1.10, rating:"Strong Buy" },
+  {ticker:"META", name:"Meta Platforms",           sector:"Communication",    mktCap:1700, pe:27.0, fwdPe:24.0, revGrowth:22.0,  grossMargin:81.5, netMargin:38.0,  divYield:0.35, beta:1.25, rating:"Strong Buy" },
+  {ticker:"NFLX", name:"Netflix Inc",              sector:"Communication",    mktCap:455,  pe:55.0, fwdPe:38.0, revGrowth:16.0,  grossMargin:47.0, netMargin:22.5,  divYield:0.00, beta:1.35, rating:"Strong Buy" },
+  {ticker:"DIS",  name:"Walt Disney Co",           sector:"Communication",    mktCap:190,  pe:55.0, fwdPe:22.0, revGrowth:4.0,   grossMargin:34.0, netMargin:4.5,   divYield:0.80, beta:1.05, rating:"Buy"       },
+  {ticker:"CMCSA",name:"Comcast Corp",             sector:"Communication",    mktCap:140,  pe:11.0, fwdPe:10.0, revGrowth:2.5,   grossMargin:68.0, netMargin:12.5,  divYield:3.50, beta:1.00, rating:"Hold"      },
+  {ticker:"VZ",   name:"Verizon Communications",   sector:"Communication",    mktCap:175,  pe:10.0, fwdPe:9.0,  revGrowth:0.5,   grossMargin:59.0, netMargin:10.0,  divYield:6.30, beta:0.40, rating:"Hold"      },
+  {ticker:"T",    name:"AT&T Inc",                 sector:"Communication",    mktCap:165,  pe:18.0, fwdPe:10.0, revGrowth:1.0,   grossMargin:59.0, netMargin:5.5,   divYield:4.90, beta:0.55, rating:"Hold"      },
+  // Energy
+  {ticker:"XOM",  name:"Exxon Mobil Corp",         sector:"Energy",           mktCap:520,  pe:14.0, fwdPe:13.5, revGrowth:-5.5,  grossMargin:35.0, netMargin:10.0,  divYield:3.50, beta:0.95, rating:"Buy"       },
+  {ticker:"CVX",  name:"Chevron Corp",             sector:"Energy",           mktCap:285,  pe:14.5, fwdPe:14.0, revGrowth:-10.0, grossMargin:37.0, netMargin:11.0,  divYield:4.30, beta:1.00, rating:"Buy"       },
+  {ticker:"COP",  name:"ConocoPhillips",           sector:"Energy",           mktCap:135,  pe:13.0, fwdPe:12.5, revGrowth:-9.0,  grossMargin:48.0, netMargin:16.0,  divYield:2.80, beta:1.20, rating:"Strong Buy" },
+  {ticker:"SLB",  name:"SLB",                      sector:"Energy",           mktCap:55,   pe:13.0, fwdPe:11.0, revGrowth:10.0,  grossMargin:21.0, netMargin:13.5,  divYield:2.80, beta:1.40, rating:"Buy"       },
+  {ticker:"EOG",  name:"EOG Resources",            sector:"Energy",           mktCap:70,   pe:11.0, fwdPe:10.5, revGrowth:-7.0,  grossMargin:64.0, netMargin:23.0,  divYield:3.30, beta:1.25, rating:"Buy"       },
+  // Industrials
+  {ticker:"CAT",  name:"Caterpillar Inc",          sector:"Industrials",      mktCap:165,  pe:16.0, fwdPe:16.0, revGrowth:-3.5,  grossMargin:37.8, netMargin:16.0,  divYield:1.70, beta:1.05, rating:"Hold"      },
+  {ticker:"HON",  name:"Honeywell Intl",           sector:"Industrials",      mktCap:130,  pe:22.0, fwdPe:18.0, revGrowth:4.0,   grossMargin:34.0, netMargin:14.0,  divYield:2.30, beta:1.00, rating:"Hold"      },
+  {ticker:"RTX",  name:"RTX Corp",                 sector:"Industrials",      mktCap:175,  pe:40.0, fwdPe:20.0, revGrowth:9.0,   grossMargin:19.0, netMargin:5.5,   divYield:1.90, beta:0.85, rating:"Buy"       },
+  {ticker:"DE",   name:"Deere & Company",          sector:"Industrials",      mktCap:130,  pe:15.0, fwdPe:16.0, revGrowth:-17.0, grossMargin:30.5, netMargin:15.0,  divYield:1.60, beta:1.05, rating:"Hold"      },
+  {ticker:"GE",   name:"GE Aerospace",             sector:"Industrials",      mktCap:250,  pe:36.0, fwdPe:30.0, revGrowth:15.0,  grossMargin:28.0, netMargin:8.0,   divYield:0.70, beta:1.20, rating:"Strong Buy" },
+  {ticker:"LMT",  name:"Lockheed Martin",          sector:"Industrials",      mktCap:105,  pe:18.0, fwdPe:16.0, revGrowth:5.5,   grossMargin:12.5, netMargin:9.5,   divYield:2.70, beta:0.45, rating:"Buy"       },
+  {ticker:"UNP",  name:"Union Pacific Corp",       sector:"Industrials",      mktCap:155,  pe:22.0, fwdPe:20.0, revGrowth:1.0,   grossMargin:52.0, netMargin:27.5,  divYield:2.30, beta:1.00, rating:"Buy"       },
+  {ticker:"UPS",  name:"United Parcel Service",    sector:"Industrials",      mktCap:90,   pe:16.0, fwdPe:14.0, revGrowth:-9.0,  grossMargin:22.0, netMargin:8.0,   divYield:5.50, beta:1.10, rating:"Hold"      },
+  // Materials
+  {ticker:"LIN",  name:"Linde plc",                sector:"Materials",        mktCap:225,  pe:30.0, fwdPe:25.0, revGrowth:-1.0,  grossMargin:43.0, netMargin:20.5,  divYield:1.30, beta:0.85, rating:"Buy"       },
+  {ticker:"APD",  name:"Air Products & Chemicals", sector:"Materials",        mktCap:65,   pe:22.0, fwdPe:20.0, revGrowth:-5.0,  grossMargin:36.0, netMargin:18.0,  divYield:2.90, beta:0.85, rating:"Hold"      },
+  {ticker:"NEM",  name:"Newmont Corp",             sector:"Materials",        mktCap:55,   pe:22.0, fwdPe:14.0, revGrowth:65.0,  grossMargin:40.0, netMargin:8.0,   divYield:2.20, beta:0.50, rating:"Buy"       },
+  {ticker:"FCX",  name:"Freeport-McMoRan",         sector:"Materials",        mktCap:60,   pe:22.0, fwdPe:16.0, revGrowth:3.0,   grossMargin:37.0, netMargin:13.0,  divYield:1.50, beta:1.75, rating:"Buy"       },
+  // Utilities
+  {ticker:"NEE",  name:"NextEra Energy",           sector:"Utilities",        mktCap:150,  pe:21.0, fwdPe:18.0, revGrowth:1.5,   grossMargin:57.0, netMargin:17.0,  divYield:3.20, beta:0.55, rating:"Buy"       },
+  {ticker:"DUK",  name:"Duke Energy Corp",         sector:"Utilities",        mktCap:90,   pe:20.0, fwdPe:17.5, revGrowth:1.5,   grossMargin:44.0, netMargin:14.5,  divYield:3.90, beta:0.40, rating:"Hold"      },
+  {ticker:"SO",   name:"Southern Company",         sector:"Utilities",        mktCap:90,   pe:22.0, fwdPe:17.5, revGrowth:3.5,   grossMargin:44.0, netMargin:14.0,  divYield:3.70, beta:0.45, rating:"Hold"      },
+  // Real Estate
+  {ticker:"AMT",  name:"American Tower Corp",      sector:"Real Estate",      mktCap:90,   pe:40.0, fwdPe:36.0, revGrowth:5.5,   grossMargin:72.0, netMargin:14.0,  divYield:3.10, beta:0.75, rating:"Buy"       },
+  {ticker:"PLD",  name:"Prologis Inc",             sector:"Real Estate",      mktCap:100,  pe:32.0, fwdPe:28.0, revGrowth:9.5,   grossMargin:69.0, netMargin:30.0,  divYield:3.30, beta:0.85, rating:"Buy"       },
+  {ticker:"EQIX", name:"Equinix Inc",              sector:"Real Estate",      mktCap:78,   pe:85.0, fwdPe:60.0, revGrowth:7.0,   grossMargin:49.0, netMargin:8.0,   divYield:2.10, beta:0.85, rating:"Buy"       },
+  {ticker:"SPG",  name:"Simon Property Group",     sector:"Real Estate",      mktCap:60,   pe:24.0, fwdPe:22.0, revGrowth:5.0,   grossMargin:77.0, netMargin:24.0,  divYield:5.20, beta:1.30, rating:"Hold"      },
+];
+
+const SECTOR_CLR = {
+  "Technology":"#2563eb","Healthcare":"#059669","Financials":"#b45309",
+  "Consumer Disc.":"#ea580c","Consumer Staples":"#047857","Communication":"#7c3aed",
+  "Energy":"#92400e","Industrials":"#475569","Materials":"#78716c",
+  "Utilities":"#0891b2","Real Estate":"#be123c",
+};
+const RATING_CLR = {
+  "Strong Buy":"#059669","Buy":"#2563eb","Hold":"#b45309","Sell":"#e11d48","Strong Sell":"#be123c",
+};
+const SCREENER_PRESETS = [
+  { label:"🚀 High Growth",   f:{ revGrowthMin:"15", grossMarginMin:"40" } },
+  { label:"💎 Value Plays",   f:{ peMax:"15", divYieldMin:"1" } },
+  { label:"💰 Dividend Dogs", f:{ divYieldMin:"3.5" } },
+  { label:"🏔 Mega Caps",     f:{ mktCapTier:"Mega" } },
+  { label:"⚡ Tech Quality",  f:{ sector:"Technology", grossMarginMin:"60" } },
+  { label:"🛡 Low Beta",      f:{ betaMax:"0.6" } },
+  { label:"🏆 Strong Buys",   f:{ rating:"Strong Buy" } },
+];
+
 
 function GlobalStyles() {
   return (
@@ -6258,6 +6378,211 @@ function GlobalMarketsModule({ onOpenResearch }) {
 }
 
 // ─── NAV ITEMS config ─────────────────────────────────────────────────────────
+// ─── STOCK SCREENER ───────────────────────────────────────────────────────────
+function StockScreener({ onSelectTicker }) {
+  const DEF = { sector:"All", mktCapTier:"All", peMin:"", peMax:"", revGrowthMin:"", grossMarginMin:"", netMarginMin:"", divYieldMin:"", betaMax:"", rating:"All" };
+  const [f, setF] = useState(DEF);
+  const [sortCol, setSortCol] = useState("mktCap");
+  const [sortDir, setSortDir] = useState("desc");
+  const [activePreset, setActivePreset] = useState(null);
+
+  const setFilter = (k, v) => { setF(prev => ({...prev, [k]:v})); setActivePreset(null); };
+  const applyPreset = (p, i) => { setF({...DEF, ...p.f}); setActivePreset(i); setSortCol("mktCap"); setSortDir("desc"); };
+  const reset = () => { setF(DEF); setActivePreset(null); setSortCol("mktCap"); setSortDir("desc"); };
+  const toggleSort = (col) => { if (sortCol===col) setSortDir(d=>d==="asc"?"desc":"asc"); else { setSortCol(col); setSortDir("desc"); } };
+
+  const results = useMemo(() => {
+    return SCREENER_UNIVERSE.filter(s => {
+      if (f.sector !== "All" && s.sector !== f.sector) return false;
+      if (f.mktCapTier === "Mega"  && s.mktCap < 200)  return false;
+      if (f.mktCapTier === "Large" && (s.mktCap < 10  || s.mktCap >= 200)) return false;
+      if (f.mktCapTier === "Mid"   && (s.mktCap < 2   || s.mktCap >= 10))  return false;
+      if (f.mktCapTier === "Small" && s.mktCap >= 2)   return false;
+      if (f.peMin          && (s.pe          == null || s.pe          < +f.peMin))          return false;
+      if (f.peMax          && (s.pe          == null || s.pe          > +f.peMax))          return false;
+      if (f.revGrowthMin   && (s.revGrowth   == null || s.revGrowth   < +f.revGrowthMin))   return false;
+      if (f.grossMarginMin && (s.grossMargin == null || s.grossMargin < +f.grossMarginMin)) return false;
+      if (f.netMarginMin   && (s.netMargin   == null || s.netMargin   < +f.netMarginMin))   return false;
+      if (f.divYieldMin    && (s.divYield    == null || s.divYield    < +f.divYieldMin))    return false;
+      if (f.betaMax        && (s.beta        == null || s.beta        > +f.betaMax))        return false;
+      if (f.rating !== "All" && s.rating !== f.rating) return false;
+      return true;
+    }).sort((a, b) => {
+      const av = a[sortCol] ?? (sortDir==="asc" ? Infinity : -Infinity);
+      const bv = b[sortCol] ?? (sortDir==="asc" ? Infinity : -Infinity);
+      return sortDir === "asc" ? av - bv : bv - av;
+    });
+  }, [f, sortCol, sortDir]);
+
+  const SECTORS = ["All","Technology","Healthcare","Financials","Consumer Disc.","Consumer Staples","Communication","Energy","Industrials","Materials","Utilities","Real Estate"];
+  const CAPS    = ["All","Mega","Large","Mid","Small"];
+  const RATINGS = ["All","Strong Buy","Buy","Hold"];
+  const COLS = [
+    {key:"ticker",       label:"Ticker",    num:false},
+    {key:"name",         label:"Company",   num:false},
+    {key:"sector",       label:"Sector",    num:false},
+    {key:"mktCap",       label:"Mkt Cap",   num:true },
+    {key:"pe",           label:"P/E",       num:true },
+    {key:"fwdPe",        label:"Fwd P/E",   num:true },
+    {key:"revGrowth",    label:"Rev Grw%",  num:true },
+    {key:"grossMargin",  label:"Gross%",    num:true },
+    {key:"netMargin",    label:"Net%",      num:true },
+    {key:"divYield",     label:"Div%",      num:true },
+    {key:"beta",         label:"Beta",      num:true },
+    {key:"rating",       label:"Rating",    num:false},
+  ];
+
+  const chipRow = (field, options) => options.map(o => {
+    const active = f[field] === o;
+    const accentColor = field === "sector" ? (SECTOR_CLR[o] || "#2563eb") : field === "rating" ? (RATING_CLR[o] || "#2563eb") : "#2563eb";
+    return (
+      <button key={o} onClick={() => setFilter(field, o)}
+        style={{ padding:"2px 9px", fontSize:10, fontWeight:500, cursor:"pointer", borderRadius:99, whiteSpace:"nowrap",
+          border:`1px solid ${active ? accentColor : "#e2e8f0"}`,
+          background: active ? `${accentColor}18` : "#ffffff",
+          color: active ? accentColor : "#64748b", transition:"all 0.12s" }}>
+        {o}
+      </button>
+    );
+  });
+
+  const numInput = (label, key) => (
+    <div style={{ display:"flex", alignItems:"center", gap:4 }}>
+      <span style={{ fontSize:10, color:"#64748b", whiteSpace:"nowrap" }}>{label}</span>
+      <input type="number" value={f[key]} placeholder="—"
+        onChange={e => setFilter(key, e.target.value)}
+        style={{ width:52, padding:"2px 6px", fontSize:11, fontFamily:"'IBM Plex Mono',monospace",
+          border:"1px solid #e2e8f0", borderRadius:4, background:"#ffffff", color:"#0f172a",
+          outline:"none", appearance:"none" }} />
+    </div>
+  );
+
+  const sortIcon = col => sortCol === col ? (sortDir === "asc" ? " ▲" : " ▼") : "";
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", height:"100%", overflow:"hidden", background:"#f8fafc" }}>
+
+      {/* ── Filter Panel ───────────────────────────────────────────── */}
+      <div style={{ padding:"10px 16px", borderBottom:"1px solid #e2e8f0", background:"#ffffff", flexShrink:0, display:"flex", flexDirection:"column", gap:8 }}>
+
+        {/* Title + count + reset */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+            <span style={{ fontSize:11, fontWeight:700, letterSpacing:"0.07em", color:"#0f172a" }}>📊 STOCK SCREENER</span>
+            <span style={{ fontSize:10, fontFamily:"'IBM Plex Mono',monospace", color:"#64748b", background:"#f1f5f9", padding:"1px 8px", borderRadius:99 }}>
+              {results.length} / {SCREENER_UNIVERSE.length}
+            </span>
+            <span style={{ fontSize:10, color:"#94a3b8" }}>· Click any row to load ticker · Click columns to sort</span>
+          </div>
+          <button onClick={reset}
+            style={{ fontSize:10, color:"#64748b", background:"none", border:"1px solid #e2e8f0", borderRadius:4, padding:"2px 10px", cursor:"pointer" }}>
+            ↺ Reset
+          </button>
+        </div>
+
+        {/* Preset chips */}
+        <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+          {SCREENER_PRESETS.map((p, i) => (
+            <button key={i} onClick={() => applyPreset(p, i)}
+              style={{ padding:"2px 10px", fontSize:10, fontWeight:500, cursor:"pointer", borderRadius:99,
+                border:`1px solid ${activePreset===i ? "#2563eb" : "#e2e8f0"}`,
+                background: activePreset===i ? "#eff6ff" : "#f8fafc",
+                color: activePreset===i ? "#2563eb" : "#475569", transition:"all 0.12s" }}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Sector row */}
+        <div style={{ display:"flex", flexWrap:"wrap", gap:3 }}>
+          {chipRow("sector", SECTORS)}
+        </div>
+
+        {/* Cap + Rating + numeric inputs */}
+        <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:12 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:3 }}>
+            <span style={{ fontSize:9, fontWeight:700, color:"#64748b", letterSpacing:"0.05em", marginRight:1 }}>CAP</span>
+            {chipRow("mktCapTier", CAPS)}
+          </div>
+          <div style={{ display:"flex", alignItems:"center", gap:3 }}>
+            <span style={{ fontSize:9, fontWeight:700, color:"#64748b", letterSpacing:"0.05em", marginRight:1 }}>RATING</span>
+            {chipRow("rating", RATINGS)}
+          </div>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:8, alignItems:"center" }}>
+            {numInput("P/E ≤",       "peMax")}
+            {numInput("Rev Grw ≥",   "revGrowthMin")}
+            {numInput("Gross Mgn ≥", "grossMarginMin")}
+            {numInput("Net Mgn ≥",   "netMarginMin")}
+            {numInput("Div Yld ≥",   "divYieldMin")}
+            {numInput("Beta ≤",      "betaMax")}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Results Table ──────────────────────────────────────────── */}
+      <div style={{ flex:1, overflow:"auto" }}>
+        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:11 }}>
+          <thead>
+            <tr style={{ background:"#f8fafc", borderBottom:"2px solid #e2e8f0", position:"sticky", top:0, zIndex:2 }}>
+              {COLS.map(c => (
+                <th key={c.key} onClick={c.num ? () => toggleSort(c.key) : undefined}
+                  style={{ padding:"6px 10px", textAlign:c.num?"right":"left", fontSize:9, fontWeight:700,
+                    letterSpacing:"0.06em", color:sortCol===c.key?"#2563eb":"#64748b",
+                    cursor:c.num?"pointer":"default", userSelect:"none", whiteSpace:"nowrap" }}>
+                  {c.label}{c.num && sortIcon(c.key)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {results.length === 0 && (
+              <tr><td colSpan={12} style={{ textAlign:"center", padding:"48px", color:"#64748b", fontSize:12 }}>
+                No stocks match — try adjusting the filters above
+              </td></tr>
+            )}
+            {results.map((s, i) => {
+              const base = i % 2 === 0 ? "#ffffff" : "#f8fafc";
+              const fmtN  = v => v == null ? "—" : v.toFixed(1);
+              const fmtP  = v => v == null ? "—" : (v > 0 ? "+" : "") + v.toFixed(1) + "%";
+              const fmtMC = v => v >= 1000 ? "$" + (v/1000).toFixed(2) + "T" : "$" + v + "B";
+              return (
+                <tr key={s.ticker + i}
+                  style={{ background:base, borderBottom:"1px solid #f1f5f9", cursor:"pointer", transition:"background 0.1s" }}
+                  onClick={() => onSelectTicker(s.ticker)}
+                  onMouseEnter={e => e.currentTarget.style.background = "#eff6ff"}
+                  onMouseLeave={e => e.currentTarget.style.background = base}>
+                  <td style={{ padding:"5px 10px", fontFamily:"'IBM Plex Mono',monospace", fontWeight:700, color:"#2563eb", whiteSpace:"nowrap" }}>{s.ticker}</td>
+                  <td style={{ padding:"5px 10px", color:"#0f172a", maxWidth:160, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.name}</td>
+                  <td style={{ padding:"5px 10px" }}>
+                    <span style={{ fontSize:9, fontWeight:600, padding:"1px 6px", borderRadius:99,
+                      background:`${SECTOR_CLR[s.sector]||"#64748b"}14`, color:SECTOR_CLR[s.sector]||"#64748b" }}>
+                      {s.sector}
+                    </span>
+                  </td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"#0f172a" }}>{fmtMC(s.mktCap)}</td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"#0f172a" }}>{fmtN(s.pe)}</td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"#64748b" }}>{fmtN(s.fwdPe)}</td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:s.revGrowth > 0 ? "#059669" : s.revGrowth < 0 ? "#e11d48" : "#0f172a" }}>{fmtP(s.revGrowth)}</td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"#0f172a" }}>{s.grossMargin == null ? "—" : s.grossMargin.toFixed(1) + "%"}</td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:s.netMargin != null && s.netMargin < 0 ? "#e11d48" : "#0f172a" }}>{s.netMargin == null ? "—" : s.netMargin.toFixed(1) + "%"}</td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:s.divYield >= 3.5 ? "#059669" : "#0f172a" }}>{s.divYield == null ? "—" : s.divYield.toFixed(2) + "%"}</td>
+                  <td style={{ padding:"5px 10px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"#0f172a" }}>{fmtN(s.beta)}</td>
+                  <td style={{ padding:"5px 10px" }}>
+                    <span style={{ fontSize:9, fontWeight:700, padding:"1px 7px", borderRadius:99,
+                      background:`${RATING_CLR[s.rating]||"#64748b"}14`, color:RATING_CLR[s.rating]||"#64748b" }}>
+                      {s.rating}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 const NAV_ITEMS = [
   { key:"financial",   icon:"📈", label:"Financial"   },
   { key:"commodities", icon:"🛢", label:"Commodities" },
@@ -6268,6 +6593,7 @@ const NAV_ITEMS = [
   { key:"fx",          icon:"💱", label:"FX"          },
   { key:"markets",     icon:"🌍", label:"Markets"     },
   { key:"portfolio",   icon:"💼", label:"Portfolio"   },
+  { key:"screener",    icon:"🔍", label:"Screener"    },
   { key:"research",    icon:"🔬", label:"Research"    },
 ];
 
@@ -6989,6 +7315,7 @@ export default function App() {
         {activePage === "eye"          && <EyeOfSauron onOpenResearch={openResearch} />}
         {activePage === "markets"      && <GlobalMarketsModule onOpenResearch={openResearch} />}
         {activePage === "portfolio"    && <PortfolioTracker />}
+        {activePage === "screener"     && <StockScreener onSelectTicker={t => { setTicker(t); setActivePage("financial"); }} />}
         {activePage === "research"     && <ResearchBrowser pendingItem={pendingResearchItem} onPendingConsumed={() => setPendingResearchItem(null)} />}
         {activePage === "settings" && (
           <div style={{ padding:24, maxWidth:480 }}>
