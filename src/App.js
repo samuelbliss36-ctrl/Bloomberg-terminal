@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from "react";
-import { AreaChart, Area, BarChart, Bar, Line, Cell, ReferenceLine, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart } from "recharts";
+import { AreaChart, Area, BarChart, Bar, Line, Cell, ReferenceLine, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, PieChart, Pie } from "recharts";
 import { Search, Settings, RefreshCw, Zap, ArrowUpRight, ArrowDownRight, Building2, BarChart2, Activity, Star } from "lucide-react";
 
 const FINNHUB_KEY = process.env.REACT_APP_FINNHUB_KEY;
@@ -148,6 +148,8 @@ const SCREENER_UNIVERSE = [
   {ticker:"EQIX", name:"Equinix Inc",              sector:"Real Estate",      mktCap:78,   pe:85.0, fwdPe:60.0, revGrowth:7.0,   grossMargin:49.0, netMargin:8.0,   divYield:2.10, beta:0.85, rating:"Buy"       },
   {ticker:"SPG",  name:"Simon Property Group",     sector:"Real Estate",      mktCap:60,   pe:24.0, fwdPe:22.0, revGrowth:5.0,   grossMargin:77.0, netMargin:24.0,  divYield:5.20, beta:1.30, rating:"Hold"      },
 ];
+
+const PF_COLORS = ["#2563eb","#059669","#e11d48","#b45309","#7c3aed","#ea580c","#0891b2","#be123c","#047857","#92400e","#78716c","#475569"];
 
 const SECTOR_CLR = {
   "Technology":"#2563eb","Healthcare":"#059669","Financials":"#b45309",
@@ -5669,11 +5671,15 @@ function PortfolioTracker() {
   const [loadingQuotes, setLoadingQuotes] = useState(false);
   const [form, setForm] = useState({ ticker: "", shares: "", avgCost: "" });
   const [formError, setFormError] = useState("");
+  const [equityHistory, setEquityHistory] = useState([]);
+  const [equityLoading, setEquityLoading] = useState(false);
+  const [equityTf, setEquityTf] = useState("3M");
 
   useEffect(() => {
     localStorage.setItem("ov_portfolio", JSON.stringify(holdings));
   }, [holdings]);
 
+  // Fetch live quotes
   const tickerKey = holdings.map(h => h.ticker).join(",");
   useEffect(() => {
     if (!holdings.length) { setQuotes({}); return; }
@@ -5692,6 +5698,47 @@ function PortfolioTracker() {
     };
     fetch_();
   }, [tickerKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch equity curve via Finnhub candles
+  const equityKey = tickerKey + "|" + equityTf;
+  useEffect(() => {
+    if (!holdings.length) { setEquityHistory([]); return; }
+    let cancelled = false;
+    setEquityLoading(true);
+    const tfDays = { "1M": 30, "3M": 90, "6M": 180, "1Y": 365 }[equityTf] || 90;
+    const from = Math.floor((Date.now() - tfDays * 86400000) / 1000);
+    const to   = Math.floor(Date.now() / 1000);
+    const build = async () => {
+      const cmap = {}; // ticker → {dateStr: closePrice}
+      for (let i = 0; i < holdings.length; i++) {
+        if (i > 0) await delay(350);
+        try {
+          const c = await api(`/stock/candle?symbol=${holdings[i].ticker}&resolution=D&from=${from}&to=${to}`);
+          if (c.s === "ok" && c.t?.length) {
+            cmap[holdings[i].ticker] = {};
+            c.t.forEach((ts, idx) => {
+              cmap[holdings[i].ticker][new Date(ts * 1000).toISOString().slice(0,10)] = c.c[idx];
+            });
+          }
+        } catch(e) {}
+      }
+      if (cancelled) return;
+      const allDates = new Set();
+      Object.values(cmap).forEach(m => Object.keys(m).forEach(d => allDates.add(d)));
+      const sorted = [...allDates].sort();
+      const last = {};
+      holdings.forEach(h => { last[h.ticker] = h.avgCost; });
+      const cost = holdings.reduce((s, h) => s + h.avgCost * h.shares, 0);
+      const curve = sorted.map(date => {
+        holdings.forEach(h => { if (cmap[h.ticker]?.[date]) last[h.ticker] = cmap[h.ticker][date]; });
+        const val = holdings.reduce((s, h) => s + (last[h.ticker] || h.avgCost) * h.shares, 0);
+        return { date, value: +val.toFixed(2), cost: +cost.toFixed(2) };
+      });
+      if (!cancelled) { setEquityHistory(curve); setEquityLoading(false); }
+    };
+    build();
+    return () => { cancelled = true; };
+  }, [equityKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const addHolding = () => {
     const t = form.ticker.trim().toUpperCase();
@@ -5721,69 +5768,217 @@ function PortfolioTracker() {
     if (!holdings.length || loadingQuotes) return;
     setLoadingQuotes(true);
     const fetch_ = async () => {
-      const newQuotes = { ...quotes };
+      const nq = { ...quotes };
       for (let i = 0; i < holdings.length; i++) {
         if (i > 0) await delay(i * 200);
         try {
           const q = await api("/quote?symbol=" + holdings[i].ticker);
-          newQuotes[holdings[i].ticker] = { price: q.c, change: q.d, changePct: q.dp };
+          nq[holdings[i].ticker] = { price: q.c, change: q.d, changePct: q.dp };
         } catch(e) {}
       }
-      setQuotes(newQuotes);
+      setQuotes(nq);
       setLoadingQuotes(false);
     };
     fetch_();
   };
 
+  // ── Core portfolio math ──────────────────────────────────────────────────
   let totalValue = 0, totalCost = 0, dayPnlTotal = 0;
   holdings.forEach(h => {
     const q = quotes[h.ticker];
     const price = q?.price || h.avgCost;
     totalValue += price * h.shares;
-    totalCost += h.avgCost * h.shares;
+    totalCost  += h.avgCost * h.shares;
     if (q?.change) dayPnlTotal += q.change * h.shares;
   });
-  const totalPnl = totalValue - totalCost;
+  const totalPnl    = totalValue - totalCost;
   const totalPnlPct = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0;
 
-  const summaryCards = [
-    { label: "Portfolio Value", value: "$" + totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), color: "var(--text-1)" },
-    { label: "Today's P&L", value: (dayPnlTotal >= 0 ? "+" : "") + "$" + Math.abs(dayPnlTotal).toFixed(2), color: clr(dayPnlTotal) },
-    { label: "Total P&L", value: (totalPnl >= 0 ? "+" : "") + "$" + Math.abs(totalPnl).toFixed(2), color: clr(totalPnl) },
-    { label: "Total Return", value: totalCost > 0 ? fmt.pct(totalPnlPct) : "—", color: totalCost > 0 ? clr(totalPnlPct) : "#64748b" },
-  ];
+  // Best / worst positions
+  const posPerf = useMemo(() => {
+    return holdings
+      .map(h => {
+        const price = quotes[h.ticker]?.price ?? null;
+        const pnlPct = price !== null ? ((price - h.avgCost) / h.avgCost) * 100 : null;
+        const pnl    = price !== null ? (price - h.avgCost) * h.shares : null;
+        return { ...h, price, pnl, pnlPct };
+      })
+      .filter(h => h.pnlPct !== null)
+      .sort((a, b) => b.pnlPct - a.pnlPct);
+  }, [holdings, quotes]);
+
+  // Donut data
+  const donutData = useMemo(() => {
+    return holdings
+      .map((h, i) => {
+        const price = quotes[h.ticker]?.price || h.avgCost;
+        return { name: h.ticker, value: +(price * h.shares).toFixed(2), color: PF_COLORS[i % PF_COLORS.length] };
+      })
+      .filter(d => d.value > 0)
+      .sort((a, b) => b.value - a.value);
+  }, [holdings, quotes]);
+
+  // Sector breakdown via SCREENER_UNIVERSE lookup
+  const sectorData = useMemo(() => {
+    const map = {};
+    holdings.forEach(h => {
+      const info   = SCREENER_UNIVERSE.find(s => s.ticker === h.ticker);
+      const sector = info?.sector || "Other";
+      const price  = quotes[h.ticker]?.price || h.avgCost;
+      const value  = price * h.shares;
+      if (!map[sector]) map[sector] = { sector, value: 0, color: SECTOR_CLR[sector] || "#475569" };
+      map[sector].value += value;
+    });
+    return Object.values(map).sort((a, b) => b.value - a.value);
+  }, [holdings, quotes]);
 
   const inputStyle = { background: "var(--surface-0)", border: "1px solid var(--border-solid)", borderRadius: 10, color: "var(--text-1)", fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, padding: "6px 8px", width: "100%" };
+  const TF_OPTS = ["1M", "3M", "6M", "1Y"];
+
+  // Equity curve color: green if final > cost, red if below
+  const curveUp = equityHistory.length > 1 ? equityHistory[equityHistory.length-1].value >= equityHistory[0].value : true;
+  const curveClr = curveUp ? "#059669" : "#e11d48";
+  const pctChange = equityHistory.length > 1
+    ? ((equityHistory[equityHistory.length-1].value - equityHistory[0].value) / equityHistory[0].value * 100).toFixed(2)
+    : null;
 
   return (
-    <div className="flex flex-col flex-1" style={{ height: "calc(100vh - 90px)", overflow: "hidden" }}>
-      {/* Summary row */}
-      <div className="grid gap-2 p-2" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
-        {summaryCards.map(({ label, value, color }) => (
+    <div className="flex flex-col" style={{ height: "calc(100vh - 90px)", overflowY: "auto", gap: 0 }}>
+
+      {/* ── Row 1 · Summary KPIs ──────────────────────────────────────────── */}
+      <div className="grid gap-2 p-2" style={{ gridTemplateColumns: "repeat(4, 1fr)", flexShrink: 0 }}>
+        {[
+          { label: "Portfolio Value", value: "$" + totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), color: "var(--text-1)" },
+          { label: "Today's P&L",    value: (dayPnlTotal >= 0 ? "+" : "") + "$" + Math.abs(dayPnlTotal).toFixed(2), color: clr(dayPnlTotal) },
+          { label: "Total P&L",      value: (totalPnl >= 0 ? "+" : "") + "$" + Math.abs(totalPnl).toFixed(2), color: clr(totalPnl) },
+          { label: "Total Return",   value: totalCost > 0 ? fmt.pct(totalPnlPct) : "—", color: totalCost > 0 ? clr(totalPnlPct) : "var(--text-3)" },
+        ].map(({ label, value, color }) => (
           <div key={label} className="terminal-panel p-3">
-            <div className="text-xs font-mono" style={{ color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 10 }}>{label}</div>
-            <div className="font-mono font-bold mt-1" style={{ color, fontSize: 18 }}>{value}</div>
+            <div className="font-mono" style={{ color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 9 }}>{label}</div>
+            <div className="font-mono font-bold mt-1" style={{ color, fontSize: 20 }}>{value}</div>
           </div>
         ))}
       </div>
 
-      {/* Main content */}
-      <div className="flex gap-2 px-2 pb-2 flex-1" style={{ overflow: "hidden", minHeight: 0 }}>
+      {/* ── Row 2 · Equity Curve + Donut ─────────────────────────────────── */}
+      <div className="flex gap-2 px-2 pb-2" style={{ flexShrink: 0, minHeight: 240 }}>
+
+        {/* Equity Curve */}
+        <div className="terminal-panel terminal-glow flex-1 flex flex-col p-3">
+          <div className="flex items-center justify-between mb-2" style={{ flexShrink: 0 }}>
+            <div className="flex items-center gap-3">
+              <span className="terminal-header">📈 Equity Curve</span>
+              {pctChange !== null && (
+                <span className="font-mono" style={{ fontSize: 12, color: curveClr, fontWeight: 700 }}>
+                  {curveUp ? "▲" : "▼"} {Math.abs(pctChange)}% this period
+                </span>
+              )}
+            </div>
+            <div className="flex gap-1">
+              {TF_OPTS.map(tf => (
+                <button key={tf} onClick={() => setEquityTf(tf)}
+                  style={{ padding: "2px 8px", fontSize: 10, fontFamily: "'IBM Plex Mono',monospace", fontWeight: 600,
+                    background: equityTf === tf ? curveClr : "transparent",
+                    color: equityTf === tf ? "#fff" : "var(--text-3)",
+                    border: `1px solid ${equityTf === tf ? curveClr : "var(--border)"}`,
+                    borderRadius: 4, cursor: "pointer" }}>
+                  {tf}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {holdings.length === 0 ? (
+            <div className="flex items-center justify-center flex-1 font-mono" style={{ color: "var(--text-3)", fontSize: 12 }}>
+              Add positions to see your equity curve
+            </div>
+          ) : equityLoading ? (
+            <div className="flex items-center justify-center flex-1 font-mono animate-pulse" style={{ color: "var(--text-3)", fontSize: 12 }}>
+              Building equity curve…
+            </div>
+          ) : equityHistory.length < 2 ? (
+            <div className="flex items-center justify-center flex-1 font-mono" style={{ color: "var(--text-3)", fontSize: 12 }}>
+              Not enough history data
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={175}>
+              <AreaChart data={equityHistory} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+                <defs>
+                  <linearGradient id="pf-eq-grad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor={curveClr} stopOpacity={0.22} />
+                    <stop offset="95%" stopColor={curveClr} stopOpacity={0.01} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                <XAxis dataKey="date" tick={{ fontSize: 9, fill: "var(--text-3)", fontFamily: "'IBM Plex Mono',monospace" }}
+                  tickFormatter={d => d.slice(5)} minTickGap={30} />
+                <YAxis tick={{ fontSize: 9, fill: "var(--text-3)", fontFamily: "'IBM Plex Mono',monospace" }}
+                  tickFormatter={v => "$" + (v >= 1000 ? (v/1000).toFixed(0) + "k" : v.toFixed(0))}
+                  width={52} />
+                <Tooltip
+                  contentStyle={{ background: "var(--surface-2)", border: "1px solid var(--border-solid)", borderRadius: 8, fontSize: 10, fontFamily: "'IBM Plex Mono',monospace" }}
+                  labelStyle={{ color: "var(--text-3)", marginBottom: 4 }}
+                  formatter={(v, name) => ["$" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), name === "value" ? "Portfolio" : "Cost Basis"]}
+                />
+                <Area type="monotone" dataKey="cost" stroke="var(--text-3)" fill="none" strokeWidth={1} strokeDasharray="5 3" dot={false} />
+                <Area type="monotone" dataKey="value" stroke={curveClr} fill="url(#pf-eq-grad)" strokeWidth={2} dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* Allocation Donut */}
+        <div className="terminal-panel terminal-glow p-3 flex flex-col" style={{ width: 240, flexShrink: 0 }}>
+          <span className="terminal-header mb-2">🍩 Allocation</span>
+          {donutData.length === 0 ? (
+            <div className="flex items-center justify-center flex-1 font-mono" style={{ color: "var(--text-3)", fontSize: 11 }}>No positions</div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={130}>
+                <PieChart>
+                  <Pie data={donutData} cx="50%" cy="50%" innerRadius={38} outerRadius={60}
+                    dataKey="value" paddingAngle={donutData.length > 1 ? 2 : 0} startAngle={90} endAngle={-270}>
+                    {donutData.map((d, i) => <Cell key={i} fill={d.color} stroke="none" />)}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ background: "var(--surface-2)", border: "1px solid var(--border-solid)", borderRadius: 8, fontSize: 10, fontFamily: "'IBM Plex Mono',monospace" }}
+                    formatter={v => ["$" + v.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 }), "Value"]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex flex-col gap-1.5" style={{ overflowY: "auto" }}>
+                {donutData.map(d => (
+                  <div key={d.name} className="flex items-center gap-2">
+                    <div style={{ width: 8, height: 8, borderRadius: 2, background: d.color, flexShrink: 0 }} />
+                    <span className="font-mono font-bold" style={{ fontSize: 11, color: "var(--text-1)", flex: 1 }}>{d.name}</span>
+                    <span className="font-mono" style={{ fontSize: 11, color: "var(--text-3)" }}>
+                      {totalValue > 0 ? ((d.value / totalValue) * 100).toFixed(1) + "%" : "—"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* ── Row 3 · Holdings Table + Right Panel ─────────────────────────── */}
+      <div className="flex gap-2 px-2 pb-2" style={{ flexShrink: 0 }}>
+
         {/* Holdings table */}
-        <div className="terminal-panel terminal-glow flex-1 flex flex-col p-3" style={{ overflowY: "auto" }}>
+        <div className="terminal-panel terminal-glow flex-1 flex flex-col p-3">
           <div className="flex items-center justify-between mb-3">
             <span className="terminal-header">💼 Holdings ({holdings.length})</span>
-            <button onClick={refreshQuotes} disabled={loadingQuotes}
-              className="text-xs font-mono px-2 py-1"
-              style={{ border: "1px solid var(--border-solid)", borderRadius: 10, background: "transparent", color: loadingQuotes ? "#64748b" : "#2563eb", cursor: loadingQuotes ? "wait" : "pointer" }}>
-              {loadingQuotes ? "⟳ Updating..." : "⟳ Refresh"}
+            <button onClick={refreshQuotes} disabled={loadingQuotes} className="text-xs font-mono px-2 py-1"
+              style={{ border: "1px solid var(--border-solid)", borderRadius: 10, background: "transparent",
+                color: loadingQuotes ? "var(--text-3)" : "#2563eb", cursor: loadingQuotes ? "wait" : "pointer" }}>
+              {loadingQuotes ? "⟳ Updating…" : "⟳ Refresh"}
             </button>
           </div>
 
           {holdings.length === 0 ? (
-            <div className="flex flex-col items-center justify-center flex-1" style={{ color: "var(--text-3)" }}>
-              <div className="text-xs font-mono text-center">No positions yet.</div>
-              <div className="text-xs font-mono text-center mt-1">Add holdings using the form on the right.</div>
+            <div className="flex flex-col items-center justify-center py-8" style={{ color: "var(--text-3)" }}>
+              <div className="font-mono" style={{ fontSize: 11 }}>No positions yet. Add holdings using the form →</div>
             </div>
           ) : (
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -5791,40 +5986,44 @@ function PortfolioTracker() {
                 <tr style={{ borderBottom: "1px solid var(--border-solid)" }}>
                   {["Ticker", "Shares", "Avg Cost", "Price", "Mkt Value", "P&L ($)", "Return", "Day Chg", ""].map(h => (
                     <th key={h} className="text-left px-2 py-2"
-                      style={{ color: "var(--text-3)", fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
+                      style={{ color: "var(--text-3)", fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {holdings.map(h => {
-                  const q = quotes[h.ticker];
-                  const price = q?.price ?? null;
-                  const mktValue = price !== null ? price * h.shares : null;
-                  const costBasis = h.avgCost * h.shares;
-                  const pnl = mktValue !== null ? mktValue - costBasis : null;
-                  const pnlPct = pnl !== null ? (pnl / costBasis) * 100 : null;
-                  const alloc = totalValue > 0 && mktValue !== null ? (mktValue / totalValue) * 100 : 0;
+                {holdings.map((h, hi) => {
+                  const q      = quotes[h.ticker];
+                  const price  = q?.price ?? null;
+                  const mktVal = price !== null ? price * h.shares : null;
+                  const basis  = h.avgCost * h.shares;
+                  const pnl    = mktVal !== null ? mktVal - basis : null;
+                  const pnlPct = pnl !== null ? (pnl / basis) * 100 : null;
+                  const alloc  = totalValue > 0 && mktVal !== null ? (mktVal / totalValue) * 100 : 0;
+                  const dot    = PF_COLORS[hi % PF_COLORS.length];
                   return (
-                    <tr key={h.ticker} className="holding-row" style={{ borderBottom: "1px solid #161b22" }}>
+                    <tr key={h.ticker} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
                       <td className="px-2 py-2">
-                        <div className="font-mono font-bold" style={{ color: "#2563eb", fontSize: 12 }}>{h.ticker}</div>
-                        <div className="font-mono" style={{ color: "var(--text-3)", fontSize: 10 }}>{alloc.toFixed(1)}%</div>
+                        <div className="flex items-center gap-1.5">
+                          <div style={{ width: 6, height: 6, borderRadius: "50%", background: dot, flexShrink: 0 }} />
+                          <span className="font-mono font-bold" style={{ color: dot, fontSize: 12 }}>{h.ticker}</span>
+                        </div>
+                        <div className="font-mono" style={{ color: "var(--text-3)", fontSize: 10, paddingLeft: 10 }}>{alloc.toFixed(1)}%</div>
                       </td>
                       <td className="px-2 py-2 font-mono" style={{ color: "var(--text-1)", fontSize: 12 }}>{h.shares.toLocaleString()}</td>
                       <td className="px-2 py-2 font-mono" style={{ color: "var(--text-1)", fontSize: 12 }}>${fmt.price(h.avgCost)}</td>
-                      <td className="px-2 py-2 font-mono" style={{ color: price !== null ? "#0f172a" : "#64748b", fontSize: 12 }}>
+                      <td className="px-2 py-2 font-mono" style={{ color: price !== null ? "var(--text-1)" : "var(--text-3)", fontSize: 12 }}>
                         {price !== null ? "$" + fmt.price(price) : loadingQuotes ? "…" : "—"}
                       </td>
                       <td className="px-2 py-2 font-mono" style={{ color: "var(--text-1)", fontSize: 12 }}>
-                        {mktValue !== null ? "$" + mktValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+                        {mktVal !== null ? "$" + mktVal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
                       </td>
-                      <td className="px-2 py-2 font-mono" style={{ color: pnl !== null ? clr(pnl) : "#64748b", fontSize: 12 }}>
+                      <td className="px-2 py-2 font-mono" style={{ color: pnl !== null ? clr(pnl) : "var(--text-3)", fontSize: 12 }}>
                         {pnl !== null ? (pnl >= 0 ? "+" : "") + "$" + Math.abs(pnl).toFixed(2) : "—"}
                       </td>
-                      <td className="px-2 py-2 font-mono" style={{ color: pnlPct !== null ? clr(pnlPct) : "#64748b", fontSize: 12 }}>
+                      <td className="px-2 py-2 font-mono" style={{ color: pnlPct !== null ? clr(pnlPct) : "var(--text-3)", fontSize: 12 }}>
                         {pnlPct !== null ? fmt.pct(pnlPct) : "—"}
                       </td>
-                      <td className="px-2 py-2 font-mono" style={{ color: q?.changePct != null ? clr(q.changePct) : "#64748b", fontSize: 12 }}>
+                      <td className="px-2 py-2 font-mono" style={{ color: q?.changePct != null ? clr(q.changePct) : "var(--text-3)", fontSize: 12 }}>
                         {q?.changePct != null ? fmt.pct(q.changePct) : "—"}
                       </td>
                       <td className="px-2 py-2">
@@ -5856,77 +6055,102 @@ function PortfolioTracker() {
           )}
         </div>
 
-        {/* Right panel */}
+        {/* ── Right column ──────────────────────────────────────────────────── */}
         <div className="flex flex-col gap-2" style={{ width: 280, flexShrink: 0 }}>
-          {/* Add position form */}
+
+          {/* Add / Update position form */}
           <div className="terminal-panel terminal-glow p-3">
             <div className="terminal-header mb-3">+ Add / Update Position</div>
             <div className="flex flex-col gap-2">
-              <div>
-                <div className="font-mono mb-1" style={{ color: "var(--text-3)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>Ticker</div>
-                <input className="pf-input" value={form.ticker}
-                  onChange={e => setForm(f => ({ ...f, ticker: e.target.value.toUpperCase() }))}
-                  onKeyDown={e => e.key === "Enter" && document.getElementById("pf-shares")?.focus()}
-                  placeholder="AAPL" style={inputStyle} />
-              </div>
-              <div>
-                <div className="font-mono mb-1" style={{ color: "var(--text-3)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>Shares</div>
-                <input id="pf-shares" className="pf-input" type="number" min="0" step="any"
-                  value={form.shares}
-                  onChange={e => setForm(f => ({ ...f, shares: e.target.value }))}
-                  onKeyDown={e => e.key === "Enter" && document.getElementById("pf-cost")?.focus()}
-                  placeholder="100" style={inputStyle} />
-              </div>
-              <div>
-                <div className="font-mono mb-1" style={{ color: "var(--text-3)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>Avg Cost / Share ($)</div>
-                <input id="pf-cost" className="pf-input" type="number" min="0" step="any"
-                  value={form.avgCost}
-                  onChange={e => setForm(f => ({ ...f, avgCost: e.target.value }))}
-                  onKeyDown={e => e.key === "Enter" && addHolding()}
-                  placeholder="150.00" style={inputStyle} />
-              </div>
+              {[
+                { label: "Ticker", key: "ticker", id: "pf-ticker", placeholder: "AAPL", type: "text",   next: "pf-shares" },
+                { label: "Shares", key: "shares", id: "pf-shares", placeholder: "100",  type: "number", next: "pf-cost"   },
+                { label: "Avg Cost / Share ($)", key: "avgCost", id: "pf-cost", placeholder: "150.00", type: "number", next: null },
+              ].map(({ label, key, id, placeholder, type, next }) => (
+                <div key={key}>
+                  <div className="font-mono mb-1" style={{ color: "var(--text-3)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</div>
+                  <input id={id} type={type} min={type === "number" ? "0" : undefined} step={type === "number" ? "any" : undefined}
+                    value={key === "ticker" ? form.ticker : key === "shares" ? form.shares : form.avgCost}
+                    onChange={e => setForm(f => ({ ...f, [key]: key === "ticker" ? e.target.value.toUpperCase() : e.target.value }))}
+                    onKeyDown={e => e.key === "Enter" && (next ? document.getElementById(next)?.focus() : addHolding())}
+                    placeholder={placeholder} style={inputStyle} />
+                </div>
+              ))}
               {formError && <div className="font-mono" style={{ color: "#e11d48", fontSize: 11 }}>{formError}</div>}
-              <button onClick={addHolding}
-                className="font-mono font-semibold py-2 mt-1"
+              <button onClick={addHolding} className="font-mono font-semibold py-2 mt-1"
                 style={{ background: "#2563eb", border: "none", borderRadius: 10, color: "#fff", cursor: "pointer", fontSize: 12, letterSpacing: "0.05em" }}>
                 ADD POSITION
               </button>
-              <div className="font-mono" style={{ color: "var(--text-3)", fontSize: 10 }}>
-                Adding an existing ticker averages your cost basis.
-              </div>
+              <div className="font-mono" style={{ color: "var(--text-3)", fontSize: 10 }}>Adding an existing ticker averages your cost basis.</div>
             </div>
           </div>
 
-          {/* Allocation breakdown */}
-          {holdings.length > 0 && (
-            <div className="terminal-panel terminal-glow p-3 flex-1" style={{ overflowY: "auto" }}>
-              <div className="terminal-header mb-3">📊 Allocation</div>
-              {[...holdings]
-                .map(h => {
-                  const q = quotes[h.ticker];
-                  const price = q?.price || h.avgCost;
-                  return { ...h, mktValue: price * h.shares };
-                })
-                .sort((a, b) => b.mktValue - a.mktValue)
-                .map(h => {
-                  const pct = totalValue > 0 ? (h.mktValue / totalValue) * 100 : 0;
-                  const q = quotes[h.ticker];
-                  return (
-                    <div key={h.ticker} className="mb-3">
-                      <div className="flex justify-between font-mono mb-1" style={{ fontSize: 11 }}>
-                        <span style={{ color: "var(--text-1)" }}>{h.ticker}</span>
-                        <span style={{ color: q?.changePct != null ? clr(q.changePct) : "#64748b" }}>
-                          {pct.toFixed(1)}%
-                        </span>
-                      </div>
-                      <div style={{ background: "#e2e8f0", borderRadius: 2, height: 4 }}>
-                        <div style={{ width: pct + "%", height: "100%", background: "#2563eb", borderRadius: 2, transition: "width 0.4s ease" }} />
-                      </div>
+          {/* Sector Breakdown */}
+          {sectorData.length > 0 && (
+            <div className="terminal-panel terminal-glow p-3">
+              <div className="terminal-header mb-3">🏭 Sector Exposure</div>
+              {sectorData.map(s => {
+                const pct = totalValue > 0 ? (s.value / totalValue) * 100 : 0;
+                return (
+                  <div key={s.sector} className="mb-2">
+                    <div className="flex justify-between font-mono mb-1" style={{ fontSize: 10 }}>
+                      <span style={{ color: s.color, fontWeight: 600 }}>{s.sector}</span>
+                      <span style={{ color: "var(--text-3)" }}>{pct.toFixed(1)}%</span>
                     </div>
-                  );
-                })}
+                    <div style={{ background: "var(--surface-3)", borderRadius: 3, height: 5 }}>
+                      <div style={{ width: pct + "%", height: "100%", background: s.color, borderRadius: 3, transition: "width 0.4s ease", opacity: 0.85 }} />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
+
+          {/* Best / Worst Positions */}
+          {posPerf.length > 0 && (
+            <div className="terminal-panel terminal-glow p-3">
+              <div className="terminal-header mb-3">🏆 Best &amp; Worst</div>
+
+              {/* Winners */}
+              <div className="mb-3">
+                <div className="font-mono mb-1" style={{ color: "#059669", fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>▲ Winners</div>
+                {posPerf.slice(0, Math.min(3, Math.ceil(posPerf.length / 2))).map(h => (
+                  <div key={h.ticker} className="flex items-center justify-between py-1.5" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                    <div>
+                      <span className="font-mono font-bold" style={{ fontSize: 11, color: "var(--text-1)" }}>{h.ticker}</span>
+                      <span className="font-mono ml-2" style={{ fontSize: 10, color: "var(--text-3)" }}>
+                        {h.pnl >= 0 ? "+" : ""}${Math.abs(h.pnl).toFixed(0)}
+                      </span>
+                    </div>
+                    <div className="font-mono font-bold" style={{ fontSize: 12, color: "#059669" }}>
+                      {h.pnlPct >= 0 ? "+" : ""}{h.pnlPct.toFixed(2)}%
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Laggards */}
+              {posPerf.filter(h => h.pnlPct < 0).length > 0 && (
+                <div>
+                  <div className="font-mono mb-1" style={{ color: "#e11d48", fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>▼ Laggards</div>
+                  {[...posPerf].reverse().slice(0, Math.min(3, Math.ceil(posPerf.length / 2))).filter(h => h.pnlPct < 0).map(h => (
+                    <div key={h.ticker} className="flex items-center justify-between py-1.5" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                      <div>
+                        <span className="font-mono font-bold" style={{ fontSize: 11, color: "var(--text-1)" }}>{h.ticker}</span>
+                        <span className="font-mono ml-2" style={{ fontSize: 10, color: "var(--text-3)" }}>
+                          -${Math.abs(h.pnl).toFixed(0)}
+                        </span>
+                      </div>
+                      <div className="font-mono font-bold" style={{ fontSize: 12, color: "#e11d48" }}>
+                        {h.pnlPct.toFixed(2)}%
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       </div>
     </div>
