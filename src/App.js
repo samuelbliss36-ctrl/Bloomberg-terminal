@@ -455,6 +455,10 @@ function GlobalStyles() {
         from { opacity: 0; }
         to   { opacity: 1; }
       }
+      @keyframes shimmer {
+        0%   { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
 
       /* Recharts tooltip polish */
       .recharts-tooltip-wrapper { filter: drop-shadow(0 4px 12px rgba(15,23,42,0.12)) !important; }
@@ -814,19 +818,25 @@ function CommoditiesDashboard() {
   const [category, setCategory] = useState("Metals");
 
   useEffect(() => {
-    Promise.all(
-      COMMODITIES.map(c =>
-        fetchChart(c.ticker, "1d", "1m")
-          .then(d => {
-            const meta = d?.chart?.result?.[0]?.meta;
-            const price = meta?.regularMarketPrice;
-            const prev  = meta?.previousClose;
-            const changePct = price && prev ? ((price - prev) / prev) * 100 : null;
-            return [c.ticker, { price, changePct }];
-          })
-          .catch(() => [c.ticker, null])
-      )
-    ).then(results => setPrices(Object.fromEntries(results)));
+    let cancelled = false;
+    const load = async () => {
+      for (const c of COMMODITIES) {
+        if (cancelled) return;
+        try {
+          const d = await fetchChart(c.ticker, "1d", "1m");
+          const meta = d?.chart?.result?.[0]?.meta;
+          const price = meta?.regularMarketPrice ?? null;
+          const prev  = meta?.previousClose ?? null;
+          const changePct = price != null && prev != null ? ((price - prev) / prev) * 100 : null;
+          if (!cancelled) setPrices(p => ({ ...p, [c.ticker]: { price, changePct } }));
+        } catch(e) {
+          if (!cancelled) setPrices(p => ({ ...p, [c.ticker]: null }));
+        }
+        await delay(120);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
   }, []); // eslint-disable-line
 
   const activeCommodity = COMMODITIES.find(c => c.ticker === active);
@@ -859,8 +869,10 @@ function CommoditiesDashboard() {
                   <div className="text-xs font-mono" style={{ color: "var(--text-3)" }}>{c.symbol} · {c.unit}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs font-mono font-bold" style={{ color: "var(--text-1)" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
-                  {d && (
+                  <div className="text-xs font-mono font-bold" style={{ color: "var(--text-1)" }}>
+                    {d === undefined ? "…" : d?.price != null ? "$" + fmt.price(d.price) : "—"}
+                  </div>
+                  {d?.changePct != null && (
                     <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#2563eb" : "#e11d48" }}>
                       {d.changePct >= 0 ? "▲" : "▼"} {Math.abs(d.changePct).toFixed(2)}%
                     </div>
@@ -898,8 +910,10 @@ function CommoditiesDashboard() {
                 className="p-2 rounded cursor-pointer transition-colors"
                 style={{ background: "var(--surface-0)", border: "1px solid var(--border)" }}>
                 <div className="text-xs font-mono" style={{ color: "var(--text-3)" }}>{c.symbol}</div>
-                <div className="text-xs font-mono font-bold" style={{ color: "var(--text-1)" }}>{d ? "$" + fmt.price(d.price) : "..."}</div>
-                {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#2563eb" : "#e11d48" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
+                <div className="text-xs font-mono font-bold" style={{ color: "var(--text-1)" }}>
+                  {d === undefined ? "…" : d?.price != null ? "$" + fmt.price(d.price) : "—"}
+                </div>
+                {d?.changePct != null && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#2563eb" : "#e11d48" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
               </div>
             );
           })}
@@ -931,19 +945,25 @@ function CryptoDashboard() {
   const activeCoin = COINS.find(c => c.ticker === active);
 
   useEffect(() => {
-    Promise.all(
-      COINS.map(c =>
-        fetchChart(c.ticker, "1d", "1m")
-          .then(d => {
-            const meta = d?.chart?.result?.[0]?.meta;
-            const price = meta?.regularMarketPrice;
-            const prev  = meta?.previousClose;
-            const changePct = price && prev ? ((price - prev) / prev) * 100 : null;
-            return [c.ticker, { price, changePct }];
-          })
-          .catch(() => [c.ticker, null])
-      )
-    ).then(results => setPrices(Object.fromEntries(results)));
+    let cancelled = false;
+    const load = async () => {
+      for (const c of COINS) {
+        if (cancelled) return;
+        try {
+          const d = await fetchChart(c.ticker, "1d", "1m");
+          const meta = d?.chart?.result?.[0]?.meta;
+          const price = meta?.regularMarketPrice ?? null;
+          const prev  = meta?.previousClose ?? null;
+          const changePct = price != null && prev != null ? ((price - prev) / prev) * 100 : null;
+          if (!cancelled) setPrices(p => ({ ...p, [c.ticker]: { price, changePct } }));
+        } catch(e) {
+          if (!cancelled) setPrices(p => ({ ...p, [c.ticker]: null }));
+        }
+        await delay(120);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
   }, []); // eslint-disable-line
 
   return (
@@ -967,7 +987,9 @@ function CryptoDashboard() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs font-mono font-bold" style={{ color: "var(--text-1)" }}>{d?.price ? "$" + fmt.price(d.price) : "..."}</div>
+                  <div className="text-xs font-mono font-bold" style={{ color: "var(--text-1)" }}>
+                    {d === undefined ? "…" : d?.price != null ? "$" + fmt.price(d.price) : "—"}
+                  </div>
                   {d?.changePct != null && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#2563eb" : "#e11d48" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
                 </div>
               </div>
@@ -1041,22 +1063,27 @@ function FXDashboard({ onOpenResearch }) {
   const [active,    setActive]    = useState("EURUSD=X");
   const [cbRates,   setCbRates]   = useState({});
 
-  // Fetch all FX prices (Yahoo Finance via /api/chart)
+  // Fetch FX prices sequentially — avoids Yahoo Finance rate-limiting
   useEffect(() => {
-    Promise.all(
-      FX_PAIRS.map(p =>
-        fetch("/api/chart?ticker=" + encodeURIComponent(p.ticker) + "&range=1d&interval=1m")
-          .then(r => r.json())
-          .then(d => {
-            const meta = d?.chart?.result?.[0]?.meta;
-            const price = meta?.regularMarketPrice;
-            const prev  = meta?.previousClose;
-            const changePct = price && prev ? ((price - prev) / prev) * 100 : null;
-            return [p.ticker, { price, changePct }];
-          })
-          .catch(() => [p.ticker, null])
-      )
-    ).then(results => setPrices(Object.fromEntries(results)));
+    let cancelled = false;
+    const load = async () => {
+      for (const p of FX_PAIRS) {
+        if (cancelled) return;
+        try {
+          const d = await fetchChart(p.ticker, "1d", "1m");
+          const meta = d?.chart?.result?.[0]?.meta;
+          const price = meta?.regularMarketPrice ?? null;
+          const prev  = meta?.previousClose ?? null;
+          const changePct = price != null && prev != null ? ((price - prev) / prev) * 100 : null;
+          if (!cancelled) setPrices(pr => ({ ...pr, [p.ticker]: { price, changePct } }));
+        } catch(e) {
+          if (!cancelled) setPrices(pr => ({ ...pr, [p.ticker]: null }));
+        }
+        await delay(120);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
   }, []); // eslint-disable-line
 
   // Fetch central bank rates from FRED
@@ -1092,14 +1119,14 @@ function FXDashboard({ onOpenResearch }) {
             return (
               <div key={p.ticker} onClick={() => setActive(p.ticker)}
                 className="flex items-center justify-between p-2 rounded cursor-pointer"
-                style={{ background:isActive?"#eff6ff":"transparent", border:"1px solid", borderColor:isActive?"#05966933":"#e2e8f0" }}>
+                style={{ background:isActive?"var(--green-dim)":"transparent", border:"1px solid", borderColor:isActive?"rgba(5,150,105,0.30)":"var(--border)" }}>
                 <div>
-                  <div className="text-xs font-mono font-bold" style={{ color:isActive?"#059669":"#0f172a" }}>{p.label}</div>
+                  <div className="text-xs font-mono font-bold" style={{ color:isActive?"var(--green)":"var(--text-1)" }}>{p.label}</div>
                   <div className="text-xs font-mono" style={{ color:"var(--text-3)" }}>{p.region}</div>
                 </div>
                 <div className="text-right">
                   <div className="text-xs font-mono font-bold" style={{ color:"var(--text-1)" }}>
-                    {d?.price != null ? d.price.toFixed(p.dec) : "…"}
+                    {d === undefined ? "…" : d?.price != null ? d.price.toFixed(p.dec) : "—"}
                   </div>
                   {d?.changePct != null && (
                     <div className="text-xs font-mono" style={{ color:d.changePct>=0?"#059669":"#e11d48" }}>
@@ -1221,40 +1248,53 @@ function SupplyChainDashboard({ onOpenResearch }) {
   const [fredData, setFredData] = useState({});
 
   useEffect(() => {
-    Promise.all(
-      FRED_SERIES.map(s =>
-        fetch("/api/fred?series=" + s.id)
-          .then(r => r.json())
-          .then(d => {
-            const valid = (d.observations || []).filter(o => o.value !== "." && !isNaN(parseFloat(o.value)));
-            const latest = valid[valid.length - 1];
-            const prev   = valid[valid.length - 2];
-            const val    = latest ? parseFloat(latest.value) : NaN;
-            const prevVal = prev ? parseFloat(prev.value) : NaN;
-            const change = !isNaN(val) && !isNaN(prevVal) ? val - prevVal : null;
-            return [s.id, { value: !isNaN(val) ? val : null, change, date: latest?.date }];
-          })
-          .catch(() => [s.id, null])
-      )
-    ).then(results => setFredData(Object.fromEntries(results)));
+    let cancelled = false;
+    const load = async () => {
+      for (const s of FRED_SERIES) {
+        if (cancelled) return;
+        try {
+          const r = await fetch("/api/fred?series=" + s.id);
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          const d = await r.json();
+          const valid = (d.observations || []).filter(o => o.value !== "." && !isNaN(parseFloat(o.value)));
+          const latest = valid[valid.length - 1];
+          const prev   = valid[valid.length - 2];
+          const val    = latest ? parseFloat(latest.value) : NaN;
+          const prevVal = prev  ? parseFloat(prev.value)   : NaN;
+          const change = !isNaN(val) && !isNaN(prevVal) ? val - prevVal : null;
+          const entry = { value: !isNaN(val) ? val : null, change, date: latest?.date };
+          if (!cancelled) setFredData(fd => ({ ...fd, [s.id]: entry }));
+        } catch(e) {
+          if (!cancelled) setFredData(fd => ({ ...fd, [s.id]: null }));
+        }
+        await delay(150);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
   }, []); // eslint-disable-line
 
   useEffect(() => {
-    Promise.all(
-      INDICES.map(c =>
-        fetch("/api/chart?ticker=" + encodeURIComponent(c.ticker) + "&range=1d&interval=1m")
-          .then(r => r.json())
-          .then(d => {
-            const meta = d?.chart?.result?.[0]?.meta;
-            const price = meta?.regularMarketPrice;
-            const prev = meta?.previousClose;
-            const change = price - prev;
-            const changePct = (change / prev) * 100;
-            return [c.ticker, { price, change, changePct }];
-          })
-          .catch(() => [c.ticker, null])
-      )
-    ).then(results => setPrices(Object.fromEntries(results)));
+    let cancelled = false;
+    const load = async () => {
+      for (const c of INDICES) {
+        if (cancelled) return;
+        try {
+          const d = await fetchChart(c.ticker, "1d", "1m");
+          const meta = d?.chart?.result?.[0]?.meta;
+          const price = meta?.regularMarketPrice ?? null;
+          const prev  = meta?.previousClose ?? null;
+          const change    = price != null && prev != null ? price - prev : null;
+          const changePct = price != null && prev != null ? ((price - prev) / prev) * 100 : null;
+          if (!cancelled) setPrices(p => ({ ...p, [c.ticker]: { price, change, changePct } }));
+        } catch(e) {
+          if (!cancelled) setPrices(p => ({ ...p, [c.ticker]: null }));
+        }
+        await delay(150);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
   }, []); // eslint-disable-line
 
   const activeIndex = INDICES.find(c => c.ticker === active);
@@ -1270,14 +1310,15 @@ function SupplyChainDashboard({ onOpenResearch }) {
             const d = fredData[s.id];
             const val = d?.value;
             const chg = d?.change;
-            const display = val != null
-              ? s.id === "BOPGSTB" ? "$" + (val/1000).toFixed(1) + "B"
-              : s.id === "M2SL"    ? "$" + (val/1000).toFixed(2) + "T"
-              : s.id === "GDP"     ? "$" + (val/1000).toFixed(1) + "T"
-              : val.toFixed(2) + s.suffix
-              : "Loading...";
-            const chgDisplay = chg != null ? (chg >= 0 ? "+" : "") + chg.toFixed(2) + s.suffix : "—";
-            const chgColor = chg == null ? "#64748b" : chg >= 0 ? "#2563eb" : "#e11d48";
+            const display = d === undefined ? "…"
+              : val != null
+                ? s.id === "BOPGSTB" ? "$" + (val/1000).toFixed(1) + "B"
+                : s.id === "M2SL"    ? "$" + (val/1000).toFixed(2) + "T"
+                : s.id === "GDP"     ? "$" + (val/1000).toFixed(1) + "T"
+                : val.toFixed(2) + s.suffix
+              : "—";
+            const chgDisplay = chg != null ? (chg >= 0 ? "+" : "") + chg.toFixed(2) + s.suffix : d === undefined ? "" : "—";
+            const chgColor = chg == null ? "var(--text-3)" : chg >= 0 ? "#2563eb" : "#e11d48";
             const researchItem = { id: s.id, label: s.label, type: "macro", series: s.id, category: "Macro" };
             return (
               <div key={s.id} className="p-2 rounded" onClick={() => onOpenResearch && onOpenResearch(researchItem)}
@@ -1287,15 +1328,15 @@ function SupplyChainDashboard({ onOpenResearch }) {
                 <div className="flex items-center justify-between mb-0.5">
                   <div>
                     <div className="text-xs font-mono font-bold" style={{ color: "var(--text-1)" }}>{s.label}</div>
-                    <div className="text-xs font-mono" style={{ color: "#e2e8f0" }}>{s.src} · {s.freq}</div>
+                    <div className="text-xs font-mono" style={{ color: "var(--text-3)" }}>{s.src} · {s.freq}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs font-mono font-bold" style={{ color: "#b45309" }}>{display}</div>
+                    <div className="text-xs font-mono font-bold" style={{ color: val != null ? "#b45309" : "var(--text-3)" }}>{display}</div>
                     <div className="text-xs font-mono" style={{ color: chgColor }}>{chgDisplay}</div>
                   </div>
                 </div>
                 <div className="text-xs font-mono" style={{ color: "var(--text-3)" }}>{s.note}</div>
-                {d?.date && <div className="text-xs font-mono" style={{ color: "#e2e8f0" }}>As of {d.date}</div>}
+                {d?.date && <div className="text-xs font-mono" style={{ color: "var(--text-3)" }}>As of {d.date}</div>}
               </div>
             );
           })}
@@ -1309,15 +1350,17 @@ function SupplyChainDashboard({ onOpenResearch }) {
             return (
               <div key={c.ticker} onClick={() => setActive(c.ticker)}
                 className="p-2 rounded cursor-pointer transition-colors"
-                style={{ background: isActive ? "#eff6ff" : "#f8fafc", border: "1px solid", borderColor: isActive ? "#2563eb33" : "#e2e8f0" }}>
+                style={{ background: isActive ? "var(--blue-dim)" : "var(--surface-0)", border: "1px solid", borderColor: isActive ? "rgba(37,99,235,0.25)" : "var(--border)" }}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#2563eb" : "#0f172a" }}>{c.label}</div>
+                    <div className="text-xs font-mono font-bold" style={{ color: isActive ? "var(--blue)" : "var(--text-1)" }}>{c.label}</div>
                     <div className="text-xs font-mono" style={{ color: "var(--text-3)" }}>{c.desc}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs font-mono font-bold" style={{ color: "var(--text-1)" }}>{d ? (d.price > 100 ? d.price.toFixed(0) : d.price.toFixed(2)) : "..."}</div>
-                    {d && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#2563eb" : "#e11d48" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
+                    <div className="text-xs font-mono font-bold" style={{ color: "var(--text-1)" }}>
+                      {d === undefined ? "…" : d?.price != null ? (d.price > 100 ? d.price.toFixed(0) : d.price.toFixed(2)) : "—"}
+                    </div>
+                    {d?.changePct != null && <div className="text-xs font-mono" style={{ color: d.changePct >= 0 ? "#2563eb" : "#e11d48" }}>{d.changePct >= 0 ? "▲" : "▼"}{Math.abs(d.changePct).toFixed(2)}%</div>}
                   </div>
                 </div>
               </div>
@@ -7174,8 +7217,8 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
   const [activeTab, setActiveTab] = useState("News");
   const [chartRange, setChartRange] = useState("1Y");
   const [chartData, setChartData] = useState([]);
+  const [chartLoading, setChartLoading] = useState(true);
   const [histData, setHistData] = useState(null);
-  const tabsLoaded = useRef(new Set());
 
   const TABS = ["News","Options","Financials","Analyst","Peers","Profile","Historical"];
   const RANGES = ["1D","5D","1M","3M","6M","1Y","5Y"];
@@ -7186,38 +7229,46 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
   const priceColor = up ? "#059669" : "#e11d48";
   const m = metrics?.metric || {};
 
-  // Fetch chart data when ticker or range changes
+  // Fetch hero chart — reset loading state on every ticker/range change
   useEffect(() => {
+    setChartData([]);
+    setChartLoading(true);
     const range = rangeMap[chartRange] || "1y";
     const interval = intMap[chartRange] || "1wk";
-    fetchChart(ticker, range, interval).then(d => {
-      const result = d?.chart?.result?.[0];
-      if (!result) return;
-      const ts = result.timestamp || [];
-      const closes = result.indicators?.quote?.[0]?.close || [];
-      setChartData(ts.map((t,i) => ({ t, v: closes[i] != null ? +closes[i].toFixed(2) : null })).filter(d => d.v != null));
-    }).catch(() => {});
+    fetchChart(ticker, range, interval)
+      .then(d => {
+        const result = d?.chart?.result?.[0];
+        if (!result) { setChartLoading(false); return; }
+        const ts = result.timestamp || [];
+        const closes = result.indicators?.quote?.[0]?.close || [];
+        const pts = ts.map((t,i) => ({ t, v: closes[i] != null ? +closes[i].toFixed(2) : null })).filter(p => p.v != null);
+        setChartData(pts);
+        setChartLoading(false);
+      })
+      .catch(() => setChartLoading(false));
   }, [ticker, chartRange]); // eslint-disable-line
 
-  // Lazy-load Historical tab
+  // Historical tab — re-fetch whenever ticker changes (fetchChart has 5-min cache)
   useEffect(() => {
-    if (activeTab !== "Historical" || tabsLoaded.current.has("Historical")) return;
-    tabsLoaded.current.add("Historical");
-    fetchChart(ticker, "3mo", "1d").then(d => {
-      const result = d?.chart?.result?.[0];
-      if (!result) { setHistData([]); return; }
-      const ts = result.timestamp || [];
-      const q0 = result.indicators?.quote?.[0] || {};
-      const rows = ts.map((t, i) => ({
-        date: new Date(t*1000).toLocaleDateString("en-US",{month:"short",day:"2-digit",year:"numeric"}),
-        open:  q0.open?.[i]?.toFixed(2),
-        high:  q0.high?.[i]?.toFixed(2),
-        low:   q0.low?.[i]?.toFixed(2),
-        close: q0.close?.[i]?.toFixed(2),
-        vol:   q0.volume?.[i],
-      })).filter(r => r.close).reverse();
-      setHistData(rows);
-    }).catch(() => setHistData([]));
+    if (activeTab !== "Historical") return;
+    setHistData(null);
+    fetchChart(ticker, "3mo", "1d")
+      .then(d => {
+        const result = d?.chart?.result?.[0];
+        if (!result) { setHistData([]); return; }
+        const ts = result.timestamp || [];
+        const q0 = result.indicators?.quote?.[0] || {};
+        const rows = ts.map((t, i) => ({
+          date: new Date(t*1000).toLocaleDateString("en-US",{month:"short",day:"2-digit",year:"numeric"}),
+          open:  q0.open?.[i]?.toFixed(2),
+          high:  q0.high?.[i]?.toFixed(2),
+          low:   q0.low?.[i]?.toFixed(2),
+          close: q0.close?.[i]?.toFixed(2),
+          vol:   q0.volume?.[i],
+        })).filter(r => r.close).reverse();
+        setHistData(rows);
+      })
+      .catch(() => setHistData([]));
   }, [activeTab, ticker]); // eslint-disable-line
 
   // Quick helpers
@@ -7472,9 +7523,24 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
             ))}
           </div>
         </div>
-        {/* Chart */}
-        {chartData.length > 0 && (
-          <div style={{ height:180, marginTop:8 }}>
+        {/* Chart — always reserve space; skeleton while loading */}
+        <div style={{ height:180, marginTop:8, position:"relative" }}>
+          {chartLoading && (
+            <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center",
+              background:"var(--surface-0)", borderRadius:6 }}>
+              <div style={{ width:"100%", height:"100%", background:`linear-gradient(90deg, var(--surface-0) 25%, var(--surface-2) 50%, var(--surface-0) 75%)`,
+                backgroundSize:"200% 100%", borderRadius:6, animation:"shimmer 1.4s infinite",
+                opacity:0.7 }} />
+            </div>
+          )}
+          {!chartLoading && chartData.length === 0 && (
+            <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
+              <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:"var(--text-3)" }}>
+                Chart data unavailable
+              </span>
+            </div>
+          )}
+          {chartData.length > 0 && (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top:4, right:0, bottom:0, left:0 }}>
                 <defs>
@@ -7485,15 +7551,15 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
                 </defs>
                 <XAxis dataKey="t" hide />
                 <YAxis domain={["auto","auto"]} hide />
-                <Tooltip contentStyle={{ background:"var(--surface-2)", border:"1px solid rgba(15,23,42,0.18)", borderRadius:8, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" }}
+                <Tooltip contentStyle={{ background:"var(--surface-2)", border:"1px solid var(--border-solid)", borderRadius:8, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" }}
                   labelFormatter={t => new Date(t*1000).toLocaleDateString()}
                   formatter={v=>["$"+v?.toFixed(2),"Price"]} />
                 <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5}
                   fill={"url(#avg_"+ticker.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false} />
               </AreaChart>
             </ResponsiveContainer>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* TIER 2: At-a-Glance Metrics */}
