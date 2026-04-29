@@ -6984,11 +6984,18 @@ const SC_ROW_H = 32; // px — fixed row height for virtualizer
 
 // FMP sector names → our screener sector labels
 const FMP_SECTOR_MAP = {
-  "Financial Services":   "Financials",
-  "Consumer Cyclical":    "Consumer Disc.",
-  "Consumer Defensive":   "Consumer Staples",
+  "Financial Services":    "Financials",
+  "Consumer Cyclical":     "Consumer Disc.",
+  "Consumer Defensive":    "Consumer Staples",
   "Communication Services":"Communication",
-  "Basic Materials":      "Materials",
+  "Basic Materials":       "Materials",
+  // pass-through sectors (same name in both systems)
+  "Technology":            "Technology",
+  "Healthcare":            "Healthcare",
+  "Energy":                "Energy",
+  "Industrials":           "Industrials",
+  "Utilities":             "Utilities",
+  "Real Estate":           "Real Estate",
 };
 
 function StockScreener({ onSelectTicker }) {
