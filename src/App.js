@@ -7,14 +7,26 @@ import { Search, Settings, RefreshCw, Zap, ArrowUpRight, ArrowDownRight, Buildin
 const FINNHUB_KEY = process.env.REACT_APP_FINNHUB_KEY;
 const BASE = "https://finnhub.io/api/v1";
 
+// Warn once at startup if the key is missing — avoids silent 401s everywhere
+if (!FINNHUB_KEY) {
+  console.error(
+    "[Bloomberg Terminal] REACT_APP_FINNHUB_KEY is not set.\n" +
+    "Add it to your .env file or Vercel environment variables.\n" +
+    "Get a free key at https://finnhub.io"
+  );
+}
 
 // In-memory API cache — 60 s TTL for Finnhub, 5 min for chart data
 const _apiCache = new Map();
 const api = (path) => {
+  if (!FINNHUB_KEY) return Promise.reject(new Error("Finnhub API key not configured."));
   const hit = _apiCache.get(path);
   if (hit && Date.now() - hit.ts < 60_000) return Promise.resolve(hit.data);
   return fetch(BASE + path + "&token=" + FINNHUB_KEY)
-    .then(r => r.json())
+    .then(r => {
+      if (!r.ok) throw new Error(`Finnhub ${r.status}: ${path}`);
+      return r.json();
+    })
     .then(data => { _apiCache.set(path, { data, ts: Date.now() }); return data; });
 };
 
