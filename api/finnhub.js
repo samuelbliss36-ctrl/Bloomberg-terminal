@@ -30,7 +30,8 @@ function cacheTTL(path) {
 }
 
 export default async function handler(req, res) {
-  const FINNHUB_KEY = process.env.FINNHUB_KEY;
+  // Accept either name — REACT_APP_FINNHUB_KEY is already in Vercel from initial setup
+  const FINNHUB_KEY = process.env.FINNHUB_KEY || process.env.REACT_APP_FINNHUB_KEY;
   if (!FINNHUB_KEY) {
     return res.status(503).json({ error: "FINNHUB_KEY env var not set." });
   }
