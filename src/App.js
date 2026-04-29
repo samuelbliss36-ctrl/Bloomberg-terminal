@@ -4,29 +4,39 @@ import { SCREENER_UNIVERSE, FULL_UNIVERSE } from "./screenerData";
 import { AreaChart, Area, BarChart, Bar, Line, Cell, ReferenceLine, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, PieChart, Pie } from "recharts";
 import { Search, Settings, RefreshCw, Zap, ArrowUpRight, ArrowDownRight, Building2, BarChart2, Activity, Star } from "lucide-react";
 
+// Client-side key used only in local development (npm start).
+// In production all Finnhub calls go through /api/finnhub so the key
+// never appears in the browser JS bundle.
 const FINNHUB_KEY = process.env.REACT_APP_FINNHUB_KEY;
-const BASE = "https://finnhub.io/api/v1";
+const IS_DEV      = process.env.NODE_ENV === "development";
 
-// Warn once at startup if the key is missing — avoids silent 401s everywhere
-if (!FINNHUB_KEY) {
+if (IS_DEV && !FINNHUB_KEY) {
   console.error(
     "[Bloomberg Terminal] REACT_APP_FINNHUB_KEY is not set.\n" +
-    "Add it to your .env file or Vercel environment variables.\n" +
+    "Add it to your .env file for local development.\n" +
     "Get a free key at https://finnhub.io"
   );
 }
 
-// In-memory API cache — 60 s TTL for Finnhub, 5 min for chart data
+// In-memory client cache — deduplicate rapid repeated calls (60 s TTL)
 const _apiCache = new Map();
 const api = (path) => {
-  if (!FINNHUB_KEY) return Promise.reject(new Error("Finnhub API key not configured."));
+  // Dev: call Finnhub directly (no /api/ routes on CRA dev server)
+  // Prod: route through /api/finnhub — Vercel edge cache shared across all users
+  if (IS_DEV) {
+    if (!FINNHUB_KEY) return Promise.reject(new Error("Finnhub API key not configured."));
+    const hit = _apiCache.get(path);
+    if (hit && Date.now() - hit.ts < 60_000) return Promise.resolve(hit.data);
+    return fetch(`https://finnhub.io/api/v1${path}&token=${FINNHUB_KEY}`)
+      .then(r => { if (!r.ok) throw new Error(`Finnhub ${r.status}: ${path}`); return r.json(); })
+      .then(data => { _apiCache.set(path, { data, ts: Date.now() }); return data; });
+  }
+
+  // Production path — proxy with edge caching
   const hit = _apiCache.get(path);
   if (hit && Date.now() - hit.ts < 60_000) return Promise.resolve(hit.data);
-  return fetch(BASE + path + "&token=" + FINNHUB_KEY)
-    .then(r => {
-      if (!r.ok) throw new Error(`Finnhub ${r.status}: ${path}`);
-      return r.json();
-    })
+  return fetch(`/api/finnhub?_q=${encodeURIComponent(path)}`)
+    .then(r => { if (!r.ok) throw new Error(`Finnhub proxy ${r.status}: ${path}`); return r.json(); })
     .then(data => { _apiCache.set(path, { data, ts: Date.now() }); return data; });
 };
 
