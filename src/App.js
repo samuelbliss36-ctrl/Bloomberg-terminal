@@ -6982,6 +6982,15 @@ const SC_COLS = [
 ];
 const SC_ROW_H = 32; // px — fixed row height for virtualizer
 
+// FMP sector names → our screener sector labels
+const FMP_SECTOR_MAP = {
+  "Financial Services":   "Financials",
+  "Consumer Cyclical":    "Consumer Disc.",
+  "Consumer Defensive":   "Consumer Staples",
+  "Communication Services":"Communication",
+  "Basic Materials":      "Materials",
+};
+
 function StockScreener({ onSelectTicker }) {
   const DEF = {
     sector:"All", mktCapTier:"All", rating:"All",
@@ -6996,6 +7005,8 @@ function StockScreener({ onSelectTicker }) {
   const [sortCol, setSortCol]   = useState("mktCap");
   const [sortDir, setSortDir]   = useState("desc");
   const [activePreset, setActivePreset] = useState(null);
+  const [liveUniverse, setLiveUniverse] = useState(null);   // null = loading, array = ready
+  const [liveStatus, setLiveStatus]     = useState("loading"); // "loading" | "live" | "synthetic"
   const scrollRef = useRef(null);
 
   const setFilter   = useCallback((k, v) => { setF(prev => ({...prev, [k]:v})); setActivePreset(null); }, []);
@@ -7003,9 +7014,50 @@ function StockScreener({ onSelectTicker }) {
   const reset       = () => { setF(DEF); setActivePreset(null); setSortCol("mktCap"); setSortDir("desc"); };
   const toggleSort  = (col) => { if (sortCol===col) setSortDir(d=>d==="asc"?"desc":"asc"); else { setSortCol(col); setSortDir("desc"); } };
 
+  /* ── Live universe: fetch from FMP on mount, merge with SCREENER_UNIVERSE fundamentals ── */
+  useEffect(() => {
+    fetch("/api/screener")
+      .then(r => r.json())
+      .then(raw => {
+        if (!Array.isArray(raw) || !raw.length) { setLiveStatus("synthetic"); return; }
+        const suMap = new Map(SCREENER_UNIVERSE.map(s => [s.ticker, s]));
+        const mapped = raw.map(s => {
+          const base     = suMap.get(s.symbol) || {};
+          const mktCapB  = (s.marketCap || 0) / 1e9;
+          const divYield = (s.price > 0 && s.lastAnnualDividend > 0)
+            ? +(s.lastAnnualDividend / s.price * 100).toFixed(2) : (base.divYield ?? null);
+          return {
+            ticker:      s.symbol,
+            name:        s.companyName   || base.name   || s.symbol,
+            sector:      FMP_SECTOR_MAP[s.sector] || s.sector || base.sector || "Other",
+            price:       s.price         ?? base.price  ?? null,
+            changePct:   base.changePct  ?? null,
+            mktCap:      mktCapB > 0     ? mktCapB      : (base.mktCap ?? null),
+            pe:          base.pe         ?? null,
+            fwdPe:       base.fwdPe      ?? null,
+            pb:          base.pb         ?? null,
+            revGrowth:   base.revGrowth  ?? null,
+            grossMargin: base.grossMargin?? null,
+            netMargin:   base.netMargin  ?? null,
+            roe:         base.roe        ?? null,
+            debtToEq:    base.debtToEq   ?? null,
+            divYield,
+            beta:        s.beta          ?? base.beta   ?? null,
+            volume:      s.volume != null ? s.volume / 1e6 : (base.volume ?? null),
+            rating:      base.rating     ?? null,
+          };
+        });
+        setLiveUniverse(mapped);
+        setLiveStatus("live");
+      })
+      .catch(() => setLiveStatus("synthetic"));
+  }, []);
+
+  const universe = liveUniverse || FULL_UNIVERSE;
+
   /* ── Filtering engine (O(n), runs synchronously in useMemo) ─── */
   const results = useMemo(() => {
-    const filtered = FULL_UNIVERSE.filter(s => {
+    const filtered = universe.filter(s => {
       if (f.sector !== "All" && s.sector !== f.sector) return false;
       if (f.mktCapTier === "Mega"  && s.mktCap < 200)  return false;
       if (f.mktCapTier === "Large" && (s.mktCap < 10  || s.mktCap >= 200)) return false;
@@ -7034,7 +7086,7 @@ function StockScreener({ onSelectTicker }) {
       return sortDir === "asc" ? av - bv : bv - av;
     });
     return filtered;
-  }, [f, sortCol, sortDir]); // eslint-disable-line
+  }, [f, sortCol, sortDir, universe]); // eslint-disable-line
 
   /* ── DOM virtualizer ───────────────────────────────────────────── */
   const rowVirtualizer = useVirtualizer({
@@ -7142,8 +7194,11 @@ function StockScreener({ onSelectTicker }) {
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
             <span style={{ fontSize:11, fontWeight:700, letterSpacing:"0.07em", color:"var(--text-1)" }}>📊 STOCK SCREENER</span>
             <span style={{ fontSize:10, fontFamily:"'IBM Plex Mono',monospace", color:"var(--text-3)", background:"var(--surface-2)", padding:"1px 8px", borderRadius:99 }}>
-              Showing {results.length.toLocaleString()} of {FULL_UNIVERSE.length.toLocaleString()}
+              Showing {results.length.toLocaleString()} of {universe.length.toLocaleString()}
             </span>
+            {liveStatus === "live"      && <span style={{ fontSize:9, fontFamily:"'IBM Plex Mono',monospace", color:"#059669" }}>● Live · FMP</span>}
+            {liveStatus === "loading"   && <span style={{ fontSize:9, fontFamily:"'IBM Plex Mono',monospace", color:"#b45309" }}>⟳ Loading live data…</span>}
+            {liveStatus === "synthetic" && <span style={{ fontSize:9, fontFamily:"'IBM Plex Mono',monospace", color:"var(--text-3)" }}>◦ Synthetic data (add FMP_KEY env var for live)</span>}
             <span style={{ fontSize:10, color:"var(--text-3)" }}>· Click row → load ticker · Click header → sort</span>
           </div>
           <button onClick={reset} style={{ fontSize:10, color:"var(--text-3)", background:"none", border:"1px solid var(--border-solid)", borderRadius:4, padding:"2px 10px", cursor:"pointer" }}>
@@ -7562,6 +7617,12 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
   const [chartLoading, setChartLoading] = useState(true);
   const [histData, setHistData] = useState(null);
 
+  // ── Options chain state ───────────────────────────────────────────
+  const [optChain, setOptChain]       = useState(null);
+  const [optLoading, setOptLoading]   = useState(false);
+  const [optExpiries, setOptExpiries] = useState([]);
+  const [optExpiryIdx, setOptExpiryIdx] = useState(0);
+
   const TABS = ["News","Options","Financials","Analyst","Peers","Profile","Historical"];
   const RANGES = ["1D","5D","1M","3M","6M","1Y","5Y"];
   const rangeMap = { "1D":"1d", "5D":"5d", "1M":"1mo", "3M":"3mo", "6M":"6mo", "1Y":"1y", "5Y":"5y" };
@@ -7589,6 +7650,42 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
       })
       .catch(() => setChartLoading(false));
   }, [ticker, chartRange]); // eslint-disable-line
+
+  // Reset options chain when ticker changes
+  useEffect(() => {
+    setOptChain(null);
+    setOptExpiries([]);
+    setOptExpiryIdx(0);
+  }, [ticker]);
+
+  // Fetch options chain via Yahoo Finance proxy
+  const fetchOptChain = useCallback(async (idx, expiryList) => {
+    setOptLoading(true);
+    try {
+      const useList = expiryList.length ? expiryList : optExpiries;
+      const dateParam = (idx > 0 && useList[idx]) ? `&date=${useList[idx]}` : "";
+      const r = await fetch(`/api/options?ticker=${encodeURIComponent(ticker)}${dateParam}`);
+      const d = await r.json();
+      const res = d?.optionChain?.result?.[0];
+      if (!res) { setOptLoading(false); return; }
+      const expList  = res.expirationDates || useList;
+      const opts     = res.options?.[0] || {};
+      const spot     = res.quote?.regularMarketPrice || quote?.c || 0;
+      setOptExpiries(expList);
+      setOptExpiryIdx(idx);
+      setOptChain({ calls: opts.calls || [], puts: opts.puts || [], spot, expiries: expList, expiryIdx: idx });
+    } catch (e) {
+      console.error("options fetch:", e);
+    }
+    setOptLoading(false);
+  }, [ticker, quote, optExpiries]);
+
+  // Auto-fetch when user clicks Options tab
+  useEffect(() => {
+    if (activeTab === "Options" && !optChain && !optLoading) {
+      fetchOptChain(0, []);
+    }
+  }, [activeTab, optChain, optLoading, fetchOptChain]);
 
   // Historical tab — re-fetch whenever ticker changes (fetchChart has 5-min cache)
   useEffect(() => {
@@ -7657,79 +7754,121 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
   };
 
   const renderOptions = () => {
-    // Mock options chain — structured, realistic
-    const strikes = [175,177.5,180,182.5,185,187.5,190,192.5,195,197.5,200];
-    const spotPrice = quote?.c || 185;
-    const mockChain = strikes.map(k => {
-      const itm = k < spotPrice;
-      const dist = Math.abs(k - spotPrice) / spotPrice;
-      const callIV = (0.22 + dist * 0.4 + Math.random()*0.02).toFixed(3);
-      const putIV  = (0.24 + dist * 0.38 + Math.random()*0.02).toFixed(3);
-      const callBid  = Math.max(0, spotPrice - k + 2 + Math.random()*2).toFixed(2);
-      const callAsk  = (+callBid + 0.05 + Math.random()*0.1).toFixed(2);
-      const putBid   = Math.max(0, k - spotPrice + 2 + Math.random()*2).toFixed(2);
-      const putAsk   = (+putBid + 0.05 + Math.random()*0.1).toFixed(2);
-      return { strike:k, itm, callIV, putIV, callBid, callAsk, putBid, putAsk,
-        callOI: Math.floor(Math.random()*12000+500),
-        putOI:  Math.floor(Math.random()*9000+300),
-        callVol: Math.floor(Math.random()*3000+100),
-        putVol:  Math.floor(Math.random()*2500+80),
-      };
-    });
+    // Loading state
+    if (optLoading) return (
+      <div style={{ padding:"40px 0", textAlign:"center", fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"var(--text-3)" }}>
+        Loading options chain for <strong style={{ color:"var(--text-1)" }}>{ticker}</strong>…
+      </div>
+    );
+
+    // Not yet fetched
+    if (!optChain) return (
+      <div style={{ padding:"40px 0", textAlign:"center", fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"var(--text-3)" }}>
+        Click <strong>Options</strong> tab to load live chain
+      </div>
+    );
+
+    const { calls, puts, spot, expiries } = optChain;
+    const callMap = new Map(calls.map(c => [c.strike, c]));
+    const putMap  = new Map(puts.map(p  => [p.strike, p]));
+    const allStrikes = [...new Set([...calls.map(c => c.strike), ...puts.map(p => p.strike)])].sort((a,b)=>a-b);
+
+    const fmtIV  = v  => v  != null ? (v  * 100).toFixed(1) + "%" : "—";
+    const fmtPx  = v  => v  != null ? "$" + v.toFixed(2)          : "—";
+    const fmtInt = v  => v  != null ? v.toLocaleString()           : "—";
+
+    const selectStyle = {
+      fontFamily:"'IBM Plex Mono',monospace", fontSize:10, padding:"2px 6px",
+      background:"var(--surface-1)", color:"var(--text-1)",
+      border:"1px solid var(--border-solid)", borderRadius:4, cursor:"pointer",
+    };
+
     return (
       <div>
-        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:"var(--text-3)", marginBottom:8, display:"flex", gap:12, alignItems:"center" }}>
-          <span>Expiry: <strong style={{ color:"#b45309" }}>May 17, 2025</strong></span>
-          <span>Spot: <strong style={{ color:"var(--text-1)" }}>${fmt.price(spotPrice)}</strong></span>
-          <span style={{ color:"var(--text-3)" }}>· Mock data · for UI demonstration</span>
+        {/* Header row — expiry selector + spot */}
+        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:"var(--text-3)", marginBottom:8, display:"flex", gap:12, alignItems:"center", flexWrap:"wrap" }}>
+          <span style={{ fontWeight:600, color:"var(--text-1)" }}>Expiry:</span>
+          <select style={selectStyle} value={optExpiryIdx}
+            onChange={e => fetchOptChain(+e.target.value, expiries)}>
+            {expiries.map((ts, i) => (
+              <option key={i} value={i}>
+                {new Date(ts * 1000).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" })}
+              </option>
+            ))}
+          </select>
+          <span>Spot: <strong style={{ color:"var(--text-1)" }}>${fmt.price(spot)}</strong></span>
+          <span style={{ color:"#059669", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }}>● Live · Yahoo Finance</span>
         </div>
+
+        {/* Calls | Strike | Puts grid */}
         <div style={{ display:"grid", gridTemplateColumns:"1fr auto 1fr", gap:0 }}>
-          {/* CALLS header */}
+          {/* CALLS */}
           <table className="dense-table">
             <thead><tr>
-              <th style={{ textAlign:"left" }}>IV</th><th>Bid</th><th>Ask</th><th>OI</th><th>Vol</th>
+              <th style={{ textAlign:"left" }}>IV</th>
+              <th>Bid</th><th>Ask</th><th>OI</th><th>Vol</th>
             </tr></thead>
             <tbody>
-              {mockChain.map(r => (
-                <tr key={r.strike} style={{ background: r.itm?"rgba(5,150,105,0.04)":"transparent" }}>
-                  <td style={{ color:"var(--text-3)", textAlign:"left" }}>{(+r.callIV*100).toFixed(1)}%</td>
-                  <td style={{ color:"#059669" }}>${r.callBid}</td>
-                  <td style={{ color:"#e11d48" }}>${r.callAsk}</td>
-                  <td style={{ color:"var(--text-3)" }}>{r.callOI.toLocaleString()}</td>
-                  <td style={{ color:"var(--text-3)" }}>{r.callVol.toLocaleString()}</td>
-                </tr>
-              ))}
+              {allStrikes.map(k => {
+                const c   = callMap.get(k);
+                const itm = k < spot;
+                return (
+                  <tr key={k} style={{ background: itm ? "rgba(5,150,105,0.05)" : "transparent" }}>
+                    <td style={{ color:"var(--text-3)", textAlign:"left" }}>{fmtIV(c?.impliedVolatility)}</td>
+                    <td style={{ color:"#059669" }}>{fmtPx(c?.bid)}</td>
+                    <td style={{ color:"#e11d48" }}>{fmtPx(c?.ask)}</td>
+                    <td style={{ color:"var(--text-3)" }}>{fmtInt(c?.openInterest)}</td>
+                    <td style={{ color:"var(--text-3)" }}>{fmtInt(c?.volume)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
-          {/* Strike column */}
-          <div style={{ display:"flex", flexDirection:"column", justifyContent:"stretch" }}>
-            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.08em", color:"var(--text-3)", padding:"5px 14px 6px", borderBottom:"1px solid rgba(15,23,42,0.07)", textAlign:"center" }}>STRIKE</div>
-            {mockChain.map(r => (
-              <div key={r.strike} style={{ padding:"4px 14px", borderBottom:"1px solid rgba(15,23,42,0.05)", fontFamily:"'IBM Plex Mono',monospace", fontSize:11, fontWeight:700, color: Math.abs(r.strike-spotPrice)<1.5?"#2563eb":"#475569", textAlign:"center", background: Math.abs(r.strike-spotPrice)<1.5?"rgba(37,99,235,0.08)":"transparent" }}>
-                {r.strike.toFixed(1)}
-              </div>
-            ))}
+
+          {/* STRIKE column */}
+          <div style={{ display:"flex", flexDirection:"column" }}>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600, textTransform:"uppercase",
+              letterSpacing:"0.08em", color:"var(--text-3)", padding:"5px 14px 6px",
+              borderBottom:"1px solid rgba(15,23,42,0.07)", textAlign:"center" }}>STRIKE</div>
+            {allStrikes.map(k => {
+              const atm = Math.abs(k - spot) / spot < 0.006;
+              return (
+                <div key={k} style={{ padding:"4px 14px", borderBottom:"1px solid rgba(15,23,42,0.05)",
+                  fontFamily:"'IBM Plex Mono',monospace", fontSize:11, fontWeight:700,
+                  color: atm ? "#2563eb" : "#475569", textAlign:"center",
+                  background: atm ? "rgba(37,99,235,0.08)" : "transparent" }}>
+                  {k % 1 === 0 ? k : k.toFixed(2)}
+                </div>
+              );
+            })}
           </div>
+
           {/* PUTS */}
           <table className="dense-table">
             <thead><tr>
-              <th>Bid</th><th>Ask</th><th>OI</th><th>Vol</th><th style={{ textAlign:"right" }}>IV</th>
+              <th>Bid</th><th>Ask</th><th>OI</th><th>Vol</th>
+              <th style={{ textAlign:"right" }}>IV</th>
             </tr></thead>
             <tbody>
-              {mockChain.map(r => (
-                <tr key={r.strike} style={{ background: !r.itm?"rgba(225,29,72,0.04)":"transparent" }}>
-                  <td style={{ color:"#059669" }}>${r.putBid}</td>
-                  <td style={{ color:"#e11d48" }}>${r.putAsk}</td>
-                  <td style={{ color:"var(--text-3)" }}>{r.putOI.toLocaleString()}</td>
-                  <td style={{ color:"var(--text-3)" }}>{r.putVol.toLocaleString()}</td>
-                  <td style={{ color:"var(--text-3)", textAlign:"right" }}>{(+r.putIV*100).toFixed(1)}%</td>
-                </tr>
-              ))}
+              {allStrikes.map(k => {
+                const p   = putMap.get(k);
+                const itm = k > spot;
+                return (
+                  <tr key={k} style={{ background: itm ? "rgba(225,29,72,0.05)" : "transparent" }}>
+                    <td style={{ color:"#059669" }}>{fmtPx(p?.bid)}</td>
+                    <td style={{ color:"#e11d48" }}>{fmtPx(p?.ask)}</td>
+                    <td style={{ color:"var(--text-3)" }}>{fmtInt(p?.openInterest)}</td>
+                    <td style={{ color:"var(--text-3)" }}>{fmtInt(p?.volume)}</td>
+                    <td style={{ color:"var(--text-3)", textAlign:"right" }}>{fmtIV(p?.impliedVolatility)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
+
         <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:"var(--text-3)", marginTop:10, textAlign:"center" }}>
-          Calls (ITM highlighted green) · ATM in blue · Puts (ITM highlighted red)
+          Calls (ITM green) · ATM blue · Puts (ITM red) · Data via Yahoo Finance
         </div>
       </div>
     );
