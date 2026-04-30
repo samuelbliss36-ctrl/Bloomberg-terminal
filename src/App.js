@@ -4632,6 +4632,41 @@ const MOCK_RESEARCH_DATA_UNUSED = {
   },
 };
 
+// ── Chart timeframe helpers (shared by all three Research panels) ─────────────
+const CHART_TF_MAP = {
+  "1D":  { range: "1d",  interval: "5m"  },
+  "5D":  { range: "5d",  interval: "15m" },
+  "1M":  { range: "1mo", interval: "1d"  },
+  "3M":  { range: "3mo", interval: "1d"  },
+  "6M":  { range: "6mo", interval: "1d"  },
+  "1Y":  { range: "1y",  interval: "1d"  },
+  "5Y":  { range: "5y",  interval: "1wk" },
+  "All": { range: "max", interval: "1mo" },
+};
+const TF_LABELS     = ["1D","5D","1M","3M","6M","1Y","5Y","All"];
+const TF_X_INTERVAL = { "1D":7,"5D":19,"1M":2,"3M":6,"6M":13,"1Y":35,"5Y":25,"All":12 };
+function tfTick(t, tf) {
+  const d = new Date(t * 1000);
+  if (tf === "1D") return d.getHours() + ":" + String(d.getMinutes()).padStart(2,"0");
+  if (tf === "5D") { const days=["Su","Mo","Tu","We","Th","Fr","Sa"]; return days[d.getDay()]; }
+  if (tf === "5Y" || tf === "All") return (d.getMonth()+1)+"/"+(d.getFullYear()+"").slice(2);
+  return (d.getMonth()+1)+"/"+d.getDate();
+}
+function TFButtons({ chartTf, setChartTf }) {
+  return (
+    <div className="flex gap-1 mb-2" style={{ flexWrap:"nowrap" }}>
+      {TF_LABELS.map(tf => (
+        <button key={tf} onClick={() => setChartTf(tf)} className="font-mono" style={{
+          padding:"2px 8px", fontSize:9, borderRadius:4, border:"none", cursor:"pointer",
+          background: chartTf === tf ? "#2563eb" : "var(--surface-2)",
+          color:      chartTf === tf ? "#fff"    : "var(--text-3)",
+          transition: "background 0.12s",
+        }}>{tf}</button>
+      ))}
+    </div>
+  );
+}
+
 function EquityResearchPanel({ item, onClose, onOpen }) {
   const TABS = ["Overview","Financials","Valuation","News","Peers"];
   const [activeTab, setActiveTab] = useState("Overview");
@@ -4639,6 +4674,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
   const [profile, setProfile]     = useState(null);
   const [metrics, setMetrics]     = useState(null);
   const [chartData, setChartData] = useState([]);
+  const [chartTf, setChartTf]     = useState("1Y");
   const [loadingBase, setLoadingBase] = useState(true);
   const [earnings, setEarnings]   = useState(null);
   const [recs, setRecs]           = useState(null);
@@ -4653,6 +4689,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
   useEffect(() => {
     setLoadingBase(true);
     setActiveTab("Overview");
+    setChartTf("1Y");
     loadedTabs.current = new Set(["Overview"]);
     setEarnings(null); setRecs(null); setPt(undefined);
     setNews(null); setPeers(null); setPeerQ({}); setPeerM({});
@@ -4661,27 +4698,38 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
       api("/quote?symbol=" + item.ticker),
       delay(150).then(() => api("/stock/profile2?symbol=" + item.ticker)),
       delay(300).then(() => api("/stock/metric?symbol=" + item.ticker + "&metric=all")),
-      fetch("/api/chart?ticker=" + encodeURIComponent(item.ticker) + "&range=1y&interval=1d")
-        .then(r => r.json()).catch(() => null),
-    ]).then(([q, p, metaRaw, c]) => {
+    ]).then(([q, p, metaRaw]) => {
       setQuote(q);
       setProfile(p || {});
       setMetrics(metaRaw?.metric || null);
-      const result = c?.chart?.result?.[0];
-      if (result) {
-        const ts      = result.timestamp || [];
-        const closes  = result.indicators?.quote?.[0]?.close || [];
-        const raw = ts.map((t,i) => ({ t, v: closes[i] != null ? +closes[i].toFixed(2) : null })).filter(d => d.v != null);
-        const withMA  = raw.map((d,i) => {
-          if (i < 49) return d;
-          const avg = raw.slice(i-49, i+1).reduce((s,x) => s+x.v, 0) / 50;
-          return { ...d, ma50: +avg.toFixed(2) };
-        });
-        setChartData(withMA);
-      }
       setLoadingBase(false);
     }).catch(() => setLoadingBase(false));
   }, [item.ticker]); // eslint-disable-line
+
+  // ── Chart fetch (re-runs when ticker OR timeframe changes) ────────────────
+  useEffect(() => {
+    let cancelled = false;
+    setChartData([]);
+    const { range, interval } = CHART_TF_MAP[chartTf];
+    fetch("/api/chart?ticker=" + encodeURIComponent(item.ticker) + "&range=" + range + "&interval=" + interval)
+      .then(r => r.json())
+      .then(c => {
+        if (cancelled) return;
+        const result = c?.chart?.result?.[0];
+        if (!result) return;
+        const ts     = result.timestamp || [];
+        const closes = result.indicators?.quote?.[0]?.close || [];
+        const raw    = ts.map((t,i) => ({ t, v: closes[i] != null ? +closes[i].toFixed(2) : null })).filter(d => d.v != null);
+        const showMA = ["3M","6M","1Y","5Y","All"].includes(chartTf);
+        const withMA = showMA ? raw.map((d,i) => {
+          if (i < 49) return d;
+          const avg = raw.slice(i-49,i+1).reduce((s,x) => s+x.v, 0) / 50;
+          return { ...d, ma50: +avg.toFixed(2) };
+        }) : raw;
+        setChartData(withMA);
+      }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [item.ticker, chartTf]); // eslint-disable-line
 
   // ── Lazy tab loads ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -4768,8 +4816,9 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
             </span>
           </div>
 
-          {/* 1Y chart with 50MA */}
-          {chartData.length > 0 && (
+          {/* Chart with timeframe selector */}
+          <TFButtons chartTf={chartTf} setChartTf={setChartTf} />
+          {chartData.length > 0 ? (
             <div style={{ height:220, marginBottom:10 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData} margin={{ top:4, right:2, bottom:0, left:0 }}>
@@ -4780,17 +4829,23 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="t"
-                    tickFormatter={t => { const d = new Date(t*1000); return (d.getMonth()+1)+"/"+(d.getDate()); }}
-                    tick={{ fill:"#64748b", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }} tickLine={false} axisLine={false} interval={35} />
+                    tickFormatter={t => tfTick(t, chartTf)}
+                    tick={{ fill:"#64748b", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }} tickLine={false} axisLine={false} interval={TF_X_INTERVAL[chartTf]||35} />
                   <YAxis domain={["auto","auto"]} hide />
                   <Tooltip
                     contentStyle={{ background:"var(--surface-2)", border:"1px solid rgba(15,23,42,0.18)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }}
-                    labelFormatter={t => new Date(t*1000).toLocaleDateString()}
+                    labelFormatter={t => (chartTf==="1D"||chartTf==="5D") ? new Date(t*1000).toLocaleString() : new Date(t*1000).toLocaleDateString()}
                     formatter={(v,n) => [v != null ? "$"+v.toFixed(2) : "—", n==="v" ? "Price" : "MA 50"]} />
                   <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5} fill={"url(#eqg_"+item.ticker.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false} />
-                  <Line type="monotone" dataKey="ma50" stroke="#b45309" strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} />
+                  {["3M","6M","1Y","5Y","All"].includes(chartTf) && (
+                    <Line type="monotone" dataKey="ma50" stroke="#b45309" strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} />
+                  )}
                 </AreaChart>
               </ResponsiveContainer>
+            </div>
+          ) : (
+            <div style={{ height:220, display:"flex", alignItems:"center", justifyContent:"center", marginBottom:10 }}>
+              <span className="font-mono" style={{ color:"var(--text-3)", fontSize:10 }}>Loading chart…</span>
             </div>
           )}
 
@@ -5264,36 +5319,55 @@ function CommodityResearchPanel({ item, onClose, onOpen }) {
   const TABS = ["Overview","Intelligence","Producers"];
   const [activeTab, setActiveTab] = useState("Overview");
   const [chartData, setChartData] = useState([]);
+  const [chartTf, setChartTf]     = useState("1Y");
   const [summary, setSummary]     = useState(null);
   const [loading, setLoading]     = useState(true);
+  const [loadingChart, setLoadingChart] = useState(false);
+  const firstLoadRef = useRef(true);
   const intel = ENTITY_INTEL[item.id];
 
+  // Reset on ticker change
   useEffect(() => {
-    setLoading(true); setChartData([]); setSummary(null); setActiveTab("Overview");
-    fetch("/api/chart?ticker=" + encodeURIComponent(item.ticker) + "&range=1y&interval=1d")
+    firstLoadRef.current = true;
+    setLoading(true); setChartData([]); setSummary(null);
+    setChartTf("1Y"); setActiveTab("Overview");
+  }, [item.ticker]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Chart fetch (fires when ticker or TF changes)
+  useEffect(() => {
+    let cancelled = false;
+    const isFirst = firstLoadRef.current;
+    if (!isFirst) { setLoadingChart(true); setChartData([]); }
+    const { range, interval } = CHART_TF_MAP[chartTf];
+    fetch("/api/chart?ticker=" + encodeURIComponent(item.ticker) + "&range=" + range + "&interval=" + interval)
       .then(r => r.json())
       .then(c => {
+        if (cancelled) return;
         const result = c?.chart?.result?.[0];
         if (result) {
           const ts     = result.timestamp || [];
           const closes = result.indicators?.quote?.[0]?.close || [];
-          const data   = ts.map((t, i) => ({ t, v: closes[i] != null ? +closes[i].toFixed(4) : null })).filter(d => d.v != null);
+          const data   = ts.map((t,i) => ({ t, v: closes[i] != null ? +closes[i].toFixed(4) : null })).filter(d => d.v != null);
           setChartData(data);
           if (data.length >= 2) {
-            const cur = data[data.length - 1].v, prev = data[data.length - 2].v;
-            const m1 = data[Math.max(0, data.length - 22)].v;
-            const m3 = data[Math.max(0, data.length - 66)].v;
-            const hi52 = Math.max(...data.map(d => d.v)), lo52 = Math.min(...data.map(d => d.v));
-            setSummary({ cur, prev, dayPct:((cur-prev)/prev)*100, m1Pct:((cur-m1)/m1)*100, m3Pct:((cur-m3)/m3)*100, ytdPct:((cur-data[0].v)/data[0].v)*100, hi52, lo52 });
+            const cur  = data[data.length-1].v, prev = data[data.length-2].v;
+            const m1   = data[Math.max(0, data.length-22)].v;
+            const m3   = data[Math.max(0, data.length-66)].v;
+            const hiP  = Math.max(...data.map(d => d.v)), loP = Math.min(...data.map(d => d.v));
+            setSummary({ cur, prev, dayPct:((cur-prev)/prev)*100, m1Pct:((cur-m1)/m1)*100, m3Pct:((cur-m3)/m3)*100, ytdPct:((cur-data[0].v)/data[0].v)*100, hi52:hiP, lo52:loP });
           }
         }
-        setLoading(false);
-      }).catch(() => setLoading(false));
-  }, [item.ticker]); // eslint-disable-line react-hooks/exhaustive-deps
+        if (isFirst) { firstLoadRef.current = false; setLoading(false); }
+        else setLoadingChart(false);
+      }).catch(() => { if (!cancelled) { setLoading(false); setLoadingChart(false); firstLoadRef.current = false; } });
+    return () => { cancelled = true; };
+  }, [item.ticker, chartTf]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const dp = 2;
   const priceColor = summary ? (summary.dayPct >= 0 ? "#059669" : "#e11d48") : "#b45309";
   const pct52 = summary ? Math.min(100, Math.max(0, ((summary.cur - summary.lo52) / (summary.hi52 - summary.lo52)) * 100)) : null;
+  const rangeLabel = chartTf === "1Y" ? "52-WEEK RANGE" : chartTf + " RANGE";
+  const isIntraday = chartTf === "1D" || chartTf === "5D";
 
   const renderOverview = () => loading ? (
     <div className="flex items-center justify-center py-8 font-mono" style={{ color:"var(--text-3)" }}>Loading…</div>
@@ -5306,11 +5380,16 @@ function CommodityResearchPanel({ item, onClose, onOpen }) {
         </div>
         <div className="text-right">
           {summary && <div className="font-mono" style={{ color:clr(summary.dayPct), fontSize:13 }}>Day {fmt.pct(summary.dayPct)}</div>}
-          {summary && <div className="font-mono" style={{ color:clr(summary.m1Pct), fontSize:10 }}>1M {fmt.pct(summary.m1Pct)}</div>}
+          {summary && !isIntraday && <div className="font-mono" style={{ color:clr(summary.m1Pct), fontSize:10 }}>1M {fmt.pct(summary.m1Pct)}</div>}
         </div>
       </div>
 
-      {chartData.length > 0 && (
+      <TFButtons chartTf={chartTf} setChartTf={setChartTf} />
+      {loadingChart ? (
+        <div style={{ height:190, display:"flex", alignItems:"center", justifyContent:"center", marginBottom:12 }}>
+          <span className="font-mono" style={{ color:"var(--text-3)", fontSize:10 }}>Loading chart…</span>
+        </div>
+      ) : chartData.length > 0 && (
         <div style={{ height:190, marginBottom:12 }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top:4, right:2, bottom:0, left:0 }}>
@@ -5320,9 +5399,9 @@ function CommodityResearchPanel({ item, onClose, onOpen }) {
                   <stop offset="95%" stopColor={priceColor} stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <XAxis dataKey="t" tickFormatter={t=>{const d=new Date(t*1000);return(d.getMonth()+1)+"/"+d.getDate();}} tick={{fill:"#64748b",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={35}/>
+              <XAxis dataKey="t" tickFormatter={t=>tfTick(t,chartTf)} tick={{fill:"#64748b",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={TF_X_INTERVAL[chartTf]||35}/>
               <YAxis domain={["auto","auto"]} hide/>
-              <Tooltip contentStyle={{background:"var(--surface-2)",border:"1px solid rgba(15,23,42,0.18)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} labelFormatter={t=>new Date(t*1000).toLocaleDateString()} formatter={v=>["$"+v?.toFixed(dp),"Price"]}/>
+              <Tooltip contentStyle={{background:"var(--surface-2)",border:"1px solid rgba(15,23,42,0.18)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} labelFormatter={t=>isIntraday?new Date(t*1000).toLocaleString():new Date(t*1000).toLocaleDateString()} formatter={v=>["$"+v?.toFixed(dp),"Price"]}/>
               <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5} fill={"url(#cmg_"+item.id.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
             </AreaChart>
           </ResponsiveContainer>
@@ -5332,9 +5411,9 @@ function CommodityResearchPanel({ item, onClose, onOpen }) {
       {pct52 != null && (
         <div className="mb-4">
           <div className="flex justify-between font-mono mb-1" style={{ color:"var(--text-3)", fontSize:9 }}>
-            <span>52W LOW ${summary.lo52.toFixed(dp)}</span>
-            <span style={{ color:"var(--text-3)" }}>52-WEEK RANGE</span>
-            <span>${summary.hi52.toFixed(dp)} 52W HIGH</span>
+            <span>LOW ${summary.lo52.toFixed(dp)}</span>
+            <span style={{ color:"var(--text-3)" }}>{rangeLabel}</span>
+            <span>${summary.hi52.toFixed(dp)} HIGH</span>
           </div>
           <div style={{ position:"relative", height:4, background:"var(--surface-3)", borderRadius:2 }}>
             <div style={{ position:"absolute", left:0, width:pct52+"%", height:"100%", background:pct52>70?"#059669":pct52<30?"#e11d48":"#b45309", borderRadius:2 }}/>
@@ -5343,14 +5422,22 @@ function CommodityResearchPanel({ item, onClose, onOpen }) {
         </div>
       )}
 
-      {summary && (
+      {summary && !isIntraday && (
         <div className="grid mb-4" style={{ gridTemplateColumns:"repeat(4,1fr)", gap:"4px 8px" }}>
-          {[["1D",summary.dayPct],["1M",summary.m1Pct],["3M",summary.m3Pct],["YTD",summary.ytdPct]].map(([label,val])=>(
+          {[["1D",summary.dayPct],["1M",summary.m1Pct],["3M",summary.m3Pct],["Period",summary.ytdPct]].map(([label,val])=>(
             <div key={label} style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, padding:"6px 8px" }}>
               <div className="font-mono" style={{ color:"var(--text-3)", fontSize:9 }}>{label}</div>
               <div className="font-mono font-bold" style={{ color:clr(val), fontSize:13 }}>{fmt.pct(val)}</div>
             </div>
           ))}
+        </div>
+      )}
+      {summary && isIntraday && (
+        <div className="grid mb-4" style={{ gridTemplateColumns:"1fr", gap:"4px 8px", maxWidth:120 }}>
+          <div style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, padding:"6px 8px" }}>
+            <div className="font-mono" style={{ color:"var(--text-3)", fontSize:9 }}>Period</div>
+            <div className="font-mono font-bold" style={{ color:clr(summary.ytdPct), fontSize:13 }}>{fmt.pct(summary.ytdPct)}</div>
+          </div>
         </div>
       )}
       <RelatedLinks itemId={item.id} onOpen={onOpen}/>
@@ -5391,20 +5478,35 @@ function FXResearchPanel({ item, onClose, onOpen }) {
   const TABS = ["Overview","Rate Differential","Intelligence"];
   const [activeTab, setActiveTab] = useState("Overview");
   const [chartData, setChartData] = useState([]);
+  const [chartTf, setChartTf]     = useState("1Y");
   const [summary, setSummary]     = useState(null);
   const [loading, setLoading]     = useState(true);
+  const [loadingChart, setLoadingChart] = useState(false);
   const [rateData, setRateData]   = useState({ base:[], quote:[] });
   const [rateLoading, setRateLoading] = useState(false);
-  const loadedTabs = useRef(new Set(["Overview"]));
+  const loadedTabs  = useRef(new Set(["Overview"]));
+  const firstLoadRef = useRef(true);
   const intel = ENTITY_INTEL[item.id];
   const pair  = FX_RATE_PAIRS[item.id];
 
+  // Reset on ticker change
   useEffect(() => {
+    firstLoadRef.current = true;
     setLoading(true); setChartData([]); setSummary(null);
-    setActiveTab("Overview"); loadedTabs.current = new Set(["Overview"]);
-    fetch("/api/chart?ticker=" + encodeURIComponent(item.ticker) + "&range=1y&interval=1d")
+    setChartTf("1Y"); setActiveTab("Overview");
+    loadedTabs.current = new Set(["Overview"]);
+  }, [item.ticker]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Chart fetch (fires when ticker or TF changes)
+  useEffect(() => {
+    let cancelled = false;
+    const isFirst = firstLoadRef.current;
+    if (!isFirst) { setLoadingChart(true); setChartData([]); }
+    const { range, interval } = CHART_TF_MAP[chartTf];
+    fetch("/api/chart?ticker=" + encodeURIComponent(item.ticker) + "&range=" + range + "&interval=" + interval)
       .then(r => r.json())
       .then(c => {
+        if (cancelled) return;
         const result = c?.chart?.result?.[0];
         if (result) {
           const ts     = result.timestamp || [];
@@ -5413,14 +5515,16 @@ function FXResearchPanel({ item, onClose, onOpen }) {
           setChartData(data);
           if (data.length >= 2) {
             const cur = data[data.length-1].v, prev = data[data.length-2].v;
-            const m1 = data[Math.max(0,data.length-22)].v, m3 = data[Math.max(0,data.length-66)].v;
-            const hi52 = Math.max(...data.map(d=>d.v)), lo52 = Math.min(...data.map(d=>d.v));
-            setSummary({ cur, prev, dayPct:((cur-prev)/prev)*100, m1Pct:((cur-m1)/m1)*100, m3Pct:((cur-m3)/m3)*100, hi52, lo52 });
+            const m1  = data[Math.max(0,data.length-22)].v, m3 = data[Math.max(0,data.length-66)].v;
+            const hiP = Math.max(...data.map(d=>d.v)), loP = Math.min(...data.map(d=>d.v));
+            setSummary({ cur, prev, dayPct:((cur-prev)/prev)*100, m1Pct:((cur-m1)/m1)*100, m3Pct:((cur-m3)/m3)*100, hi52:hiP, lo52:loP });
           }
         }
-        setLoading(false);
-      }).catch(() => setLoading(false));
-  }, [item.ticker]); // eslint-disable-line react-hooks/exhaustive-deps
+        if (isFirst) { firstLoadRef.current = false; setLoading(false); }
+        else setLoadingChart(false);
+      }).catch(() => { if (!cancelled) { setLoading(false); setLoadingChart(false); firstLoadRef.current = false; } });
+    return () => { cancelled = true; };
+  }, [item.ticker, chartTf]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (loadedTabs.current.has(activeTab)) return;
@@ -5441,6 +5545,8 @@ function FXResearchPanel({ item, onClose, onOpen }) {
   const dp = 4;
   const priceColor = summary ? (summary.dayPct >= 0 ? "#059669" : "#e11d48") : "#059669";
   const pct52 = summary ? Math.min(100, Math.max(0, ((summary.cur-summary.lo52)/(summary.hi52-summary.lo52))*100)) : null;
+  const fxRangeLabel = chartTf === "1Y" ? "52-WEEK RANGE" : chartTf + " RANGE";
+  const fxIntraday   = chartTf === "1D" || chartTf === "5D";
 
   const renderOverview = () => loading ? (
     <div className="flex items-center justify-center py-8 font-mono" style={{ color:"var(--text-3)" }}>Loading…</div>
@@ -5450,11 +5556,16 @@ function FXResearchPanel({ item, onClose, onOpen }) {
         <span className="font-mono font-bold" style={{ color:"var(--text-1)", fontSize:26 }}>{summary?.cur.toLocaleString("en-US",{minimumFractionDigits:dp,maximumFractionDigits:dp})||"—"}</span>
         <div className="text-right">
           {summary && <div className="font-mono" style={{ color:clr(summary.dayPct), fontSize:13 }}>Day {fmt.pct(summary.dayPct)}</div>}
-          {summary && <div className="font-mono" style={{ color:clr(summary.m1Pct), fontSize:10 }}>1M {fmt.pct(summary.m1Pct)}</div>}
+          {summary && !fxIntraday && <div className="font-mono" style={{ color:clr(summary.m1Pct), fontSize:10 }}>1M {fmt.pct(summary.m1Pct)}</div>}
         </div>
       </div>
 
-      {chartData.length > 0 && (
+      <TFButtons chartTf={chartTf} setChartTf={setChartTf} />
+      {loadingChart ? (
+        <div style={{ height:190, display:"flex", alignItems:"center", justifyContent:"center", marginBottom:12 }}>
+          <span className="font-mono" style={{ color:"var(--text-3)", fontSize:10 }}>Loading chart…</span>
+        </div>
+      ) : chartData.length > 0 && (
         <div style={{ height:190, marginBottom:12 }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top:4, right:2, bottom:0, left:0 }}>
@@ -5464,9 +5575,9 @@ function FXResearchPanel({ item, onClose, onOpen }) {
                   <stop offset="95%" stopColor={priceColor} stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <XAxis dataKey="t" tickFormatter={t=>{const d=new Date(t*1000);return(d.getMonth()+1)+"/"+d.getDate();}} tick={{fill:"#64748b",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={35}/>
+              <XAxis dataKey="t" tickFormatter={t=>tfTick(t,chartTf)} tick={{fill:"#64748b",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={TF_X_INTERVAL[chartTf]||35}/>
               <YAxis domain={["auto","auto"]} hide/>
-              <Tooltip contentStyle={{background:"var(--surface-2)",border:"1px solid rgba(15,23,42,0.18)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} labelFormatter={t=>new Date(t*1000).toLocaleDateString()} formatter={v=>[v?.toFixed(dp),"Rate"]}/>
+              <Tooltip contentStyle={{background:"var(--surface-2)",border:"1px solid rgba(15,23,42,0.18)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} labelFormatter={t=>fxIntraday?new Date(t*1000).toLocaleString():new Date(t*1000).toLocaleDateString()} formatter={v=>[v?.toFixed(dp),"Rate"]}/>
               <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5} fill={"url(#fxg_"+item.id.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
             </AreaChart>
           </ResponsiveContainer>
@@ -5476,9 +5587,9 @@ function FXResearchPanel({ item, onClose, onOpen }) {
       {pct52 != null && (
         <div className="mb-4">
           <div className="flex justify-between font-mono mb-1" style={{ color:"var(--text-3)", fontSize:9 }}>
-            <span>52W LOW {summary.lo52.toFixed(dp)}</span>
-            <span style={{ color:"var(--text-3)" }}>52-WEEK RANGE</span>
-            <span>{summary.hi52.toFixed(dp)} 52W HIGH</span>
+            <span>LOW {summary.lo52.toFixed(dp)}</span>
+            <span style={{ color:"var(--text-3)" }}>{fxRangeLabel}</span>
+            <span>{summary.hi52.toFixed(dp)} HIGH</span>
           </div>
           <div style={{ position:"relative", height:4, background:"var(--surface-3)", borderRadius:2 }}>
             <div style={{ position:"absolute", left:0, width:pct52+"%", height:"100%", background:pct52>70?"#059669":pct52<30?"#e11d48":"#b45309", borderRadius:2 }}/>
@@ -5487,7 +5598,7 @@ function FXResearchPanel({ item, onClose, onOpen }) {
         </div>
       )}
 
-      {summary && (
+      {summary && !fxIntraday && (
         <div className="grid mb-4" style={{ gridTemplateColumns:"repeat(3,1fr)", gap:"4px 8px" }}>
           {[["1D",summary.dayPct],["1M",summary.m1Pct],["3M",summary.m3Pct]].map(([label,val])=>(
             <div key={label} style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, padding:"6px 8px" }}>
@@ -5495,6 +5606,14 @@ function FXResearchPanel({ item, onClose, onOpen }) {
               <div className="font-mono font-bold" style={{ color:clr(val), fontSize:13 }}>{fmt.pct(val)}</div>
             </div>
           ))}
+        </div>
+      )}
+      {summary && fxIntraday && (
+        <div className="grid mb-4" style={{ gridTemplateColumns:"1fr", gap:"4px 8px", maxWidth:120 }}>
+          <div style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, padding:"6px 8px" }}>
+            <div className="font-mono" style={{ color:"var(--text-3)", fontSize:9 }}>Period</div>
+            <div className="font-mono font-bold" style={{ color:clr(((summary.cur-summary.prev)/summary.prev)*100), fontSize:13 }}>{fmt.pct(((summary.cur-summary.prev)/summary.prev)*100)}</div>
+          </div>
         </div>
       )}
       <RelatedLinks itemId={item.id} onOpen={onOpen}/>
