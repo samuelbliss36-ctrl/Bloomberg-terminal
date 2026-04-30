@@ -6124,6 +6124,9 @@ function PortfolioTracker() {
   const [equityHistory, setEquityHistory] = useState([]);
   const [equityLoading, setEquityLoading] = useState(false);
   const [equityTf, setEquityTf] = useState("3M");
+  const [aiAnalysis, setAiAnalysis] = useState(null);  // null = hidden, string = result
+  const [aiLoading,  setAiLoading]  = useState(false);
+  const [aiError,    setAiError]    = useState("");
 
   useEffect(() => {
     localStorage.setItem("ov_portfolio", JSON.stringify(holdings));
@@ -6282,6 +6285,73 @@ function PortfolioTracker() {
     return Object.values(map).sort((a, b) => b.value - a.value);
   }, [holdings, quotes]);
 
+  // ── AI Portfolio Analysis ──────────────────────────────────────────────────
+  const runPortfolioAnalysis = async () => {
+    if (!holdings.length || aiLoading) return;
+    setAiLoading(true);
+    setAiAnalysis(null);
+    setAiError("");
+
+    // Build rich context string from live state
+    const lines = [
+      "PORTFOLIO SNAPSHOT",
+      `Total Value : $${totalValue.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`,
+      `Total P&L   : ${totalPnl>=0?"+":""}$${Math.abs(totalPnl).toFixed(2)} (${totalPnlPct>=0?"+":""}${totalPnlPct.toFixed(2)}%)`,
+      `Today's P&L : ${dayPnlTotal>=0?"+":""}$${Math.abs(dayPnlTotal).toFixed(2)}`,
+      "",
+      "HOLDINGS (ticker · shares · avg cost → current price · return · % of portfolio):",
+    ];
+    holdings.forEach(h => {
+      const q      = quotes[h.ticker];
+      const price  = q?.price || h.avgCost;
+      const ret    = ((price - h.avgCost) / h.avgCost) * 100;
+      const mktVal = price * h.shares;
+      const portPct = totalValue > 0 ? (mktVal / totalValue) * 100 : 0;
+      lines.push(`  ${h.ticker}: ${h.shares} sh @ $${h.avgCost.toFixed(2)} → $${price.toFixed(2)} | ${ret>=0?"+":""}${ret.toFixed(1)}% | $${mktVal.toLocaleString("en-US",{maximumFractionDigits:0})} (${portPct.toFixed(1)}%)`);
+    });
+    lines.push("", "SECTOR EXPOSURE:");
+    sectorData.forEach(s => {
+      const pct = totalValue > 0 ? (s.value / totalValue) * 100 : 0;
+      lines.push(`  ${s.sector}: ${pct.toFixed(1)}%`);
+    });
+    if (posPerf.length) {
+      lines.push("", `BEST PERFORMER  : ${posPerf[0].ticker} +${posPerf[0].pnlPct.toFixed(1)}%`);
+      lines.push(`WORST PERFORMER : ${posPerf[posPerf.length-1].ticker} ${posPerf[posPerf.length-1].pnlPct>=0?"+":""}${posPerf[posPerf.length-1].pnlPct.toFixed(1)}%`);
+    }
+    const context = lines.join("\n");
+
+    const savedKey = localStorage.getItem("ov_copilot_key") || "";
+    try {
+      const r = await fetch("/api/copilot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", content:
+            "Analyze my portfolio above. Provide:\n" +
+            "1. **Sector concentration** — is any sector overweight? What's the risk?\n" +
+            "2. **Top 3 risk factors** specific to these holdings\n" +
+            "3. **Correlation concerns** — which positions move together and why that matters\n" +
+            "4. **Rebalancing suggestions** — specific tickers to trim or add with reasoning\n\n" +
+            "Be direct, cite exact percentages from the data, and keep it actionable."
+          }],
+          context,
+          apiKey: savedKey,
+        }),
+      });
+      const data = await r.json();
+      if (data.error === "no_key") {
+        setAiError("No API key found. Open the 🤖 Copilot button and enter your OpenAI or Anthropic key first.");
+      } else if (data.error) {
+        setAiError(data.error);
+      } else {
+        setAiAnalysis(data.message);
+      }
+    } catch (err) {
+      setAiError("Request failed: " + err.message);
+    }
+    setAiLoading(false);
+  };
+
   const inputStyle = { background: "var(--surface-0)", border: "1px solid var(--border-solid)", borderRadius: 10, color: "var(--text-1)", fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, padding: "6px 8px", width: "100%" };
   const TF_OPTS = ["1M", "3M", "6M", "1Y"];
 
@@ -6296,18 +6366,68 @@ function PortfolioTracker() {
     <div className="flex flex-col" style={{ height: "calc(100vh - 90px)", overflowY: "auto", gap: 0 }}>
 
       {/* ── Row 1 · Summary KPIs ──────────────────────────────────────────── */}
-      <div className="grid gap-2 p-2" style={{ gridTemplateColumns: "repeat(4, 1fr)", flexShrink: 0 }}>
-        {[
-          { label: "Portfolio Value", value: "$" + totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), color: "var(--text-1)" },
-          { label: "Today's P&L",    value: (dayPnlTotal >= 0 ? "+" : "") + "$" + Math.abs(dayPnlTotal).toFixed(2), color: clr(dayPnlTotal) },
-          { label: "Total P&L",      value: (totalPnl >= 0 ? "+" : "") + "$" + Math.abs(totalPnl).toFixed(2), color: clr(totalPnl) },
-          { label: "Total Return",   value: totalCost > 0 ? fmt.pct(totalPnlPct) : "—", color: totalCost > 0 ? clr(totalPnlPct) : "var(--text-3)" },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="terminal-panel p-3">
-            <div className="font-mono" style={{ color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 9 }}>{label}</div>
-            <div className="font-mono font-bold mt-1" style={{ color, fontSize: 20 }}>{value}</div>
+      <div className="p-2 pb-0" style={{ flexShrink: 0 }}>
+        <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+          {[
+            { label: "Portfolio Value", value: "$" + totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), color: "var(--text-1)" },
+            { label: "Today's P&L",    value: (dayPnlTotal >= 0 ? "+" : "") + "$" + Math.abs(dayPnlTotal).toFixed(2), color: clr(dayPnlTotal) },
+            { label: "Total P&L",      value: (totalPnl >= 0 ? "+" : "") + "$" + Math.abs(totalPnl).toFixed(2), color: clr(totalPnl) },
+            { label: "Total Return",   value: totalCost > 0 ? fmt.pct(totalPnlPct) : "—", color: totalCost > 0 ? clr(totalPnlPct) : "var(--text-3)" },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="terminal-panel p-3">
+              <div className="font-mono" style={{ color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 9 }}>{label}</div>
+              <div className="font-mono font-bold mt-1" style={{ color, fontSize: 20 }}>{value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* AI Analyze button + result panel */}
+        {holdings.length > 0 && (
+          <div className="mt-2">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={runPortfolioAnalysis}
+                disabled={aiLoading}
+                className="font-mono flex items-center gap-1.5"
+                style={{
+                  background: aiLoading ? "var(--surface-2)" : "linear-gradient(135deg,#1d4ed8,#2563eb)",
+                  border: "none", borderRadius: 8, padding: "6px 14px",
+                  fontSize: 11, cursor: aiLoading ? "not-allowed" : "pointer",
+                  color: "#fff", fontWeight: 600, letterSpacing: "0.03em",
+                  opacity: aiLoading ? 0.7 : 1,
+                  boxShadow: aiLoading ? "none" : "0 2px 8px rgba(37,99,235,0.35)",
+                }}
+              >
+                {aiLoading
+                  ? <><span style={{ display:"inline-block", animation:"spin 1s linear infinite" }}>⟳</span> Analyzing…</>
+                  : <>🤖 Analyze Portfolio</>}
+              </button>
+              {aiAnalysis && !aiLoading && (
+                <button onClick={() => setAiAnalysis(null)} className="font-mono"
+                  style={{ background:"var(--surface-2)", border:"1px solid var(--border-solid)", borderRadius:6, padding:"4px 10px", fontSize:10, cursor:"pointer", color:"var(--text-3)" }}>
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {aiError && (
+              <div className="font-mono mt-2 p-3" style={{ background:"var(--surface-0)", border:"1px solid #e11d48", borderRadius:8, color:"#e11d48", fontSize:11, lineHeight:1.6 }}>
+                ⚠ {aiError}
+              </div>
+            )}
+
+            {aiAnalysis && (
+              <div className="mt-2 terminal-panel p-4" style={{ borderLeft:"3px solid #2563eb" }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="font-mono font-bold" style={{ color:"var(--text-1)", fontSize:11, textTransform:"uppercase", letterSpacing:"0.08em" }}>🤖 AI Portfolio Analysis</span>
+                </div>
+                <div className="font-mono" style={{ color:"var(--text-2)", fontSize:11, lineHeight:1.75 }}>
+                  <MdText text={aiAnalysis} />
+                </div>
+              </div>
+            )}
           </div>
-        ))}
+        )}
       </div>
 
       {/* ── Row 2 · Equity Curve + Donut ─────────────────────────────────── */}
