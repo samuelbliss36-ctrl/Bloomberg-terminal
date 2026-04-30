@@ -8613,10 +8613,10 @@ export default function App() {
     const yearAhead = new Date(Date.now()+365*24*3600*1000).toISOString().split("T")[0];
     Promise.all([
       api("/quote?symbol="+ticker),
-      delay(300).then(() => api("/stock/metric?symbol="+ticker+"&metric=all")),
-      delay(600).then(() => api("/stock/profile2?symbol="+ticker)),
-      delay(900).then(() => api("/company-news?symbol="+ticker+"&from="+monthAgo+"&to="+today)),
-      delay(1200).then(() => api("/calendar/earnings?symbol="+ticker+"&from="+today+"&to="+yearAhead)),
+      api("/stock/metric?symbol="+ticker+"&metric=all"),
+      api("/stock/profile2?symbol="+ticker),
+      api("/company-news?symbol="+ticker+"&from="+monthAgo+"&to="+today),
+      api("/calendar/earnings?symbol="+ticker+"&from="+today+"&to="+yearAhead),
     ]).then(([q,m,p,n,e]) => {
       setQuote(q); setMetrics(m); setProfile(p);
       setNews(Array.isArray(n)?n:[]);
