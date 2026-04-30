@@ -4639,6 +4639,7 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
   const [profile, setProfile]     = useState(null);
   const [metrics, setMetrics]     = useState(null);
   const [chartData, setChartData] = useState([]);
+  const [chartRange, setChartRange] = useState("1Y");
   const [loadingBase, setLoadingBase] = useState(true);
   const [earnings, setEarnings]   = useState(null);
   const [recs, setRecs]           = useState(null);
@@ -4661,27 +4662,35 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
       api("/quote?symbol=" + item.ticker),
       delay(150).then(() => api("/stock/profile2?symbol=" + item.ticker)),
       delay(300).then(() => api("/stock/metric?symbol=" + item.ticker + "&metric=all")),
-      fetch("/api/chart?ticker=" + encodeURIComponent(item.ticker) + "&range=1y&interval=1d")
-        .then(r => r.json()).catch(() => null),
-    ]).then(([q, p, metaRaw, c]) => {
+    ]).then(([q, p, metaRaw]) => {
       setQuote(q);
       setProfile(p || {});
       setMetrics(metaRaw?.metric || null);
-      const result = c?.chart?.result?.[0];
-      if (result) {
-        const ts      = result.timestamp || [];
-        const closes  = result.indicators?.quote?.[0]?.close || [];
+      setLoadingBase(false);
+    }).catch(() => setLoadingBase(false));
+  }, [item.ticker]); // eslint-disable-line
+
+  // ── Chart data (re-fetches on ticker or range change) ─────────────────────
+  const EQ_RANGE_MAP = { "1D":"1d","5D":"5d","1M":"1mo","3M":"3mo","6M":"6mo","1Y":"1y","5Y":"5y","MAX":"max" };
+  const EQ_INT_MAP   = { "1D":"5m","5D":"15m","1M":"1d","3M":"1d","6M":"1d","1Y":"1d","5Y":"1wk","MAX":"1mo" };
+  useEffect(() => {
+    const range    = EQ_RANGE_MAP[chartRange] || "1y";
+    const interval = EQ_INT_MAP[chartRange]   || "1d";
+    fetch("/api/chart?ticker=" + encodeURIComponent(item.ticker) + "&range=" + range + "&interval=" + interval)
+      .then(r => r.json()).then(c => {
+        const result = c?.chart?.result?.[0];
+        if (!result) return;
+        const ts     = result.timestamp || [];
+        const closes = result.indicators?.quote?.[0]?.close || [];
         const raw = ts.map((t,i) => ({ t, v: closes[i] != null ? +closes[i].toFixed(2) : null })).filter(d => d.v != null);
-        const withMA  = raw.map((d,i) => {
+        const withMA = raw.map((d,i) => {
           if (i < 49) return d;
           const avg = raw.slice(i-49, i+1).reduce((s,x) => s+x.v, 0) / 50;
           return { ...d, ma50: +avg.toFixed(2) };
         });
         setChartData(withMA);
-      }
-      setLoadingBase(false);
-    }).catch(() => setLoadingBase(false));
-  }, [item.ticker]); // eslint-disable-line
+      }).catch(() => {});
+  }, [item.ticker, chartRange]); // eslint-disable-line
 
   // ── Lazy tab loads ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -4768,7 +4777,12 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
             </span>
           </div>
 
-          {/* 1Y chart with 50MA */}
+          {/* Chart with time range selector */}
+          <div className="tf-btn-group" style={{ marginBottom:6 }}>
+            {["1D","5D","1M","3M","6M","1Y","5Y","MAX"].map(r => (
+              <button key={r} className={"tf-btn"+(chartRange===r?" active":"")} onClick={() => setChartRange(r)}>{r}</button>
+            ))}
+          </div>
           {chartData.length > 0 && (
             <div style={{ height:220, marginBottom:10 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -7660,9 +7674,9 @@ function AssetView({ ticker, quote, metrics, profile, news }) {
   const [optExpiryIdx, setOptExpiryIdx] = useState(0);
 
   const TABS = ["News","Options","Financials","Analyst","Peers","Profile","Historical"];
-  const RANGES = ["1D","5D","1M","3M","6M","1Y","5Y"];
-  const rangeMap = { "1D":"1d", "5D":"5d", "1M":"1mo", "3M":"3mo", "6M":"6mo", "1Y":"1y", "5Y":"5y" };
-  const intMap =  { "1D":"5m","5D":"15m","1M":"1d","3M":"1d","6M":"1d","1Y":"1wk","5Y":"1mo" };
+  const RANGES = ["1D","5D","1M","3M","6M","1Y","5Y","MAX"];
+  const rangeMap = { "1D":"1d", "5D":"5d", "1M":"1mo", "3M":"3mo", "6M":"6mo", "1Y":"1y", "5Y":"5y", "MAX":"max" };
+  const intMap =  { "1D":"5m","5D":"15m","1M":"1d","3M":"1d","6M":"1d","1Y":"1wk","5Y":"1mo","MAX":"1mo" };
 
   const up = quote?.dp >= 0;
   const priceColor = up ? "#059669" : "#e11d48";
