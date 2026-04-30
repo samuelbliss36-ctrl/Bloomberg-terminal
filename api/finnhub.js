@@ -51,6 +51,10 @@ export default async function handler(req, res) {
 
     const r = await fetch(url);
     if (!r.ok) {
+      // 403 = endpoint not available on current plan — return null so callers
+      // degrade gracefully instead of causing Promise.all to reject and wipe
+      // out other successful responses in the same batch.
+      if (r.status === 403) return res.status(200).json(null);
       return res.status(r.status).json({ error: `Finnhub returned ${r.status}` });
     }
 

@@ -3047,17 +3047,22 @@ function AnalystData({ ticker }) {
   const [insider, setInsider] = useState(null);
 
   useEffect(() => {
-    Promise.all([
+    // Use allSettled so one failing/paid endpoint doesn't wipe the others
+    Promise.allSettled([
       api("/stock/recommendation?symbol=" + ticker),
       api("/stock/price-target?symbol=" + ticker),
       api("/stock/earnings?symbol=" + ticker + "&limit=4"),
       api("/stock/insider-transactions?symbol=" + ticker),
     ]).then(([rec, tgt, earn, ins]) => {
-      setData(rec?.[0] || null);
-      setTargets(tgt || null);
-      setEarnings(earn?.data?.slice(0, 4) || []);
-      setInsider(ins?.data?.slice(0, 6) || []);
-    }).catch(() => {});
+      const r = rec.status === "fulfilled"  ? rec.value  : null;
+      const t = tgt.status === "fulfilled"  ? tgt.value  : null;
+      const e = earn.status === "fulfilled" ? earn.value : null;
+      const i = ins.status === "fulfilled"  ? ins.value  : null;
+      setData(Array.isArray(r) ? (r[0] || null) : null);
+      setTargets(t?.targetMean ? t : null);
+      setEarnings(e?.data?.slice(0, 4) || []);
+      setInsider(i?.data?.slice(0, 6) || []);
+    });
   }, [ticker]);
 
   const total = data ? (data.buy + data.hold + data.sell + data.strongBuy + data.strongSell) : 0;
@@ -4694,13 +4699,15 @@ function EquityResearchPanel({ item, onClose, onOpen }) {
         .catch(() => setEarnings([]));
     }
     if (activeTab === "Valuation") {
-      Promise.all([
-        api("/stock/recommendation?symbol=" + item.ticker),
-        delay(150).then(() => api("/stock/price-target?symbol=" + item.ticker)),
-      ]).then(([r, p]) => {
-        setRecs(Array.isArray(r) ? r : []);
-        setPt(p?.targetMean ? p : null);
-      }).catch(() => { setRecs([]); setPt(null); });
+      // Run independently — price-target is a paid endpoint and may return null;
+      // separating prevents it from killing the recommendations fetch.
+      api("/stock/recommendation?symbol=" + item.ticker)
+        .then(r => setRecs(Array.isArray(r) ? r : []))
+        .catch(() => setRecs([]));
+      delay(150)
+        .then(() => api("/stock/price-target?symbol=" + item.ticker))
+        .then(p => setPt(p?.targetMean ? p : null))
+        .catch(() => setPt(null));
     }
     if (activeTab === "News") {
       const today = new Date().toISOString().split("T")[0];
