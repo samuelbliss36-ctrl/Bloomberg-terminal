@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { api, fetchChart } from "../../lib/api";
-import { fmt, delay, fmtMktCap, fmtX, fmtN, fmtMgn, fmtGr, clr, clrM2 } from "../../lib/fmt";
+import { fmt, delay, fmtMktCap, fmtX, fmtN, fmtMgn, fmtGr, clrM2 } from "../../lib/fmt";
 
 function AnalystData({ ticker }) {
   const [data, setData] = useState(null);
