@@ -181,13 +181,6 @@ export const PT_STYLE = {
   conflictZones: { color:"#ff3333", r:0.70, alt:0.014 },
   sanctioned:    { color:"#b45309", r:0.50, alt:0.008 },
 };
-const arcCol = d => ARC_STYLE[d._layer]?.color    || "rgba(255,255,255,0.6)";
-const arcStr = d => ARC_STYLE[d._layer]?.stroke   || 0.5;
-const arcAlt = d => ARC_STYLE[d._layer]?.altitude || 0.1;
-const ptCol  = d => PT_STYLE[d._layer]?.color || "#fff";
-const ptRad  = d => PT_STYLE[d._layer]?.r     || 0.3;
-const ptAlt  = d => PT_STYLE[d._layer]?.alt   || 0.01;
-
 // ── Region filter definitions ──
 export const GLOBE_REGIONS = {
   all:        { label:"All Regions",   bounds:null,                                                 pov:{ lat:20, lng:10,  altitude:2.3 } },
@@ -197,18 +190,6 @@ export const GLOBE_REGIONS = {
   asia:       { label:"Asia-Pacific",  bounds:{ latMin:-50, latMax:55,  lngMin:60,   lngMax:180 },  pov:{ lat:20, lng:110, altitude:1.8 } },
   africa:     { label:"Africa",        bounds:{ latMin:-35, latMax:38,  lngMin:-20,  lngMax:55  },  pov:{ lat:5,  lng:20,  altitude:1.8 } },
   russia:     { label:"Russia / FSU",  bounds:{ latMin:40,  latMax:82,  lngMin:20,   lngMax:180 },  pov:{ lat:60, lng:80,  altitude:1.8 } },
-};
-
-// ── Filter helpers ──
-const inRegion = (lat, lng, key) => {
-  const b = GLOBE_REGIONS[key]?.bounds;
-  if (!b) return true;
-  return lat >= b.latMin && lat <= b.latMax && lng >= b.lngMin && lng <= b.lngMax;
-};
-const meetsImp = (imp, filter) => {
-  if (filter === "all") return true;
-  if (filter === "critical") return imp === "critical";
-  return imp === "critical" || imp === "major";
 };
 
 // ── Data: Strategic Chokepoints ──
@@ -403,23 +384,6 @@ export const GLOBE_FUTURE_LAYERS = [
   { icon:"💻",  label:"Cyber Infrastructure",  cat:"infrastructure" },
 ];
 
-// ── Research context resolver (which research item to open per globe element) ──
-const resolveResearch = (d) => {
-  if (!d) return null;
-  if (d._layer === "oilRoutes" || d._layer === "pipelines")
-    return { id:"CL=F", label:"WTI Crude Oil", ticker:"CL=F", type:"commodity", category:"Commodities" };
-  if (d._layer === "seaCables" || d._layer === "cableLandings")
-    return null; // no direct research link
-  if (d._layer === "conflictZones")
-    return { id:d.id, label:d.name, type:"event", category:"Geopolitics" };
-  if (d._layer === "tradeFlows")
-    return { id:"macro", label:"Global Trade", type:"macro", category:"Macro" };
-  if (d._layer === "sanctioned" && d.id === "russia_s")
-    return { id:"NG=F", label:"Natural Gas", ticker:"NG=F", type:"commodity", category:"Commodities" };
-  if (d._layer === "sanctioned" && d.id === "iran_s")
-    return { id:"CL=F", label:"WTI Crude Oil", ticker:"CL=F", type:"commodity", category:"Commodities" };
-  return null;
-};
 
 // ── Tooltip HTML helper ──
 export const TIP = "background:#0d1117;border:1px solid #30363d;padding:5px 10px;border-radius:3px;font-family:monospace;font-size:10px;color:#e6edf3;pointer-events:none";
