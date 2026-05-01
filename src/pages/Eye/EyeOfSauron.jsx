@@ -15,7 +15,6 @@ export default function EyeOfSauron({ onOpenResearch }) {
     { id: "vessels", icon: "🛢", title: "Vessel Tracker",       desc: "Live oil tankers and cargo ships via MarineTraffic" },
     { id: "flights", icon: "✈️", title: "Flight Tracker",       desc: "Real-time global flight tracking via ADS-B Exchange" },
     { id: "energy",  icon: "⚡", title: "Energy Grid",          desc: "Live US electricity grid demand and generation mix" },
-    { id: "tankers", icon: "🚢", title: "Shipping Routes",      desc: "Major shipping lane congestion and freight rates", tag: "Coming Soon" },
     { id: "geo",     icon: "🌍", title: "Geopolitical Events",  desc: "Live intelligence feed — market-moving events classified by impact and region" },
   ];
 
