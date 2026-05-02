@@ -20,8 +20,10 @@ const AlertsContext = createContext({
 
 export function useAlerts() { return useContext(AlertsContext); }
 
-const POLL_MS    = 60_000;   // poll every 60 s
-const LS_TELEGRAM = 'ov_telegram';
+const POLL_MS = 60_000;   // poll every 60 s
+
+// Keys are scoped to the user so two accounts on the same device stay isolated
+const telegramKey = (uid) => uid ? `ov_telegram_${uid}` : 'ov_telegram';
 
 function lsGet(key, fb) {
   try { return JSON.parse(localStorage.getItem(key) ?? 'null') ?? fb; } catch { return fb; }
@@ -44,7 +46,7 @@ async function sendTelegram(token, chatId, text) {
 export function AlertsProvider({ children }) {
   const { user } = useAuth();
   const [alertList, setAlertList] = useState(() => dbAlerts.load());
-  const [telegram,  setTgState]   = useState(() => lsGet(LS_TELEGRAM, { token: '', chatId: '' }));
+  const [telegram,  setTgState]   = useState(() => lsGet(telegramKey(user?.id), { token: '', chatId: '' }));
   const [prices,    setPrices]    = useState({});   // { TICKER: latestPrice }
 
   // Refs so the polling closure always sees the latest values
@@ -74,7 +76,7 @@ export function AlertsProvider({ children }) {
 
   const setTelegram = useCallback((cfg) => {
     setTgState(cfg);
-    lsSet(LS_TELEGRAM, cfg);
+    lsSet(telegramKey(userRef.current?.id), cfg);
   }, []);
 
   // ── CRUD ─────────────────────────────────────────────────────────────────

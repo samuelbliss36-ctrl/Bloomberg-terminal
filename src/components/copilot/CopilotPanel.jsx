@@ -341,7 +341,11 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
   const [msgs,       setMsgs]      = useState([]);
   const [input,      setInput]     = useState("");
   const [loading,    setLoading]   = useState(false);
-  const [apiKey,     setApiKey]    = useState(() => localStorage.getItem("ov_copilot_key") || "");
+  const [apiKey,     setApiKey]    = useState(() => {
+    // Try user-scoped key first, fall back to legacy unscoped key
+    const uid = (() => { try { const s = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token')); if (!s) return null; const t = JSON.parse(localStorage.getItem(s)); return t?.user?.id || null; } catch { return null; } })();
+    return localStorage.getItem(uid ? `ov_copilot_key_${uid}` : 'ov_copilot_key') || "";
+  });
   const [showConfig, setShowConfig]= useState(false);
   const [keyDraft,   setKeyDraft]  = useState("");
   const [provider,   setProvider]  = useState(null); // "openai" | "anthropic"
@@ -432,7 +436,9 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
   const saveKey = () => {
     const k = keyDraft.trim();
     setApiKey(k);
-    localStorage.setItem("ov_copilot_key", k);
+    // Save under user-scoped key so two accounts on same device stay isolated
+    const uid = (() => { try { const s = Object.keys(localStorage).find(k2 => k2.startsWith('sb-') && k2.endsWith('-auth-token')); if (!s) return null; const t = JSON.parse(localStorage.getItem(s)); return t?.user?.id || null; } catch { return null; } })();
+    localStorage.setItem(uid ? `ov_copilot_key_${uid}` : 'ov_copilot_key', k);
     setShowConfig(false);
     setKeyDraft("");
   };

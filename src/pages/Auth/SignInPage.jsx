@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { Zap, Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { setRememberMe } from '../../lib/supabase';
 
 const BG = {
   position: 'fixed', inset: 0, zIndex: 99999,
@@ -72,12 +73,13 @@ function Input({ icon: Icon, type: typeProp, placeholder, value, onChange, onKey
 
 export default function SignInPage() {
   const { signIn, signUp } = useAuth();
-  const [mode,     setMode]     = useState('signin');   // 'signin' | 'signup'
-  const [email,    setEmail]    = useState('');
-  const [password, setPassword] = useState('');
-  const [confirm,  setConfirm]  = useState('');
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState('');
+  const [mode,       setMode]       = useState('signin');   // 'signin' | 'signup'
+  const [email,      setEmail]      = useState('');
+  const [password,   setPassword]   = useState('');
+  const [confirm,    setConfirm]    = useState('');
+  const [rememberMe, setRememberMe_] = useState(true);
+  const [loading,    setLoading]    = useState(false);
+  const [error,      setError]      = useState('');
 
   const submit = async () => {
     setError('');
@@ -86,6 +88,7 @@ export default function SignInPage() {
     if (mode === 'signup' && password.length < 6)  return setError('Password must be at least 6 characters.');
     setLoading(true);
     try {
+      setRememberMe(rememberMe); // configure storage BEFORE sign-in
       if (mode === 'signin') await signIn(email.trim(), password);
       else                   await signUp(email.trim(), password);
     } catch (e) {
@@ -150,6 +153,26 @@ export default function SignInPage() {
         <Input icon={Lock}  type="password" placeholder="Password"        value={password} onChange={e => setPassword(e.target.value)} onKeyDown={onKey} />
         {mode === 'signup' && (
           <Input icon={Lock} type="password" placeholder="Confirm password" value={confirm} onChange={e => setConfirm(e.target.value)} onKeyDown={onKey} />
+        )}
+
+        {/* Remember me — only shown on sign-in, not account creation */}
+        {mode === 'signin' && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, cursor: 'pointer' }}>
+            <div
+              onClick={() => setRememberMe_(r => !r)}
+              style={{
+                width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                border: `1.5px solid ${rememberMe ? '#2563eb' : 'rgba(255,255,255,0.20)'}`,
+                background: rememberMe ? '#2563eb' : 'transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.15s',
+              }}>
+              {rememberMe && <span style={{ color: '#fff', fontSize: 10, lineHeight: 1 }}>✓</span>}
+            </div>
+            <span style={{ fontSize: 11, color: 'rgba(148,163,184,0.75)', userSelect: 'none' }}>
+              Remember me on this device
+            </span>
+          </label>
         )}
 
         {/* Error */}
