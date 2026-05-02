@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { MdText } from '../ui/MdText';
 
-export function buildCopilotContext(activePage, ticker, quote, metrics, profile, news, pageContext) {
+export function buildCopilotContext(activePage, ticker, quote, metrics, profile, news, pageContext, structured) {
   const m   = metrics?.metric || {};
   const fmt = v => v != null ? (+v).toFixed(2) : null;
   const lines = [`Active Terminal Page: ${activePage}`];
@@ -17,13 +17,82 @@ export function buildCopilotContext(activePage, ticker, quote, metrics, profile,
     if (m.marketCapitalization)      lines.push(`Market Cap: $${(m.marketCapitalization/1000).toFixed(1)}B`);
     if (m.peBasicExclExtraTTM)       lines.push(`P/E (TTM): ${fmt(m.peBasicExclExtraTTM)}x`);
     if (m.pbAnnual)                  lines.push(`P/B: ${fmt(m.pbAnnual)}x`);
-    if (m.grossMarginAnnual)         lines.push(`Gross Margin: ${(m.grossMarginAnnual*100).toFixed(1)}%`);
-    if (m.netMarginAnnual)           lines.push(`Net Margin: ${(m.netMarginAnnual*100).toFixed(1)}%`);
+    if (m.grossMarginTTM != null)    lines.push(`Gross Margin (TTM): ${(m.grossMarginTTM*100).toFixed(1)}%`);
+    if (m.netMarginTTM != null)      lines.push(`Net Margin (TTM): ${(m.netMarginTTM*100).toFixed(1)}%`);
     if (m.roeTTM)                    lines.push(`ROE (TTM): ${(m.roeTTM*100).toFixed(1)}%`);
     if (m["totalDebt/totalEquityAnnual"]) lines.push(`Debt/Equity: ${fmt(m["totalDebt/totalEquityAnnual"])}`);
     if (m.revenueGrowthTTMYoy)       lines.push(`Revenue Growth (YoY TTM): ${(m.revenueGrowthTTMYoy*100).toFixed(1)}%`);
     if (m.epsGrowthTTMYoy)           lines.push(`EPS Growth (YoY TTM): ${(m.epsGrowthTTMYoy*100).toFixed(1)}%`);
-    if (m.beta)                      lines.push(`Beta: ${fmt(m.beta)}`);
+
+    // ── Structured section 1: Analyst Consensus ──────────────────────────────
+    const { earningsHistory = [], recommendation: rec, priceTarget: pt,
+            peerTickers = [], peerMetrics = {} } = structured || {};
+
+    if (rec) {
+      const total    = rec.strongBuy + rec.buy + rec.hold + rec.sell + rec.strongSell;
+      const bullish  = rec.strongBuy + rec.buy;
+      const bearish  = rec.sell + rec.strongSell;
+      const majority = bullish > bearish ? "BULLISH" : bearish > bullish ? "BEARISH" : "MIXED";
+      lines.push(`\nAnalyst Consensus (${rec.period?.slice(0,7) ?? "latest"} · ${total} analysts) — ${majority}:`);
+      lines.push(`  Strong Buy: ${rec.strongBuy}  Buy: ${rec.buy}  Hold: ${rec.hold}  Sell: ${rec.sell}  Strong Sell: ${rec.strongSell}`);
+    }
+    if (pt?.targetMean && quote?.c) {
+      const upside = ((pt.targetMean - quote.c) / quote.c) * 100;
+      lines.push(`  Price Target — Mean: $${pt.targetMean.toFixed(2)} (${upside >= 0 ? "+" : ""}${upside.toFixed(1)}% implied upside) | Low: $${pt.targetLow?.toFixed(2) ?? "—"} | High: $${pt.targetHigh?.toFixed(2) ?? "—"}`);
+    }
+
+    // ── Structured section 2: Quarterly EPS / Revenue trend ─────────────────
+    if (earningsHistory.length) {
+      lines.push(`\nEarnings Trend — Last ${earningsHistory.length} Reported Quarters:`);
+      earningsHistory.forEach(e => {
+        const surp = e.epsActual != null && e.epsEstimate
+          ? ((e.epsActual - e.epsEstimate) / Math.abs(e.epsEstimate)) * 100 : null;
+        let row = `  Q${e.quarter} ${e.year}: EPS $${e.epsActual?.toFixed(2) ?? "—"}`;
+        if (e.epsEstimate != null) row += ` (est $${e.epsEstimate.toFixed(2)})`;
+        if (surp != null) row += ` [${surp >= 0 ? "BEAT" : "MISS"} ${surp >= 0 ? "+" : ""}${surp.toFixed(1)}%]`;
+        if (e.revenueActual != null)   row += ` | Rev $${(e.revenueActual/1e9).toFixed(2)}B`;
+        if (e.revenueEstimate != null) row += ` (est $${(e.revenueEstimate/1e9).toFixed(2)}B)`;
+        lines.push(row);
+      });
+    }
+
+    // ── Structured section 3: Comparable company multiples ──────────────────
+    if (peerTickers.length) {
+      lines.push(`\nComparable Company Multiples:`);
+      peerTickers.forEach(peer => {
+        const pm = peerMetrics[peer];
+        if (!pm || Object.keys(pm).length === 0) return;
+        let row = `  ${peer}:`;
+        if (pm.peBasicExclExtraTTM != null)  row += ` P/E ${pm.peBasicExclExtraTTM.toFixed(1)}x`;
+        const evEb = pm.evEbitdaTTM ?? pm.evEbitdaAnnual;
+        if (evEb != null)                    row += ` | EV/EBITDA ${evEb.toFixed(1)}x`;
+        if (pm.marketCapitalization != null) row += ` | MCap $${(pm.marketCapitalization/1000).toFixed(0)}B`;
+        if (pm.grossMarginTTM != null)       row += ` | GM ${(pm.grossMarginTTM*100).toFixed(0)}%`;
+        if (pm.netMarginTTM != null)         row += ` | Net Mgn ${(pm.netMarginTTM*100).toFixed(0)}%`;
+        lines.push(row);
+      });
+      // Subject company row for direct comparison
+      const subjectEvEb = m.evEbitdaTTM ?? m.evEbitdaAnnual;
+      let subjectRow = `  ${ticker} (subject):`;
+      if (m.peBasicExclExtraTTM != null)  subjectRow += ` P/E ${m.peBasicExclExtraTTM.toFixed(1)}x`;
+      if (subjectEvEb != null)            subjectRow += ` | EV/EBITDA ${subjectEvEb.toFixed(1)}x`;
+      if (m.marketCapitalization != null) subjectRow += ` | MCap $${(m.marketCapitalization/1000).toFixed(0)}B`;
+      if (m.grossMarginTTM != null)       subjectRow += ` | GM ${(m.grossMarginTTM*100).toFixed(0)}%`;
+      if (m.netMarginTTM != null)         subjectRow += ` | Net Mgn ${(m.netMarginTTM*100).toFixed(0)}%`;
+      lines.push(subjectRow);
+    }
+
+    // ── Structured section 4: Volatility / IV proxy ──────────────────────────
+    if (m.beta != null || (m["52WeekHigh"] && m["52WeekLow"])) {
+      lines.push(`\nVolatility:`);
+      if (m.beta != null) lines.push(`  Beta (vs S&P 500): ${m.beta.toFixed(2)}`);
+      if (m["52WeekHigh"] && m["52WeekLow"]) {
+        const annRange = ((m["52WeekHigh"] - m["52WeekLow"]) / m["52WeekLow"]) * 100;
+        lines.push(`  52-Week High: $${fmt(m["52WeekHigh"])} | Low: $${fmt(m["52WeekLow"])} | Annual price swing: ~${annRange.toFixed(0)}%`);
+      }
+      lines.push(`  Note: live options IV (30-day ATM) requires a paid options chain feed — not yet integrated.`);
+    }
+
     if (news?.length) {
       lines.push("\nRecent News (most recent 6):");
       news.slice(0,6).forEach(n => lines.push(`  • [${n.source}] ${n.headline}`));
@@ -268,7 +337,7 @@ export function buildCopilotContext(activePage, ticker, quote, metrics, profile,
   return lines.join("\n");
 }
 
-export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news, pageContext, onClose }) {
+export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news, pageContext, structured, onClose }) {
   const [msgs,       setMsgs]      = useState([]);
   const [input,      setInput]     = useState("");
   const [loading,    setLoading]   = useState(false);
@@ -279,7 +348,7 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
   const bottomRef = useRef(null);
   const inputRef  = useRef(null);
 
-  const context = buildCopilotContext(activePage, ticker, quote, metrics, profile, news, pageContext);
+  const context = buildCopilotContext(activePage, ticker, quote, metrics, profile, news, pageContext, structured);
 
   // Suggested prompts change based on active page
   const SUGGESTIONS = useMemo(() => {
@@ -485,7 +554,7 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
             ${quote.c.toFixed(2)}
             <span style={{ color: quote.dp >= 0 ? "#059669" : "#e11d48" }}> ({quote.dp >= 0 ? "+" : ""}{quote.dp?.toFixed(2)}%)</span>
           </span>}
-        {pageContext && activePage !== "financial" &&
+        {(pageContext || (activePage === "financial" && structured?.earningsHistory?.length > 0)) &&
           <span style={{ fontSize:8, color:"#059669", fontFamily:"'IBM Plex Mono',monospace", marginLeft:"auto" }}>● live data</span>}
       </div>
 

@@ -34,6 +34,12 @@ export default function App() {
   const [profile, setProfile] = useState(null);
   const [news, setNews] = useState(null);
   const [earnings, setEarnings] = useState(null);
+  // Structured financial data for AI copilot context
+  const [earningsHistory, setEarningsHistory] = useState([]);
+  const [recommendation,  setRecommendation]  = useState(null);
+  const [priceTarget,     setPriceTarget]     = useState(null);
+  const [peerTickers,     setPeerTickers]     = useState([]);
+  const [peerMetrics,     setPeerMetrics]     = useState({});
   const [tapeData, setTapeData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pendingResearchItem, setPendingResearchItem] = useState(null);
@@ -48,6 +54,7 @@ export default function App() {
   useEffect(() => {
     setLoading(true);
     setQuote(null); setMetrics(null); setProfile(null); setNews(null); setEarnings(null);
+    setEarningsHistory([]); setRecommendation(null); setPriceTarget(null); setPeerTickers([]); setPeerMetrics({});
     const today = new Date().toISOString().split("T")[0];
     const monthAgo = new Date(Date.now()-30*24*3600*1000).toISOString().split("T")[0];
     const yearAhead = new Date(Date.now()+365*24*3600*1000).toISOString().split("T")[0];
@@ -64,6 +71,52 @@ export default function App() {
       setLoading(false);
     }).catch(()=>setLoading(false));
   }, [ticker]);
+
+  // Structured AI-context data: earnings history, analyst consensus, price target, peer multiples.
+  // Runs in parallel with the main UI fetch but is kept separate so main data renders immediately.
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const twoYearsAgo = new Date(Date.now() - 730*24*3600*1000).toISOString().split("T")[0];
+      const today       = new Date().toISOString().split("T")[0];
+      // ── 1. Historical earnings + analyst data (parallel, staggered) ──
+      try {
+        const [hist, recs, pt] = await Promise.all([
+          api("/calendar/earnings?symbol="+ticker+"&from="+twoYearsAgo+"&to="+today),
+          delay(150).then(() => api("/stock/recommendation?symbol="+ticker)),
+          delay(300).then(() => api("/stock/price-target?symbol="+ticker).catch(() => null)),
+        ]);
+        if (cancelled) return;
+        // Keep last 4 reported quarters (epsActual present), newest first
+        const histQ = (hist?.earningsCalendar || [])
+          .filter(e => e.epsActual != null)
+          .sort((a, b) => (b.date > a.date ? 1 : -1))
+          .slice(0, 4);
+        setEarningsHistory(histQ);
+        setRecommendation(Array.isArray(recs) ? (recs[0] || null) : null);
+        setPriceTarget(pt?.targetMean ? pt : null);
+      } catch(e) {}
+      // ── 2. Peer list then per-peer metrics (sequential to respect rate limits) ──
+      try {
+        const list = await delay(400).then(() => api("/stock/peers?symbol="+ticker));
+        if (cancelled) return;
+        const top4 = (list || []).filter(x => x !== ticker).slice(0, 4);
+        setPeerTickers(top4);
+        const mMap = {};
+        for (let i = 0; i < top4.length; i++) {
+          if (cancelled) return;
+          if (i > 0) await delay(220);
+          try {
+            const pm = await api("/stock/metric?symbol="+top4[i]+"&metric=all");
+            mMap[top4[i]] = pm?.metric || {};
+          } catch(e) {}
+        }
+        if (!cancelled) setPeerMetrics({ ...mMap });
+      } catch(e) {}
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [ticker]); // eslint-disable-line
 
   useEffect(() => {
     // Stagger to respect Finnhub rate limits; single state update at end to avoid 8 re-renders
@@ -176,6 +229,7 @@ export default function App() {
           profile={profile}
           news={news}
           pageContext={pageContext}
+          structured={{ earningsHistory, recommendation, priceTarget, peerTickers, peerMetrics }}
           onClose={() => setCopilotOpen(false)}
         />
       )}
