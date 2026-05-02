@@ -118,6 +118,15 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
   const up  = quote?.dp >= 0;
   const priceColor = up ? "#059669" : "#e11d48";
 
+  // Compute P/E live from current price so it reflects today's quote, not
+  // Finnhub's cached snapshot (which can be weeks stale and significantly off).
+  const livePeTTM = quote?.c && m.epsBasicExclExtraItemsTTM && m.epsBasicExclExtraItemsTTM > 0
+    ? quote.c / m.epsBasicExclExtraItemsTTM
+    : null;
+  const livePeNorm = quote?.c && m.epsNormalizedAnnual && m.epsNormalizedAnnual > 0
+    ? quote.c / m.epsNormalizedAnnual
+    : null;
+
   const pct52 = m["52WeekHigh"] && m["52WeekLow"] && quote?.c
     ? Math.min(100, Math.max(0, ((quote.c - m["52WeekLow"]) / (m["52WeekHigh"] - m["52WeekLow"])) * 100))
     : null;
@@ -206,8 +215,8 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
           <div style={{ borderTop:"1px solid rgba(15,23,42,0.09)" }}>
             {[
               ["Market Cap",      fmtMktCap(m.marketCapitalization)],
-              ["P/E (TTM)",       fmtX(m.peBasicExclExtraTTM)],
-              ["P/E (Norm.)",     fmtX(m.peNormalizedAnnual)],
+              ["P/E (TTM)",       livePeTTM  != null ? fmtX(livePeTTM)  : fmtX(m.peBasicExclExtraTTM)],
+              ["P/E (Norm.)",     livePeNorm != null ? fmtX(livePeNorm) : fmtX(m.peNormalizedAnnual)],
               ["EV/EBITDA",       fmtX(m.evEbitdaTTM)],
               ["Price/Book",      fmtX(m.pbAnnual)],
               ["Price/Sales",     fmtX(m.psAnnual)],
@@ -389,8 +398,8 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
         <div>
           <div className="font-mono mb-2" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Valuation Multiples</div>
           {[
-            ["P/E (TTM)",          fmtX(m.peBasicExclExtraTTM)],
-            ["P/E (Normalized)",   fmtX(m.peNormalizedAnnual)],
+            ["P/E (TTM)",          livePeTTM  != null ? fmtX(livePeTTM)  : fmtX(m.peBasicExclExtraTTM)],
+            ["P/E (Normalized)",   livePeNorm != null ? fmtX(livePeNorm) : fmtX(m.peNormalizedAnnual)],
             ["EV/EBITDA (Annual)", fmtX(m.evEbitdaAnnual)],
             ["EV/EBITDA (TTM)",    fmtX(m.evEbitdaTTM)],
             ["Price/Sales (Ann.)", fmtX(m.psAnnual)],
@@ -531,7 +540,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
                 <td className="font-mono py-2 text-right" style={{ color:"var(--text-1)", fontSize:10, paddingRight:10 }}>{q?.c!=null?"$"+fmt.price(q.c):"—"}</td>
                 <td className="font-mono py-2 text-right" style={{ color:clr(q?.dp||0), fontSize:10, paddingRight:10 }}>{q?.dp!=null?fmt.pct(q.dp):"—"}</td>
                 <td className="font-mono py-2 text-right" style={{ color:"var(--text-1)", fontSize:10, paddingRight:10 }}>{fmtMktCap(pm.marketCapitalization)}</td>
-                <td className="font-mono py-2 text-right" style={{ color:"var(--text-1)", fontSize:10, paddingRight:10 }}>{fmtX(pm.peBasicExclExtraTTM)}</td>
+                <td className="font-mono py-2 text-right" style={{ color:"var(--text-1)", fontSize:10, paddingRight:10 }}>{fmtX(q?.c && pm.epsBasicExclExtraItemsTTM > 0 ? q.c / pm.epsBasicExclExtraItemsTTM : pm.peBasicExclExtraTTM)}</td>
                 <td className="font-mono py-2 text-right" style={{ color:"var(--text-1)", fontSize:10, paddingRight:10 }}>{fmtX(pm.evEbitdaTTM)}</td>
                 <td className="font-mono py-2 text-right" style={{ color:"var(--text-1)", fontSize:10, paddingRight:10 }}>{fmtX(pm.psAnnual)}</td>
                 <td className="font-mono py-2 text-right" style={{ color:clrM(pm.grossMarginAnnual), fontSize:10, paddingRight:10 }}>{fmtMgn(pm.grossMarginAnnual)}</td>
