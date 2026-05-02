@@ -620,3 +620,13 @@ tr:hover td { background: rgba(15,23,42,0.025) !important; }
   color: var(--blue) !important;
   box-shadow: var(--shadow-sm) !important;
 }
+
+/* ── Sign-in / onboarding: override browser autofill so text stays visible ── */
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f1f5f9 !important;
+  -webkit-box-shadow: 0 0 0px 1000px rgba(10,15,30,0.95) inset !important;
+  caret-color: #f1f5f9;
+  transition: background-color 5000s ease-in-out 0s;
+}

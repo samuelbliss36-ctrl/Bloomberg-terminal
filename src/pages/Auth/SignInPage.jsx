@@ -39,6 +39,7 @@ function Input({ icon: Icon, type: typeProp, placeholder, value, onChange, onKey
     <div style={{ position: 'relative', marginBottom: 12 }}>
       <Icon size={14} style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: 'rgba(148,163,184,0.6)', pointerEvents: 'none' }} />
       <input
+        className="auth-input"
         type={type}
         placeholder={placeholder}
         value={value}
