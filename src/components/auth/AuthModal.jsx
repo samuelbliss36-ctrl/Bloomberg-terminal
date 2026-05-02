@@ -40,7 +40,8 @@ export default function AuthModal({ onClose }) {
   const overlayStyle = {
     position: 'fixed', inset: 0, zIndex: 9999,
     background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(2px)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+    paddingTop: 80, overflowY: 'auto',
   };
   const modalStyle = {
     background: 'var(--surface-1, #0f172a)',
