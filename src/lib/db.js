@@ -210,6 +210,43 @@ export const recentResearch = {
   },
 };
 
+// ─── Watchlist ────────────────────────────────────────────────────────────────
+// Shape: string[]  — ticker symbols, e.g. ["SPY","QQQ","AAPL"]
+const LS_WATCHLIST     = 'ov_watchlist';
+const DEFAULT_WATCHLIST = ["SPY","QQQ","MSFT","NVDA","TSLA","GOOGL","AMZN","META"];
+
+async function _syncWatchlistUp(userId, tickers) {
+  if (!supabase || !userId) return;
+  try {
+    await supabase.from('watchlists')
+      .upsert({ user_id: userId, tickers, updated_at: new Date().toISOString() },
+               { onConflict: 'user_id' });
+  } catch (e) { console.warn('watchlist sync-up failed:', e.message); }
+}
+
+export const watchlist = {
+  load() {
+    const stored = lsGet(LS_WATCHLIST, null);
+    return stored ?? [...DEFAULT_WATCHLIST];
+  },
+
+  save(tickers, userId) {
+    lsSet(LS_WATCHLIST, tickers);
+    if (userId) _syncWatchlistUp(userId, tickers);
+  },
+
+  async sync(userId) {
+    if (!supabase || !userId) return null;
+    try {
+      const { data, error } = await supabase
+        .from('watchlists').select('tickers').eq('user_id', userId).single();
+      if (error || !data) return null;
+      lsSet(LS_WATCHLIST, data.tickers);
+      return data.tickers;
+    } catch (e) { console.warn('watchlist sync-down failed:', e.message); return null; }
+  },
+};
+
 // ─── Convenience default export ───────────────────────────────────────────────
-const db = { portfolio, conversations, savedScreens, recentResearch };
+const db = { portfolio, conversations, savedScreens, recentResearch, watchlist };
 export default db;

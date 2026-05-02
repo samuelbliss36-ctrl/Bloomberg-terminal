@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase, isConfigured } from '../lib/supabase';
-import { portfolio, conversations, savedScreens, recentResearch } from '../lib/db';
+import { portfolio, conversations, savedScreens, recentResearch, watchlist } from '../lib/db';
 
 const AuthContext = createContext({
   user:     null,
@@ -19,6 +19,7 @@ async function syncAllDown(userId) {
     conversations.sync(userId),
     savedScreens.sync(userId),
     recentResearch.sync(userId),
+    watchlist.sync(userId),
   ]);
   window.dispatchEvent(new Event('ov:data-synced'));
 }

@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { watchlist as dbWatchlist } from './lib/db';
 import { api } from './lib/api';
 import { delay, loadSettings, saveSettings } from './lib/fmt';
-import { WATCHLIST } from './lib/constants';
 import { CopilotPanel } from './components/copilot/CopilotPanel';
 import { GlobalTopBar } from './layout/GlobalTopBar';
 import { SidebarNav } from './layout/SidebarNav';
@@ -21,6 +21,11 @@ import ResearchBrowser from './pages/Research/ResearchBrowser';
 import EarningsCalendarPage from './pages/Earnings/EarningsCalendarPage';
 
 export default function App() {
+  return <AuthProvider><AppInner /></AuthProvider>;
+}
+
+function AppInner() {
+  const { user } = useAuth();
   const [activePage, setActivePage] = useState("financial");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settings, setSettings] = useState(() => ({ showTickerTape: true, darkMode: false, ...loadSettings() }));
@@ -45,6 +50,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [pendingResearchItem, setPendingResearchItem] = useState(null);
   const [statusTime, setStatusTime] = useState(() => new Date().toLocaleTimeString());
+  const [watchlistTickers, setWatchlistTickers] = useState(() => dbWatchlist.load());
 
   // Live clock in status bar
   useEffect(() => {
@@ -119,21 +125,46 @@ export default function App() {
     return () => { cancelled = true; };
   }, [ticker]); // eslint-disable-line
 
+  // Fetch live prices for watchlist — re-runs when tickers change
   useEffect(() => {
-    // Stagger to respect Finnhub rate limits; single state update at end to avoid 8 re-renders
+    if (!watchlistTickers.length) { setTapeData([]); return; }
+    let cancelled = false;
     const fetchTape = async () => {
       const results = [];
-      for (let i = 0; i < WATCHLIST.length; i++) {
+      for (let i = 0; i < watchlistTickers.length; i++) {
+        if (cancelled) return;
         if (i > 0) await delay(150);
         try {
-          const q = await api("/quote?symbol=" + WATCHLIST[i]);
-          results.push({ symbol: WATCHLIST[i], price: q.c, changePct: q.dp });
+          const q = await api("/quote?symbol=" + watchlistTickers[i]);
+          if (!cancelled) results.push({ symbol: watchlistTickers[i], price: q.c, changePct: q.dp });
         } catch(e) {}
       }
-      setTapeData(results);
+      if (!cancelled) setTapeData(results);
     };
     fetchTape();
+    return () => { cancelled = true; };
+  }, [watchlistTickers]); // eslint-disable-line
+
+  // Re-read watchlist when cloud sync completes
+  useEffect(() => {
+    const handler = () => setWatchlistTickers(dbWatchlist.load());
+    window.addEventListener('ov:data-synced', handler);
+    return () => window.removeEventListener('ov:data-synced', handler);
   }, []);
+
+  const addToWatchlist = useCallback((sym) => {
+    const s = sym.trim().toUpperCase();
+    if (!s || watchlistTickers.includes(s)) return;
+    const updated = [...watchlistTickers, s];
+    setWatchlistTickers(updated);
+    dbWatchlist.save(updated, user?.id);
+  }, [watchlistTickers, user]);
+
+  const removeFromWatchlist = useCallback((sym) => {
+    const updated = watchlistTickers.filter(t => t !== sym);
+    setWatchlistTickers(updated);
+    dbWatchlist.save(updated, user?.id);
+  }, [watchlistTickers, user]);
 
   // Clear stale page context whenever the user navigates to a different page
   useEffect(() => { setPageContext(null); }, [activePage]);
@@ -141,7 +172,6 @@ export default function App() {
   const openResearch = (item) => { setPendingResearchItem(item); setActivePage("research"); };
 
   return (
-    <AuthProvider>
     <div className={"app-shell" + (sidebarOpen ? " sidebar-open" : "") + (settings.darkMode ? " dark" : "")} style={{ fontFamily:"'Inter','IBM Plex Sans',sans-serif" }}>
       {/* ── Global Top Bar ─────────────────────────────────── */}
       <GlobalTopBar
@@ -210,6 +240,8 @@ export default function App() {
         onSelectTicker={t => { setTicker(t); setActivePage("financial"); }}
         earnings={earnings}
         activeTicker={ticker}
+        onAddToWatchlist={addToWatchlist}
+        onRemoveFromWatchlist={removeFromWatchlist}
       />
 
       {/* ── Status Bar ─────────────────────────────────────── */}
@@ -253,6 +285,5 @@ export default function App() {
         🤖
       </button>
     </div>
-    </AuthProvider>
   );
 }

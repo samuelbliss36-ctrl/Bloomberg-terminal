@@ -44,6 +44,16 @@ ALTER TABLE screener_presets ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users manage their own presets"
   ON screener_presets FOR ALL USING (auth.uid() = user_id);
 
+-- ── Watchlist ────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS watchlists (
+  user_id    uuid        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  tickers    text[]      NOT NULL DEFAULT '{}',
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE watchlists ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users manage their own watchlist"
+  ON watchlists FOR ALL USING (auth.uid() = user_id);
+
 -- ── Recent Research ──────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS recent_research (
   user_id   uuid        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
