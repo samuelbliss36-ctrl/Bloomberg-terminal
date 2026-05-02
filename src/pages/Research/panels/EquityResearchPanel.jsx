@@ -1,11 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { AreaChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { api } from "../../../lib/api";
 import { fmt, clr, delay, fmtMktCap, fmtX, fmtN, fmtMgn, fmtGr, clrM } from "../../../lib/fmt";
+import { IntelCard } from "../../../components/ui/IntelCard";
+import { useIntelCard } from "../../../hooks/useIntelCard";
 import RelatedLinks from "./RelatedLinks";
 
 export default function EquityResearchPanel({ item, onClose, onOpen }) {
-  const TABS = ["Overview","Financials","Valuation","News","Peers"];
+  const TABS = ["Overview","Financials","Valuation","News","Peers","Intelligence"];
   const [activeTab, setActiveTab] = useState("Overview");
   const [quote, setQuote]         = useState(null);
   const [profile, setProfile]     = useState(null);
@@ -126,8 +128,6 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
   const up  = quote?.dp >= 0;
   const priceColor = up ? "#059669" : "#e11d48";
 
-  // P/E: prefer Yahoo Finance's trailingPE (GAAP diluted, current price, matches
-  // Google/Bloomberg) → fall back to Finnhub's stored value if Yahoo is unavailable.
   const peTTM   = yahooStats?.trailingPE?.raw   ?? m.peBasicExclExtraTTM   ?? null;
   const peForward = yahooStats?.forwardPE?.raw  ?? null;
   const peNorm  = m.peNormalizedAnnual ?? null;
@@ -135,6 +135,58 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
   const pct52 = m["52WeekHigh"] && m["52WeekLow"] && quote?.c
     ? Math.min(100, Math.max(0, ((quote.c - m["52WeekLow"]) / (m["52WeekHigh"] - m["52WeekLow"])) * 100))
     : null;
+
+  // Build context for AI Intel — only once base data has loaded
+  const intelContext = useMemo(() => {
+    if (!quote || !profile) return null;
+    const mx = metrics || {};
+    const peTTMv   = yahooStats?.trailingPE?.raw   ?? mx.peBasicExclExtraTTM   ?? null;
+    const peFwdv   = yahooStats?.forwardPE?.raw    ?? null;
+    const lines = [
+      `Asset: ${item.ticker} — ${profile.name || item.label}`,
+      `Type: Equity`,
+    ];
+    if (profile.finnhubIndustry) lines.push(`Industry: ${profile.finnhubIndustry}`);
+    if (profile.country)         lines.push(`Country: ${profile.country}`);
+    if (profile.marketCapitalization) lines.push(`Market Cap: $${(profile.marketCapitalization / 1e6).toFixed(0)}M`);
+    if (profile.description)     lines.push(`Description: ${profile.description.slice(0, 600)}`);
+    lines.push(`Current Price: $${quote.c?.toFixed(2)}`);
+    if (quote.dp != null) lines.push(`1-Day Change: ${quote.dp >= 0 ? "+" : ""}${quote.dp.toFixed(2)}%`);
+    if (mx.marketCapitalization)  lines.push(`Market Cap (Finnhub): $${(mx.marketCapitalization / 1000).toFixed(1)}B`);
+    if (peTTMv != null)           lines.push(`P/E (TTM): ${peTTMv.toFixed(1)}x`);
+    if (peFwdv != null)           lines.push(`P/E (Forward): ${peFwdv.toFixed(1)}x`);
+    if (mx.evEbitdaTTM != null)   lines.push(`EV/EBITDA (TTM): ${mx.evEbitdaTTM.toFixed(1)}x`);
+    if (mx.pbAnnual != null)      lines.push(`Price/Book: ${mx.pbAnnual.toFixed(2)}x`);
+    if (mx.grossMarginTTM != null) lines.push(`Gross Margin (TTM): ${(mx.grossMarginTTM * 100).toFixed(1)}%`);
+    if (mx.netMarginTTM != null)   lines.push(`Net Margin (TTM): ${(mx.netMarginTTM * 100).toFixed(1)}%`);
+    if (mx.roeTTM != null)         lines.push(`ROE (TTM): ${(mx.roeTTM * 100).toFixed(1)}%`);
+    if (mx.revenueGrowthTTMYoy != null) lines.push(`Revenue Growth (TTM YoY): ${(mx.revenueGrowthTTMYoy * 100).toFixed(1)}%`);
+    if (mx.epsGrowthTTMYoy != null)     lines.push(`EPS Growth (TTM YoY): ${(mx.epsGrowthTTMYoy * 100).toFixed(1)}%`);
+    if (mx.beta != null)          lines.push(`Beta: ${mx.beta.toFixed(2)}`);
+    if (mx["52WeekHigh"] && mx["52WeekLow"]) {
+      lines.push(`52-Week Range: $${mx["52WeekLow"].toFixed(2)} — $${mx["52WeekHigh"].toFixed(2)}`);
+    }
+    if (mx.dividendYieldIndicatedAnnual != null && mx.dividendYieldIndicatedAnnual > 0) {
+      lines.push(`Dividend Yield: ${(mx.dividendYieldIndicatedAnnual * 100).toFixed(2)}%`);
+    }
+    // Include analyst consensus if loaded
+    if (recs?.[0]) {
+      const r = recs[0];
+      const total = r.strongBuy + r.buy + r.hold + r.sell + r.strongSell;
+      lines.push(`Analyst Consensus (${r.period?.slice(0,7)} · ${total} analysts): StrongBuy ${r.strongBuy} | Buy ${r.buy} | Hold ${r.hold} | Sell ${r.sell} | StrongSell ${r.strongSell}`);
+    }
+    if (pt?.targetMean && quote.c) {
+      const upside = ((pt.targetMean - quote.c) / quote.c) * 100;
+      lines.push(`Analyst Price Target: Mean $${pt.targetMean.toFixed(2)} (${upside >= 0 ? "+" : ""}${upside.toFixed(1)}% upside)`);
+    }
+    return lines.join("\n");
+  }, [quote, profile, metrics, yahooStats, recs, pt, item.ticker, item.label]); // eslint-disable-line
+
+  const { intel, loading: intelLoading, error: intelError, refresh: intelRefresh } = useIntelCard(
+    item.ticker,
+    intelContext,
+    { enabled: activeTab === "Intelligence" }
+  );
 
   const errBox = msg => (
     <div className="flex items-center gap-2 font-mono" style={{ color:"#e11d48", background:"rgba(225,29,72,0.06)", border:"1px solid rgba(225,29,72,0.18)", borderRadius:6, padding:"10px 14px", fontSize:11, marginBottom:8 }}>⚠ {msg}</div>
@@ -561,6 +613,27 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
     );
   };
 
+  const renderIntelligence = () => (
+    <div>
+      {loadingBase ? (
+        <div className="font-mono py-4" style={{ color:"var(--text-3)", fontSize:10 }}>
+          Loading financial data…
+        </div>
+      ) : (
+        <IntelCard
+          intel={intel}
+          loading={intelLoading}
+          error={intelError}
+          onRefresh={intelRefresh}
+          accentColor="#2563eb"
+        />
+      )}
+      {!intelLoading && !intelError && intel && (
+        <div className="mt-4"><RelatedLinks itemId={item.id} onOpen={onOpen} /></div>
+      )}
+    </div>
+  );
+
   return (
     <div className="terminal-panel terminal-glow flex flex-col" style={{ minHeight:520 }}>
       <div className="flex items-center justify-between px-4 pt-3 pb-0" style={{ borderBottom:"1px solid rgba(15,23,42,0.09)", flexShrink:0 }}>
@@ -587,11 +660,12 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
           ? <div className="flex items-center justify-center font-mono" style={{ height:200, color:"var(--text-3)", fontSize:11 }}>Loading…</div>
           : baseError
           ? errBox("Failed to load data — check your connection or try again")
-          : activeTab==="Overview"   ? renderOverview()
-          : activeTab==="Financials" ? renderFinancials()
-          : activeTab==="Valuation"  ? renderValuation()
-          : activeTab==="News"       ? renderNews()
-          : activeTab==="Peers"      ? renderPeers()
+          : activeTab==="Overview"      ? renderOverview()
+          : activeTab==="Financials"   ? renderFinancials()
+          : activeTab==="Valuation"    ? renderValuation()
+          : activeTab==="News"         ? renderNews()
+          : activeTab==="Peers"        ? renderPeers()
+          : activeTab==="Intelligence" ? renderIntelligence()
           : null}
       </div>
     </div>

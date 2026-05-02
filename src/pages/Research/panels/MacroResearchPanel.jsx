@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { fmt, clr } from "../../../lib/fmt";
-import { ENTITY_INTEL } from "../../../data/researchData";
 import { ResearchPanelShell, ResearchTabBar } from "../../../components/ui/ResearchPanelShell";
 import { IntelCard } from "../../../components/ui/IntelCard";
+import { useIntelCard } from "../../../hooks/useIntelCard";
 import RelatedLinks from "./RelatedLinks";
 
 export default function MacroResearchPanel({ item, onClose, onOpen }) {
@@ -12,7 +12,6 @@ export default function MacroResearchPanel({ item, onClose, onOpen }) {
   const [data, setData]     = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState(false);
-  const intel = ENTITY_INTEL[item.id];
 
   useEffect(() => {
     setLoading(true); setError(false); setActiveTab("Chart");
@@ -42,6 +41,31 @@ export default function MacroResearchPanel({ item, onClose, onOpen }) {
     const den = pts.reduce((s,d,i)=>s+(i-xm)**2,0);
     return den===0 ? 0 : num/den;
   })();
+
+  // Build AI context once FRED data has loaded
+  const intelContext = useMemo(() => {
+    if (!data.length || !latest) return null;
+    const lines = [
+      `Asset: ${item.id} — ${item.label}`,
+      `Type: Macroeconomic Indicator`,
+      `FRED Series: ${item.series}`,
+      `Latest Value: ${latest.v.toFixed(2)} (as of ${latest.t})`,
+    ];
+    if (prev)    lines.push(`Previous Reading: ${prev.v.toFixed(2)} (as of ${prev.t})`);
+    if (yoyPct != null) lines.push(`Year-over-Year Change: ${yoyPct >= 0 ? "+" : ""}${yoyPct.toFixed(2)}%`);
+    if (mom != null)    lines.push(`Period-over-Period Change: ${mom >= 0 ? "+" : ""}${mom.toFixed(3)}`);
+    if (trend != null)  lines.push(`12-Period Trend: ${trend > 0.01 ? "Rising" : trend < -0.01 ? "Declining" : "Flat"} (slope: ${trend >= 0 ? "+" : ""}${trend.toFixed(4)}/period)`);
+    const min5 = data.length >= 12 ? Math.min(...data.slice(-60).map(d=>d.v)).toFixed(2) : null;
+    const max5 = data.length >= 12 ? Math.max(...data.slice(-60).map(d=>d.v)).toFixed(2) : null;
+    if (min5 && max5) lines.push(`5-Year Range: ${min5} — ${max5}`);
+    return lines.join("\n");
+  }, [data, latest, prev, yoyPct, mom, trend, item.id, item.label, item.series]);
+
+  const { intel, loading: intelLoading, error: intelError, refresh: intelRefresh } = useIntelCard(
+    item.id,
+    intelContext,
+    { enabled: activeTab === "Context" }
+  );
 
   const renderChart = () => {
     if (loading) return <div className="flex items-center justify-center py-8 font-mono" style={{ color:"var(--text-3)" }}>Loading…</div>;
@@ -110,8 +134,16 @@ export default function MacroResearchPanel({ item, onClose, onOpen }) {
       {activeTab === "Chart"   && renderChart()}
       {activeTab === "Context" && (
         <div>
-          {intel ? <IntelCard intel={intel} accentColor="#7c3aed"/> : <div className="font-mono py-4" style={{color:"var(--text-3)"}}>No context data available.</div>}
-          <div className="mt-4"><RelatedLinks itemId={item.id} onOpen={onOpen}/></div>
+          <IntelCard
+            intel={intel}
+            loading={intelLoading}
+            error={intelError}
+            onRefresh={intelRefresh}
+            accentColor="#7c3aed"
+          />
+          {!intelLoading && !intelError && (
+            <div className="mt-4"><RelatedLinks itemId={item.id} onOpen={onOpen}/></div>
+          )}
         </div>
       )}
     </ResearchPanelShell>

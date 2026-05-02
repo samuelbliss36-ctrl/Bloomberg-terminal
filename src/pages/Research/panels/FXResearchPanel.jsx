@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { AreaChart, Area, ReferenceLine, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { fmt, clr } from "../../../lib/fmt";
-import { ENTITY_INTEL, FX_RATE_PAIRS } from "../../../data/researchData";
+import { FX_RATE_PAIRS } from "../../../data/researchData";
 import { ResearchPanelShell, ResearchTabBar } from "../../../components/ui/ResearchPanelShell";
 import { IntelCard } from "../../../components/ui/IntelCard";
+import { useIntelCard } from "../../../hooks/useIntelCard";
 import RelatedLinks from "./RelatedLinks";
 
 export default function FXResearchPanel({ item, onClose, onOpen }) {
@@ -17,7 +18,6 @@ export default function FXResearchPanel({ item, onClose, onOpen }) {
   const [rateLoading, setRateLoading] = useState(false);
   const [rateError, setRateError]   = useState(false);
   const loadedTabs = useRef(new Set(["Overview"]));
-  const intel = ENTITY_INTEL[item.id];
   const pair  = FX_RATE_PAIRS[item.id];
 
   useEffect(() => {
@@ -58,6 +58,32 @@ export default function FXResearchPanel({ item, onClose, onOpen }) {
       }).catch(() => { setRateLoading(false); setRateError(true); });
     }
   }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Build context string for AI intel (once price data is ready)
+  const intelContext = useMemo(() => {
+    if (!summary) return null;
+    const lines = [
+      `Asset: ${item.id} — ${item.label}`,
+      `Type: FX Currency Pair`,
+      `Ticker: ${item.ticker}`,
+      `Current Rate: ${summary.cur.toFixed(4)}`,
+      `1-Day Change: ${summary.dayPct >= 0 ? "+" : ""}${summary.dayPct.toFixed(2)}%`,
+      `1-Month Change: ${summary.m1Pct >= 0 ? "+" : ""}${summary.m1Pct.toFixed(2)}%`,
+      `3-Month Change: ${summary.m3Pct >= 0 ? "+" : ""}${summary.m3Pct.toFixed(2)}%`,
+      `52-Week High: ${summary.hi52.toFixed(4)} | 52-Week Low: ${summary.lo52.toFixed(4)}`,
+    ];
+    if (pair) {
+      lines.push(`Base Currency Rate Series: ${pair.baseSeries} (${pair.baseLabel})`);
+      if (pair.quoteSeries) lines.push(`Quote Currency Rate Series: ${pair.quoteSeries} (${pair.quoteLabel})`);
+    }
+    return lines.join("\n");
+  }, [summary, item.id, item.label, item.ticker, pair]);
+
+  const { intel, loading: intelLoading, error: intelError, refresh: intelRefresh } = useIntelCard(
+    item.id,
+    intelContext,
+    { enabled: activeTab === "Intelligence" }
+  );
 
   const dp = 4;
   const priceColor = summary ? (summary.dayPct >= 0 ? "#059669" : "#e11d48") : "#059669";
@@ -198,7 +224,20 @@ export default function FXResearchPanel({ item, onClose, onOpen }) {
       <ResearchTabBar tabs={TABS} active={activeTab} onSelect={setActiveTab}/>
       {activeTab === "Overview"          && renderOverview()}
       {activeTab === "Rate Differential" && renderRateDiff()}
-      {activeTab === "Intelligence"      && <div>{intel ? <IntelCard intel={intel} accentColor="#059669"/> : <div className="font-mono py-4" style={{color:"var(--text-3)"}}>No data.</div>}<div className="mt-4"><RelatedLinks itemId={item.id} onOpen={onOpen}/></div></div>}
+      {activeTab === "Intelligence"      && (
+        <div>
+          <IntelCard
+            intel={intel}
+            loading={intelLoading}
+            error={intelError}
+            onRefresh={intelRefresh}
+            accentColor="#059669"
+          />
+          {!intelLoading && !intelError && (
+            <div className="mt-4"><RelatedLinks itemId={item.id} onOpen={onOpen}/></div>
+          )}
+        </div>
+      )}
     </ResearchPanelShell>
   );
 }

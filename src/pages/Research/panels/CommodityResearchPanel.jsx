@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { fmt, clr } from "../../../lib/fmt";
 import { ENTITY_INTEL } from "../../../data/researchData";
 import { ResearchPanelShell, ResearchTabBar } from "../../../components/ui/ResearchPanelShell";
 import { IntelCard } from "../../../components/ui/IntelCard";
+import { useIntelCard } from "../../../hooks/useIntelCard";
 import RelatedLinks from "./RelatedLinks";
 
 export default function CommodityResearchPanel({ item, onClose, onOpen }) {
@@ -13,7 +14,9 @@ export default function CommodityResearchPanel({ item, onClose, onOpen }) {
   const [summary, setSummary]     = useState(null);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState(false);
-  const intel = ENTITY_INTEL[item.id];
+
+  // Static data kept only for `unit` label and `producers` tab
+  const staticIntel = ENTITY_INTEL[item.id];
 
   useEffect(() => {
     setLoading(true); setError(false); setChartData([]); setSummary(null); setActiveTab("Overview");
@@ -38,6 +41,30 @@ export default function CommodityResearchPanel({ item, onClose, onOpen }) {
       }).catch(() => { setLoading(false); setError(true); });
   }, [item.ticker]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Build context string for AI intel (only when price data is ready)
+  const intelContext = useMemo(() => {
+    if (!summary) return null;
+    const lines = [
+      `Asset: ${item.id} — ${item.label}`,
+      `Type: Commodity`,
+      `Ticker: ${item.ticker}`,
+      `Current Price: $${summary.cur.toFixed(4)}`,
+      `1-Day Change: ${summary.dayPct >= 0 ? "+" : ""}${summary.dayPct.toFixed(2)}%`,
+      `1-Month Change: ${summary.m1Pct >= 0 ? "+" : ""}${summary.m1Pct.toFixed(2)}%`,
+      `3-Month Change: ${summary.m3Pct >= 0 ? "+" : ""}${summary.m3Pct.toFixed(2)}%`,
+      `YTD Change: ${summary.ytdPct >= 0 ? "+" : ""}${summary.ytdPct.toFixed(2)}%`,
+      `52-Week High: $${summary.hi52.toFixed(4)} | 52-Week Low: $${summary.lo52.toFixed(4)}`,
+      `Annual Price Swing: ~${(((summary.hi52 - summary.lo52) / summary.lo52) * 100).toFixed(1)}%`,
+    ];
+    return lines.join("\n");
+  }, [summary, item.id, item.label, item.ticker]);
+
+  const { intel, loading: intelLoading, error: intelError, refresh: intelRefresh } = useIntelCard(
+    item.id,
+    intelContext,
+    { enabled: activeTab === "Intelligence" }
+  );
+
   const dp = 2;
   const priceColor = summary ? (summary.dayPct >= 0 ? "#059669" : "#e11d48") : "#b45309";
   const pct52 = summary ? Math.min(100, Math.max(0, ((summary.cur - summary.lo52) / (summary.hi52 - summary.lo52)) * 100)) : null;
@@ -50,7 +77,7 @@ export default function CommodityResearchPanel({ item, onClose, onOpen }) {
         <div className="flex items-baseline justify-between mb-3">
           <div>
             <span className="font-mono font-bold" style={{ color:"var(--text-1)", fontSize:26 }}>${summary?.cur.toLocaleString("en-US",{minimumFractionDigits:dp,maximumFractionDigits:dp})||"—"}</span>
-            {intel?.unit && <span className="font-mono ml-2" style={{ color:"var(--text-3)", fontSize:10 }}>per {intel.unit.split("/")[1]||intel.unit}</span>}
+            {staticIntel?.unit && <span className="font-mono ml-2" style={{ color:"var(--text-3)", fontSize:10 }}>per {staticIntel.unit.split("/")[1]||staticIntel.unit}</span>}
           </div>
           <div className="text-right">
             {summary && <div className="font-mono" style={{ color:clr(summary.dayPct), fontSize:13 }}>Day {fmt.pct(summary.dayPct)}</div>}
@@ -106,13 +133,13 @@ export default function CommodityResearchPanel({ item, onClose, onOpen }) {
     );
   };
 
-  const renderProducers = () => !intel?.producers ? (
+  const renderProducers = () => !staticIntel?.producers ? (
     <div className="font-mono py-4" style={{ color:"var(--text-3)" }}>No producer data available.</div>
   ) : (
     <div>
       <div className="font-mono mb-3" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Producers / Supply Sources</div>
       <div style={{ borderTop:"1px solid rgba(15,23,42,0.09)" }}>
-        {intel.producers.map((p,i) => (
+        {staticIntel.producers.map((p,i) => (
           <div key={i} className="flex items-start justify-between py-2.5" style={{ borderBottom:"1px solid rgba(15,23,42,0.06)" }}>
             <div>
               <div className="font-mono" style={{ color:"var(--text-1)", fontSize:11 }}>{p.name}</div>
@@ -130,7 +157,20 @@ export default function CommodityResearchPanel({ item, onClose, onOpen }) {
     <ResearchPanelShell title={item.label} subtitle={item.ticker} badge="Commodity" onClose={onClose}>
       <ResearchTabBar tabs={TABS} active={activeTab} onSelect={setActiveTab}/>
       {activeTab === "Overview"     && renderOverview()}
-      {activeTab === "Intelligence" && <div>{intel ? <IntelCard intel={intel} accentColor="#b45309"/> : <div className="font-mono py-4" style={{color:"var(--text-3)"}}>No data.</div>}<div className="mt-4"><RelatedLinks itemId={item.id} onOpen={onOpen}/></div></div>}
+      {activeTab === "Intelligence" && (
+        <div>
+          <IntelCard
+            intel={intel}
+            loading={intelLoading}
+            error={intelError}
+            onRefresh={intelRefresh}
+            accentColor="#b45309"
+          />
+          {!intelLoading && !intelError && (
+            <div className="mt-4"><RelatedLinks itemId={item.id} onOpen={onOpen}/></div>
+          )}
+        </div>
+      )}
       {activeTab === "Producers"    && renderProducers()}
     </ResearchPanelShell>
   );
