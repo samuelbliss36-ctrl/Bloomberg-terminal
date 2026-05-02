@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../../context/AuthContext';
 import { isConfigured } from '../../lib/supabase';
 
@@ -38,10 +39,9 @@ export default function AuthModal({ onClose }) {
   };
 
   const overlayStyle = {
-    position: 'fixed', inset: 0, zIndex: 9999,
-    background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(2px)',
-    display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-    paddingTop: 80, overflowY: 'auto',
+    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999,
+    background: 'rgba(0,0,0,0.60)', backdropFilter: 'blur(3px)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
   };
   const modalStyle = {
     background: 'var(--surface-1, #0f172a)',
@@ -77,7 +77,7 @@ export default function AuthModal({ onClose }) {
     cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.15s',
   };
 
-  return (
+  return createPortal(
     <div style={overlayStyle} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={modalStyle}>
 
@@ -181,6 +181,7 @@ export default function AuthModal({ onClose }) {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
