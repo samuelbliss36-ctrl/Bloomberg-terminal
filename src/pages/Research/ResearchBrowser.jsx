@@ -6,6 +6,8 @@ import { fmt, clr, delay, fmtMktCap, fmtX, fmtN, fmtMgn, fmtGr, clrM, RB_TYPE_CO
 import { RELATED_MAP, RESEARCH_CATALOG, ENTITY_INTEL, FX_RATE_PAIRS, TOPIC_CONFIG, HOME_TILES } from "../../data/researchData";
 import { ResearchPanelShell, ResearchTabBar } from "../../components/ui/ResearchPanelShell";
 import { IntelCard } from "../../components/ui/IntelCard";
+import { db } from "../../lib/db";
+import { useAuth } from "../../context/AuthContext";
 
 // ── RelatedLinks ──────────────────────────────────────────────────────────────
 function RelatedLinks({ itemId, onOpen }) {
@@ -1161,17 +1163,22 @@ function ResearchHomeDashboard({ onOpen }) {
 
 // ── ResearchBrowser (default export) ─────────────────────────────────────────
 export default function ResearchBrowser({ pendingItem, onPendingConsumed }) {
+  const { user } = useAuth();
   const [query, setQuery]               = useState("");
   const [suggestions, setSuggestions]   = useState([]);
   const [suggestionIdx, setSuggestionIdx] = useState(-1);
   const [panels, setPanels]             = useState([]);
   const [searchFocused, setSearchFocused] = useState(false);
-  const [recentSearches, setRecentSearches] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("ov_research_recent") || "[]"); }
-    catch { return []; }
-  });
+  const [recentSearches, setRecentSearches] = useState(() => db.recentResearch.load());
   const debounceRef = useRef(null);
   const searchRef   = useRef(null);
+
+  // Re-read recent research after cloud sync
+  useEffect(() => {
+    const handler = () => setRecentSearches(db.recentResearch.load());
+    window.addEventListener('ov:data-synced', handler);
+    return () => window.removeEventListener('ov:data-synced', handler);
+  }, []);
 
   useEffect(() => {
     const handler = e => {
@@ -1207,7 +1214,7 @@ export default function ResearchBrowser({ pendingItem, onPendingConsumed }) {
   const openPanel = item => {
     const newRecent = [item, ...recentSearches.filter(r => r.id !== item.id)].slice(0, 8);
     setRecentSearches(newRecent);
-    localStorage.setItem("ov_research_recent", JSON.stringify(newRecent));
+    db.recentResearch.save(newRecent, user?.id);
     setPanels(prev => prev.find(p => p.id === item.id) ? prev : [{ ...item }, ...prev]);
     setQuery(""); setSuggestions([]); setSuggestionIdx(-1);
   };

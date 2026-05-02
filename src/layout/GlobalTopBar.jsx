@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useMemo, memo, useCallback } from 'react';
 import { Search, Zap, RefreshCw, Settings, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { fmt, clr, bg } from '../lib/fmt';
 import { _apiCache } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
+import AuthModal from '../components/auth/AuthModal';
 
 // ─── TICKER TAPE (standalone) ─────────────────────────────────────────────────
 export const TickerTape = memo(function TickerTape({ tapeData }) {
@@ -127,6 +129,8 @@ export function GlobalTopBar({ ticker, setTicker, tapeData, quote, loading, sett
   const [input, setInput] = useState(ticker);
   const [focused, setFocused] = useState(false);
   const tapeRef = useRef(null);
+  const [authOpen, setAuthOpen] = useState(false);
+  const { user, syncing } = useAuth();
 
   useEffect(() => { setInput(ticker); }, [ticker]);
 
@@ -245,10 +249,53 @@ export function GlobalTopBar({ ticker, setTicker, tapeData, quote, loading, sett
             {settings?.darkMode ? "DAY" : "NIGHT"}
           </span>
         </button>
+
+        {/* Auth / Sync button */}
+        {user ? (
+          <button
+            onClick={() => setAuthOpen(true)}
+            title={user.email}
+            style={{
+              display:"flex", alignItems:"center", gap:4, padding:"3px 8px",
+              background:"rgba(5,150,105,0.10)",
+              border:"1px solid rgba(5,150,105,0.28)",
+              borderRadius:6, cursor:"pointer", transition:"all 0.15s",
+              color:"#059669",
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = "0.75"}
+            onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+          >
+            <span style={{ width:14, height:14, borderRadius:"50%", background:"linear-gradient(135deg,#2563eb,#7c3aed)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:8, fontWeight:700, flexShrink:0 }}>
+              {user.email?.[0]?.toUpperCase() || "?"}
+            </span>
+            <span style={{ width:5, height:5, borderRadius:"50%", background:"#059669", flexShrink:0 }} />
+            {syncing && <span style={{ fontSize:9, fontFamily:"'Inter',sans-serif", fontWeight:600 }}>SYNC…</span>}
+          </button>
+        ) : (
+          <button
+            onClick={() => setAuthOpen(true)}
+            title="Cloud sync — sign in"
+            style={{
+              display:"flex", alignItems:"center", gap:4, padding:"3px 8px",
+              background:"transparent",
+              border:"1px solid var(--border)",
+              borderRadius:6, cursor:"pointer", transition:"all 0.15s",
+              color:"var(--text-3)",
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = "0.75"}
+            onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+          >
+            <span style={{ fontSize:11 }}>☁</span>
+            <span style={{ fontSize:9, fontFamily:"'Inter',sans-serif", fontWeight:600, letterSpacing:"0.05em" }}>SYNC</span>
+          </button>
+        )}
       </div>
 
       {/* Clock */}
       <TopBarClock />
+
+      {/* Auth modal */}
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
     </div>
   );
 }

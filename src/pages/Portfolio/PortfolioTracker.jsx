@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { api } from "../../lib/api";
 import { fmt, clr, delay } from "../../lib/fmt";
 import { PF_COLORS, SECTOR_CLR } from "../../lib/constants";
 import { SCREENER_UNIVERSE } from "../../screenerData";
 import { MdText } from "../../components/ui/MdText";
+import { db } from "../../lib/db";
+import { useAuth } from "../../context/AuthContext";
 
 function MarketSessionBadges() {
   const SESSIONS = [
@@ -44,10 +46,8 @@ function MarketSessionBadges() {
 export { MarketSessionBadges };
 
 export default function PortfolioTracker() {
-  const [holdings, setHoldings] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("ov_portfolio") || "[]"); }
-    catch { return []; }
-  });
+  const { user } = useAuth();
+  const [holdings, setHoldings] = useState(() => db.portfolio.load());
   const [quotes, setQuotes] = useState({});
   const [loadingQuotes, setLoadingQuotes] = useState(false);
   const [form, setForm] = useState({ ticker: "", shares: "", avgCost: "" });
@@ -60,8 +60,15 @@ export default function PortfolioTracker() {
   const [aiError,    setAiError]    = useState("");
 
   useEffect(() => {
-    localStorage.setItem("ov_portfolio", JSON.stringify(holdings));
-  }, [holdings]);
+    db.portfolio.save(holdings, user?.id);
+  }, [holdings, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-read from db when cloud sync completes
+  useEffect(() => {
+    const handler = () => setHoldings(db.portfolio.load());
+    window.addEventListener('ov:data-synced', handler);
+    return () => window.removeEventListener('ov:data-synced', handler);
+  }, []);
 
   // Fetch live quotes
   const tickerKey = holdings.map(h => h.ticker).join(",");

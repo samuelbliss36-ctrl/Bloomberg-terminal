@@ -6,6 +6,7 @@ import { CopilotPanel } from './components/copilot/CopilotPanel';
 import { GlobalTopBar } from './layout/GlobalTopBar';
 import { SidebarNav } from './layout/SidebarNav';
 import { RightPanelShell } from './layout/RightPanelShell';
+import { AuthProvider } from './context/AuthContext';
 import CommoditiesDashboard from './pages/Commodities/CommoditiesDashboard';
 import CryptoDashboard from './pages/Crypto/CryptoDashboard';
 import FXDashboard from './pages/FX/FXDashboard';
@@ -18,6 +19,7 @@ import PortfolioTracker, { MarketSessionBadges } from './pages/Portfolio/Portfol
 import StockScreener from './pages/Screener/StockScreener';
 import ResearchBrowser from './pages/Research/ResearchBrowser';
 import EarningsCalendarPage from './pages/Earnings/EarningsCalendarPage';
+import AdminDashboard from './pages/Admin/AdminDashboard';
 
 export default function App() {
   const [activePage, setActivePage] = useState("financial");
@@ -37,6 +39,18 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [pendingResearchItem, setPendingResearchItem] = useState(null);
   const [statusTime, setStatusTime] = useState(() => new Date().toLocaleTimeString());
+  const [subscribedToast, setSubscribedToast] = useState(false);
+
+  // Check for ?subscribed=true after Stripe redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('subscribed') === 'true') {
+      setSubscribedToast(true);
+      window.history.replaceState({}, '', window.location.pathname);
+      const t = setTimeout(() => setSubscribedToast(false), 5000);
+      return () => clearTimeout(t);
+    }
+  }, []); // eslint-disable-line
 
   // Live clock in status bar
   useEffect(() => {
@@ -83,6 +97,7 @@ export default function App() {
   const openResearch = (item) => { setPendingResearchItem(item); setActivePage("research"); };
 
   return (
+    <AuthProvider>
     <div className={"app-shell" + (sidebarOpen ? " sidebar-open" : "") + (settings.darkMode ? " dark" : "")} style={{ fontFamily:"'Inter','IBM Plex Sans',sans-serif" }}>
       {/* ── Global Top Bar ─────────────────────────────────── */}
       <GlobalTopBar
@@ -126,6 +141,7 @@ export default function App() {
         {activePage === "screener"     && <StockScreener onSelectTicker={t => { setTicker(t); setActivePage("financial"); }} />}
         {activePage === "research"     && <ResearchBrowser pendingItem={pendingResearchItem} onPendingConsumed={() => setPendingResearchItem(null)} />}
         {activePage === "earnings"     && <EarningsCalendarPage />}
+        {activePage === "admin" && <AdminDashboard />}
         {activePage === "settings" && (
           <div style={{ padding:24, maxWidth:480 }}>
             <div style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:13, color:"var(--text-1)", marginBottom:16 }}>Settings</div>
@@ -162,6 +178,21 @@ export default function App() {
         <span style={{ marginLeft:"auto" }}>{statusTime}</span>
       </div>
 
+      {/* ── Subscription success toast ─────────────────────── */}
+      {subscribedToast && (
+        <div style={{
+          position:"fixed", top:16, left:"50%", transform:"translateX(-50%)", zIndex:10000,
+          background:"#059669", color:"#fff", borderRadius:8, padding:"10px 20px",
+          fontSize:12, fontWeight:600, boxShadow:"0 4px 16px rgba(5,150,105,0.40)",
+          display:"flex", alignItems:"center", gap:8,
+        }}>
+          <span>✓</span>
+          <span>Welcome to Pro! Your subscription is now active.</span>
+          <button onClick={() => setSubscribedToast(false)}
+            style={{ background:"none", border:"none", color:"#fff", cursor:"pointer", fontSize:14, marginLeft:4 }}>✕</button>
+        </div>
+      )}
+
       {/* ── AI Copilot ─────────────────────────────────────── */}
       {copilotOpen && (
         <CopilotPanel
@@ -192,5 +223,6 @@ export default function App() {
         🤖
       </button>
     </div>
+    </AuthProvider>
   );
 }

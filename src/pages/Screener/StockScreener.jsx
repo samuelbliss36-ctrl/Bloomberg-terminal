@@ -3,8 +3,19 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { SCREENER_UNIVERSE, FULL_UNIVERSE } from "../../screenerData";
 import { SECTOR_CLR, RATING_CLR, SCREENER_PRESETS } from "../../lib/constants";
 import { SC_COLS, SC_ROW_H, FMP_SECTOR_MAP } from "../../data/screenerData";
+import { db } from "../../lib/db";
+import { useAuth } from "../../context/AuthContext";
+
+function genUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    // eslint-disable-next-line no-mixed-operators
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
 
 export default function StockScreener({ onSelectTicker }) {
+  const { user } = useAuth();
   const DEF = {
     sector:"All", mktCapTier:"All", rating:"All",
     peMin:"", peMax:"", fwdPeMax:"",
@@ -20,12 +31,50 @@ export default function StockScreener({ onSelectTicker }) {
   const [activePreset, setActivePreset] = useState(null);
   const [liveUniverse, setLiveUniverse] = useState(null);   // null = loading, array = ready
   const [liveStatus, setLiveStatus]     = useState("loading"); // "loading" | "live" | "synthetic"
+  const [savedScreens, setSavedScreens] = useState(() => db.savedScreens.load());
+  const [saveNameInput, setSaveNameInput] = useState("");
+  const [showSaveInput,  setShowSaveInput]  = useState(false);
   const scrollRef = useRef(null);
+  const saveInputRef = useRef(null);
 
   const setFilter   = useCallback((k, v) => { setF(prev => ({...prev, [k]:v})); setActivePreset(null); }, []);
   const applyPreset = (p, i) => { setF({...DEF, ...p.f}); setActivePreset(i); setSortCol("mktCap"); setSortDir("desc"); };
   const reset       = () => { setF(DEF); setActivePreset(null); setSortCol("mktCap"); setSortDir("desc"); };
   const toggleSort  = (col) => { if (sortCol===col) setSortDir(d=>d==="asc"?"desc":"asc"); else { setSortCol(col); setSortDir("desc"); } };
+
+  // Re-read saved screens after cloud sync
+  useEffect(() => {
+    const handler = () => setSavedScreens(db.savedScreens.load());
+    window.addEventListener('ov:data-synced', handler);
+    return () => window.removeEventListener('ov:data-synced', handler);
+  }, []);
+
+  // Check whether filters differ from default
+  const isNonDefault = JSON.stringify(f) !== JSON.stringify(DEF);
+
+  const saveCurrentScreen = () => {
+    const name = saveNameInput.trim();
+    if (!name) return;
+    const newScreen = { id: genUUID(), name, filters: f, created_at: new Date().toISOString() };
+    const updated = [...savedScreens, newScreen];
+    setSavedScreens(updated);
+    db.savedScreens.save(updated, user?.id);
+    setSaveNameInput("");
+    setShowSaveInput(false);
+  };
+
+  const deleteScreen = (id) => {
+    const updated = savedScreens.filter(s => s.id !== id);
+    setSavedScreens(updated);
+    db.savedScreens.save(updated, user?.id);
+  };
+
+  const applySavedScreen = (screen) => {
+    setF({ ...DEF, ...screen.filters });
+    setActivePreset(null);
+    setSortCol("mktCap");
+    setSortDir("desc");
+  };
 
   /* ── Live universe: fetch from FMP on mount, merge with SCREENER_UNIVERSE fundamentals ── */
   useEffect(() => {
@@ -214,9 +263,37 @@ export default function StockScreener({ onSelectTicker }) {
             {liveStatus === "synthetic" && <span style={{ fontSize:9, fontFamily:"'IBM Plex Mono',monospace", color:"var(--text-3)" }}>◦ Synthetic data (add FMP_KEY env var for live)</span>}
             <span style={{ fontSize:10, color:"var(--text-3)" }}>· Click row → load ticker · Click header → sort</span>
           </div>
-          <button onClick={reset} style={{ fontSize:10, color:"var(--text-3)", background:"none", border:"1px solid var(--border-solid)", borderRadius:4, padding:"2px 10px", cursor:"pointer" }}>
-            ↺ Reset
-          </button>
+          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+            {isNonDefault && !showSaveInput && (
+              <button onClick={() => { setShowSaveInput(true); setTimeout(() => saveInputRef.current?.focus(), 50); }}
+                style={{ fontSize:10, color:"#2563eb", background:"rgba(37,99,235,0.08)", border:"1px solid rgba(37,99,235,0.25)", borderRadius:4, padding:"2px 10px", cursor:"pointer" }}>
+                💾 Save Screen
+              </button>
+            )}
+            {showSaveInput && (
+              <div style={{ display:"flex", alignItems:"center", gap:4 }}>
+                <input
+                  ref={saveInputRef}
+                  value={saveNameInput}
+                  onChange={e => setSaveNameInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") saveCurrentScreen(); if (e.key === "Escape") { setShowSaveInput(false); setSaveNameInput(""); } }}
+                  placeholder="Screen name…"
+                  style={{ fontSize:10, fontFamily:"'IBM Plex Mono',monospace", border:"1px solid rgba(37,99,235,0.40)", borderRadius:4, padding:"2px 8px", background:"var(--surface-0)", color:"var(--text-1)", outline:"none", width:140 }}
+                />
+                <button onClick={saveCurrentScreen}
+                  style={{ fontSize:10, color:"#fff", background:"#2563eb", border:"none", borderRadius:4, padding:"2px 8px", cursor:"pointer" }}>
+                  Save
+                </button>
+                <button onClick={() => { setShowSaveInput(false); setSaveNameInput(""); }}
+                  style={{ fontSize:10, color:"var(--text-3)", background:"none", border:"1px solid var(--border-solid)", borderRadius:4, padding:"2px 6px", cursor:"pointer" }}>
+                  ✕
+                </button>
+              </div>
+            )}
+            <button onClick={reset} style={{ fontSize:10, color:"var(--text-3)", background:"none", border:"1px solid var(--border-solid)", borderRadius:4, padding:"2px 10px", cursor:"pointer" }}>
+              ↺ Reset
+            </button>
+          </div>
         </div>
 
         {/* Preset chips */}
@@ -230,6 +307,24 @@ export default function StockScreener({ onSelectTicker }) {
               {p.label}
             </button>
           ))}
+          {savedScreens.length > 0 && (
+            <>
+              <span style={{ fontSize:9, color:"var(--text-3)", alignSelf:"center", padding:"0 4px" }}>── Saved ──</span>
+              {savedScreens.map(s => (
+                <span key={s.id} style={{ display:"inline-flex", alignItems:"center", gap:3 }}>
+                  <button onClick={() => applySavedScreen(s)}
+                    style={{ padding:"2px 8px", fontSize:10, fontWeight:500, cursor:"pointer", borderRadius:99,
+                      border:"1px solid rgba(124,58,237,0.35)",
+                      background:"rgba(124,58,237,0.08)", color:"#7c3aed", transition:"all 0.12s" }}>
+                    {s.name}
+                  </button>
+                  <button onClick={() => deleteScreen(s.id)}
+                    title="Delete saved screen"
+                    style={{ fontSize:9, color:"var(--text-3)", background:"none", border:"none", cursor:"pointer", padding:"0 2px", lineHeight:1 }}>✕</button>
+                </span>
+              ))}
+            </>
+          )}
         </div>
 
         {/* Sector chips */}

@@ -1,5 +1,18 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { MdText } from '../ui/MdText';
+import { db } from '../../lib/db';
+import { useAuth } from '../../context/AuthContext';
+import { isOwner, getSubscription } from '../../lib/subscription';
+import { supabase } from '../../lib/supabase';
+import UpgradePage from '../../pages/Subscription/UpgradePage';
+
+function genUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    // eslint-disable-next-line no-mixed-operators
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
 
 export function buildCopilotContext(activePage, ticker, quote, metrics, profile, news) {
   const m   = metrics?.metric || {};
@@ -62,17 +75,86 @@ export function buildCopilotContext(activePage, ticker, quote, metrics, profile,
 }
 
 export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news, onClose }) {
-  const [msgs,       setMsgs]      = useState([]);
+  const { user } = useAuth();
+
+  // Load most recent conversation on mount
+  const [conversationId, setConversationId] = useState(() => genUUID());
+  const [msgs,       setMsgs]      = useState(() => {
+    const convs = db.conversations.load();
+    if (convs.length > 0) return convs[0].messages || [];
+    return [];
+  });
+  const [convTitle,  setConvTitle] = useState(() => {
+    const convs = db.conversations.load();
+    if (convs.length > 0) { return convs[0].title || ''; }
+    return '';
+  });
+  const [showHistory,setShowHistory] = useState(false);
+
   const [input,      setInput]     = useState("");
   const [loading,    setLoading]   = useState(false);
   const [apiKey,     setApiKey]    = useState(() => localStorage.getItem("ov_copilot_key") || "");
   const [showConfig, setShowConfig]= useState(false);
   const [keyDraft,   setKeyDraft]  = useState("");
-  const [provider,   setProvider]  = useState(null); // "openai" | "anthropic"
+  const [provider,    setProvider]   = useState(null); // "openai" | "anthropic" | "perplexity"
+  const [showUpgrade, setShowUpgrade]= useState(false);
+  const [subscription, setSubscription] = useState(null);
+
+  // Load subscription on mount
+  useEffect(() => {
+    if (!user || isOwner(user)) return;
+    getSubscription().then(sub => setSubscription(sub));
+  }, [user]);
   const bottomRef = useRef(null);
   const inputRef  = useRef(null);
 
   const context = buildCopilotContext(activePage, ticker, quote, metrics, profile, news);
+
+  // Re-read conversations when cloud sync fires
+  useEffect(() => {
+    const handler = () => {
+      const convs = db.conversations.load();
+      if (convs.length > 0 && msgs.length === 0) {
+        setMsgs(convs[0].messages || []);
+        setConvTitle(convs[0].title || '');
+        setConversationId(convs[0].id || genUUID());
+      }
+    };
+    window.addEventListener('ov:data-synced', handler);
+    return () => window.removeEventListener('ov:data-synced', handler);
+  }, [msgs.length]);
+
+  // Persist conversation after every assistant response
+  const persistConversation = useCallback((updatedMsgs, title) => {
+    const convs = db.conversations.load();
+    const now = new Date().toISOString();
+    const entry = {
+      id: conversationId,
+      title: title || convTitle || 'Untitled',
+      messages: updatedMsgs,
+      page_context: activePage,
+      updated_at: now,
+    };
+    // Replace existing entry with same id, or prepend
+    const filtered = convs.filter(c => c.id !== conversationId);
+    const updated = [entry, ...filtered].slice(0, 20);
+    db.conversations.save(updated, user?.id);
+  }, [conversationId, convTitle, activePage, user?.id]);
+
+  const startNewChat = useCallback(() => {
+    setMsgs([]);
+    setConvTitle('');
+    setConversationId(genUUID());
+    setShowHistory(false);
+    setProvider(null);
+  }, []);
+
+  const loadConversation = useCallback((conv) => {
+    setMsgs(conv.messages || []);
+    setConvTitle(conv.title || '');
+    setConversationId(conv.id);
+    setShowHistory(false);
+  }, []);
 
   // Suggested prompts change based on active page
   const SUGGESTIONS = useMemo(() => {
@@ -122,31 +204,59 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
     setMsgs(newMsgs);
     setInput("");
     setLoading(true);
+
+    // Set title from first user message
+    const title = convTitle || q.slice(0, 40);
+    if (!convTitle) setConvTitle(title);
+
     try {
+      // Attach Supabase session token so the server can verify subscription
+      let authHeader = {};
+      if (supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          authHeader = { Authorization: `Bearer ${session.access_token}` };
+        }
+      }
       const res  = await fetch("/api/copilot", {
         method: "POST",
-        headers: { "Content-Type":"application/json" },
+        headers: { "Content-Type":"application/json", ...authHeader },
         body: JSON.stringify({ messages: newMsgs, context, apiKey: apiKey || undefined }),
       });
+      if (res.status === 402) {
+        // Not subscribed and no user key — show upgrade wall
+        setMsgs(newMsgs.slice(0, -1)); // remove the user message we just added
+        setInput(q);                    // restore input
+        setShowUpgrade(true);
+        setLoading(false);
+        return;
+      }
       const data = await res.json();
+      let finalMsgs;
       if (data.error === "no_key") {
-        setMsgs(m => [...m, { role:"assistant", content:"⚙️ No API key configured. Click the **settings icon** (⚙) above to enter your OpenAI or Anthropic API key." }]);
+        finalMsgs = [...newMsgs, { role:"assistant", content:"⚙️ No API key configured. Click the **settings icon** (⚙) above to enter your OpenAI or Anthropic API key." }];
       } else if (data.error) {
-        setMsgs(m => [...m, { role:"assistant", content:`Error: ${data.error}` }]);
+        finalMsgs = [...newMsgs, { role:"assistant", content:`Error: ${data.error}` }];
       } else {
         if (data.provider) setProvider(data.provider);
-        setMsgs(m => [...m, { role:"assistant", content: data.message }]);
+        finalMsgs = [...newMsgs, { role:"assistant", content: data.message }];
       }
+      setMsgs(finalMsgs);
+      persistConversation(finalMsgs, title);
     } catch(e) {
-      setMsgs(m => [...m, { role:"assistant", content:"Connection error — check your API key or network." }]);
+      const finalMsgs = [...newMsgs, { role:"assistant", content:"Connection error — check your API key or network." }];
+      setMsgs(finalMsgs);
+      persistConversation(finalMsgs, title);
     }
     setLoading(false);
   };
 
   const providerBadge = provider === "anthropic"
-    ? { label:"Claude · Haiku", color:"#7c3aed" }
+    ? { label:"Claude · Haiku",         color:"#7c3aed" }
     : provider === "openai"
-    ? { label:"GPT-4o mini",    color:"#059669" }
+    ? { label:"GPT-4o mini",            color:"#059669" }
+    : provider === "perplexity"
+    ? { label:"Perplexity · Live",      color:"#0ea5e9" }
     : null;
 
   const panelStyle = {
@@ -169,7 +279,18 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
             ● {providerBadge.label}
           </span>
         )}
+        {isOwner(user) && (
+          <span style={{ fontSize:9, fontFamily:"'IBM Plex Mono',monospace", padding:"1px 7px", borderRadius:99, background:"#fef9c3", color:"#854d0e", fontWeight:600, marginLeft:2 }}>
+            ★ Owner — Unlimited
+          </span>
+        )}
         <div style={{ marginLeft:"auto", display:"flex", gap:6 }}>
+          <button onClick={startNewChat}
+            title="New chat"
+            style={{ background:"none", border:"1px solid var(--border-solid)", cursor:"pointer", fontSize:10, color:"var(--text-3)", padding:"2px 8px", lineHeight:1.4, borderRadius:5, fontFamily:"'IBM Plex Mono',monospace" }}>+ New</button>
+          <button onClick={() => setShowHistory(h => !h)}
+            title="Conversation history"
+            style={{ background: showHistory ? "rgba(37,99,235,0.10)" : "none", border:"none", cursor:"pointer", fontSize:12, color: showHistory ? "#2563eb" : "var(--text-3)", padding:"2px 4px", lineHeight:1 }}>☰</button>
           <button onClick={() => { setShowConfig(c => !c); setKeyDraft(apiKey); }}
             title="Configure API key"
             style={{ background:"none", border:"none", cursor:"pointer", fontSize:13, color:"var(--text-3)", padding:"2px 4px", lineHeight:1 }}>⚙</button>
@@ -177,6 +298,31 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
             style={{ background:"none", border:"none", cursor:"pointer", fontSize:14, color:"var(--text-3)", padding:"2px 4px", lineHeight:1 }}>✕</button>
         </div>
       </div>
+
+      {/* ── Conversation History ────────────────────────────────── */}
+      {showHistory && (() => {
+        const convs = db.conversations.load();
+        return (
+          <div style={{ borderBottom:"1px solid var(--border-solid)", background:"var(--surface-2)", flexShrink:0, maxHeight:160, overflowY:"auto" }}>
+            {convs.length === 0 ? (
+              <div style={{ padding:"12px 14px", fontSize:10, color:"var(--text-3)", fontFamily:"'IBM Plex Mono',monospace" }}>No saved conversations yet</div>
+            ) : convs.map(c => (
+              <button key={c.id} onClick={() => loadConversation(c)}
+                style={{ display:"block", width:"100%", textAlign:"left", padding:"8px 14px", background: c.id===conversationId ? "rgba(37,99,235,0.08)" : "none",
+                  border:"none", borderBottom:"1px solid var(--border-subtle)", cursor:"pointer", transition:"background 0.1s" }}
+                onMouseEnter={e => e.currentTarget.style.background="rgba(37,99,235,0.05)"}
+                onMouseLeave={e => e.currentTarget.style.background=c.id===conversationId?"rgba(37,99,235,0.08)":"none"}>
+                <div style={{ fontSize:11, color:"var(--text-1)", fontFamily:"'IBM Plex Mono',monospace", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                  {c.title || 'Untitled'}
+                </div>
+                <div style={{ fontSize:9, color:"var(--text-3)", fontFamily:"'IBM Plex Mono',monospace", marginTop:2 }}>
+                  {c.updated_at ? new Date(c.updated_at).toLocaleDateString() : ''} · {c.messages?.length || 0} messages
+                </div>
+              </button>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* ── API Key Config ──────────────────────────────────────── */}
       {showConfig && (
@@ -204,7 +350,22 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
         </div>
       )}
 
+      {/* ── Upgrade wall ───────────────────────────────────────── */}
+      {showUpgrade && !apiKey && (
+        <div style={{ flex:1, overflowY:"auto" }}>
+          <div style={{ padding:"8px 14px", borderBottom:"1px solid var(--border-solid)", display:"flex", alignItems:"center", gap:6 }}>
+            <span style={{ fontSize:10, color:"var(--text-3)" }}>Pro subscription required</span>
+            <button onClick={() => setShowUpgrade(false)}
+              style={{ marginLeft:"auto", background:"none", border:"none", cursor:"pointer", fontSize:10, color:"var(--text-3)" }}>
+              ← Back
+            </button>
+          </div>
+          <UpgradePage subscription={subscription} />
+        </div>
+      )}
+
       {/* ── Context badge ──────────────────────────────────────── */}
+      {!(showUpgrade && !apiKey) && (
       <div style={{ padding:"6px 14px", borderBottom:"1px solid var(--border-solid)", flexShrink:0, display:"flex", gap:8, alignItems:"center", background:"var(--surface-1)" }}>
         <span style={{ fontSize:9, color:"var(--text-3)", fontFamily:"'IBM Plex Mono',monospace" }}>Context:</span>
         <span style={{ fontSize:9, fontWeight:600, color:"#2563eb", fontFamily:"'IBM Plex Mono',monospace" }}>
@@ -221,8 +382,10 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
             <span style={{ color: quote.dp >= 0 ? "#059669" : "#e11d48" }}> ({quote.dp >= 0 ? "+" : ""}{quote.dp?.toFixed(2)}%)</span>
           </span>}
       </div>
+      )}
 
       {/* ── Message thread ─────────────────────────────────────── */}
+      {!(showUpgrade && !apiKey) && (
       <div style={{ flex:1, overflowY:"auto", padding:"12px 14px", display:"flex", flexDirection:"column", gap:10 }}>
         {msgs.length === 0 && (
           <div style={{ textAlign:"center", marginTop:20 }}>
@@ -258,9 +421,10 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
         )}
         <div ref={bottomRef} />
       </div>
+      )}
 
       {/* ── Suggested prompts ──────────────────────────────────── */}
-      {msgs.length === 0 && (
+      {!(showUpgrade && !apiKey) && msgs.length === 0 && (
         <div style={{ padding:"0 14px 8px", display:"flex", flexWrap:"wrap", gap:5, flexShrink:0 }}>
           {SUGGESTIONS.map((s, i) => (
             <button key={i} onClick={() => send(s)}
@@ -276,6 +440,7 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
       )}
 
       {/* ── Input bar ──────────────────────────────────────────── */}
+      {!(showUpgrade && !apiKey) && (
       <div style={{ padding:"10px 14px", borderTop:"1px solid var(--border-solid)", display:"flex", gap:8, flexShrink:0, background:"var(--surface-1)" }}>
         <input
           ref={inputRef}
@@ -293,6 +458,7 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
           ↑
         </button>
       </div>
+      )}
     </div>
   );
 }
