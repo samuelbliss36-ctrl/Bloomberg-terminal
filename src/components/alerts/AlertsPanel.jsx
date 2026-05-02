@@ -33,12 +33,13 @@ function pctAway(current, target) {
   return ((current - target) / target * 100).toFixed(1);
 }
 
-function AddForm({ onAdd }) {
+function AddForm({ onAdd, telegramConnected }) {
   const [ticker,    setTicker]    = useState('');
   const [target,    setTarget]    = useState('');
   const [condition, setCondition] = useState('above');
   const [note,      setNote]      = useState('');
   const [err,       setErr]       = useState('');
+  const [success,   setSuccess]   = useState('');
 
   const submit = useCallback(() => {
     const sym = ticker.trim().toUpperCase();
@@ -47,8 +48,12 @@ function AddForm({ onAdd }) {
     if (!px || isNaN(px) || px <= 0) return setErr('Enter a valid price.');
     setErr('');
     onAdd({ ticker: sym, targetPrice: px, condition, note });
+    // Show success confirmation
+    const dir = condition === 'above' ? 'above' : 'below';
+    setSuccess(`✓ Alert set — ${sym} ${dir} $${px.toFixed(2)}${telegramConnected ? ' · Telegram ready' : ''}`);
+    setTimeout(() => setSuccess(''), 4000);
     setTicker(''); setTarget(''); setNote('');
-  }, [ticker, target, condition, note, onAdd]);
+  }, [ticker, target, condition, note, onAdd, telegramConnected]);
 
   const row = { display: 'flex', flexDirection: 'column', gap: 3, marginBottom: 8 };
   const label = { fontSize: 9, fontWeight: 700, color: 'var(--text-3, #94a3b8)', textTransform: 'uppercase', letterSpacing: '0.07em' };
@@ -61,9 +66,16 @@ function AddForm({ onAdd }) {
 
   return (
     <div style={{ padding: '10px 14px 12px', borderBottom: '1px solid rgba(15,23,42,0.08)' }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-1)', letterSpacing: '0.06em', marginBottom: 8 }}>
-        NEW ALERT
+      {/* Header row with Telegram status */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-1)', letterSpacing: '0.06em' }}>NEW ALERT</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 9, fontFamily: "'IBM Plex Mono',monospace",
+          color: telegramConnected ? '#059669' : '#94a3b8' }}>
+          <Send size={9} />
+          {telegramConnected ? 'Telegram connected' : 'Telegram not set up'}
+        </div>
       </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <div style={row}>
           <span style={label}>Ticker</span>
@@ -98,7 +110,15 @@ function AddForm({ onAdd }) {
           onChange={e => setNote(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && submit()} />
       </div>
-      {err && <div style={{ fontSize: 10, color: '#e11d48', marginBottom: 6, fontFamily: "'IBM Plex Mono',monospace" }}>{err}</div>}
+
+      {err     && <div style={{ fontSize: 10, color: '#e11d48', marginBottom: 6, fontFamily: "'IBM Plex Mono',monospace" }}>{err}</div>}
+      {success && (
+        <div style={{ fontSize: 10, color: '#059669', marginBottom: 6, fontFamily: "'IBM Plex Mono',monospace",
+          background: 'rgba(5,150,105,0.08)', border: '1px solid rgba(5,150,105,0.20)', borderRadius: 5, padding: '5px 8px' }}>
+          {success}
+        </div>
+      )}
+
       <button onClick={submit}
         style={{ width: '100%', padding: '7px 0', border: 'none', borderRadius: 7, cursor: 'pointer',
           background: '#2563eb', color: '#fff', fontSize: 11, fontWeight: 700, fontFamily: "'Inter',sans-serif",
@@ -107,6 +127,12 @@ function AddForm({ onAdd }) {
         onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
         <Plus size={12} /> SET ALERT
       </button>
+
+      {!telegramConnected && (
+        <div style={{ marginTop: 7, fontSize: 9, color: '#94a3b8', textAlign: 'center', fontFamily: "'Inter',sans-serif" }}>
+          Set up Telegram below to receive alerts on your phone
+        </div>
+      )}
     </div>
   );
 }
@@ -195,9 +221,9 @@ function TelegramSection() {
 }
 
 export function AlertsPanel({ onClose }) {
-  const { alerts, removeAlert, reActivate, prices, activeCount } = useAlerts();
+  const { alerts, addAlert, removeAlert, reActivate, prices, activeCount, telegram } = useAlerts();
   const [tab, setTab] = useState('active');
-  const { addAlert } = useAlerts();
+  const telegramConnected = !!(telegram.token && telegram.chatId);
 
   // Request browser notification permission on first open
   useState(() => {
@@ -223,13 +249,18 @@ export function AlertsPanel({ onClose }) {
               {activeCount} ACTIVE
             </span>
           )}
+          {telegramConnected && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 9, color: '#059669', fontFamily: "'IBM Plex Mono',monospace" }}>
+              <Send size={9} /> TG
+            </span>
+          )}
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', display: 'flex', alignItems: 'center' }}>
             <X size={14} />
           </button>
         </div>
 
         {/* Add form */}
-        <AddForm onAdd={addAlert} />
+        <AddForm onAdd={addAlert} telegramConnected={telegramConnected} />
 
         {/* Tabs */}
         <div style={{ display: 'flex', borderBottom: '1px solid rgba(15,23,42,0.08)', flexShrink: 0 }}>

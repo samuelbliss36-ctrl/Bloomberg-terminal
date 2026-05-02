@@ -7,19 +7,20 @@ import { useAlerts } from '../context/AlertsContext';
 import { AlertsPanel } from '../components/alerts/AlertsPanel';
 
 // ─── Sign-out button (used in account dropdown) ───────────────────────────────
-// Keys that are local-only and should be wiped when switching accounts
-const LOCAL_ONLY_KEYS = [
-  'ov_onboarding_done', // cleared locally; Supabase metadata is the source of truth
-  'ov_alerts',
-  'ov_telegram',
-  'ov_copilot_key',
-];
-
 function SignOutButton({ onClose }) {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const handle = async () => {
     onClose();
-    LOCAL_ONLY_KEYS.forEach(k => localStorage.removeItem(k));
+    // Clear base keys (legacy) + user-scoped keys for this account
+    const uid = user?.id;
+    const keys = [
+      'ov_onboarding_done',
+      'ov_alerts',
+      'ov_telegram',
+      'ov_copilot_key',
+      ...(uid ? [`ov_telegram_${uid}`, `ov_copilot_key_${uid}`] : []),
+    ];
+    keys.forEach(k => localStorage.removeItem(k));
     await signOut();
   };
   return (
