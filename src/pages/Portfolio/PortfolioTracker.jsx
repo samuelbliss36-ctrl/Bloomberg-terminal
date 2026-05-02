@@ -5,6 +5,8 @@ import { fmt, clr, delay } from "../../lib/fmt";
 import { PF_COLORS, SECTOR_CLR } from "../../lib/constants";
 import { SCREENER_UNIVERSE } from "../../screenerData";
 import { MdText } from "../../components/ui/MdText";
+import { useAuth } from "../../context/AuthContext";
+import { portfolio as dbPortfolio } from "../../lib/db";
 
 function MarketSessionBadges() {
   const SESSIONS = [
@@ -66,10 +68,8 @@ function sharpeLabel(s) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function PortfolioTracker({ onContextUpdate }) {
-  const [holdings, setHoldings] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("ov_portfolio") || "[]"); }
-    catch { return []; }
-  });
+  const { user } = useAuth();
+  const [holdings, setHoldings] = useState(() => dbPortfolio.load());
   const [quotes,        setQuotes]        = useState({});
   const [loadingQuotes, setLoadingQuotes] = useState(false);
   const [form,          setForm]          = useState({ ticker: "", shares: "", avgCost: "" });
@@ -81,9 +81,17 @@ export default function PortfolioTracker({ onContextUpdate }) {
   const [aiLoading,     setAiLoading]     = useState(false);
   const [aiError,       setAiError]       = useState("");
 
+  // Persist holdings on every change (localStorage + background Supabase sync)
   useEffect(() => {
-    localStorage.setItem("ov_portfolio", JSON.stringify(holdings));
-  }, [holdings]);
+    dbPortfolio.save(holdings, user?.id);
+  }, [holdings, user?.id]);
+
+  // Re-read from localStorage when cloud sync completes
+  useEffect(() => {
+    const handler = () => setHoldings(dbPortfolio.load());
+    window.addEventListener('ov:data-synced', handler);
+    return () => window.removeEventListener('ov:data-synced', handler);
+  }, []);
 
   // ── Live quotes ────────────────────────────────────────────────────────────
   const tickerKey = holdings.map(h => h.ticker).join(",");

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { AuthProvider } from './context/AuthContext';
 import { api } from './lib/api';
 import { delay, loadSettings, saveSettings } from './lib/fmt';
 import { WATCHLIST } from './lib/constants';
@@ -140,6 +141,7 @@ export default function App() {
   const openResearch = (item) => { setPendingResearchItem(item); setActivePage("research"); };
 
   return (
+    <AuthProvider>
     <div className={"app-shell" + (sidebarOpen ? " sidebar-open" : "") + (settings.darkMode ? " dark" : "")} style={{ fontFamily:"'Inter','IBM Plex Sans',sans-serif" }}>
       {/* ── Global Top Bar ─────────────────────────────────── */}
       <GlobalTopBar
@@ -251,5 +253,6 @@ export default function App() {
         🤖
       </button>
     </div>
+    </AuthProvider>
   );
 }

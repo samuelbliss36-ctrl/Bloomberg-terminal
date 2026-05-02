@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useMemo, memo, useCallback } from 'react';
 import { Search, Zap, RefreshCw, Settings, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { fmt, clr, bg } from '../lib/fmt';
 import { _apiCache } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
+import AuthModal from '../components/auth/AuthModal';
 
 // ─── TICKER TAPE (standalone) ─────────────────────────────────────────────────
 export const TickerTape = memo(function TickerTape({ tapeData }) {
@@ -126,7 +128,9 @@ export function TopBarClock() {
 export function GlobalTopBar({ ticker, setTicker, tapeData, quote, loading, settings, onToggleTape, onToggleDark }) {
   const [input, setInput] = useState(ticker);
   const [focused, setFocused] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
   const tapeRef = useRef(null);
+  const { user, syncing } = useAuth();
 
   useEffect(() => { setInput(ticker); }, [ticker]);
 
@@ -245,7 +249,39 @@ export function GlobalTopBar({ ticker, setTicker, tapeData, quote, loading, sett
             {settings?.darkMode ? "DAY" : "NIGHT"}
           </span>
         </button>
+
+        {/* Cloud sync / auth button */}
+        <button
+          onClick={() => setAuthOpen(true)}
+          title={user ? `Signed in as ${user.email}` : "Sign in to sync data"}
+          style={{
+            display:"flex", alignItems:"center", gap:4, padding:"3px 8px",
+            background: user ? "rgba(5,150,105,0.10)" : "transparent",
+            border: `1px solid ${user ? "rgba(5,150,105,0.30)" : "var(--border)"}`,
+            borderRadius:6, cursor:"pointer", transition:"all 0.15s",
+            color: user ? "#34d399" : "var(--text-3)",
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = "0.75"}
+          onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+        >
+          {user ? (
+            <>
+              <span style={{ width:7, height:7, borderRadius:"50%", background: syncing ? "#f59e0b" : "#10b981", display:"inline-block" }} />
+              <span style={{ fontSize:9, fontFamily:"'Inter',sans-serif", fontWeight:700, letterSpacing:"0.05em" }}>
+                {user.email[0].toUpperCase()}
+              </span>
+            </>
+          ) : (
+            <>
+              <span style={{ fontSize:10 }}>☁</span>
+              <span style={{ fontSize:9, fontFamily:"'Inter',sans-serif", fontWeight:600, letterSpacing:"0.05em" }}>SYNC</span>
+            </>
+          )}
+        </button>
       </div>
+
+      {/* Auth modal */}
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
 
       {/* Clock */}
       <TopBarClock />

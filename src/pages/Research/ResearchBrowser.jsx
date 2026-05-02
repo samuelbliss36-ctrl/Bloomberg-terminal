@@ -5,17 +5,24 @@ import { RB_TYPE_COLOR } from "../../lib/fmt";
 import { RESEARCH_CATALOG } from "../../data/researchData";
 import ResearchPanel         from "./panels/ResearchPanel";
 import ResearchHomeDashboard from "./panels/ResearchHomeDashboard";
+import { useAuth } from "../../context/AuthContext";
+import { recentResearch as dbRecent } from "../../lib/db";
 
 export default function ResearchBrowser({ pendingItem, onPendingConsumed, onContextUpdate }) {
+  const { user } = useAuth();
   const [query, setQuery]               = useState("");
   const [suggestions, setSuggestions]   = useState([]);
   const [suggestionIdx, setSuggestionIdx] = useState(-1);
   const [panels, setPanels]             = useState([]);
   const [searchFocused, setSearchFocused] = useState(false);
-  const [recentSearches, setRecentSearches] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("ov_research_recent") || "[]"); }
-    catch { return []; }
-  });
+  const [recentSearches, setRecentSearches] = useState(() => dbRecent.load());
+
+  // Refresh when cloud sync completes
+  useEffect(() => {
+    const handler = () => setRecentSearches(dbRecent.load());
+    window.addEventListener('ov:data-synced', handler);
+    return () => window.removeEventListener('ov:data-synced', handler);
+  }, []);
   const debounceRef = useRef(null);
   const searchRef   = useRef(null);
 
@@ -51,9 +58,9 @@ export default function ResearchBrowser({ pendingItem, onPendingConsumed, onCont
   }, [query]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openPanel = item => {
-    const newRecent = [item, ...recentSearches.filter(r => r.id !== item.id)].slice(0, 8);
+    const newRecent = [item, ...recentSearches.filter(r => r.id !== item.id)].slice(0, 20);
     setRecentSearches(newRecent);
-    localStorage.setItem("ov_research_recent", JSON.stringify(newRecent));
+    dbRecent.save(newRecent, user?.id);
     setPanels(prev => prev.find(p => p.id === item.id) ? prev : [{ ...item }, ...prev]);
     setQuery(""); setSuggestions([]); setSuggestionIdx(-1);
   };

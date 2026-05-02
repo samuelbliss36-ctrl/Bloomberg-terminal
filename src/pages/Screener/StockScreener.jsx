@@ -3,6 +3,8 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { SCREENER_UNIVERSE, FULL_UNIVERSE } from "../../screenerData";
 import { SECTOR_CLR, RATING_CLR, SCREENER_PRESETS } from "../../lib/constants";
 import { SC_COLS, SC_ROW_H, FMP_SECTOR_MAP } from "../../data/screenerData";
+import { useAuth } from "../../context/AuthContext";
+import { savedScreens as dbScreens } from "../../lib/db";
 
 const AI_EXAMPLES = [
   "Profitable small-caps in defense with low debt and revenue growth",
@@ -30,6 +32,39 @@ export default function StockScreener({ onSelectTicker, onContextUpdate }) {
   const [liveUniverse, setLiveUniverse] = useState(null);   // null = loading, array = ready
   const [liveStatus, setLiveStatus]     = useState("loading"); // "loading" | "live" | "synthetic"
   const scrollRef = useRef(null);
+
+  // ── Saved screens state ────────────────────────────────────────────────────
+  const { user } = useAuth();
+  const [userScreens, setUserScreens]         = useState(() => dbScreens.load());
+  const [saveNameInput, setSaveNameInput]      = useState("");
+  const [showSaveInput, setShowSaveInput]      = useState(false);
+
+  // Refresh when cloud sync completes
+  useEffect(() => {
+    const handler = () => setUserScreens(dbScreens.load());
+    window.addEventListener('ov:data-synced', handler);
+    return () => window.removeEventListener('ov:data-synced', handler);
+  }, []);
+
+  const isDefaultFilters = useMemo(() => {
+    return Object.entries(f).every(([k, v]) => v === DEF[k]);
+  }, [f]); // eslint-disable-line
+
+  const saveScreen = useCallback(() => {
+    const name = saveNameInput.trim() || (aiInterpretation?.description?.slice(0, 40)) || "My Screen";
+    const newScreen = { id: Date.now().toString(), name, filters: { ...f }, createdAt: new Date().toISOString() };
+    const updated = [newScreen, ...userScreens];
+    setUserScreens(updated);
+    dbScreens.save(updated, user?.id);
+    setSaveNameInput("");
+    setShowSaveInput(false);
+  }, [saveNameInput, f, userScreens, user, aiInterpretation]);
+
+  const deleteScreen = useCallback((id) => {
+    const updated = userScreens.filter(s => s.id !== id);
+    setUserScreens(updated);
+    dbScreens.save(updated, user?.id);
+  }, [userScreens, user]);
 
   // ── AI Screener state ──────────────────────────────────────────────────────
   const [aiMode, setAiMode]                   = useState(false);
@@ -383,8 +418,8 @@ export default function StockScreener({ onSelectTicker, onContextUpdate }) {
         {/* ── Filter Mode Panel ──────────────────────────────────────── */}
         {!aiMode && (
           <div style={{ display:"flex", flexDirection:"column", gap:8, paddingBottom:10, borderBottom:"1px solid var(--border-solid)" }}>
-            {/* Preset chips */}
-            <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+            {/* Preset chips + Save Screen */}
+            <div style={{ display:"flex", flexWrap:"wrap", gap:4, alignItems:"center" }}>
               {SCREENER_PRESETS.map((p, i) => (
                 <button key={i} onClick={() => applyPreset(p, i)}
                   style={{ padding:"2px 10px", fontSize:10, fontWeight:500, cursor:"pointer", borderRadius:99,
@@ -394,6 +429,51 @@ export default function StockScreener({ onSelectTicker, onContextUpdate }) {
                   {p.label}
                 </button>
               ))}
+              {/* User saved screens */}
+              {userScreens.length > 0 && (
+                <>
+                  <span style={{ fontSize:9, color:"var(--text-3)", margin:"0 2px" }}>──</span>
+                  {userScreens.map(s => (
+                    <span key={s.id} style={{ display:"inline-flex", alignItems:"center", gap:3,
+                      padding:"2px 8px 2px 10px", fontSize:10, fontWeight:500, borderRadius:99,
+                      border:"1px solid rgba(124,58,237,0.40)", background:"rgba(124,58,237,0.08)", color:"#a78bfa" }}>
+                      <button onClick={() => { setF({...DEF, ...s.filters}); setActivePreset(null); setAiInterpretation(null); }}
+                        style={{ background:"none", border:"none", cursor:"pointer", color:"inherit", padding:0, fontSize:10, fontFamily:"inherit" }}>
+                        {s.name}
+                      </button>
+                      <button onClick={() => deleteScreen(s.id)}
+                        style={{ background:"none", border:"none", cursor:"pointer", color:"rgba(167,139,250,0.6)", padding:0, fontSize:10, lineHeight:1 }}>✕</button>
+                    </span>
+                  ))}
+                </>
+              )}
+              {/* Save current filters */}
+              {!isDefaultFilters && !showSaveInput && (
+                <button onClick={() => setShowSaveInput(true)}
+                  style={{ padding:"2px 10px", fontSize:10, fontWeight:500, cursor:"pointer", borderRadius:99,
+                    border:"1px solid rgba(5,150,105,0.40)", background:"rgba(5,150,105,0.08)", color:"#34d399" }}>
+                  💾 Save Screen
+                </button>
+              )}
+              {showSaveInput && (
+                <span style={{ display:"inline-flex", alignItems:"center", gap:4 }}>
+                  <input
+                    autoFocus
+                    value={saveNameInput}
+                    onChange={e => setSaveNameInput(e.target.value)}
+                    onKeyDown={e => { if (e.key==="Enter") saveScreen(); if (e.key==="Escape") setShowSaveInput(false); }}
+                    placeholder="Screen name…"
+                    style={{ fontSize:10, padding:"2px 8px", borderRadius:6, background:"var(--surface-0)",
+                      border:"1px solid rgba(5,150,105,0.40)", color:"var(--text-1)", outline:"none",
+                      fontFamily:"'IBM Plex Mono',monospace", width:130 }} />
+                  <button onClick={saveScreen}
+                    style={{ padding:"2px 8px", fontSize:10, borderRadius:6, cursor:"pointer",
+                      background:"rgba(5,150,105,0.15)", border:"1px solid rgba(5,150,105,0.40)", color:"#34d399" }}>Save</button>
+                  <button onClick={() => setShowSaveInput(false)}
+                    style={{ padding:"2px 6px", fontSize:10, borderRadius:6, cursor:"pointer",
+                      background:"none", border:"1px solid var(--border-solid)", color:"var(--text-3)" }}>✕</button>
+                </span>
+              )}
             </div>
 
             {/* Sector chips */}
