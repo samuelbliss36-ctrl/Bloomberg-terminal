@@ -2,6 +2,18 @@
 // POST { ticker, entityName, formType, period, filingDate, sections, apiKey }
 // Returns { headline, financialHighlights, riskFactors, mdaInsights, outlook, watchPoints }
 
+const OPENAI_KEY_RE    = /^sk-[A-Za-z0-9\-_]{20,}$/;
+const ANTHROPIC_KEY_RE = /^sk-ant-[A-Za-z0-9\-_]{20,}$/;
+const MAX_SECTION_LEN  = 6_000; // chars per filing section
+
+function safeError(err) {
+  const msg = err?.message || "";
+  if (msg.includes("rate limit") || msg.includes("Rate limit")) return "AI provider rate limit reached — try again shortly.";
+  if (msg.includes("invalid_api_key") || msg.includes("Incorrect API key")) return "Invalid API key.";
+  if (msg.includes("insufficient_quota")) return "API quota exceeded on the configured key.";
+  return "AI request failed. Check your API key and try again.";
+}
+
 const SYSTEM_PROMPT = `You are a senior equity research analyst specializing in SEC filing analysis. You have just read the relevant sections of a public company's SEC filing (10-K or 10-Q).
 
 Generate a structured, professional analysis. Respond ONLY with valid JSON — no markdown, no code fences.
@@ -46,13 +58,17 @@ export default async function handler(req, res) {
   }
 
   const isAnthropic = key.startsWith("sk-ant");
+  if (!(isAnthropic ? ANTHROPIC_KEY_RE : OPENAI_KEY_RE).test(key)) {
+    return res.status(401).json({ error: "Invalid API key format." });
+  }
 
-  // Build the user prompt from whatever sections we have
+  // Build the user prompt from whatever sections we have (capped to prevent oversized payloads)
+  const cap = s => (typeof s === "string" ? s.slice(0, MAX_SECTION_LEN) : "");
   const textParts = [];
-  if (sections.riskFactors) textParts.push(`=== ITEM 1A — RISK FACTORS ===\n${sections.riskFactors}`);
-  if (sections.mda)         textParts.push(`=== ITEM 7 / ITEM 2 — MD&A ===\n${sections.mda}`);
-  if (sections.results)     textParts.push(`=== RESULTS OF OPERATIONS ===\n${sections.results}`);
-  if (sections.fullText && !textParts.length) textParts.push(`=== FILING EXCERPT ===\n${sections.fullText}`);
+  if (sections.riskFactors) textParts.push(`=== ITEM 1A — RISK FACTORS ===\n${cap(sections.riskFactors)}`);
+  if (sections.mda)         textParts.push(`=== ITEM 7 / ITEM 2 — MD&A ===\n${cap(sections.mda)}`);
+  if (sections.results)     textParts.push(`=== RESULTS OF OPERATIONS ===\n${cap(sections.results)}`);
+  if (sections.fullText && !textParts.length) textParts.push(`=== FILING EXCERPT ===\n${cap(sections.fullText)}`);
 
   if (!textParts.length) {
     return res.status(400).json({ error: "No extractable text in this filing" });
@@ -122,6 +138,6 @@ Generate a structured JSON analysis. Return the JSON object directly — no mark
     res.json(parsed);
   } catch (err) {
     console.error("sec-summary error:", err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: safeError(err) });
   }
 }

@@ -2,6 +2,17 @@
 // POST { query, apiKey }
 // Returns { filters, description, reasoning }
 
+const OPENAI_KEY_RE    = /^sk-[A-Za-z0-9\-_]{20,}$/;
+const ANTHROPIC_KEY_RE = /^sk-ant-[A-Za-z0-9\-_]{20,}$/;
+
+function safeError(err) {
+  const msg = err?.message || "";
+  if (msg.includes("rate limit") || msg.includes("Rate limit")) return "AI provider rate limit reached — try again shortly.";
+  if (msg.includes("invalid_api_key") || msg.includes("Incorrect API key")) return "Invalid API key.";
+  if (msg.includes("insufficient_quota")) return "API quota exceeded on the configured key.";
+  return "AI request failed. Check your API key and try again.";
+}
+
 const SYSTEM_PROMPT = `You are a quantitative equity research assistant for a stock screener tool.
 
 Your job: translate a plain-English stock screening query into a structured filter object.
@@ -107,6 +118,9 @@ export default async function handler(req, res) {
   }
 
   const isAnthropic = key.startsWith("sk-ant");
+  if (!(isAnthropic ? ANTHROPIC_KEY_RE : OPENAI_KEY_RE).test(key)) {
+    return res.status(401).json({ error: "Invalid API key format." });
+  }
   const userPrompt = `Translate this stock screening query into filter parameters:\n\n"${query.trim()}"`;
 
   try {
@@ -174,6 +188,6 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("ai-screener error:", err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: safeError(err) });
   }
 }

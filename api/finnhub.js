@@ -7,15 +7,24 @@
 // Usage: GET /api/finnhub?_q=/quote%3Fsymbol%3DAAPL
 // The _q param is the full Finnhub path + query string, URL-encoded.
 
-// Only forward to these path prefixes — blocks abuse of the proxy
+// Explicit allowlist of permitted Finnhub path prefixes — keeps the proxy narrow
 const ALLOWED = [
   "/quote",
-  "/stock/",
+  "/stock/profile2",
+  "/stock/metric",
+  "/stock/peers",
+  "/stock/recommendation",
+  "/stock/earnings",
+  "/stock/candle",
+  "/stock/insider-transactions",
+  "/stock/insider-sentiment",
+  "/stock/ownership",
   "/company-news",
-  "/calendar/",
+  "/calendar/earnings",
   "/news",
   "/search",
-  "/forex/",
+  "/forex/candle",
+  "/forex/rates",
 ];
 
 // Cache TTLs (seconds) per endpoint — prices short, stable data long

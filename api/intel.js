@@ -2,6 +2,10 @@
 // Uses the same key resolution as api/copilot.js: env vars first, then user-supplied key.
 // Response shape: { whatThisIs, currentNarrative, keyRisks[], bullCase, bearCase }
 
+const OPENAI_KEY_RE    = /^sk-[A-Za-z0-9\-_]{20,}$/;
+const ANTHROPIC_KEY_RE = /^sk-ant-[A-Za-z0-9\-_]{20,}$/;
+const MAX_CONTEXT_LEN  = 8_000;
+
 const SYSTEM_PROMPT = `You are a financial intelligence engine embedded in a professional Bloomberg-style terminal called "Omnes Videntes."
 
 Given data about a financial asset, generate structured intelligence cards for a professional trader or analyst.
@@ -29,6 +33,14 @@ Rules:
 - Keep all text concise and professional — this is for experienced market participants
 - If limited data is provided, use your knowledge of the asset to fill gaps, but note uncertainty`;
 
+function safeError(err) {
+  const msg = err?.message || "";
+  if (msg.includes("rate limit") || msg.includes("Rate limit")) return "AI provider rate limit reached — try again shortly.";
+  if (msg.includes("invalid_api_key") || msg.includes("Incorrect API key")) return "Invalid API key.";
+  if (msg.includes("insufficient_quota")) return "API quota exceeded on the configured key.";
+  return "AI request failed. Check your API key and try again.";
+}
+
 export default async function handler(req, res) {
   if (req.method === "OPTIONS") {
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -41,20 +53,25 @@ export default async function handler(req, res) {
   const { id, context, apiKey } = req.body || {};
   if (!id) return res.status(400).json({ error: "id required" });
 
-  const key = process.env.OPENAI_KEY || process.env.ANTHROPIC_KEY || apiKey;
-  if (!key) {
+  const rawKey = process.env.OPENAI_KEY || process.env.ANTHROPIC_KEY || apiKey;
+  if (!rawKey) {
     return res.status(401).json({
       error: "no_key",
       message: "No API key configured. Enter your OpenAI or Anthropic key in the AI Copilot settings panel.",
     });
   }
 
-  const isAnthropic = key.startsWith("sk-ant");
+  const isAnthropic = rawKey.startsWith("sk-ant");
+  if (!(isAnthropic ? ANTHROPIC_KEY_RE : OPENAI_KEY_RE).test(rawKey)) {
+    return res.status(401).json({ error: "Invalid API key format." });
+  }
+
+  const safeContext = typeof context === "string" ? context.slice(0, MAX_CONTEXT_LEN) : null;
 
   const userPrompt = `Generate intelligence cards for the following financial asset.
 
-Asset ID: ${id}
-${context ? `\nLive market data:\n${context}` : "\nNo live data available — use your knowledge of this asset."}
+Asset ID: ${String(id).slice(0, 20)}
+${safeContext ? `\nLive market data:\n${safeContext}` : "\nNo live data available — use your knowledge of this asset."}
 
 Return a JSON object with keys: whatThisIs, currentNarrative, keyRisks (array of 4 strings), bullCase, bearCase.`;
 
@@ -65,7 +82,7 @@ Return a JSON object with keys: whatThisIs, currentNarrative, keyRisks (array of
       const r = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
-          "x-api-key":         key,
+          "x-api-key":         rawKey,
           "anthropic-version": "2023-06-01",
           "content-type":      "application/json",
         },
@@ -83,7 +100,7 @@ Return a JSON object with keys: whatThisIs, currentNarrative, keyRisks (array of
       const r = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": "Bearer " + key,
+          "Authorization": "Bearer " + rawKey,
           "Content-Type":  "application/json",
         },
         body: JSON.stringify({
@@ -108,7 +125,6 @@ Return a JSON object with keys: whatThisIs, currentNarrative, keyRisks (array of
     try {
       parsed = JSON.parse(clean);
     } catch {
-      // Last-ditch: try to extract JSON object from the text
       const match = clean.match(/\{[\s\S]*\}/);
       if (!match) throw new Error("AI returned non-JSON response");
       parsed = JSON.parse(match[0]);
@@ -125,6 +141,6 @@ Return a JSON object with keys: whatThisIs, currentNarrative, keyRisks (array of
     res.json(parsed);
   } catch (err) {
     console.error("intel error:", err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: safeError(err) });
   }
 }

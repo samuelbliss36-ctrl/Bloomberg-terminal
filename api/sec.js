@@ -104,7 +104,16 @@ async function handleFilings(ticker, res) {
   res.json({ cik, entityName, filings });
 }
 
+// Strict format validators — prevent path traversal / SSRF into unexpected EDGAR paths
+const CIK_RE        = /^\d{1,10}$/;
+const ACCESSION_RE  = /^\d{10}-\d{2}-\d{6}$/;
+const DOC_RE        = /^[a-zA-Z0-9._-]{1,120}$/;
+
 async function handleExtract(cik, accession, doc, res) {
+  if (!CIK_RE.test(cik))            return res.status(400).json({ error: "Invalid CIK format." });
+  if (!ACCESSION_RE.test(accession)) return res.status(400).json({ error: "Invalid accession format." });
+  if (!DOC_RE.test(doc))             return res.status(400).json({ error: "Invalid document filename." });
+
   const acc = accession.replace(/-/g, "");
   const url = `https://www.sec.gov/Archives/edgar/data/${cik}/${acc}/${doc}`;
 
@@ -178,6 +187,6 @@ export default async function handler(req, res) {
     }
   } catch (err) {
     console.error("sec error:", err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "SEC filing request failed" });
   }
 }
