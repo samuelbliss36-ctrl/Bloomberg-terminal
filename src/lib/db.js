@@ -307,6 +307,6 @@ export const alerts = {
   },
 };
 
-// ─── Convenience default export ───────────────────────────────────────────────
-const db = { portfolio, conversations, savedScreens, recentResearch, watchlist, alerts };
+// ─── Exports (both named and default for compatibility) ───────────────────────
+export const db = { portfolio, conversations, savedScreens, recentResearch, watchlist, alerts };
 export default db;
