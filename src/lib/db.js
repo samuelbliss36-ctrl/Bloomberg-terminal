@@ -13,11 +13,6 @@ function lsSet(key, val) {
   try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
 }
 
-// Dispatch so components listening for sync events can refresh
-function dispatchSync() {
-  window.dispatchEvent(new Event('ov:data-synced'));
-}
-
 // ─── Portfolio ─────────────────────────────────────────────────────────────────
 // Shape: [{ticker, shares, avgCost}]
 const LS_PORTFOLIO = 'ov_portfolio';

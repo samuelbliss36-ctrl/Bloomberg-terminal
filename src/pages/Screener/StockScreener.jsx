@@ -58,7 +58,7 @@ export default function StockScreener({ onSelectTicker, onContextUpdate }) {
     dbScreens.save(updated, user?.id);
     setSaveNameInput("");
     setShowSaveInput(false);
-  }, [saveNameInput, f, userScreens, user, aiInterpretation]);
+  }, [saveNameInput, f, userScreens, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const deleteScreen = useCallback((id) => {
     const updated = userScreens.filter(s => s.id !== id);
