@@ -7,7 +7,7 @@ import { useIntelCard } from "../../../hooks/useIntelCard";
 import RelatedLinks from "./RelatedLinks";
 
 export default function EquityResearchPanel({ item, onClose, onOpen }) {
-  const TABS = ["Overview","Financials","Valuation","News","Peers","Intelligence"];
+  const TABS = ["Overview","Financials","Valuation","News","Peers","Intelligence","SEC"];
   const [activeTab, setActiveTab] = useState("Overview");
   const [quote, setQuote]         = useState(null);
   const [profile, setProfile]     = useState(null);
@@ -24,6 +24,19 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
   const [peerQ, setPeerQ]         = useState({});
   const [peerM, setPeerM]         = useState({});
   const [yahooStats, setYahooStats] = useState(null);
+  // SEC state
+  const [secFilings, setSecFilings]   = useState(null);
+  const [secLoading, setSecLoading]   = useState(false);
+  const [secError, setSecError]       = useState(null);
+  const [secCik, setSecCik]           = useState(null);
+  const [secEntityName, setSecEntityName] = useState(null);
+  const [activeFiling, setActiveFiling]   = useState(null);
+  const [secExtract, setSecExtract]   = useState(null);
+  const [secExtractLoading, setSecExtractLoading] = useState(false);
+  const [secExtractError, setSecExtractError]     = useState(null);
+  const [secSummary, setSecSummary]   = useState(null);
+  const [secSummaryLoading, setSecSummaryLoading] = useState(false);
+  const [secSummaryError, setSecSummaryError]     = useState(null);
   const loadedTabs = useRef(new Set(["Overview"]));
 
   useEffect(() => {
@@ -34,6 +47,11 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
     setEarnings(null); setRecs(null); setPt(undefined);
     setNews(null); setPeers(null); setPeerQ({}); setPeerM({});
     setYahooStats(null);
+    setSecFilings(null); setSecLoading(false); setSecError(null);
+    setSecCik(null); setSecEntityName(null);
+    setActiveFiling(null); setSecExtract(null);
+    setSecExtractLoading(false); setSecExtractError(null);
+    setSecSummary(null); setSecSummaryLoading(false); setSecSummaryError(null);
 
     Promise.all([
       api("/quote?symbol=" + item.ticker),
@@ -121,6 +139,19 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
         }
         setPeerQ({...qMap}); setPeerM({...mMap});
       }).catch(() => setPeers([]));
+    }
+    if (activeTab === "SEC") {
+      setSecLoading(true); setSecError(null);
+      fetch("/api/sec?mode=filings&ticker=" + encodeURIComponent(item.ticker))
+        .then(r => r.json())
+        .then(d => {
+          if (d.error) throw new Error(d.error);
+          setSecCik(d.cik);
+          setSecEntityName(d.entityName);
+          setSecFilings(d.filings || []);
+          setSecLoading(false);
+        })
+        .catch(e => { setSecError(e.message); setSecLoading(false); });
     }
   }, [activeTab]); // eslint-disable-line
 
@@ -613,6 +644,254 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
     );
   };
 
+  // ── SEC helpers ─────────────────────────────────────────────────────────────
+  const loadFilingSummary = async (filing) => {
+    setActiveFiling(filing);
+    setSecExtract(null); setSecExtractError(null); setSecExtractLoading(true);
+    setSecSummary(null); setSecSummaryError(null); setSecSummaryLoading(false);
+
+    // Step 1: extract text from the filing document
+    let sections;
+    try {
+      const r = await fetch(
+        `/api/sec?mode=extract&cik=${secCik}&accession=${encodeURIComponent(filing.accession)}&doc=${encodeURIComponent(filing.primaryDoc)}`
+      );
+      const d = await r.json();
+      if (d.error) throw new Error(d.error);
+      sections = d;
+      setSecExtract(d);
+      setSecExtractLoading(false);
+    } catch(e) {
+      setSecExtractError(e.message || "Failed to extract filing text");
+      setSecExtractLoading(false);
+      return;
+    }
+
+    // Step 2: AI summary
+    setSecSummaryLoading(true);
+    let apiKey;
+    try { apiKey = localStorage.getItem("ov_copilot_key") || undefined; } catch {}
+    try {
+      const r = await fetch("/api/sec-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticker:      item.ticker,
+          entityName:  secEntityName,
+          formType:    filing.form,
+          period:      filing.period,
+          filingDate:  filing.date,
+          sections,
+          apiKey,
+        }),
+      });
+      const d = await r.json();
+      if (d.error) throw new Error(d.message || d.error);
+      setSecSummary(d);
+    } catch(e) {
+      setSecSummaryError(e.message || "AI summary failed");
+    } finally {
+      setSecSummaryLoading(false);
+    }
+  };
+
+  const renderSEC = () => {
+    if (secLoading) return (
+      <div className="flex items-center gap-2 font-mono py-6" style={{ color:"var(--text-3)", fontSize:11 }}>
+        <span style={{ width:7, height:7, borderRadius:"50%", background:"#7c3aed", display:"inline-block", animation:"ov-pulse 1.4s ease-in-out infinite" }}/>
+        Searching EDGAR…
+      </div>
+    );
+    if (secError) return (
+      <div className="font-mono p-3" style={{ color:"#e11d48", background:"rgba(225,29,72,0.06)", border:"1px solid rgba(225,29,72,0.2)", borderRadius:6, fontSize:11 }}>
+        ⚠ {secError}
+      </div>
+    );
+    if (!secFilings) return null;
+    if (!secFilings.length) return (
+      <div className="font-mono py-4" style={{ color:"var(--text-3)", fontSize:11 }}>No 10-K or 10-Q filings found in EDGAR for {item.ticker}.</div>
+    );
+
+    const accentFor = form => form === "10-K" ? "#7c3aed" : "#2563eb";
+
+    return (
+      <div>
+        <style>{`@keyframes ov-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}`}</style>
+
+        {/* Filing list */}
+        {!activeFiling && (
+          <div>
+            <div className="font-mono mb-3" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>
+              Recent SEC Filings — {secEntityName || item.ticker}
+            </div>
+            <div style={{ borderTop:"1px solid rgba(15,23,42,0.09)" }}>
+              {secFilings.map((f, i) => (
+                <div key={i} className="flex items-center justify-between py-2.5"
+                  style={{ borderBottom:"1px solid rgba(15,23,42,0.06)", cursor: f.primaryDoc ? "pointer" : "default" }}
+                  onClick={() => f.primaryDoc && loadFilingSummary(f)}
+                  onMouseEnter={e => { if (f.primaryDoc) e.currentTarget.style.background = "var(--surface-0)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono font-bold" style={{ color: accentFor(f.form), fontSize:11, width:36, flexShrink:0 }}>{f.form}</span>
+                    <div>
+                      <div className="font-mono" style={{ color:"var(--text-1)", fontSize:11 }}>Period: {f.period || "—"}</div>
+                      <div className="font-mono" style={{ color:"var(--text-3)", fontSize:9 }}>Filed {f.date}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {f.primaryDoc && (
+                      <span className="font-mono" style={{ color:"#2563eb", fontSize:9 }}>✦ AI Summary →</span>
+                    )}
+                    <a href={f.indexUrl} target="_blank" rel="noopener noreferrer"
+                      className="font-mono"
+                      style={{ color:"var(--text-3)", fontSize:9, textDecoration:"none" }}
+                      onClick={e => e.stopPropagation()}>
+                      SEC ↗
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="font-mono mt-3" style={{ color:"var(--text-3)", fontSize:9 }}>
+              Click a filing to generate an AI summary · Powered by SEC EDGAR (free, no API key)
+            </div>
+          </div>
+        )}
+
+        {/* Active filing summary */}
+        {activeFiling && (
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <button onClick={() => { setActiveFiling(null); setSecExtract(null); setSecSummary(null); }}
+                className="font-mono" style={{ color:"var(--text-3)", background:"none", border:"none", cursor:"pointer", fontSize:11 }}>
+                ← Back
+              </button>
+              <span className="font-mono font-bold" style={{ color: accentFor(activeFiling.form), fontSize:11 }}>{activeFiling.form}</span>
+              <span className="font-mono" style={{ color:"var(--text-1)", fontSize:11 }}>Period {activeFiling.period}</span>
+              <span className="font-mono" style={{ color:"var(--text-3)", fontSize:10 }}>Filed {activeFiling.date}</span>
+              <a href={activeFiling.indexUrl} target="_blank" rel="noopener noreferrer"
+                className="font-mono ml-auto" style={{ color:"#2563eb", fontSize:9, textDecoration:"none" }}>
+                View on SEC ↗
+              </a>
+            </div>
+
+            {/* Extract status */}
+            {secExtractLoading && (
+              <div className="flex items-center gap-2 font-mono mb-3" style={{ color:"var(--text-3)", fontSize:10 }}>
+                <span style={{ width:6, height:6, borderRadius:"50%", background:"#b45309", display:"inline-block", animation:"ov-pulse 1.4s ease-in-out infinite" }}/>
+                Fetching filing document from EDGAR…
+              </div>
+            )}
+            {secExtractError && (
+              <div className="font-mono mb-3 p-3" style={{ color:"#e11d48", background:"rgba(225,29,72,0.06)", border:"1px solid rgba(225,29,72,0.2)", borderRadius:6, fontSize:10 }}>
+                ⚠ Extract failed: {secExtractError}
+              </div>
+            )}
+            {secExtract && !secExtractLoading && (
+              <div className="font-mono mb-3 px-3 py-1.5" style={{ background:"rgba(5,150,105,0.06)", border:"1px solid rgba(5,150,105,0.2)", borderRadius:4, fontSize:9, color:"#059669" }}>
+                ✓ Fetched {Math.round(secExtract.charsFetched / 1024)}KB from EDGAR
+                {secExtract.riskFactors ? " · Risk Factors extracted" : ""}
+                {secExtract.mda ? " · MD&A extracted" : ""}
+                {secExtract.truncated ? " · document truncated" : ""}
+              </div>
+            )}
+
+            {/* AI summary loading */}
+            {secSummaryLoading && (
+              <div className="flex items-center gap-2 font-mono mb-3" style={{ color:"var(--text-3)", fontSize:10 }}>
+                <span style={{ width:6, height:6, borderRadius:"50%", background:"#2563eb", display:"inline-block", animation:"ov-pulse 1.4s ease-in-out infinite" }}/>
+                Generating AI analysis…
+              </div>
+            )}
+            {secSummaryError && (
+              <div className="font-mono mb-3 p-3" style={{ color:"#e11d48", background:"rgba(225,29,72,0.06)", border:"1px solid rgba(225,29,72,0.2)", borderRadius:6, fontSize:10 }}>
+                ⚠ {secSummaryError}
+              </div>
+            )}
+
+            {/* Summary cards */}
+            {secSummary && (
+              <div className="flex flex-col gap-4">
+                {/* Headline */}
+                <div style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:6, padding:"10px 14px" }}>
+                  <div className="font-mono mb-1" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Takeaway</div>
+                  <p className="font-mono" style={{ color:"var(--text-1)", fontSize:12, lineHeight:1.6, margin:0, fontWeight:500 }}>{secSummary.headline}</p>
+                </div>
+
+                {/* Financial Highlights */}
+                {secSummary.financialHighlights?.length > 0 && (
+                  <div>
+                    <div className="font-mono mb-2" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Financial Highlights</div>
+                    <div className="flex flex-col gap-1">
+                      {secSummary.financialHighlights.map((h, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <span className="font-mono flex-shrink-0" style={{ color:"#059669", fontSize:10 }}>▸</span>
+                          <span className="font-mono" style={{ color:"var(--text-1)", fontSize:10, lineHeight:1.65 }}>{h}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* MD&A + Outlook side-by-side */}
+                <div className="grid gap-3" style={{ gridTemplateColumns:"1fr 1fr" }}>
+                  <div style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:6, padding:"10px 12px" }}>
+                    <div className="font-mono mb-1.5" style={{ color:"#2563eb", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>MD&amp;A Insights</div>
+                    <p className="font-mono" style={{ color:"var(--text-1)", fontSize:10, lineHeight:1.65, margin:0 }}>{secSummary.mdaInsights}</p>
+                  </div>
+                  <div style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:6, padding:"10px 12px" }}>
+                    <div className="font-mono mb-1.5" style={{ color:"#b45309", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Outlook / Guidance</div>
+                    <p className="font-mono" style={{ color:"var(--text-1)", fontSize:10, lineHeight:1.65, margin:0 }}>{secSummary.outlook}</p>
+                  </div>
+                </div>
+
+                {/* Risk Factors */}
+                {secSummary.riskFactors?.length > 0 && (
+                  <div>
+                    <div className="font-mono mb-2" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Risk Factors</div>
+                    <div className="flex flex-col gap-1">
+                      {secSummary.riskFactors.map((r, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <span className="font-mono flex-shrink-0" style={{ color:"#e11d48", fontSize:10 }}>▸</span>
+                          <span className="font-mono" style={{ color:"var(--text-2)", fontSize:10, lineHeight:1.65 }}>{r}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Watch Points */}
+                {secSummary.watchPoints?.length > 0 && (
+                  <div>
+                    <div className="font-mono mb-2" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Watch Points</div>
+                    <div className="flex flex-col gap-1">
+                      {secSummary.watchPoints.map((w, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <span className="font-mono flex-shrink-0" style={{ color:"#b45309", fontSize:10 }}>◆</span>
+                          <span className="font-mono" style={{ color:"var(--text-2)", fontSize:10, lineHeight:1.65 }}>{w}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Footer */}
+                <div className="flex items-center gap-2" style={{ paddingTop:4, borderTop:"1px solid rgba(15,23,42,0.08)" }}>
+                  <span className="font-mono" style={{ color:"var(--text-3)", fontSize:9 }}>
+                    ✦ AI analysis of SEC {activeFiling.form} · EDGAR free public data
+                  </span>
+                  {activeFiling.truncated && (
+                    <span className="font-mono" style={{ color:"#b45309", fontSize:9 }}>· document truncated (first 500KB)</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderIntelligence = () => (
     <div>
       {loadingBase ? (
@@ -666,6 +945,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
           : activeTab==="News"         ? renderNews()
           : activeTab==="Peers"        ? renderPeers()
           : activeTab==="Intelligence" ? renderIntelligence()
+          : activeTab==="SEC"          ? renderSEC()
           : null}
       </div>
     </div>
