@@ -247,6 +247,16 @@ export const watchlist = {
   },
 };
 
+// ─── Price Alerts ─────────────────────────────────────────────────────────────
+// Shape: [{id, ticker, targetPrice, condition:'above'|'below', note, active, createdAt, triggeredAt, triggeredPrice}]
+// Local-only — Telegram credentials are also local-only (never synced to cloud).
+const LS_ALERTS = 'ov_alerts';
+
+export const alerts = {
+  load() { return lsGet(LS_ALERTS, []); },
+  save(list) { lsSet(LS_ALERTS, list); },
+};
+
 // ─── Convenience default export ───────────────────────────────────────────────
-const db = { portfolio, conversations, savedScreens, recentResearch, watchlist };
+const db = { portfolio, conversations, savedScreens, recentResearch, watchlist, alerts };
 export default db;

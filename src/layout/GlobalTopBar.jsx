@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useMemo, memo, useCallback } from 'react';
-import { Search, Zap, RefreshCw, Settings, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Search, Zap, RefreshCw, Settings, ArrowUpRight, ArrowDownRight, Bell } from 'lucide-react';
 import { fmt, clr, bg } from '../lib/fmt';
 import { _apiCache } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import { useAlerts } from '../context/AlertsContext';
 import AuthModal from '../components/auth/AuthModal';
+import { AlertsPanel } from '../components/alerts/AlertsPanel';
 
 // ─── TICKER TAPE (standalone) ─────────────────────────────────────────────────
 export const TickerTape = memo(function TickerTape({ tapeData }) {
@@ -128,9 +130,11 @@ export function TopBarClock() {
 export function GlobalTopBar({ ticker, setTicker, tapeData, quote, loading, settings, onToggleTape, onToggleDark }) {
   const [input, setInput] = useState(ticker);
   const [focused, setFocused] = useState(false);
-  const [authOpen, setAuthOpen] = useState(false);
+  const [authOpen,   setAuthOpen]   = useState(false);
+  const [alertsOpen, setAlertsOpen] = useState(false);
   const tapeRef = useRef(null);
   const { user, syncing } = useAuth();
+  const { activeCount } = useAlerts();
 
   useEffect(() => { setInput(ticker); }, [ticker]);
 
@@ -250,6 +254,32 @@ export function GlobalTopBar({ ticker, setTicker, tapeData, quote, loading, sett
           </span>
         </button>
 
+        {/* Price-alerts bell */}
+        <button
+          onClick={() => setAlertsOpen(o => !o)}
+          title="Price Alerts"
+          style={{
+            position: 'relative',
+            display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px',
+            background: alertsOpen ? 'rgba(245,158,11,0.12)' : activeCount > 0 ? 'rgba(245,158,11,0.08)' : 'transparent',
+            border: `1px solid ${alertsOpen || activeCount > 0 ? 'rgba(245,158,11,0.35)' : 'var(--border)'}`,
+            borderRadius: 6, cursor: 'pointer', transition: 'all 0.15s',
+            color: activeCount > 0 ? '#f59e0b' : 'var(--text-3)',
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+        >
+          <Bell size={12} />
+          {activeCount > 0 && (
+            <span style={{
+              position: 'absolute', top: -4, right: -4,
+              background: '#f59e0b', color: '#fff', fontSize: 8, fontWeight: 700,
+              borderRadius: 10, minWidth: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: "'Inter',sans-serif", lineHeight: 1, padding: '0 3px',
+            }}>{activeCount}</span>
+          )}
+        </button>
+
         {/* Cloud sync / auth button */}
         <button
           onClick={() => setAuthOpen(true)}
@@ -282,6 +312,9 @@ export function GlobalTopBar({ ticker, setTicker, tapeData, quote, loading, sett
 
       {/* Auth modal */}
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
+
+      {/* Price alerts panel */}
+      {alertsOpen && <AlertsPanel onClose={() => setAlertsOpen(false)} />}
 
       {/* Clock */}
       <TopBarClock />

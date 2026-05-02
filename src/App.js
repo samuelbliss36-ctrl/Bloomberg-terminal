@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { AlertsProvider } from './context/AlertsContext';
 import { watchlist as dbWatchlist } from './lib/db';
 import { api } from './lib/api';
 import { delay, loadSettings, saveSettings } from './lib/fmt';
@@ -21,7 +22,13 @@ import ResearchBrowser from './pages/Research/ResearchBrowser';
 import EarningsCalendarPage from './pages/Earnings/EarningsCalendarPage';
 
 export default function App() {
-  return <AuthProvider><AppInner /></AuthProvider>;
+  return (
+    <AuthProvider>
+      <AlertsProvider>
+        <AppInner />
+      </AlertsProvider>
+    </AuthProvider>
+  );
 }
 
 function AppInner() {
