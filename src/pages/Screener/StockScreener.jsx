@@ -301,7 +301,7 @@ export default function StockScreener({ onSelectTicker }) {
               value={aiQuery}
               onChange={e => setAiQuery(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") runAiScreen(); }}
-              placeholder='Describe what you\'re looking for… e.g. "profitable small-cap tech with low debt and high growth"'
+              placeholder='Describe what you are looking for... e.g. "profitable small-cap tech with low debt and high growth"'
               style={{ flex:1, background:"none", border:"none", outline:"none",
                 fontSize:11, color:"var(--text-1)", fontFamily:"'IBM Plex Mono',monospace" }}
             />
