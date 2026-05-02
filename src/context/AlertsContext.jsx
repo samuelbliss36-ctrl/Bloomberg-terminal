@@ -6,6 +6,7 @@ import { createContext, useContext, useState, useEffect, useRef, useCallback } f
 import { alerts as dbAlerts } from '../lib/db';
 import { api } from '../lib/api';
 import { useAuth } from './AuthContext';
+import { supabase } from '../lib/supabase';
 
 const AlertsContext = createContext({
   alerts:      [],
@@ -43,11 +44,24 @@ async function sendTelegram(token, chatId, text) {
   } catch { return false; }
 }
 
+// Read telegram config: localStorage first (fast), then user metadata (cross-device)
+function loadTelegram(user) {
+  const local = lsGet(telegramKey(user?.id), null);
+  if (local?.token) return local;
+  const meta = user?.user_metadata || {};
+  if (meta.telegram_token) {
+    const cfg = { token: meta.telegram_token, chatId: meta.telegram_chat_id || '' };
+    if (user?.id) lsSet(telegramKey(user.id), cfg); // cache locally
+    return cfg;
+  }
+  return { token: '', chatId: '' };
+}
+
 export function AlertsProvider({ children }) {
   const { user } = useAuth();
   const [alertList, setAlertList] = useState(() => dbAlerts.load());
-  const [telegram,  setTgState]   = useState(() => lsGet(telegramKey(user?.id), { token: '', chatId: '' }));
-  const [prices,    setPrices]    = useState({});   // { TICKER: latestPrice }
+  const [telegram,  setTgState]   = useState(() => loadTelegram(user));
+  const [prices,    setPrices]    = useState({});
 
   // Refs so the polling closure always sees the latest values
   const alertsRef   = useRef(alertList);
@@ -57,7 +71,15 @@ export function AlertsProvider({ children }) {
   useEffect(() => { telegramRef.current = telegram; }, [telegram]);
   useEffect(() => { userRef.current = user; },         [user]);
 
-  // ── Reload from localStorage when cloud sync completes ───────────────────
+  // ── When user signs in, reload telegram from metadata if not in localStorage ─
+  useEffect(() => {
+    if (!user) return;
+    const cfg = loadTelegram(user);
+    setTgState(cfg);
+    telegramRef.current = cfg;
+  }, [user]); // eslint-disable-line
+
+  // ── Reload alerts from localStorage when cloud sync completes ────────────
   useEffect(() => {
     const handler = () => {
       const synced = dbAlerts.load();
@@ -74,9 +96,15 @@ export function AlertsProvider({ children }) {
     dbAlerts.save(list, userRef.current?.id);
   }, []);
 
+  // Save telegram: localStorage (instant) + Supabase user metadata (cross-device)
   const setTelegram = useCallback((cfg) => {
     setTgState(cfg);
     lsSet(telegramKey(userRef.current?.id), cfg);
+    if (supabase && userRef.current) {
+      supabase.auth.updateUser({
+        data: { telegram_token: cfg.token, telegram_chat_id: cfg.chatId },
+      }).catch(e => console.warn('telegram metadata sync failed:', e.message));
+    }
   }, []);
 
   // ── CRUD ─────────────────────────────────────────────────────────────────
