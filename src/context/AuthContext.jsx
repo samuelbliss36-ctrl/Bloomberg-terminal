@@ -1,88 +1,76 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase, isConfigured } from '../lib/supabase';
-import { db } from '../lib/db';
+import { portfolio, conversations, savedScreens, recentResearch, watchlist, alerts } from '../lib/db';
 
-const AuthContext = createContext(null);
+const AuthContext = createContext({
+  user:     null,
+  loading:  true,
+  syncing:  false,
+  signIn:   async () => {},
+  signUp:   async () => {},
+  signOut:  async () => {},
+});
+
+export function useAuth() { return useContext(AuthContext); }
+
+async function syncAllDown(userId) {
+  await Promise.all([
+    portfolio.sync(userId),
+    conversations.sync(userId),
+    savedScreens.sync(userId),
+    recentResearch.sync(userId),
+    watchlist.sync(userId),
+    alerts.sync(userId),
+  ]);
+  window.dispatchEvent(new Event('ov:data-synced'));
+}
 
 export function AuthProvider({ children }) {
-  const [user, setUser]       = useState(null);
+  const [user,    setUser]    = useState(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
 
-  // Run cloud sync after sign-in and dispatch data-synced event
-  const syncAllData = useCallback(async (authUser) => {
-    if (!authUser || !isConfigured) return;
-    setSyncing(true);
-    try {
-      await Promise.all([
-        db.portfolio.sync(authUser.id),
-        db.conversations.sync(authUser.id),
-        db.savedScreens.sync(authUser.id),
-        db.recentResearch.sync(authUser.id),
-      ]);
-      window.dispatchEvent(new CustomEvent('ov:data-synced'));
-    } catch (err) {
-      console.warn('[AuthContext.syncAllData]', err?.message || err);
-    } finally {
-      setSyncing(false);
-    }
-  }, []);
-
   useEffect(() => {
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
+    if (!supabase) { setLoading(false); return; }
 
-    // Get initial session
+    // Get current session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
-      const u = session?.user ?? null;
-      setUser(u);
+      setUser(session?.user ?? null);
       setLoading(false);
-      if (u) syncAllData(u);
+      if (session?.user) {
+        setSyncing(true);
+        syncAllDown(session.user.id).finally(() => setSyncing(false));
+      }
     });
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        const u = session?.user ?? null;
-        setUser(u);
-        if (event === 'SIGNED_IN' && u) {
-          syncAllData(u);
-        }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const u = session?.user ?? null;
+      setUser(u);
+      if (u) {
+        setSyncing(true);
+        syncAllDown(u.id).finally(() => setSyncing(false));
       }
-    );
+    });
 
     return () => subscription.unsubscribe();
-  }, [syncAllData]);
+  }, []);
 
   const signIn = useCallback(async (email, password) => {
-    if (!isConfigured) {
-      throw new Error(
-        'Supabase not configured — add REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY to .env'
-      );
-    }
+    if (!isConfigured) throw new Error('Supabase not configured — add REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY to .env');
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   }, []);
 
   const signUp = useCallback(async (email, password) => {
-    if (!isConfigured) {
-      throw new Error(
-        'Supabase not configured — add REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY to .env'
-      );
-    }
+    if (!isConfigured) throw new Error('Supabase not configured — add REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY to .env');
     const { error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
   }, []);
 
   const signOut = useCallback(async () => {
     if (!supabase) return;
-    try {
-      await supabase.auth.signOut();
-    } catch (err) {
-      console.warn('[AuthContext.signOut]', err?.message || err);
-    }
+    await supabase.auth.signOut();
     setUser(null);
   }, []);
 
@@ -91,10 +79,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within an AuthProvider');
-  return ctx;
 }
