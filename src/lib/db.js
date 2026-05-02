@@ -249,12 +249,62 @@ export const watchlist = {
 
 // ─── Price Alerts ─────────────────────────────────────────────────────────────
 // Shape: [{id, ticker, targetPrice, condition:'above'|'below', note, active, createdAt, triggeredAt, triggeredPrice}]
-// Local-only — Telegram credentials are also local-only (never synced to cloud).
+// Alert list syncs to Supabase. Telegram credentials stay local-only (security).
 const LS_ALERTS = 'ov_alerts';
+
+async function _syncAlertsUp(userId, list) {
+  if (!supabase || !userId) return;
+  try {
+    await supabase.from('price_alerts').delete().eq('user_id', userId);
+    if (list.length) {
+      const rows = list.map(a => ({
+        id:              a.id,
+        user_id:         userId,
+        ticker:          a.ticker,
+        target_price:    a.targetPrice,
+        condition:       a.condition,
+        note:            a.note || '',
+        active:          a.active,
+        created_at:      a.createdAt,
+        triggered_at:    a.triggeredAt   || null,
+        triggered_price: a.triggeredPrice != null ? a.triggeredPrice : null,
+        updated_at:      new Date().toISOString(),
+      }));
+      await supabase.from('price_alerts').insert(rows);
+    }
+  } catch (e) { console.warn('alerts sync-up failed:', e.message); }
+}
 
 export const alerts = {
   load() { return lsGet(LS_ALERTS, []); },
-  save(list) { lsSet(LS_ALERTS, list); },
+
+  save(list, userId) {
+    lsSet(LS_ALERTS, list);
+    if (userId) _syncAlertsUp(userId, list); // fire-and-forget
+  },
+
+  async sync(userId) {
+    if (!supabase || !userId) return null;
+    try {
+      const { data, error } = await supabase
+        .from('price_alerts').select('*').eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (error || !data?.length) return null;
+      const list = data.map(r => ({
+        id:             r.id,
+        ticker:         r.ticker,
+        targetPrice:    +r.target_price,
+        condition:      r.condition,
+        note:           r.note || '',
+        active:         r.active,
+        createdAt:      r.created_at,
+        triggeredAt:    r.triggered_at   || null,
+        triggeredPrice: r.triggered_price != null ? +r.triggered_price : null,
+      }));
+      lsSet(LS_ALERTS, list);
+      return list;
+    } catch (e) { console.warn('alerts sync-down failed:', e.message); return null; }
+  },
 };
 
 // ─── Convenience default export ───────────────────────────────────────────────

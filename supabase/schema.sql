@@ -54,6 +54,25 @@ ALTER TABLE watchlists ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users manage their own watchlist"
   ON watchlists FOR ALL USING (auth.uid() = user_id);
 
+-- ── Price Alerts ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS price_alerts (
+  id              uuid        PRIMARY KEY,
+  user_id         uuid        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  ticker          text        NOT NULL,
+  target_price    numeric(18,6) NOT NULL,
+  condition       text        NOT NULL CHECK (condition IN ('above','below')),
+  note            text        NOT NULL DEFAULT '',
+  active          boolean     NOT NULL DEFAULT true,
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  triggered_at    timestamptz,
+  triggered_price numeric(18,6),
+  updated_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS price_alerts_user_id_idx ON price_alerts(user_id);
+ALTER TABLE price_alerts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users manage their own alerts"
+  ON price_alerts FOR ALL USING (auth.uid() = user_id);
+
 -- ── Recent Research ──────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS recent_research (
   user_id   uuid        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,

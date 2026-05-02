@@ -5,6 +5,7 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { alerts as dbAlerts } from '../lib/db';
 import { api } from '../lib/api';
+import { useAuth } from './AuthContext';
 
 const AlertsContext = createContext({
   alerts:      [],
@@ -41,6 +42,7 @@ async function sendTelegram(token, chatId, text) {
 }
 
 export function AlertsProvider({ children }) {
+  const { user } = useAuth();
   const [alertList, setAlertList] = useState(() => dbAlerts.load());
   const [telegram,  setTgState]   = useState(() => lsGet(LS_TELEGRAM, { token: '', chatId: '' }));
   const [prices,    setPrices]    = useState({});   // { TICKER: latestPrice }
@@ -48,13 +50,26 @@ export function AlertsProvider({ children }) {
   // Refs so the polling closure always sees the latest values
   const alertsRef   = useRef(alertList);
   const telegramRef = useRef(telegram);
+  const userRef     = useRef(user);
   useEffect(() => { alertsRef.current = alertList;  }, [alertList]);
   useEffect(() => { telegramRef.current = telegram; }, [telegram]);
+  useEffect(() => { userRef.current = user; },         [user]);
+
+  // ── Reload from localStorage when cloud sync completes ───────────────────
+  useEffect(() => {
+    const handler = () => {
+      const synced = dbAlerts.load();
+      setAlertList(synced);
+      alertsRef.current = synced;
+    };
+    window.addEventListener('ov:data-synced', handler);
+    return () => window.removeEventListener('ov:data-synced', handler);
+  }, []);
 
   // ── Persist helpers ──────────────────────────────────────────────────────
   const saveAlerts = useCallback((list) => {
     setAlertList(list);
-    dbAlerts.save(list);
+    dbAlerts.save(list, userRef.current?.id);
   }, []);
 
   const setTelegram = useCallback((cfg) => {
