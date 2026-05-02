@@ -7,6 +7,7 @@ import { SCREENER_UNIVERSE } from "../../screenerData";
 import { MdText } from "../../components/ui/MdText";
 import { db } from "../../lib/db";
 import { useAuth } from "../../context/AuthContext";
+import { supabase } from "../../lib/supabase";
 
 function MarketSessionBadges() {
   const SESSIONS = [
@@ -255,10 +256,15 @@ export default function PortfolioTracker() {
     const context = lines.join("\n");
 
     const savedKey = localStorage.getItem("ov_copilot_key") || "";
+    let authHeader = {};
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) authHeader = { Authorization: `Bearer ${session.access_token}` };
+    } catch {}
     try {
       const r = await fetch("/api/copilot", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({
           messages: [{ role: "user", content:
             "Analyze my portfolio above. Provide:\n" +

@@ -223,11 +223,26 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
         headers: { "Content-Type":"application/json", ...authHeader },
         body: JSON.stringify({ messages: newMsgs, context, apiKey: apiKey || undefined }),
       });
+      if (res.status === 503) {
+        // Owner is authenticated but no server key configured — show config hint
+        const finalMsgs = [...newMsgs, { role:"assistant", content:"⚙️ **Server AI key not configured.** Add `PERPLEXITY_KEY` (or `OPENAI_KEY`) to **Vercel → Settings → Environment Variables**, then redeploy. You can also enter your own key via the ⚙ settings icon above." }];
+        setMsgs(finalMsgs);
+        persistConversation(finalMsgs, convTitle || q.slice(0,40));
+        setLoading(false);
+        return;
+      }
       if (res.status === 402) {
-        // Not subscribed and no user key — show upgrade wall
-        setMsgs(newMsgs.slice(0, -1)); // remove the user message we just added
-        setInput(q);                    // restore input
-        setShowUpgrade(true);
+        // Not subscribed and no user key — show upgrade wall (never for owner)
+        if (!isOwner(user)) {
+          setMsgs(newMsgs.slice(0, -1));
+          setInput(q);
+          setShowUpgrade(true);
+          setLoading(false);
+          return;
+        }
+        // Owner hitting 402 shouldn't happen, but just in case show config hint
+        const finalMsgs = [...newMsgs, { role:"assistant", content:"⚙️ Add `PERPLEXITY_KEY` to Vercel environment variables to enable the AI copilot." }];
+        setMsgs(finalMsgs);
         setLoading(false);
         return;
       }

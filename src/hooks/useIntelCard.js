@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { supabase } from "../lib/supabase";
 
 const CACHE_TTL = 3_600_000; // 1 hour
 
@@ -38,12 +39,17 @@ export function useIntelCard(id, context, { enabled = true } = {}) {
   const doFetch = useCallback(async (ctx) => {
     let apiKey;
     try { apiKey = localStorage.getItem("ov_copilot_key") || undefined; } catch {}
+    let authHeader = {};
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) authHeader = { Authorization: `Bearer ${session.access_token}` };
+    } catch {}
     setLoading(true);
     setError(null);
     try {
       const r = await fetch("/api/intel", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({ id, context: ctx || "", apiKey }),
       });
       const d = await r.json();

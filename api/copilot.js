@@ -182,7 +182,14 @@ export default async function handler(req, res) {
   }
 
   if (!rawKey) {
-    // Not subscribed and no user key → require subscription
+    // Owner is authenticated but no server key configured → config error, not payment error
+    if (isOwnerUser) {
+      return res.status(503).json({
+        error: "no_server_key",
+        message: "No server AI key configured. Add PERPLEXITY_KEY (or OPENAI_KEY) to Vercel → Settings → Environment Variables, then redeploy.",
+      });
+    }
+    // Non-owner, no subscription, no user key → require subscription
     return res.status(402).json({
       error: "subscription_required",
       message: "A Pro subscription is required to use the AI Copilot. Upgrade to get Perplexity live search AI.",

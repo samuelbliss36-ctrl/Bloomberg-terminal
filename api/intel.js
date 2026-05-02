@@ -1,9 +1,13 @@
 // AI Intelligence Card generator — returns structured JSON for any financial asset
-// Uses the same key resolution as api/copilot.js: env vars first, then user-supplied key.
+// Owner + active subscribers use server keys; others need user-supplied key.
 // Response shape: { whatThisIs, currentNarrative, keyRisks[], bullCase, bearCase }
 
+import { createClient } from '@supabase/supabase-js';
+
+const OWNER_EMAIL      = 'samuelbliss36@gmail.com';
 const OPENAI_KEY_RE    = /^sk-[A-Za-z0-9\-_]{20,}$/;
 const ANTHROPIC_KEY_RE = /^sk-ant-[A-Za-z0-9\-_]{20,}$/;
+const PERPLEXITY_KEY_RE = /^pplx-[A-Za-z0-9]{20,}$/;
 const MAX_CONTEXT_LEN  = 8_000;
 
 const SYSTEM_PROMPT = `You are a financial intelligence engine embedded in a professional Bloomberg-style terminal called "Omnes Videntes."
@@ -50,19 +54,51 @@ export default async function handler(req, res) {
   }
   if (req.method !== "POST") return res.status(405).end();
 
-  const { id, context, apiKey } = req.body || {};
+  const { id, context, apiKey: userApiKey } = req.body || {};
   if (!id) return res.status(400).json({ error: "id required" });
 
-  const rawKey = process.env.OPENAI_KEY || process.env.ANTHROPIC_KEY || apiKey;
+  // ── Auth check: identify owner / active subscriber ────────────────────────
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  let serverKeyAllowed = false;
+  let isOwnerUser = false;
+
+  if (token) {
+    try {
+      const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY);
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (!error && user) {
+        if (user.email === OWNER_EMAIL) {
+          serverKeyAllowed = true;
+          isOwnerUser = true;
+        } else {
+          const admin = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+          const { data: sub } = await admin.from('subscriptions').select('status').eq('user_id', user.id).single();
+          if (sub?.status === 'active') serverKeyAllowed = true;
+        }
+      }
+    } catch {}
+  }
+
+  // ── Key resolution ────────────────────────────────────────────────────────
+  let rawKey = null;
+  if (serverKeyAllowed) {
+    rawKey = process.env.PERPLEXITY_KEY || process.env.OPENAI_KEY || process.env.ANTHROPIC_KEY || null;
+  }
+  if (!rawKey && userApiKey) rawKey = userApiKey;
+
   if (!rawKey) {
+    if (isOwnerUser) {
+      return res.status(503).json({ error: "no_server_key", message: "No server AI key configured. Add PERPLEXITY_KEY to Vercel environment variables." });
+    }
     return res.status(401).json({
       error: "no_key",
       message: "No API key configured. Enter your OpenAI or Anthropic key in the AI Copilot settings panel.",
     });
   }
 
-  const isAnthropic = rawKey.startsWith("sk-ant");
-  if (!(isAnthropic ? ANTHROPIC_KEY_RE : OPENAI_KEY_RE).test(rawKey)) {
+  const isPerplexity = PERPLEXITY_KEY_RE.test(rawKey);
+  const isAnthropic  = rawKey.startsWith("sk-ant");
+  if (!isPerplexity && !(isAnthropic ? ANTHROPIC_KEY_RE : OPENAI_KEY_RE).test(rawKey)) {
     return res.status(401).json({ error: "Invalid API key format." });
   }
 
@@ -78,7 +114,23 @@ Return a JSON object with keys: whatThisIs, currentNarrative, keyRisks (array of
   try {
     let text;
 
-    if (isAnthropic) {
+    if (isPerplexity) {
+      const r = await fetch("https://api.perplexity.ai/chat/completions", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + rawKey, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "sonar-pro",
+          max_tokens: 900,
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user",   content: userPrompt },
+          ],
+        }),
+      });
+      const d = await r.json();
+      if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
+      text = d.choices?.[0]?.message?.content || "";
+    } else if (isAnthropic) {
       const r = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
@@ -99,10 +151,7 @@ Return a JSON object with keys: whatThisIs, currentNarrative, keyRisks (array of
     } else {
       const r = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
-        headers: {
-          "Authorization": "Bearer " + rawKey,
-          "Content-Type":  "application/json",
-        },
+        headers: { "Authorization": "Bearer " + rawKey, "Content-Type": "application/json" },
         body: JSON.stringify({
           model:           "gpt-4o-mini",
           max_tokens:      900,

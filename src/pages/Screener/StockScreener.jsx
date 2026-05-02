@@ -5,6 +5,7 @@ import { SECTOR_CLR, RATING_CLR, SCREENER_PRESETS } from "../../lib/constants";
 import { SC_COLS, SC_ROW_H, FMP_SECTOR_MAP } from "../../data/screenerData";
 import { db } from "../../lib/db";
 import { useAuth } from "../../context/AuthContext";
+import { supabase } from "../../lib/supabase";
 
 function genUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -32,6 +33,11 @@ export default function StockScreener({ onSelectTicker }) {
   const [liveUniverse, setLiveUniverse] = useState(null);   // null = loading, array = ready
   const [liveStatus, setLiveStatus]     = useState("loading"); // "loading" | "live" | "synthetic"
   const [savedScreens, setSavedScreens] = useState(() => db.savedScreens.load());
+  // AI screener state
+  const [aiQuery,     setAiQuery]     = useState("");
+  const [aiLoading,   setAiLoading]   = useState(false);
+  const [aiReasoning, setAiReasoning] = useState(null); // { description, chips[] }
+  const aiInputRef = useRef(null);
   const [saveNameInput, setSaveNameInput] = useState("");
   const [showSaveInput,  setShowSaveInput]  = useState(false);
   const scrollRef = useRef(null);
@@ -74,6 +80,39 @@ export default function StockScreener({ onSelectTicker }) {
     setActivePreset(null);
     setSortCol("mktCap");
     setSortDir("desc");
+  };
+
+  const runAiScreen = async () => {
+    const q = aiQuery.trim();
+    if (!q || aiLoading) return;
+    setAiLoading(true);
+    setAiReasoning(null);
+    const savedKey = localStorage.getItem("ov_copilot_key") || undefined;
+    let authHeader = {};
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) authHeader = { Authorization: `Bearer ${session.access_token}` };
+    } catch {}
+    try {
+      const r = await fetch("/api/screener?mode=ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ query: q, apiKey: savedKey }),
+      });
+      const data = await r.json();
+      if (data.error) {
+        setAiReasoning({ description: data.message || data.error, chips: [], isError: true });
+      } else {
+        setF({ ...DEF, ...data.filters });
+        setActivePreset(null);
+        setSortCol("mktCap");
+        setSortDir("desc");
+        setAiReasoning({ description: data.description, chips: data.reasoning || [] });
+      }
+    } catch (e) {
+      setAiReasoning({ description: "AI request failed — check your connection.", chips: [], isError: true });
+    }
+    setAiLoading(false);
   };
 
   /* ── Live universe: fetch from FMP on mount, merge with SCREENER_UNIVERSE fundamentals ── */
@@ -250,6 +289,53 @@ export default function StockScreener({ onSelectTicker }) {
 
       {/* ── Filter Panel ──────────────────────────────────────────── */}
       <div style={{ padding:"10px 16px", borderBottom:"1px solid var(--border-solid)", background:"var(--surface-1)", flexShrink:0, display:"flex", flexDirection:"column", gap:8 }}>
+
+        {/* AI Natural Language Search */}
+        <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+          <div style={{ flex:1, display:"flex", alignItems:"center", gap:6, padding:"5px 10px",
+            background:"var(--surface-0)", border:"1px solid rgba(37,99,235,0.30)", borderRadius:8,
+            boxShadow:"0 0 0 3px rgba(37,99,235,0.06)" }}>
+            <span style={{ fontSize:13 }}>🤖</span>
+            <input
+              ref={aiInputRef}
+              value={aiQuery}
+              onChange={e => setAiQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") runAiScreen(); }}
+              placeholder='Describe what you\'re looking for… e.g. "profitable small-cap tech with low debt and high growth"'
+              style={{ flex:1, background:"none", border:"none", outline:"none",
+                fontSize:11, color:"var(--text-1)", fontFamily:"'IBM Plex Mono',monospace" }}
+            />
+            {aiQuery && <button onClick={() => { setAiQuery(""); setAiReasoning(null); }}
+              style={{ background:"none", border:"none", color:"var(--text-3)", cursor:"pointer", fontSize:13, lineHeight:1, padding:"0 2px" }}>✕</button>}
+          </div>
+          <button onClick={runAiScreen} disabled={!aiQuery.trim() || aiLoading}
+            style={{ padding:"5px 14px", fontSize:11, fontWeight:700, letterSpacing:"0.05em",
+              background: aiQuery.trim() && !aiLoading ? "#2563eb" : "var(--surface-2)",
+              color: aiQuery.trim() && !aiLoading ? "#fff" : "var(--text-3)",
+              border:"none", borderRadius:8, cursor: aiQuery.trim() && !aiLoading ? "pointer" : "default",
+              transition:"all 0.15s", whiteSpace:"nowrap" }}>
+            {aiLoading ? "⟳ Thinking…" : "AI Screen"}
+          </button>
+        </div>
+
+        {/* AI result chips */}
+        {aiReasoning && (
+          <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+            <span style={{ fontSize:9, fontFamily:"'IBM Plex Mono',monospace",
+              color: aiReasoning.isError ? "#e11d48" : "#2563eb", fontWeight:700, letterSpacing:"0.06em" }}>
+              {aiReasoning.isError ? "⚠ AI" : "✦ AI"}
+            </span>
+            <span style={{ fontSize:10, color: aiReasoning.isError ? "#e11d48" : "var(--text-2)", fontStyle:"italic" }}>
+              {aiReasoning.description}
+            </span>
+            {!aiReasoning.isError && aiReasoning.chips.map((c, i) => (
+              <span key={i} style={{ fontSize:9, fontWeight:600, padding:"1px 8px", borderRadius:99,
+                background:"rgba(37,99,235,0.10)", color:"#2563eb", border:"1px solid rgba(37,99,235,0.25)" }}>
+                {c}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Title + live count + reset */}
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
