@@ -124,6 +124,27 @@ const TT     = { background: "var(--surface-2)", border: "1px solid rgba(15,23,4
 const MONO   = { fontFamily: "'IBM Plex Mono',monospace" };
 const TF_MAP = { "1M": "1mo", "3M": "3mo", "6M": "6mo", "1Y": "1y" };
 
+// ── Stable sub-components at module scope (never redefined on render) ─────────
+function ChartPanel({ title, height, loading, children }) {
+  return (
+    <div className="terminal-panel terminal-glow p-3" style={{ flexShrink: 0, height }}>
+      <div className="terminal-header mb-2" style={{ fontSize: 10 }}>{title}</div>
+      {loading
+        ? <div className="flex items-center justify-center h-full text-xs font-mono animate-pulse" style={{ color: "var(--text-3)" }}>Loading…</div>
+        : children}
+    </div>
+  );
+}
+
+function SigCard({ title, children }) {
+  return (
+    <div className="p-3 rounded" style={{ background: "var(--surface-0)", border: "1px solid var(--border)", flexShrink: 0 }}>
+      <div className="terminal-header mb-2" style={{ fontSize: 9 }}>{title}</div>
+      {children}
+    </div>
+  );
+}
+
 export default function TechnicalAnalysis({ ticker, onContextUpdate }) {
   const [data,    setData]    = useState([]);
   const [tf,      setTf]      = useState("3M");
@@ -301,22 +322,6 @@ export default function TechnicalAnalysis({ ticker, onContextUpdate }) {
   const minP = data.length ? Math.min(...data.map(d => d.close)) * 0.99 : 0;
   const maxP = data.length ? Math.max(...data.map(d => d.close)) * 1.01 : 0;
 
-  const ChartPanel = ({ title, height, children }) => (
-    <div className="terminal-panel terminal-glow p-3" style={{ flexShrink: 0, height }}>
-      <div className="terminal-header mb-2" style={{ fontSize: 10 }}>{title}</div>
-      {loading
-        ? <div className="flex items-center justify-center h-full text-xs font-mono animate-pulse" style={{ color: "var(--text-3)" }}>Loading…</div>
-        : children}
-    </div>
-  );
-
-  const SigCard = ({ title, children }) => (
-    <div className="p-3 rounded" style={{ background: "var(--surface-0)", border: "1px solid var(--border)", flexShrink: 0 }}>
-      <div className="terminal-header mb-2" style={{ fontSize: 9 }}>{title}</div>
-      {children}
-    </div>
-  );
-
   const val = (v, dp = 2) => v != null ? v.toFixed(dp) : "—";
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -345,7 +350,7 @@ export default function TechnicalAnalysis({ ticker, onContextUpdate }) {
         </div>
 
         {/* 1 ── Price + Bollinger Bands + SMA 20/50 ──────────────────── */}
-        <ChartPanel title="Price · Bollinger Bands (20,2) · SMA 20 · SMA 50" height={255}>
+        <ChartPanel title="Price · Bollinger Bands (20,2) · SMA 20 · SMA 50" height={255} loading={loading}>
           <ResponsiveContainer width="100%" height={202}>
             <ComposedChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
               <defs>
@@ -374,7 +379,7 @@ export default function TechnicalAnalysis({ ticker, onContextUpdate }) {
         </ChartPanel>
 
         {/* 2 ── RSI (14) ──────────────────────────────────────────────── */}
-        <ChartPanel title="RSI (14) — Relative Strength Index" height={185}>
+        <ChartPanel title="RSI (14) — Relative Strength Index" height={185} loading={loading}>
           <ResponsiveContainer width="100%" height={133}>
             <ComposedChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f020" vertical={false} />
@@ -393,7 +398,7 @@ export default function TechnicalAnalysis({ ticker, onContextUpdate }) {
         </ChartPanel>
 
         {/* 3 ── MACD (12,26,9): histogram + MACD line + signal line ───── */}
-        <ChartPanel title="MACD (12,26,9) — Histogram · MACD Line · Signal Line" height={200}>
+        <ChartPanel title="MACD (12,26,9) — Histogram · MACD Line · Signal Line" height={200} loading={loading}>
           <ResponsiveContainer width="100%" height={148}>
             <ComposedChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f020" vertical={false} />
@@ -413,7 +418,7 @@ export default function TechnicalAnalysis({ ticker, onContextUpdate }) {
         </ChartPanel>
 
         {/* 4 ── Stochastic (14,3) ─────────────────────────────────────── */}
-        <ChartPanel title="Stochastic Oscillator (14,3) — %K (fast) · %D (slow)" height={185}>
+        <ChartPanel title="Stochastic Oscillator (14,3) — %K (fast) · %D (slow)" height={185} loading={loading}>
           <ResponsiveContainer width="100%" height={133}>
             <ComposedChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f020" vertical={false} />
