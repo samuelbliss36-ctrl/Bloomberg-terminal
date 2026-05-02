@@ -54,6 +54,8 @@ function Input({ icon: Icon, type: typeProp, placeholder, value, onChange, onKey
           color: '#f1f5f9', fontSize: 13,
           fontFamily: "'Inter',sans-serif",
           transition: 'border-color 0.2s, box-shadow 0.2s',
+          colorScheme: 'dark',
+          caretColor: '#f1f5f9',
         }}
         onFocus={e => { e.target.style.borderColor = 'rgba(37,99,235,0.6)'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.15)'; }}
         onBlur={e  => { e.target.style.borderColor = 'rgba(255,255,255,0.08)'; e.target.style.boxShadow = 'none'; }}
@@ -97,6 +99,18 @@ export default function SignInPage() {
 
   return (
     <div style={BG}>
+      <style>{`
+        .auth-input { color: #f1f5f9 !important; caret-color: #f1f5f9 !important; }
+        .auth-input:-webkit-autofill,
+        .auth-input:-webkit-autofill:hover,
+        .auth-input:-webkit-autofill:focus,
+        .auth-input:-webkit-autofill:active {
+          -webkit-text-fill-color: #f1f5f9 !important;
+          -webkit-box-shadow: 0 0 0px 1000px #0d1424 inset !important;
+          caret-color: #f1f5f9 !important;
+          transition: background-color 9999s ease-in-out 0s !important;
+        }
+      `}</style>
       <div style={GRID_OVERLAY} />
 
       {/* Ambient glow */}
