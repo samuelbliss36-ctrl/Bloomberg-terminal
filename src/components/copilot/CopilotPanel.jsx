@@ -1,12 +1,24 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { MdText } from '../ui/MdText';
+import { db } from '../../lib/db';
+import { useAuth } from '../../context/AuthContext';
+import { isOwner, getSubscription } from '../../lib/subscription';
+import { supabase } from '../../lib/supabase';
+import UpgradePage from '../../pages/Subscription/UpgradePage';
 
-export function buildCopilotContext(activePage, ticker, quote, metrics, profile, news, pageContext, structured) {
+function genUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    // eslint-disable-next-line no-mixed-operators
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+export function buildCopilotContext(activePage, ticker, quote, metrics, profile, news) {
   const m   = metrics?.metric || {};
   const fmt = v => v != null ? (+v).toFixed(2) : null;
   const lines = [`Active Terminal Page: ${activePage}`];
 
-  // ── Financial ──────────────────────────────────────────────────────────────
   if (activePage === "financial" && ticker) {
     lines.push(`Ticker: ${ticker}${profile?.name ? ` — ${profile.name}` : ""}`);
     if (profile?.finnhubIndustry) lines.push(`Sector / Industry: ${profile.finnhubIndustry}`);
@@ -17,342 +29,132 @@ export function buildCopilotContext(activePage, ticker, quote, metrics, profile,
     if (m.marketCapitalization)      lines.push(`Market Cap: $${(m.marketCapitalization/1000).toFixed(1)}B`);
     if (m.peBasicExclExtraTTM)       lines.push(`P/E (TTM): ${fmt(m.peBasicExclExtraTTM)}x`);
     if (m.pbAnnual)                  lines.push(`P/B: ${fmt(m.pbAnnual)}x`);
-    if (m.grossMarginTTM != null)    lines.push(`Gross Margin (TTM): ${(m.grossMarginTTM*100).toFixed(1)}%`);
-    if (m.netMarginTTM != null)      lines.push(`Net Margin (TTM): ${(m.netMarginTTM*100).toFixed(1)}%`);
+    if (m.grossMarginAnnual)         lines.push(`Gross Margin: ${(m.grossMarginAnnual*100).toFixed(1)}%`);
+    if (m.netMarginAnnual)           lines.push(`Net Margin: ${(m.netMarginAnnual*100).toFixed(1)}%`);
     if (m.roeTTM)                    lines.push(`ROE (TTM): ${(m.roeTTM*100).toFixed(1)}%`);
     if (m["totalDebt/totalEquityAnnual"]) lines.push(`Debt/Equity: ${fmt(m["totalDebt/totalEquityAnnual"])}`);
     if (m.revenueGrowthTTMYoy)       lines.push(`Revenue Growth (YoY TTM): ${(m.revenueGrowthTTMYoy*100).toFixed(1)}%`);
     if (m.epsGrowthTTMYoy)           lines.push(`EPS Growth (YoY TTM): ${(m.epsGrowthTTMYoy*100).toFixed(1)}%`);
-
-    // ── Structured section 1: Analyst Consensus ──────────────────────────────
-    const { earningsHistory = [], recommendation: rec, priceTarget: pt,
-            peerTickers = [], peerMetrics = {} } = structured || {};
-
-    if (rec) {
-      const total    = rec.strongBuy + rec.buy + rec.hold + rec.sell + rec.strongSell;
-      const bullish  = rec.strongBuy + rec.buy;
-      const bearish  = rec.sell + rec.strongSell;
-      const majority = bullish > bearish ? "BULLISH" : bearish > bullish ? "BEARISH" : "MIXED";
-      lines.push(`\nAnalyst Consensus (${rec.period?.slice(0,7) ?? "latest"} · ${total} analysts) — ${majority}:`);
-      lines.push(`  Strong Buy: ${rec.strongBuy}  Buy: ${rec.buy}  Hold: ${rec.hold}  Sell: ${rec.sell}  Strong Sell: ${rec.strongSell}`);
-    }
-    if (pt?.targetMean && quote?.c) {
-      const upside = ((pt.targetMean - quote.c) / quote.c) * 100;
-      lines.push(`  Price Target — Mean: $${pt.targetMean.toFixed(2)} (${upside >= 0 ? "+" : ""}${upside.toFixed(1)}% implied upside) | Low: $${pt.targetLow?.toFixed(2) ?? "—"} | High: $${pt.targetHigh?.toFixed(2) ?? "—"}`);
-    }
-
-    // ── Structured section 2: Quarterly EPS / Revenue trend ─────────────────
-    if (earningsHistory.length) {
-      lines.push(`\nEarnings Trend — Last ${earningsHistory.length} Reported Quarters:`);
-      earningsHistory.forEach(e => {
-        const surp = e.epsActual != null && e.epsEstimate
-          ? ((e.epsActual - e.epsEstimate) / Math.abs(e.epsEstimate)) * 100 : null;
-        let row = `  Q${e.quarter} ${e.year}: EPS $${e.epsActual?.toFixed(2) ?? "—"}`;
-        if (e.epsEstimate != null) row += ` (est $${e.epsEstimate.toFixed(2)})`;
-        if (surp != null) row += ` [${surp >= 0 ? "BEAT" : "MISS"} ${surp >= 0 ? "+" : ""}${surp.toFixed(1)}%]`;
-        if (e.revenueActual != null)   row += ` | Rev $${(e.revenueActual/1e9).toFixed(2)}B`;
-        if (e.revenueEstimate != null) row += ` (est $${(e.revenueEstimate/1e9).toFixed(2)}B)`;
-        lines.push(row);
-      });
-    }
-
-    // ── Structured section 3: Comparable company multiples ──────────────────
-    if (peerTickers.length) {
-      lines.push(`\nComparable Company Multiples:`);
-      peerTickers.forEach(peer => {
-        const pm = peerMetrics[peer];
-        if (!pm || Object.keys(pm).length === 0) return;
-        let row = `  ${peer}:`;
-        if (pm.peBasicExclExtraTTM != null)  row += ` P/E ${pm.peBasicExclExtraTTM.toFixed(1)}x`;
-        const evEb = pm.evEbitdaTTM ?? pm.evEbitdaAnnual;
-        if (evEb != null)                    row += ` | EV/EBITDA ${evEb.toFixed(1)}x`;
-        if (pm.marketCapitalization != null) row += ` | MCap $${(pm.marketCapitalization/1000).toFixed(0)}B`;
-        if (pm.grossMarginTTM != null)       row += ` | GM ${(pm.grossMarginTTM*100).toFixed(0)}%`;
-        if (pm.netMarginTTM != null)         row += ` | Net Mgn ${(pm.netMarginTTM*100).toFixed(0)}%`;
-        lines.push(row);
-      });
-      // Subject company row for direct comparison
-      const subjectEvEb = m.evEbitdaTTM ?? m.evEbitdaAnnual;
-      let subjectRow = `  ${ticker} (subject):`;
-      if (m.peBasicExclExtraTTM != null)  subjectRow += ` P/E ${m.peBasicExclExtraTTM.toFixed(1)}x`;
-      if (subjectEvEb != null)            subjectRow += ` | EV/EBITDA ${subjectEvEb.toFixed(1)}x`;
-      if (m.marketCapitalization != null) subjectRow += ` | MCap $${(m.marketCapitalization/1000).toFixed(0)}B`;
-      if (m.grossMarginTTM != null)       subjectRow += ` | GM ${(m.grossMarginTTM*100).toFixed(0)}%`;
-      if (m.netMarginTTM != null)         subjectRow += ` | Net Mgn ${(m.netMarginTTM*100).toFixed(0)}%`;
-      lines.push(subjectRow);
-    }
-
-    // ── Structured section 4: Volatility / IV proxy ──────────────────────────
-    if (m.beta != null || (m["52WeekHigh"] && m["52WeekLow"])) {
-      lines.push(`\nVolatility:`);
-      if (m.beta != null) lines.push(`  Beta (vs S&P 500): ${m.beta.toFixed(2)}`);
-      if (m["52WeekHigh"] && m["52WeekLow"]) {
-        const annRange = ((m["52WeekHigh"] - m["52WeekLow"]) / m["52WeekLow"]) * 100;
-        lines.push(`  52-Week High: $${fmt(m["52WeekHigh"])} | Low: $${fmt(m["52WeekLow"])} | Annual price swing: ~${annRange.toFixed(0)}%`);
-      }
-      lines.push(`  Note: live options IV (30-day ATM) requires a paid options chain feed — not yet integrated.`);
-    }
-
+    if (m.beta)                      lines.push(`Beta: ${fmt(m.beta)}`);
     if (news?.length) {
       lines.push("\nRecent News (most recent 6):");
       news.slice(0,6).forEach(n => lines.push(`  • [${n.source}] ${n.headline}`));
     }
   }
 
-  // ── Portfolio ──────────────────────────────────────────────────────────────
   if (activePage === "portfolio") {
-    if (pageContext?.type === "portfolio" && pageContext.holdings?.length) {
-      const { holdings, livePrices } = pageContext;
-      let totalValue = 0, totalCost = 0;
-      lines.push(`Portfolio: ${holdings.length} position${holdings.length !== 1 ? "s" : ""}`);
-      holdings.forEach(h => {
-        const lp = livePrices?.[h.ticker];
-        const currentPrice = lp?.price ?? null;
-        const currentValue = currentPrice != null ? currentPrice * h.shares : null;
-        const cost = h.avgCost * h.shares;
-        const gainLoss = currentValue != null ? currentValue - cost : null;
-        const gainLossPct = gainLoss != null && cost > 0 ? (gainLoss / cost) * 100 : null;
-        if (currentValue != null) totalValue += currentValue;
-        totalCost += cost;
-        let pos = `${h.ticker}: ${h.shares} sh @ $${h.avgCost} avg`;
-        if (currentPrice != null) pos += ` | now $${currentPrice.toFixed(2)}`;
-        if (gainLoss != null) pos += ` | P&L ${gainLoss >= 0 ? "+" : ""}$${gainLoss.toFixed(0)} (${gainLossPct >= 0 ? "+" : ""}${gainLossPct?.toFixed(1)}%)`;
-        lines.push(`  • ${pos}`);
-      });
-      if (totalValue > 0) {
-        const totalGL = totalValue - totalCost;
-        lines.push(`Total Value: $${totalValue.toFixed(0)} | Total P&L: ${totalGL >= 0 ? "+" : ""}$${totalGL.toFixed(0)} (${(totalGL/totalCost*100).toFixed(1)}%)`);
+    try {
+      const holdings = JSON.parse(localStorage.getItem("ov_portfolio") || "[]");
+      if (holdings.length) {
+        lines.push(`Portfolio: ${holdings.length} positions`);
+        holdings.forEach(h => {
+          const pos = `${h.ticker}: ${h.shares} shares @ $${h.avgCost} avg cost`;
+          lines.push(`  • ${pos}`);
+        });
+      } else {
+        lines.push("Portfolio: no positions entered yet.");
       }
-    } else {
-      try {
-        const holdings = JSON.parse(localStorage.getItem("ov_portfolio") || "[]");
-        if (holdings.length) {
-          lines.push(`Portfolio: ${holdings.length} positions`);
-          holdings.forEach(h => lines.push(`  • ${h.ticker}: ${h.shares} shares @ $${h.avgCost} avg cost`));
-        } else {
-          lines.push("Portfolio: no positions entered yet.");
-        }
-      } catch(e) {}
-    }
+    } catch(e) {}
   }
 
-  // ── Screener ───────────────────────────────────────────────────────────────
   if (activePage === "screener") {
-    if (pageContext?.type === "screener") {
-      const { presetName, filterCount, topResults } = pageContext;
-      lines.push(`Stock Screener — ${filterCount} stocks match current filters${presetName ? ` (preset: "${presetName}")` : ""}`);
-      if (topResults?.length) {
-        lines.push("Top results by market cap:");
-        topResults.slice(0, 12).forEach(s => {
-          let row = `  • ${s.ticker} (${s.name}) | ${s.sector} | $${s.price?.toFixed(2) ?? "—"}`;
-          if (s.mktCap != null) row += ` | MCap $${s.mktCap.toFixed(1)}B`;
-          if (s.pe != null)     row += ` | P/E ${s.pe.toFixed(1)}x`;
-          if (s.roe != null)    row += ` | ROE ${(s.roe * 100).toFixed(1)}%`;
-          lines.push(row);
-        });
-      }
-    } else {
-      lines.push("Stock Screener — filter thousands of equities by P/E, ROE, margins, market cap, sector, and more.");
-    }
+    lines.push("The user is on the Stock Screener page, browsing a universe of thousands of equities.");
+    lines.push("They can filter by P/E, P/B, ROE, margins, market cap, sector, div yield, beta, and more.");
   }
 
-  // ── Earnings ───────────────────────────────────────────────────────────────
   if (activePage === "earnings") {
-    if (pageContext?.type === "earnings") {
-      const { month, eventCount, selectedDate, eventsOnDate } = pageContext;
-      lines.push(`Earnings Calendar — ${month} — ${eventCount ?? 0} notable earnings`);
-      if (selectedDate && eventsOnDate?.length) {
-        lines.push(`Selected date: ${selectedDate}`);
-        eventsOnDate.forEach(e => {
-          let row = `  • ${e.symbol}`;
-          if (e.epsEstimate != null)     row += ` | EPS est $${e.epsEstimate}`;
-          if (e.revenueEstimate != null) row += ` | Rev est $${(e.revenueEstimate/1e9).toFixed(1)}B`;
-          if (e.hour)                    row += ` | ${e.hour === "bmo" ? "Before Open" : e.hour === "amc" ? "After Close" : e.hour}`;
-          lines.push(row);
-        });
-      } else if (selectedDate) {
-        lines.push(`Selected date: ${selectedDate} — no notable earnings`);
-      }
-    } else {
-      lines.push("Earnings Calendar — upcoming earnings announcements with beat/miss history and whisper numbers.");
-    }
+    lines.push("The user is viewing the Earnings Calendar — upcoming earnings announcements with beat/miss history and whisper numbers.");
   }
 
-  // ── Technical Analysis ─────────────────────────────────────────────────────
   if (activePage === "technical") {
-    lines.push(`Technical Analysis — ${ticker}${pageContext?.range ? ` (${pageContext.range} range)` : ""}`);
+    lines.push(`The user is viewing the Technical Analysis page for: ${ticker}`);
     if (quote?.c) lines.push(`Current Price: $${fmt(quote.c)}`);
-    if (pageContext?.type === "technical") {
-      const { lastRSI, lastMACD, lastSignal, rsiLabel, macdSignal, bbSignal } = pageContext;
-      if (lastRSI  != null) lines.push(`RSI(14): ${lastRSI.toFixed(1)} — ${rsiLabel}`);
-      if (lastMACD != null) lines.push(`MACD(12,26,9): ${lastMACD.toFixed(4)} | Signal: ${lastSignal?.toFixed(4) ?? "—"} — ${macdSignal}`);
-      if (bbSignal)         lines.push(`Bollinger Bands(20,2): price is ${bbSignal}`);
-    }
-  }
-
-  // ── Commodities ────────────────────────────────────────────────────────────
-  if (activePage === "commodities") {
-    if (pageContext?.type === "commodities") {
-      const { active: activeTicker, snapshot } = pageContext;
-      const activeCom = snapshot?.find(c => c.ticker === activeTicker);
-      lines.push(`Commodities Futures Dashboard — active chart: ${activeCom?.label ?? activeTicker}`);
-      const available = (snapshot ?? []).filter(c => c.price != null);
-      if (available.length) {
-        lines.push("Current futures prices:");
-        ["Metals","Energy","Agriculture"].forEach(cat => {
-          const group = available.filter(c => c.category === cat);
-          if (!group.length) return;
-          lines.push(`  ${cat}:`);
-          group.forEach(c => {
-            const chg = c.changePct != null ? ` (${c.changePct >= 0 ? "+" : ""}${c.changePct.toFixed(2)}%)` : "";
-            lines.push(`    • ${c.label} (${c.symbol}): ${c.price.toFixed(2)} ${c.unit}${chg}`);
-          });
-        });
-      }
-    } else {
-      lines.push("Commodities Futures Dashboard — metals, energy, agriculture futures.");
-    }
-  }
-
-  // ── Crypto ─────────────────────────────────────────────────────────────────
-  if (activePage === "crypto") {
-    if (pageContext?.type === "crypto") {
-      const { active: activeTicker, snapshot } = pageContext;
-      const activeCoin = snapshot?.find(c => c.ticker === activeTicker);
-      lines.push(`Crypto Markets Dashboard — active chart: ${activeCoin?.label ?? activeTicker}`);
-      const available = (snapshot ?? []).filter(c => c.price != null);
-      if (available.length) {
-        lines.push("Current prices:");
-        available.forEach(c => {
-          const chg = c.changePct != null ? ` (${c.changePct >= 0 ? "+" : ""}${c.changePct.toFixed(2)}%)` : "";
-          const p = c.price < 0.01 ? c.price.toFixed(6) : c.price < 1 ? c.price.toFixed(4) : c.price < 1000 ? c.price.toFixed(2) : c.price.toFixed(0);
-          lines.push(`  • ${c.label} (${c.symbol}): $${p}${chg}`);
-        });
-      }
-    } else {
-      lines.push("Crypto Markets Dashboard — top cryptocurrencies by market cap.");
-    }
-  }
-
-  // ── FX ─────────────────────────────────────────────────────────────────────
-  if (activePage === "fx") {
-    if (pageContext?.type === "fx") {
-      const { active: activeTicker, snapshot, cbRates } = pageContext;
-      const activePair = snapshot?.find(p => p.ticker === activeTicker);
-      lines.push(`FX Dashboard — active pair: ${activePair?.label ?? activeTicker}`);
-      const available = (snapshot ?? []).filter(p => p.price != null);
-      if (available.length) {
-        lines.push("FX Rates:");
-        available.forEach(p => {
-          const dec = p.dec ?? 4;
-          const chg = p.changePct != null ? ` (${p.changePct >= 0 ? "+" : ""}${p.changePct.toFixed(3)}%)` : "";
-          lines.push(`  • ${p.label}: ${p.price.toFixed(dec)}${chg}`);
-        });
-      }
-      const cbArr = cbRates ? Object.values(cbRates).filter(r => r?.value != null) : [];
-      if (cbArr.length) {
-        lines.push("Central Bank Policy Rates:");
-        cbArr.forEach(r => lines.push(`  • ${r.flag} ${r.label} (${r.bank}): ${r.value.toFixed(2)}%`));
-      }
-    } else {
-      lines.push("FX Dashboard — major currency pairs and central bank rates.");
-    }
-  }
-
-  // ── Supply Chain / Macro ───────────────────────────────────────────────────
-  if (activePage === "supplychain") {
-    if (pageContext?.type === "supplychain") {
-      const { macroSnapshot, commoditySnapshot } = pageContext;
-      lines.push("Macro Intelligence Dashboard — FRED macro series + commodity proxies");
-      if (macroSnapshot?.length) {
-        lines.push("FRED Series (latest readings):");
-        macroSnapshot.filter(s => s.value != null).forEach(s => {
-          const chg = s.change != null ? ` Δ${s.change >= 0 ? "+" : ""}${s.change.toFixed(2)}` : "";
-          lines.push(`  • ${s.label}: ${s.value.toFixed(2)}${s.suffix}${chg} — ${s.note}`);
-        });
-      }
-      const comAvail = (commoditySnapshot ?? []).filter(c => c.price != null);
-      if (comAvail.length) {
-        lines.push("Commodity Proxies:");
-        comAvail.forEach(c => {
-          const chg = c.changePct != null ? ` (${c.changePct >= 0 ? "+" : ""}${c.changePct.toFixed(2)}%)` : "";
-          lines.push(`  • ${c.label}: $${c.price.toFixed(2)}${chg} — ${c.desc}`);
-        });
-      }
-    } else {
-      lines.push("Macro Intelligence Dashboard — Fed Funds, yield curve, CPI, PCE, GDP, M2 and supply chain indicators.");
-    }
-  }
-
-  // ── Eye of Sauron ──────────────────────────────────────────────────────────
-  if (activePage === "eye") {
-    if (pageContext?.type === "eye" && pageContext.activeModule === "geo" && pageContext.events?.length) {
-      const { events: geoEvents, selectedEvent } = pageContext;
-      lines.push(`Geopolitical Intelligence Feed — ${geoEvents.length} market-moving events`);
-      ["High","Medium","Low"].forEach(impact => {
-        const group = geoEvents.filter(e => e.impact === impact).slice(0, 5);
-        if (!group.length) return;
-        lines.push(`  ${impact} Impact:`);
-        group.forEach(e => {
-          let row = `    • [${e.category}] ${e.headline}`;
-          if (e.signal) row += ` | Signal: ${e.signal}`;
-          if (e.assets?.length) row += ` | Assets: ${e.assets.join(", ")}`;
-          lines.push(row);
-        });
-      });
-      if (selectedEvent) {
-        lines.push(`\nFocused event: ${selectedEvent.headline}`);
-        if (selectedEvent.summary) lines.push(`Summary: ${selectedEvent.summary}`);
-        if (selectedEvent.assets?.length) lines.push(`Affected assets: ${selectedEvent.assets.join(", ")}`);
-      }
-    } else if (pageContext?.type === "eye" && pageContext.activeModule) {
-      lines.push(`Eye of Sauron — active module: ${pageContext.activeModule}`);
-    } else {
-      lines.push("Eye of Sauron — global intelligence feeds: globe, weather, vessel tracker, flights, energy grid, geopolitical events.");
-    }
-  }
-
-  // ── Global Markets ─────────────────────────────────────────────────────────
-  if (activePage === "markets") {
-    if (pageContext?.type === "markets" && pageContext.country) {
-      const { country } = pageContext;
-      lines.push(`Global Markets — ${country.flag ?? ""} ${country.name} (currency: ${country.currency ?? "—"})`);
-    } else {
-      lines.push("Global Markets — country-level equity market dashboards.");
-    }
-  }
-
-  // ── Research Browser ───────────────────────────────────────────────────────
-  if (activePage === "research") {
-    if (pageContext?.type === "research" && pageContext.panels?.length) {
-      lines.push(`Research Browser — ${pageContext.panels.length} open panel${pageContext.panels.length !== 1 ? "s" : ""}:`);
-      pageContext.panels.forEach(p => {
-        lines.push(`  • [${(p.type ?? "?").toUpperCase()}] ${p.label} (${p.ticker ?? p.id})`);
-      });
-    } else {
-      lines.push("Research Browser — no panels open. User can search equities, commodities, FX, macro, and topics.");
-    }
   }
 
   return lines.join("\n");
 }
 
-export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news, pageContext, structured, onClose }) {
-  const [msgs,       setMsgs]      = useState([]);
+export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news, onClose }) {
+  const { user } = useAuth();
+
+  // Load most recent conversation on mount
+  const [conversationId, setConversationId] = useState(() => genUUID());
+  const [msgs,       setMsgs]      = useState(() => {
+    const convs = db.conversations.load();
+    if (convs.length > 0) return convs[0].messages || [];
+    return [];
+  });
+  const [convTitle,  setConvTitle] = useState(() => {
+    const convs = db.conversations.load();
+    if (convs.length > 0) { return convs[0].title || ''; }
+    return '';
+  });
+  const [showHistory,setShowHistory] = useState(false);
+
   const [input,      setInput]     = useState("");
   const [loading,    setLoading]   = useState(false);
-  const [apiKey,     setApiKey]    = useState(() => {
-    // Try user-scoped key first, fall back to legacy unscoped key
-    const uid = (() => { try { const s = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token')); if (!s) return null; const t = JSON.parse(localStorage.getItem(s)); return t?.user?.id || null; } catch { return null; } })();
-    return localStorage.getItem(uid ? `ov_copilot_key_${uid}` : 'ov_copilot_key') || "";
-  });
+  const [apiKey,     setApiKey]    = useState(() => localStorage.getItem("ov_copilot_key") || "");
   const [showConfig, setShowConfig]= useState(false);
   const [keyDraft,   setKeyDraft]  = useState("");
-  const [provider,   setProvider]  = useState(null); // "openai" | "anthropic"
+  const [provider,    setProvider]   = useState(null); // "openai" | "anthropic" | "perplexity"
+  const [showUpgrade, setShowUpgrade]= useState(false);
+  const [subscription, setSubscription] = useState(null);
+
+  // Load subscription on mount
+  useEffect(() => {
+    if (!user || isOwner(user)) return;
+    getSubscription().then(sub => setSubscription(sub));
+  }, [user]);
   const bottomRef = useRef(null);
   const inputRef  = useRef(null);
 
-  const context = buildCopilotContext(activePage, ticker, quote, metrics, profile, news, pageContext, structured);
+  const context = buildCopilotContext(activePage, ticker, quote, metrics, profile, news);
+
+  // Re-read conversations when cloud sync fires
+  useEffect(() => {
+    const handler = () => {
+      const convs = db.conversations.load();
+      if (convs.length > 0 && msgs.length === 0) {
+        setMsgs(convs[0].messages || []);
+        setConvTitle(convs[0].title || '');
+        setConversationId(convs[0].id || genUUID());
+      }
+    };
+    window.addEventListener('ov:data-synced', handler);
+    return () => window.removeEventListener('ov:data-synced', handler);
+  }, [msgs.length]);
+
+  // Persist conversation after every assistant response
+  const persistConversation = useCallback((updatedMsgs, title) => {
+    const convs = db.conversations.load();
+    const now = new Date().toISOString();
+    const entry = {
+      id: conversationId,
+      title: title || convTitle || 'Untitled',
+      messages: updatedMsgs,
+      page_context: activePage,
+      updated_at: now,
+    };
+    // Replace existing entry with same id, or prepend
+    const filtered = convs.filter(c => c.id !== conversationId);
+    const updated = [entry, ...filtered].slice(0, 20);
+    db.conversations.save(updated, user?.id);
+  }, [conversationId, convTitle, activePage, user?.id]);
+
+  const startNewChat = useCallback(() => {
+    setMsgs([]);
+    setConvTitle('');
+    setConversationId(genUUID());
+    setShowHistory(false);
+    setProvider(null);
+  }, []);
+
+  const loadConversation = useCallback((conv) => {
+    setMsgs(conv.messages || []);
+    setConvTitle(conv.title || '');
+    setConversationId(conv.id);
+    setShowHistory(false);
+  }, []);
 
   // Suggested prompts change based on active page
   const SUGGESTIONS = useMemo(() => {
@@ -364,7 +166,7 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
     ];
     if (activePage === "portfolio")  return [
       "How concentrated is my portfolio?",
-      "Which positions carry the most risk?",
+      "Which positions have the most risk?",
       "Suggest ways to diversify my holdings",
       "What would you trim or add to?",
     ];
@@ -372,61 +174,14 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
       "What criteria would you use to find quality growth stocks?",
       "How would you screen for deep value plays?",
       "Explain a capital-efficient investing strategy",
-      "What does this filtered list of stocks suggest?",
     ];
     if (activePage === "technical")  return [
-      `Describe a trading plan for ${ticker} based on these technicals`,
-      `Is ${ticker} currently overbought or oversold?`,
+      `Describe a trading plan for ${ticker} based on technicals`,
       "What signals should I watch for a trend reversal?",
-      "Explain what RSI and MACD are telling me",
     ];
     if (activePage === "earnings")   return [
       "What should I look for in earnings releases this week?",
-      "Which upcoming earnings could be market-moving?",
       "How do I trade an earnings announcement safely?",
-      "Explain EPS estimates and what a beat or miss means",
-    ];
-    if (activePage === "commodities") return [
-      "Which commodity is showing the strongest momentum?",
-      "What's driving crude oil prices right now?",
-      "Explain the relationship between gold and the US dollar",
-      "Which commodities are the best inflation hedges?",
-    ];
-    if (activePage === "crypto") return [
-      "Analyze current crypto market conditions",
-      "Compare BTC vs ETH risk/reward today",
-      "What macro factors move crypto markets?",
-      "Which coins show relative strength today?",
-    ];
-    if (activePage === "fx") return [
-      "Which currency pairs offer the best carry trade opportunity?",
-      "What do current CB rate differentials signal for the USD?",
-      "Explain the macro implications of EUR/USD movement",
-      "Which pairs are most sensitive to US rate policy?",
-    ];
-    if (activePage === "supplychain") return [
-      "Interpret the current yield curve signal",
-      "Is inflation trending up or down based on this data?",
-      "Summarize current macro conditions in 3 bullets",
-      "What does the macro environment mean for equities?",
-    ];
-    if (activePage === "eye") return [
-      "Which geopolitical events pose the highest market risk?",
-      "Summarize the top intelligence events and their impact",
-      "Which sectors benefit from current geopolitical tensions?",
-      "What assets are most at risk from current events?",
-    ];
-    if (activePage === "markets") return [
-      "Give me an investment overview of this market",
-      "What are the key risks in this country's economy?",
-      "How does this market compare to US equities?",
-      "What ETFs give me exposure to this market?",
-    ];
-    if (activePage === "research") return [
-      "Summarize what I'm currently researching",
-      "Compare the open research panels",
-      "What investment themes do my open panels share?",
-      "What should I add to my research list?",
     ];
     return ["What can you help me with?", "Explain the current market environment"];
   }, [activePage, ticker]);
@@ -436,9 +191,7 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
   const saveKey = () => {
     const k = keyDraft.trim();
     setApiKey(k);
-    // Save under user-scoped key so two accounts on same device stay isolated
-    const uid = (() => { try { const s = Object.keys(localStorage).find(k2 => k2.startsWith('sb-') && k2.endsWith('-auth-token')); if (!s) return null; const t = JSON.parse(localStorage.getItem(s)); return t?.user?.id || null; } catch { return null; } })();
-    localStorage.setItem(uid ? `ov_copilot_key_${uid}` : 'ov_copilot_key', k);
+    localStorage.setItem("ov_copilot_key", k);
     setShowConfig(false);
     setKeyDraft("");
   };
@@ -451,48 +204,60 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
     setMsgs(newMsgs);
     setInput("");
     setLoading(true);
+
+    // Set title from first user message
+    const title = convTitle || q.slice(0, 40);
+    if (!convTitle) setConvTitle(title);
+
     try {
+      // Attach Supabase session token so the server can verify subscription
+      let authHeader = {};
+      if (supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          authHeader = { Authorization: `Bearer ${session.access_token}` };
+        }
+      }
       const res  = await fetch("/api/copilot", {
         method: "POST",
-        headers: { "Content-Type":"application/json" },
+        headers: { "Content-Type":"application/json", ...authHeader },
         body: JSON.stringify({ messages: newMsgs, context, apiKey: apiKey || undefined }),
       });
+      if (res.status === 402) {
+        // Not subscribed and no user key — show upgrade wall
+        setMsgs(newMsgs.slice(0, -1)); // remove the user message we just added
+        setInput(q);                    // restore input
+        setShowUpgrade(true);
+        setLoading(false);
+        return;
+      }
       const data = await res.json();
+      let finalMsgs;
       if (data.error === "no_key") {
-        setMsgs(m => [...m, { role:"assistant", content:"⚙️ No API key configured. Click the **settings icon** (⚙) above to enter your OpenAI or Anthropic API key." }]);
+        finalMsgs = [...newMsgs, { role:"assistant", content:"⚙️ No API key configured. Click the **settings icon** (⚙) above to enter your OpenAI or Anthropic API key." }];
       } else if (data.error) {
-        setMsgs(m => [...m, { role:"assistant", content:`Error: ${data.error}` }]);
+        finalMsgs = [...newMsgs, { role:"assistant", content:`Error: ${data.error}` }];
       } else {
         if (data.provider) setProvider(data.provider);
-        setMsgs(m => [...m, { role:"assistant", content: data.message }]);
+        finalMsgs = [...newMsgs, { role:"assistant", content: data.message }];
       }
+      setMsgs(finalMsgs);
+      persistConversation(finalMsgs, title);
     } catch(e) {
-      setMsgs(m => [...m, { role:"assistant", content:"Connection error — check your API key or network." }]);
+      const finalMsgs = [...newMsgs, { role:"assistant", content:"Connection error — check your API key or network." }];
+      setMsgs(finalMsgs);
+      persistConversation(finalMsgs, title);
     }
     setLoading(false);
   };
 
   const providerBadge = provider === "anthropic"
-    ? { label:"Claude · Haiku", color:"#7c3aed" }
+    ? { label:"Claude · Haiku",         color:"#7c3aed" }
     : provider === "openai"
-    ? { label:"GPT-4o mini",    color:"#059669" }
+    ? { label:"GPT-4o mini",            color:"#059669" }
+    : provider === "perplexity"
+    ? { label:"Perplexity · Live",      color:"#0ea5e9" }
     : null;
-
-  // Human-readable label for the context badge
-  const contextLabel =
-    activePage === "financial"   ? `${ticker} · Financial View`     :
-    activePage === "portfolio"   ? "Portfolio Tracker"               :
-    activePage === "screener"    ? "Stock Screener"                  :
-    activePage === "technical"   ? `${ticker} · Technical Analysis`  :
-    activePage === "earnings"    ? "Earnings Calendar"               :
-    activePage === "commodities" ? "Commodities Dashboard"           :
-    activePage === "crypto"      ? "Crypto Markets"                  :
-    activePage === "fx"          ? "FX Dashboard"                    :
-    activePage === "supplychain" ? "Macro Intelligence"              :
-    activePage === "eye"         ? "Eye of Sauron"                   :
-    activePage === "markets"     ? "Global Markets"                  :
-    activePage === "research"    ? "Research Browser"                :
-    activePage.charAt(0).toUpperCase() + activePage.slice(1);
 
   const panelStyle = {
     position:"fixed", bottom:40, right:16, width:400, height:580,
@@ -514,7 +279,18 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
             ● {providerBadge.label}
           </span>
         )}
+        {isOwner(user) && (
+          <span style={{ fontSize:9, fontFamily:"'IBM Plex Mono',monospace", padding:"1px 7px", borderRadius:99, background:"#fef9c3", color:"#854d0e", fontWeight:600, marginLeft:2 }}>
+            ★ Owner — Unlimited
+          </span>
+        )}
         <div style={{ marginLeft:"auto", display:"flex", gap:6 }}>
+          <button onClick={startNewChat}
+            title="New chat"
+            style={{ background:"none", border:"1px solid var(--border-solid)", cursor:"pointer", fontSize:10, color:"var(--text-3)", padding:"2px 8px", lineHeight:1.4, borderRadius:5, fontFamily:"'IBM Plex Mono',monospace" }}>+ New</button>
+          <button onClick={() => setShowHistory(h => !h)}
+            title="Conversation history"
+            style={{ background: showHistory ? "rgba(37,99,235,0.10)" : "none", border:"none", cursor:"pointer", fontSize:12, color: showHistory ? "#2563eb" : "var(--text-3)", padding:"2px 4px", lineHeight:1 }}>☰</button>
           <button onClick={() => { setShowConfig(c => !c); setKeyDraft(apiKey); }}
             title="Configure API key"
             style={{ background:"none", border:"none", cursor:"pointer", fontSize:13, color:"var(--text-3)", padding:"2px 4px", lineHeight:1 }}>⚙</button>
@@ -522,6 +298,31 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
             style={{ background:"none", border:"none", cursor:"pointer", fontSize:14, color:"var(--text-3)", padding:"2px 4px", lineHeight:1 }}>✕</button>
         </div>
       </div>
+
+      {/* ── Conversation History ────────────────────────────────── */}
+      {showHistory && (() => {
+        const convs = db.conversations.load();
+        return (
+          <div style={{ borderBottom:"1px solid var(--border-solid)", background:"var(--surface-2)", flexShrink:0, maxHeight:160, overflowY:"auto" }}>
+            {convs.length === 0 ? (
+              <div style={{ padding:"12px 14px", fontSize:10, color:"var(--text-3)", fontFamily:"'IBM Plex Mono',monospace" }}>No saved conversations yet</div>
+            ) : convs.map(c => (
+              <button key={c.id} onClick={() => loadConversation(c)}
+                style={{ display:"block", width:"100%", textAlign:"left", padding:"8px 14px", background: c.id===conversationId ? "rgba(37,99,235,0.08)" : "none",
+                  border:"none", borderBottom:"1px solid var(--border-subtle)", cursor:"pointer", transition:"background 0.1s" }}
+                onMouseEnter={e => e.currentTarget.style.background="rgba(37,99,235,0.05)"}
+                onMouseLeave={e => e.currentTarget.style.background=c.id===conversationId?"rgba(37,99,235,0.08)":"none"}>
+                <div style={{ fontSize:11, color:"var(--text-1)", fontFamily:"'IBM Plex Mono',monospace", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                  {c.title || 'Untitled'}
+                </div>
+                <div style={{ fontSize:9, color:"var(--text-3)", fontFamily:"'IBM Plex Mono',monospace", marginTop:2 }}>
+                  {c.updated_at ? new Date(c.updated_at).toLocaleDateString() : ''} · {c.messages?.length || 0} messages
+                </div>
+              </button>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* ── API Key Config ──────────────────────────────────────── */}
       {showConfig && (
@@ -549,22 +350,42 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
         </div>
       )}
 
+      {/* ── Upgrade wall ───────────────────────────────────────── */}
+      {showUpgrade && !apiKey && (
+        <div style={{ flex:1, overflowY:"auto" }}>
+          <div style={{ padding:"8px 14px", borderBottom:"1px solid var(--border-solid)", display:"flex", alignItems:"center", gap:6 }}>
+            <span style={{ fontSize:10, color:"var(--text-3)" }}>Pro subscription required</span>
+            <button onClick={() => setShowUpgrade(false)}
+              style={{ marginLeft:"auto", background:"none", border:"none", cursor:"pointer", fontSize:10, color:"var(--text-3)" }}>
+              ← Back
+            </button>
+          </div>
+          <UpgradePage subscription={subscription} />
+        </div>
+      )}
+
       {/* ── Context badge ──────────────────────────────────────── */}
+      {!(showUpgrade && !apiKey) && (
       <div style={{ padding:"6px 14px", borderBottom:"1px solid var(--border-solid)", flexShrink:0, display:"flex", gap:8, alignItems:"center", background:"var(--surface-1)" }}>
         <span style={{ fontSize:9, color:"var(--text-3)", fontFamily:"'IBM Plex Mono',monospace" }}>Context:</span>
         <span style={{ fontSize:9, fontWeight:600, color:"#2563eb", fontFamily:"'IBM Plex Mono',monospace" }}>
-          {contextLabel}
+          {activePage === "financial" ? `${ticker} · Financial View` :
+           activePage === "portfolio" ? "Portfolio Tracker" :
+           activePage === "screener"  ? "Stock Screener" :
+           activePage === "technical" ? `${ticker} · Technical Analysis` :
+           activePage === "earnings"  ? "Earnings Calendar" :
+           activePage.charAt(0).toUpperCase() + activePage.slice(1)}
         </span>
         {quote?.c && activePage === "financial" &&
           <span style={{ fontSize:9, color:"var(--text-3)", fontFamily:"'IBM Plex Mono',monospace" }}>
             ${quote.c.toFixed(2)}
             <span style={{ color: quote.dp >= 0 ? "#059669" : "#e11d48" }}> ({quote.dp >= 0 ? "+" : ""}{quote.dp?.toFixed(2)}%)</span>
           </span>}
-        {(pageContext || (activePage === "financial" && structured?.earningsHistory?.length > 0)) &&
-          <span style={{ fontSize:8, color:"#059669", fontFamily:"'IBM Plex Mono',monospace", marginLeft:"auto" }}>● live data</span>}
       </div>
+      )}
 
       {/* ── Message thread ─────────────────────────────────────── */}
+      {!(showUpgrade && !apiKey) && (
       <div style={{ flex:1, overflowY:"auto", padding:"12px 14px", display:"flex", flexDirection:"column", gap:10 }}>
         {msgs.length === 0 && (
           <div style={{ textAlign:"center", marginTop:20 }}>
@@ -600,9 +421,10 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
         )}
         <div ref={bottomRef} />
       </div>
+      )}
 
       {/* ── Suggested prompts ──────────────────────────────────── */}
-      {msgs.length === 0 && (
+      {!(showUpgrade && !apiKey) && msgs.length === 0 && (
         <div style={{ padding:"0 14px 8px", display:"flex", flexWrap:"wrap", gap:5, flexShrink:0 }}>
           {SUGGESTIONS.map((s, i) => (
             <button key={i} onClick={() => send(s)}
@@ -618,6 +440,7 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
       )}
 
       {/* ── Input bar ──────────────────────────────────────────── */}
+      {!(showUpgrade && !apiKey) && (
       <div style={{ padding:"10px 14px", borderTop:"1px solid var(--border-solid)", display:"flex", gap:8, flexShrink:0, background:"var(--surface-1)" }}>
         <input
           ref={inputRef}
@@ -635,6 +458,7 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
           ↑
         </button>
       </div>
+      )}
     </div>
   );
 }

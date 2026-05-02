@@ -1,37 +1,9 @@
 import { useState, useEffect, useRef, useMemo, memo, useCallback } from 'react';
-import { Search, Zap, RefreshCw, Settings, ArrowUpRight, ArrowDownRight, Bell } from 'lucide-react';
+import { Search, Zap, RefreshCw, Settings, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { fmt, clr, bg } from '../lib/fmt';
 import { _apiCache } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
-import { useAlerts } from '../context/AlertsContext';
-import { AlertsPanel } from '../components/alerts/AlertsPanel';
-
-// ─── Sign-out button (used in account dropdown) ───────────────────────────────
-function SignOutButton({ onClose }) {
-  const { signOut, user } = useAuth();
-  const handle = async () => {
-    onClose();
-    // Clear base keys (legacy) + user-scoped keys for this account
-    const uid = user?.id;
-    const keys = [
-      'ov_onboarding_done',
-      'ov_alerts',
-      'ov_telegram',
-      'ov_copilot_key',
-      ...(uid ? [`ov_telegram_${uid}`, `ov_copilot_key_${uid}`] : []),
-    ];
-    keys.forEach(k => localStorage.removeItem(k));
-    await signOut();
-  };
-  return (
-    <button onClick={handle}
-      style={{ width:'100%', padding:'9px 14px', background:'none', border:'none', cursor:'pointer', textAlign:'left', fontSize:11, color:'#e11d48', fontWeight:600, fontFamily:"'Inter',sans-serif", display:'flex', alignItems:'center', gap:7, transition:'background 0.12s' }}
-      onMouseEnter={e => e.currentTarget.style.background = 'rgba(225,29,72,0.06)'}
-      onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-      Sign Out
-    </button>
-  );
-}
+import AuthModal from '../components/auth/AuthModal';
 
 // ─── TICKER TAPE (standalone) ─────────────────────────────────────────────────
 export const TickerTape = memo(function TickerTape({ tapeData }) {
@@ -156,11 +128,9 @@ export function TopBarClock() {
 export function GlobalTopBar({ ticker, setTicker, tapeData, quote, loading, settings, onToggleTape, onToggleDark }) {
   const [input, setInput] = useState(ticker);
   const [focused, setFocused] = useState(false);
-  const [authOpen,   setAuthOpen]   = useState(false);
-  const [alertsOpen, setAlertsOpen] = useState(false);
   const tapeRef = useRef(null);
+  const [authOpen, setAuthOpen] = useState(false);
   const { user, syncing } = useAuth();
-  const { activeCount } = useAlerts();
 
   useEffect(() => { setInput(ticker); }, [ticker]);
 
@@ -280,72 +250,52 @@ export function GlobalTopBar({ ticker, setTicker, tapeData, quote, loading, sett
           </span>
         </button>
 
-        {/* Price-alerts bell */}
-        <button
-          onClick={() => setAlertsOpen(o => !o)}
-          title="Price Alerts"
-          style={{
-            position: 'relative',
-            display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px',
-            background: alertsOpen ? 'rgba(245,158,11,0.12)' : activeCount > 0 ? 'rgba(245,158,11,0.08)' : 'transparent',
-            border: `1px solid ${alertsOpen || activeCount > 0 ? 'rgba(245,158,11,0.35)' : 'var(--border)'}`,
-            borderRadius: 6, cursor: 'pointer', transition: 'all 0.15s',
-            color: activeCount > 0 ? '#f59e0b' : 'var(--text-3)',
-          }}
-          onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
-          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-        >
-          <Bell size={12} />
-          {activeCount > 0 && (
-            <span style={{
-              position: 'absolute', top: -4, right: -4,
-              background: '#f59e0b', color: '#fff', fontSize: 8, fontWeight: 700,
-              borderRadius: 10, minWidth: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: "'Inter',sans-serif", lineHeight: 1, padding: '0 3px',
-            }}>{activeCount}</span>
-          )}
-        </button>
-
-        {/* Account button */}
-        {user && (
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={() => setAuthOpen(o => !o)}
-              title={`Signed in as ${user.email}`}
-              style={{
-                display:"flex", alignItems:"center", gap:5, padding:"3px 8px",
-                background: authOpen ? "rgba(5,150,105,0.16)" : "rgba(5,150,105,0.08)",
-                border: "1px solid rgba(5,150,105,0.28)",
-                borderRadius:6, cursor:"pointer", transition:"all 0.15s", color:"#34d399",
-              }}
-              onMouseEnter={e => e.currentTarget.style.opacity = "0.80"}
-              onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-            >
-              <span style={{ width:7, height:7, borderRadius:"50%", background: syncing ? "#f59e0b" : "#10b981", display:"inline-block", flexShrink:0 }} />
-              <span style={{ fontSize:9, fontFamily:"'Inter',sans-serif", fontWeight:700, letterSpacing:"0.05em", maxWidth:72, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                {user.email}
-              </span>
-            </button>
-
-            {/* Sign-out dropdown */}
-            {authOpen && (
-              <div style={{ position:'absolute', top:'calc(100% + 6px)', right:0, zIndex:9999, background:'var(--surface-1, #fff)', border:'1px solid rgba(15,23,42,0.12)', borderRadius:8, boxShadow:'0 8px 24px rgba(15,23,42,0.14)', minWidth:160, overflow:'hidden' }}>
-                <div style={{ padding:'10px 14px 8px', borderBottom:'1px solid rgba(15,23,42,0.08)' }}>
-                  <div style={{ fontSize:9, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:2 }}>Signed in as</div>
-                  <div style={{ fontSize:11, color:'var(--text-1)', fontWeight:600, wordBreak:'break-all' }}>{user.email}</div>
-                </div>
-                <SignOutButton onClose={() => setAuthOpen(false)} />
-              </div>
-            )}
-          </div>
+        {/* Auth / Sync button */}
+        {user ? (
+          <button
+            onClick={() => setAuthOpen(true)}
+            title={user.email}
+            style={{
+              display:"flex", alignItems:"center", gap:4, padding:"3px 8px",
+              background:"rgba(5,150,105,0.10)",
+              border:"1px solid rgba(5,150,105,0.28)",
+              borderRadius:6, cursor:"pointer", transition:"all 0.15s",
+              color:"#059669",
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = "0.75"}
+            onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+          >
+            <span style={{ width:14, height:14, borderRadius:"50%", background:"linear-gradient(135deg,#2563eb,#7c3aed)", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:8, fontWeight:700, flexShrink:0 }}>
+              {user.email?.[0]?.toUpperCase() || "?"}
+            </span>
+            <span style={{ width:5, height:5, borderRadius:"50%", background:"#059669", flexShrink:0 }} />
+            {syncing && <span style={{ fontSize:9, fontFamily:"'Inter',sans-serif", fontWeight:600 }}>SYNC…</span>}
+          </button>
+        ) : (
+          <button
+            onClick={() => setAuthOpen(true)}
+            title="Cloud sync — sign in"
+            style={{
+              display:"flex", alignItems:"center", gap:4, padding:"3px 8px",
+              background:"transparent",
+              border:"1px solid var(--border)",
+              borderRadius:6, cursor:"pointer", transition:"all 0.15s",
+              color:"var(--text-3)",
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = "0.75"}
+            onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+          >
+            <span style={{ fontSize:11 }}>☁</span>
+            <span style={{ fontSize:9, fontFamily:"'Inter',sans-serif", fontWeight:600, letterSpacing:"0.05em" }}>SYNC</span>
+          </button>
         )}
       </div>
 
-      {/* Price alerts panel */}
-      {alertsOpen && <AlertsPanel onClose={() => setAlertsOpen(false)} />}
-
       {/* Clock */}
       <TopBarClock />
+
+      {/* Auth modal */}
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
     </div>
   );
 }

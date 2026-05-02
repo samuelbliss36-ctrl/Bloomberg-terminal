@@ -1,7 +1,10 @@
 import { NAV_ITEMS } from '../data/screenerData';
+import { useAuth } from '../context/AuthContext';
+import { isOwner } from '../lib/subscription';
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 export function SidebarNav({ activePage, setActivePage, isOpen, onToggle }) {
+  const { user } = useAuth();
   return (
     <div className="app-sidebar" style={{ justifyContent:"space-between" }}>
       <div>
@@ -22,9 +25,17 @@ export function SidebarNav({ activePage, setActivePage, isOpen, onToggle }) {
           </button>
         ))}
       </div>
-      {/* Bottom: settings */}
+      {/* Bottom: settings + admin (owner only) */}
       <div style={{ borderTop:"1px solid rgba(15,23,42,0.08)" }}>
-        <button className="sidebar-item" onClick={() => setActivePage("settings")}>
+        {isOwner(user) && (
+          <button
+            className={"sidebar-item" + (activePage==="admin" ? " active" : "")}
+            onClick={() => setActivePage("admin")}>
+            <span className="sidebar-icon">👁</span>
+            <span className="sidebar-label">Admin</span>
+          </button>
+        )}
+        <button className={"sidebar-item" + (activePage==="settings" ? " active" : "")} onClick={() => setActivePage("settings")}>
           <span className="sidebar-icon">⚙</span>
           <span className="sidebar-label">Settings</span>
         </button>

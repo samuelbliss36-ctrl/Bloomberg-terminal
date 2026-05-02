@@ -3,19 +3,19 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { SCREENER_UNIVERSE, FULL_UNIVERSE } from "../../screenerData";
 import { SECTOR_CLR, RATING_CLR, SCREENER_PRESETS } from "../../lib/constants";
 import { SC_COLS, SC_ROW_H, FMP_SECTOR_MAP } from "../../data/screenerData";
+import { db } from "../../lib/db";
 import { useAuth } from "../../context/AuthContext";
-import { savedScreens as dbScreens } from "../../lib/db";
 
-const AI_EXAMPLES = [
-  "Profitable small-caps in defense with low debt and revenue growth",
-  "High-margin tech companies with low P/E and strong ROE",
-  "Dividend payers in utilities with beta under 0.8",
-  "Growth stocks in healthcare with revenue acceleration and no debt",
-  "Cheap financials with high dividend yield and strong analyst ratings",
-  "Large-cap energy companies with low valuation and positive margins",
-];
+function genUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    // eslint-disable-next-line no-mixed-operators
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
 
-export default function StockScreener({ onSelectTicker, onContextUpdate }) {
+export default function StockScreener({ onSelectTicker }) {
+  const { user } = useAuth();
   const DEF = {
     sector:"All", mktCapTier:"All", rating:"All",
     peMin:"", peMax:"", fwdPeMax:"",
@@ -31,87 +31,50 @@ export default function StockScreener({ onSelectTicker, onContextUpdate }) {
   const [activePreset, setActivePreset] = useState(null);
   const [liveUniverse, setLiveUniverse] = useState(null);   // null = loading, array = ready
   const [liveStatus, setLiveStatus]     = useState("loading"); // "loading" | "live" | "synthetic"
+  const [savedScreens, setSavedScreens] = useState(() => db.savedScreens.load());
+  const [saveNameInput, setSaveNameInput] = useState("");
+  const [showSaveInput,  setShowSaveInput]  = useState(false);
   const scrollRef = useRef(null);
+  const saveInputRef = useRef(null);
 
-  // ── Saved screens state ────────────────────────────────────────────────────
-  const { user } = useAuth();
-  const [userScreens, setUserScreens]         = useState(() => dbScreens.load());
-  const [saveNameInput, setSaveNameInput]      = useState("");
-  const [showSaveInput, setShowSaveInput]      = useState(false);
+  const setFilter   = useCallback((k, v) => { setF(prev => ({...prev, [k]:v})); setActivePreset(null); }, []);
+  const applyPreset = (p, i) => { setF({...DEF, ...p.f}); setActivePreset(i); setSortCol("mktCap"); setSortDir("desc"); };
+  const reset       = () => { setF(DEF); setActivePreset(null); setSortCol("mktCap"); setSortDir("desc"); };
+  const toggleSort  = (col) => { if (sortCol===col) setSortDir(d=>d==="asc"?"desc":"asc"); else { setSortCol(col); setSortDir("desc"); } };
 
-  // Refresh when cloud sync completes
+  // Re-read saved screens after cloud sync
   useEffect(() => {
-    const handler = () => setUserScreens(dbScreens.load());
+    const handler = () => setSavedScreens(db.savedScreens.load());
     window.addEventListener('ov:data-synced', handler);
     return () => window.removeEventListener('ov:data-synced', handler);
   }, []);
 
-  const isDefaultFilters = useMemo(() => {
-    return Object.entries(f).every(([k, v]) => v === DEF[k]);
-  }, [f]); // eslint-disable-line
+  // Check whether filters differ from default
+  const isNonDefault = JSON.stringify(f) !== JSON.stringify(DEF);
 
-  const saveScreen = useCallback(() => {
-    const name = saveNameInput.trim() || (aiInterpretation?.description?.slice(0, 40)) || "My Screen";
-    const newScreen = { id: Date.now().toString(), name, filters: { ...f }, createdAt: new Date().toISOString() };
-    const updated = [newScreen, ...userScreens];
-    setUserScreens(updated);
-    dbScreens.save(updated, user?.id);
+  const saveCurrentScreen = () => {
+    const name = saveNameInput.trim();
+    if (!name) return;
+    const newScreen = { id: genUUID(), name, filters: f, created_at: new Date().toISOString() };
+    const updated = [...savedScreens, newScreen];
+    setSavedScreens(updated);
+    db.savedScreens.save(updated, user?.id);
     setSaveNameInput("");
     setShowSaveInput(false);
-  }, [saveNameInput, f, userScreens, user]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const deleteScreen = useCallback((id) => {
-    const updated = userScreens.filter(s => s.id !== id);
-    setUserScreens(updated);
-    dbScreens.save(updated, user?.id);
-  }, [userScreens, user]);
-
-  // ── AI Screener state ──────────────────────────────────────────────────────
-  const [aiMode, setAiMode]                   = useState(false);
-  const [aiQuery, setAiQuery]                 = useState("");
-  const [aiLoading, setAiLoading]             = useState(false);
-  const [aiError, setAiError]                 = useState(null);
-  const [aiInterpretation, setAiInterpretation] = useState(null); // { description, reasoning }
-  const aiInputRef = useRef(null);
-
-  const runAiScreen = useCallback(async (queryOverride) => {
-    const q = (queryOverride ?? aiQuery).trim();
-    if (!q) return;
-    let apiKey;
-    try { apiKey = localStorage.getItem("ov_copilot_key") || undefined; } catch {}
-    setAiLoading(true);
-    setAiError(null);
-    setAiInterpretation(null);
-    try {
-      const r = await fetch("/api/ai-screener", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: q, apiKey }),
-      });
-      const d = await r.json();
-      if (!r.ok || d.error) throw new Error(d.message || d.error || `HTTP ${r.status}`);
-      setF({ ...DEF, ...d.filters });
-      setActivePreset(null);
-      setSortCol("mktCap");
-      setSortDir("desc");
-      setAiInterpretation({ description: d.description, reasoning: d.reasoning || [] });
-    } catch (e) {
-      setAiError(e.message || "AI screening failed");
-    } finally {
-      setAiLoading(false);
-    }
-  }, [aiQuery]); // eslint-disable-line
-
-  const switchToAiMode = () => {
-    setAiMode(true);
-    setTimeout(() => aiInputRef.current?.focus(), 60);
   };
-  const switchToFilterMode = () => setAiMode(false);
 
-  const setFilter   = useCallback((k, v) => { setF(prev => ({...prev, [k]:v})); setActivePreset(null); }, []);
-  const applyPreset = (p, i) => { setF({...DEF, ...p.f}); setActivePreset(i); setSortCol("mktCap"); setSortDir("desc"); setAiInterpretation(null); };
-  const reset       = () => { setF(DEF); setActivePreset(null); setSortCol("mktCap"); setSortDir("desc"); setAiInterpretation(null); setAiQuery(""); };
-  const toggleSort  = (col) => { if (sortCol===col) setSortDir(d=>d==="asc"?"desc":"asc"); else { setSortCol(col); setSortDir("desc"); } };
+  const deleteScreen = (id) => {
+    const updated = savedScreens.filter(s => s.id !== id);
+    setSavedScreens(updated);
+    db.savedScreens.save(updated, user?.id);
+  };
+
+  const applySavedScreen = (screen) => {
+    setF({ ...DEF, ...screen.filters });
+    setActivePreset(null);
+    setSortCol("mktCap");
+    setSortDir("desc");
+  };
 
   /* ── Live universe: fetch from FMP on mount, merge with SCREENER_UNIVERSE fundamentals ── */
   useEffect(() => {
@@ -186,17 +149,6 @@ export default function StockScreener({ onSelectTicker, onContextUpdate }) {
     });
     return filtered;
   }, [f, sortCol, sortDir, universe]); // eslint-disable-line
-
-  // Serialize screener results into copilot context whenever filters change
-  useEffect(() => {
-    if (!onContextUpdate) return;
-    const presetName = activePreset != null ? SCREENER_PRESETS[activePreset]?.name ?? null : null;
-    const topResults = results.slice(0, 15).map(s => ({
-      ticker: s.ticker, name: s.name, sector: s.sector,
-      price: s.price, mktCap: s.mktCap, pe: s.pe, roe: s.roe,
-    }));
-    onContextUpdate({ type: "screener", presetName, filterCount: results.length, topResults });
-  }, [results, activePreset, onContextUpdate]);
 
   /* ── DOM virtualizer ───────────────────────────────────────────── */
   const rowVirtualizer = useVirtualizer({
@@ -296,214 +248,106 @@ export default function StockScreener({ onSelectTicker, onContextUpdate }) {
   return (
     <div style={{ display:"flex", flexDirection:"column", height:"100%", overflow:"hidden", background:"var(--surface-0)" }}>
 
-      {/* ── Top Bar: title + mode toggle + status + reset ─────────── */}
-      <div style={{ padding:"8px 16px 0", borderBottom:"none", background:"var(--surface-1)", flexShrink:0 }}>
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+      {/* ── Filter Panel ──────────────────────────────────────────── */}
+      <div style={{ padding:"10px 16px", borderBottom:"1px solid var(--border-solid)", background:"var(--surface-1)", flexShrink:0, display:"flex", flexDirection:"column", gap:8 }}>
+
+        {/* Title + live count + reset */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
             <span style={{ fontSize:11, fontWeight:700, letterSpacing:"0.07em", color:"var(--text-1)" }}>📊 STOCK SCREENER</span>
             <span style={{ fontSize:10, fontFamily:"'IBM Plex Mono',monospace", color:"var(--text-3)", background:"var(--surface-2)", padding:"1px 8px", borderRadius:99 }}>
-              {results.length.toLocaleString()} / {universe.length.toLocaleString()}
+              Showing {results.length.toLocaleString()} of {universe.length.toLocaleString()}
             </span>
             {liveStatus === "live"      && <span style={{ fontSize:9, fontFamily:"'IBM Plex Mono',monospace", color:"#059669" }}>● Live · FMP</span>}
-            {liveStatus === "loading"   && <span style={{ fontSize:9, fontFamily:"'IBM Plex Mono',monospace", color:"#b45309" }}>⟳ Loading…</span>}
-            {liveStatus === "synthetic" && <span style={{ fontSize:9, fontFamily:"'IBM Plex Mono',monospace", color:"var(--text-3)" }}>◦ Synthetic</span>}
+            {liveStatus === "loading"   && <span style={{ fontSize:9, fontFamily:"'IBM Plex Mono',monospace", color:"#b45309" }}>⟳ Loading live data…</span>}
+            {liveStatus === "synthetic" && <span style={{ fontSize:9, fontFamily:"'IBM Plex Mono',monospace", color:"var(--text-3)" }}>◦ Synthetic data (add FMP_KEY env var for live)</span>}
+            <span style={{ fontSize:10, color:"var(--text-3)" }}>· Click row → load ticker · Click header → sort</span>
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-            {/* Mode toggle */}
-            <div style={{ display:"flex", border:"1px solid var(--border-solid)", borderRadius:6, overflow:"hidden" }}>
-              <button onClick={switchToFilterMode}
-                style={{ padding:"3px 10px", fontSize:10, fontWeight:600, cursor:"pointer", border:"none",
-                  background: !aiMode ? "#2563eb" : "var(--surface-0)",
-                  color: !aiMode ? "#fff" : "var(--text-3)", transition:"all 0.12s" }}>
-                ⊞ Filters
+            {isNonDefault && !showSaveInput && (
+              <button onClick={() => { setShowSaveInput(true); setTimeout(() => saveInputRef.current?.focus(), 50); }}
+                style={{ fontSize:10, color:"#2563eb", background:"rgba(37,99,235,0.08)", border:"1px solid rgba(37,99,235,0.25)", borderRadius:4, padding:"2px 10px", cursor:"pointer" }}>
+                💾 Save Screen
               </button>
-              <button onClick={switchToAiMode}
-                style={{ padding:"3px 10px", fontSize:10, fontWeight:600, cursor:"pointer", border:"none",
-                  borderLeft:"1px solid var(--border-solid)",
-                  background: aiMode ? "#7c3aed" : "var(--surface-0)",
-                  color: aiMode ? "#fff" : "var(--text-3)", transition:"all 0.12s" }}>
-                ✦ AI Screen
-              </button>
-            </div>
-            <button onClick={reset} style={{ fontSize:10, color:"var(--text-3)", background:"none", border:"1px solid var(--border-solid)", borderRadius:4, padding:"3px 10px", cursor:"pointer" }}>
+            )}
+            {showSaveInput && (
+              <div style={{ display:"flex", alignItems:"center", gap:4 }}>
+                <input
+                  ref={saveInputRef}
+                  value={saveNameInput}
+                  onChange={e => setSaveNameInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") saveCurrentScreen(); if (e.key === "Escape") { setShowSaveInput(false); setSaveNameInput(""); } }}
+                  placeholder="Screen name…"
+                  style={{ fontSize:10, fontFamily:"'IBM Plex Mono',monospace", border:"1px solid rgba(37,99,235,0.40)", borderRadius:4, padding:"2px 8px", background:"var(--surface-0)", color:"var(--text-1)", outline:"none", width:140 }}
+                />
+                <button onClick={saveCurrentScreen}
+                  style={{ fontSize:10, color:"#fff", background:"#2563eb", border:"none", borderRadius:4, padding:"2px 8px", cursor:"pointer" }}>
+                  Save
+                </button>
+                <button onClick={() => { setShowSaveInput(false); setSaveNameInput(""); }}
+                  style={{ fontSize:10, color:"var(--text-3)", background:"none", border:"1px solid var(--border-solid)", borderRadius:4, padding:"2px 6px", cursor:"pointer" }}>
+                  ✕
+                </button>
+              </div>
+            )}
+            <button onClick={reset} style={{ fontSize:10, color:"var(--text-3)", background:"none", border:"1px solid var(--border-solid)", borderRadius:4, padding:"2px 10px", cursor:"pointer" }}>
               ↺ Reset
             </button>
           </div>
         </div>
 
-        {/* ── AI Mode Panel ─────────────────────────────────────────── */}
-        {aiMode && (
-          <div style={{ paddingBottom:10, borderBottom:"1px solid var(--border-solid)" }}>
-            {/* Input row */}
-            <div style={{ display:"flex", gap:6, marginBottom:8 }}>
-              <div style={{ flex:1, position:"relative" }}>
-                <input
-                  ref={aiInputRef}
-                  value={aiQuery}
-                  onChange={e => setAiQuery(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter" && !aiLoading) runAiScreen(); }}
-                  placeholder='e.g. "profitable small-caps in defense with low debt and revenue acceleration"'
-                  style={{ width:"100%", padding:"8px 12px", fontSize:11,
-                    fontFamily:"'IBM Plex Mono',monospace",
-                    border:"1px solid #7c3aed", borderRadius:6,
-                    background:"var(--surface-0)", color:"var(--text-1)",
-                    outline:"none", boxSizing:"border-box",
-                    boxShadow:"0 0 0 2px rgba(124,58,237,0.1)" }} />
-              </div>
-              <button
-                onClick={() => runAiScreen()}
-                disabled={aiLoading || !aiQuery.trim()}
-                style={{ padding:"8px 18px", fontSize:11, fontWeight:700, cursor: aiLoading||!aiQuery.trim() ? "default":"pointer",
-                  background: aiLoading||!aiQuery.trim() ? "var(--surface-2)" : "#7c3aed",
-                  color: aiLoading||!aiQuery.trim() ? "var(--text-3)" : "#fff",
-                  border:"none", borderRadius:6, transition:"all 0.12s", whiteSpace:"nowrap",
-                  opacity: aiLoading||!aiQuery.trim() ? 0.6 : 1 }}>
-                {aiLoading ? "Screening…" : "✦ Screen"}
-              </button>
-            </div>
-
-            {/* Example queries */}
-            {!aiInterpretation && !aiLoading && (
-              <div style={{ display:"flex", flexWrap:"wrap", gap:4, marginBottom:4 }}>
-                <span style={{ fontSize:9, color:"var(--text-3)", fontFamily:"'IBM Plex Mono',monospace", alignSelf:"center", marginRight:2 }}>EXAMPLES:</span>
-                {AI_EXAMPLES.map((ex, i) => (
-                  <button key={i}
-                    onClick={() => { setAiQuery(ex); runAiScreen(ex); }}
-                    style={{ padding:"2px 9px", fontSize:9, cursor:"pointer", borderRadius:99,
-                      border:"1px solid var(--border-solid)", background:"var(--surface-0)",
-                      color:"var(--text-3)", transition:"all 0.1s", fontFamily:"'IBM Plex Mono',monospace" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor="#7c3aed"; e.currentTarget.style.color="#7c3aed"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor="var(--border-solid)"; e.currentTarget.style.color="var(--text-3)"; }}>
-                    {ex}
+        {/* Preset chips */}
+        <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+          {SCREENER_PRESETS.map((p, i) => (
+            <button key={i} onClick={() => applyPreset(p, i)}
+              style={{ padding:"2px 10px", fontSize:10, fontWeight:500, cursor:"pointer", borderRadius:99,
+                border:`1px solid ${activePreset===i?"#2563eb":"var(--border-solid)"}`,
+                background: activePreset===i?"var(--blue-dim)":"var(--surface-0)",
+                color: activePreset===i?"#2563eb":"var(--text-3)", transition:"all 0.12s" }}>
+              {p.label}
+            </button>
+          ))}
+          {savedScreens.length > 0 && (
+            <>
+              <span style={{ fontSize:9, color:"var(--text-3)", alignSelf:"center", padding:"0 4px" }}>── Saved ──</span>
+              {savedScreens.map(s => (
+                <span key={s.id} style={{ display:"inline-flex", alignItems:"center", gap:3 }}>
+                  <button onClick={() => applySavedScreen(s)}
+                    style={{ padding:"2px 8px", fontSize:10, fontWeight:500, cursor:"pointer", borderRadius:99,
+                      border:"1px solid rgba(124,58,237,0.35)",
+                      background:"rgba(124,58,237,0.08)", color:"#7c3aed", transition:"all 0.12s" }}>
+                    {s.name}
                   </button>
-                ))}
-              </div>
-            )}
-
-            {/* Error */}
-            {aiError && (
-              <div style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 10px", borderRadius:5,
-                background:"rgba(225,29,72,0.07)", border:"1px solid rgba(225,29,72,0.2)", fontSize:10,
-                fontFamily:"'IBM Plex Mono',monospace", color:"#e11d48" }}>
-                ⚠ {aiError}
-                {aiError.includes("key") && <span style={{ color:"var(--text-3)" }}> — Add your API key in AI Copilot settings</span>}
-              </div>
-            )}
-
-            {/* AI result: description + reasoning chips */}
-            {aiInterpretation && !aiLoading && (
-              <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:6 }}>
-                <span style={{ fontSize:10, fontFamily:"'IBM Plex Mono',monospace", color:"#7c3aed", fontWeight:600 }}>
-                  ✦ {aiInterpretation.description}
+                  <button onClick={() => deleteScreen(s.id)}
+                    title="Delete saved screen"
+                    style={{ fontSize:9, color:"var(--text-3)", background:"none", border:"none", cursor:"pointer", padding:"0 2px", lineHeight:1 }}>✕</button>
                 </span>
-                <span style={{ fontSize:9, color:"var(--text-3)", margin:"0 2px" }}>·</span>
-                {aiInterpretation.reasoning.map((chip, i) => (
-                  <span key={i} style={{ fontSize:9, padding:"1px 8px", borderRadius:99,
-                    background:"rgba(124,58,237,0.1)", border:"1px solid rgba(124,58,237,0.2)",
-                    color:"#7c3aed", fontFamily:"'IBM Plex Mono',monospace" }}>
-                    {chip}
-                  </span>
-                ))}
-                <button onClick={switchToFilterMode}
-                  style={{ marginLeft:4, fontSize:9, padding:"1px 8px", borderRadius:99, cursor:"pointer",
-                    border:"1px solid var(--border-solid)", background:"var(--surface-0)",
-                    color:"var(--text-3)", fontFamily:"'IBM Plex Mono',monospace" }}>
-                  Edit Filters →
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── Filter Mode Panel ──────────────────────────────────────── */}
-        {!aiMode && (
-          <div style={{ display:"flex", flexDirection:"column", gap:8, paddingBottom:10, borderBottom:"1px solid var(--border-solid)" }}>
-            {/* Preset chips + Save Screen */}
-            <div style={{ display:"flex", flexWrap:"wrap", gap:4, alignItems:"center" }}>
-              {SCREENER_PRESETS.map((p, i) => (
-                <button key={i} onClick={() => applyPreset(p, i)}
-                  style={{ padding:"2px 10px", fontSize:10, fontWeight:500, cursor:"pointer", borderRadius:99,
-                    border:`1px solid ${activePreset===i?"#2563eb":"var(--border-solid)"}`,
-                    background: activePreset===i?"var(--blue-dim)":"var(--surface-0)",
-                    color: activePreset===i?"#2563eb":"var(--text-3)", transition:"all 0.12s" }}>
-                  {p.label}
-                </button>
               ))}
-              {/* User saved screens */}
-              {userScreens.length > 0 && (
-                <>
-                  <span style={{ fontSize:9, color:"var(--text-3)", margin:"0 2px" }}>──</span>
-                  {userScreens.map(s => (
-                    <span key={s.id} style={{ display:"inline-flex", alignItems:"center", gap:3,
-                      padding:"2px 8px 2px 10px", fontSize:10, fontWeight:500, borderRadius:99,
-                      border:"1px solid rgba(124,58,237,0.40)", background:"rgba(124,58,237,0.08)", color:"#a78bfa" }}>
-                      <button onClick={() => { setF({...DEF, ...s.filters}); setActivePreset(null); setAiInterpretation(null); }}
-                        style={{ background:"none", border:"none", cursor:"pointer", color:"inherit", padding:0, fontSize:10, fontFamily:"inherit" }}>
-                        {s.name}
-                      </button>
-                      <button onClick={() => deleteScreen(s.id)}
-                        style={{ background:"none", border:"none", cursor:"pointer", color:"rgba(167,139,250,0.6)", padding:0, fontSize:10, lineHeight:1 }}>✕</button>
-                    </span>
-                  ))}
-                </>
-              )}
-              {/* Save current filters */}
-              {!isDefaultFilters && !showSaveInput && (
-                <button onClick={() => setShowSaveInput(true)}
-                  style={{ padding:"2px 10px", fontSize:10, fontWeight:500, cursor:"pointer", borderRadius:99,
-                    border:"1px solid rgba(5,150,105,0.40)", background:"rgba(5,150,105,0.08)", color:"#34d399" }}>
-                  💾 Save Screen
-                </button>
-              )}
-              {showSaveInput && (
-                <span style={{ display:"inline-flex", alignItems:"center", gap:4 }}>
-                  <input
-                    autoFocus
-                    value={saveNameInput}
-                    onChange={e => setSaveNameInput(e.target.value)}
-                    onKeyDown={e => { if (e.key==="Enter") saveScreen(); if (e.key==="Escape") setShowSaveInput(false); }}
-                    placeholder="Screen name…"
-                    style={{ fontSize:10, padding:"2px 8px", borderRadius:6, background:"var(--surface-0)",
-                      border:"1px solid rgba(5,150,105,0.40)", color:"var(--text-1)", outline:"none",
-                      fontFamily:"'IBM Plex Mono',monospace", width:130 }} />
-                  <button onClick={saveScreen}
-                    style={{ padding:"2px 8px", fontSize:10, borderRadius:6, cursor:"pointer",
-                      background:"rgba(5,150,105,0.15)", border:"1px solid rgba(5,150,105,0.40)", color:"#34d399" }}>Save</button>
-                  <button onClick={() => setShowSaveInput(false)}
-                    style={{ padding:"2px 6px", fontSize:10, borderRadius:6, cursor:"pointer",
-                      background:"none", border:"1px solid var(--border-solid)", color:"var(--text-3)" }}>✕</button>
-                </span>
-              )}
-            </div>
+            </>
+          )}
+        </div>
 
-            {/* Sector chips */}
-            <div style={{ display:"flex", flexWrap:"wrap", gap:3 }}>{chipRow("sector", SECTORS)}</div>
+        {/* Sector chips */}
+        <div style={{ display:"flex", flexWrap:"wrap", gap:3 }}>{chipRow("sector", SECTORS)}</div>
 
-            {/* Cap + Rating + Boolean toggles */}
-            <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:12 }}>
-              <div style={{ display:"flex", alignItems:"center", gap:3 }}>{grpLbl("CAP")}<span style={{marginRight:2}}/>{chipRow("mktCapTier", CAPS)}</div>
-              <div style={{ display:"flex", alignItems:"center", gap:3 }}>{grpLbl("RATING")}<span style={{marginRight:2}}/>{chipRow("rating", RATINGS)}</div>
-              <div style={{ display:"flex", alignItems:"center", gap:4 }}>{grpLbl("ONLY")}<span style={{marginRight:2}}/>{boolChip("profitable","Profitable")}{boolChip("paysDividend","Pays Dividend")}</div>
-            </div>
+        {/* Cap + Rating + Boolean toggles */}
+        <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:12 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:3 }}>{grpLbl("CAP")}<span style={{marginRight:2}}/>{chipRow("mktCapTier", CAPS)}</div>
+          <div style={{ display:"flex", alignItems:"center", gap:3 }}>{grpLbl("RATING")}<span style={{marginRight:2}}/>{chipRow("rating", RATINGS)}</div>
+          <div style={{ display:"flex", alignItems:"center", gap:4 }}>{grpLbl("ONLY")}<span style={{marginRight:2}}/>{boolChip("profitable","Profitable")}{boolChip("paysDividend","Pays Dividend")}</div>
+        </div>
 
-            {/* Numeric filters — grouped */}
-            <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:14 }}>
-              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                {grpLbl("VALUATION")}{numInput("P/E ≥","peMin")}{numInput("P/E ≤","peMax")}{numInput("Fwd P/E ≤","fwdPeMax")}{numInput("P/B ≤","pbMax")}
-              </div>
-              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                {grpLbl("QUALITY")}{numInput("ROE ≥","roeMin")}{numInput("D/E ≤","debtToEqMax",44)}{numInput("Gross ≥","grossMarginMin")}{numInput("Net ≥","netMarginMin")}
-              </div>
-              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                {grpLbl("GROWTH / INCOME")}{numInput("Rev ≥","revGrowthMin")}{numInput("Rev ≤","revGrowthMax")}{numInput("Div ≥","divYieldMin")}{numInput("Beta ≤","betaMax",44)}
-              </div>
-            </div>
+        {/* Numeric filters — grouped */}
+        <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", gap:14 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+            {grpLbl("VALUATION")}{numInput("P/E ≥","peMin")}{numInput("P/E ≤","peMax")}{numInput("Fwd P/E ≤","fwdPeMax")}{numInput("P/B ≤","pbMax")}
           </div>
-        )}
-
-        {/* Row count hint — always shown */}
-        <div style={{ padding:"4px 0 6px", fontSize:9, fontFamily:"'IBM Plex Mono',monospace", color:"var(--text-3)" }}>
-          Showing {results.length.toLocaleString()} stocks · Click row to open · Click column header to sort
+          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+            {grpLbl("QUALITY")}{numInput("ROE ≥","roeMin")}{numInput("D/E ≤","debtToEqMax",44)}{numInput("Gross ≥","grossMarginMin")}{numInput("Net ≥","netMarginMin")}
+          </div>
+          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+            {grpLbl("GROWTH / INCOME")}{numInput("Rev ≥","revGrowthMin")}{numInput("Rev ≤","revGrowthMax")}{numInput("Div ≥","divYieldMin")}{numInput("Beta ≤","betaMax",44)}
+          </div>
         </div>
       </div>
 
