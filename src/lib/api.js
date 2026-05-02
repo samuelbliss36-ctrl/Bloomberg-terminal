@@ -12,6 +12,25 @@ if (IS_DEV && !FINNHUB_KEY) {
   );
 }
 
+// Retry fetch with timeout — 2 retries, 8 s per attempt, 500/1000 ms backoff
+const withRetry = async (url, retries = 2, timeoutMs = 8000) => {
+  let lastErr;
+  for (let i = 0; i <= retries; i++) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+      const r = await fetch(url, { signal: ctrl.signal });
+      clearTimeout(t);
+      return r;
+    } catch (err) {
+      clearTimeout(t);
+      lastErr = err;
+      if (i < retries) await new Promise(res => setTimeout(res, 500 * (i + 1)));
+    }
+  }
+  throw lastErr;
+};
+
 // In-memory client cache — deduplicate rapid repeated calls (60 s TTL)
 export const _apiCache = new Map();
 export const api = (path) => {
@@ -21,7 +40,7 @@ export const api = (path) => {
     if (!FINNHUB_KEY) return Promise.reject(new Error("Finnhub API key not configured."));
     const hit = _apiCache.get(path);
     if (hit && Date.now() - hit.ts < 60_000) return Promise.resolve(hit.data);
-    return fetch(`https://finnhub.io/api/v1${path}&token=${FINNHUB_KEY}`)
+    return withRetry(`https://finnhub.io/api/v1${path}&token=${FINNHUB_KEY}`)
       .then(r => { if (!r.ok) throw new Error(`Finnhub ${r.status}: ${path}`); return r.json(); })
       .then(data => { _apiCache.set(path, { data, ts: Date.now() }); return data; });
   }
@@ -29,7 +48,7 @@ export const api = (path) => {
   // Production path — proxy with edge caching
   const hit = _apiCache.get(path);
   if (hit && Date.now() - hit.ts < 60_000) return Promise.resolve(hit.data);
-  return fetch(`/api/finnhub?_q=${encodeURIComponent(path)}`)
+  return withRetry(`/api/finnhub?_q=${encodeURIComponent(path)}`)
     .then(r => { if (!r.ok) throw new Error(`Finnhub proxy ${r.status}: ${path}`); return r.json(); })
     .then(data => { _apiCache.set(path, { data, ts: Date.now() }); return data; });
 };
@@ -40,7 +59,7 @@ export const fetchChart = (ticker, range, interval) => {
   const key = ticker + "|" + range + "|" + interval;
   const hit = _chartCache.get(key);
   if (hit && Date.now() - hit.ts < 300_000) return Promise.resolve(hit.data);
-  return fetch("/api/chart?ticker=" + encodeURIComponent(ticker) + "&range=" + range + "&interval=" + interval)
+  return withRetry("/api/chart?ticker=" + encodeURIComponent(ticker) + "&range=" + range + "&interval=" + interval)
     .then(r => r.json())
     .then(data => { _chartCache.set(key, { data, ts: Date.now() }); return data; });
 };

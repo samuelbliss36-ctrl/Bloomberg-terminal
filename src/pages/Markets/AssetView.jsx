@@ -242,7 +242,9 @@ function FinancialStatements({ ticker }) {
   const [tab, setTab] = useState("income");
   const [data, setData] = useState(null);
   useEffect(() => {
-    api("/stock/financials-reported?symbol=" + ticker + "&freq=quarterly").then(d => setData(d.data?.slice(0,40) || []));
+    api("/stock/financials-reported?symbol=" + ticker + "&freq=quarterly")
+      .then(d => setData(d.data?.slice(0,40) || []))
+      .catch(() => setData([]));
   }, [ticker]);
   const tabs = [{ key: "income", label: "Income Stmt" }, { key: "balance", label: "Balance Sheet" }, { key: "cashflow", label: "Cash Flow" }];
   const find = (arr, key) => arr?.find(x=>x.concept.includes(key))?.value/1e9||0;
@@ -439,7 +441,10 @@ export default function AssetView({ ticker, quote, metrics, profile, news }) {
     if (!news.length) return <div style={{ color:"var(--text-3)", fontFamily:"'IBM Plex Mono',monospace", fontSize:10 }}>No recent news</div>;
     return (
       <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-        {news.slice(0,14).map((n,i) => {
+        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:"var(--text-3)", marginBottom:2 }}>
+          {news.length} article{news.length !== 1 ? "s" : ""} · last 30 days
+        </div>
+        {news.map((n,i) => {
           const ts = n.datetime ? new Date(n.datetime*1000) : null;
           const ago = ts ? Math.floor((Date.now()-ts)/86400000) : null;
           return (

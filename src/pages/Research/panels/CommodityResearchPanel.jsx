@@ -1,0 +1,137 @@
+import { useState, useEffect } from "react";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { fmt, clr } from "../../../lib/fmt";
+import { ENTITY_INTEL } from "../../../data/researchData";
+import { ResearchPanelShell, ResearchTabBar } from "../../../components/ui/ResearchPanelShell";
+import { IntelCard } from "../../../components/ui/IntelCard";
+import RelatedLinks from "./RelatedLinks";
+
+export default function CommodityResearchPanel({ item, onClose, onOpen }) {
+  const TABS = ["Overview","Intelligence","Producers"];
+  const [activeTab, setActiveTab] = useState("Overview");
+  const [chartData, setChartData] = useState([]);
+  const [summary, setSummary]     = useState(null);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState(false);
+  const intel = ENTITY_INTEL[item.id];
+
+  useEffect(() => {
+    setLoading(true); setError(false); setChartData([]); setSummary(null); setActiveTab("Overview");
+    fetch("/api/chart?ticker=" + encodeURIComponent(item.ticker) + "&range=1y&interval=1d")
+      .then(r => r.json())
+      .then(c => {
+        const result = c?.chart?.result?.[0];
+        if (result) {
+          const ts     = result.timestamp || [];
+          const closes = result.indicators?.quote?.[0]?.close || [];
+          const data   = ts.map((t, i) => ({ t, v: closes[i] != null ? +closes[i].toFixed(4) : null })).filter(d => d.v != null);
+          setChartData(data);
+          if (data.length >= 2) {
+            const cur = data[data.length - 1].v, prev = data[data.length - 2].v;
+            const m1 = data[Math.max(0, data.length - 22)].v;
+            const m3 = data[Math.max(0, data.length - 66)].v;
+            const hi52 = Math.max(...data.map(d => d.v)), lo52 = Math.min(...data.map(d => d.v));
+            setSummary({ cur, prev, dayPct:((cur-prev)/prev)*100, m1Pct:((cur-m1)/m1)*100, m3Pct:((cur-m3)/m3)*100, ytdPct:((cur-data[0].v)/data[0].v)*100, hi52, lo52 });
+          }
+        }
+        setLoading(false);
+      }).catch(() => { setLoading(false); setError(true); });
+  }, [item.ticker]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const dp = 2;
+  const priceColor = summary ? (summary.dayPct >= 0 ? "#059669" : "#e11d48") : "#b45309";
+  const pct52 = summary ? Math.min(100, Math.max(0, ((summary.cur - summary.lo52) / (summary.hi52 - summary.lo52)) * 100)) : null;
+
+  const renderOverview = () => {
+    if (loading) return <div className="flex items-center justify-center py-8 font-mono" style={{ color:"var(--text-3)" }}>Loading…</div>;
+    if (error)   return <div className="flex items-center gap-2 font-mono" style={{ color:"#e11d48", background:"rgba(225,29,72,0.06)", border:"1px solid rgba(225,29,72,0.18)", borderRadius:6, padding:"10px 14px", fontSize:11 }}>⚠ Failed to load — check your connection</div>;
+    return (
+      <div>
+        <div className="flex items-baseline justify-between mb-3">
+          <div>
+            <span className="font-mono font-bold" style={{ color:"var(--text-1)", fontSize:26 }}>${summary?.cur.toLocaleString("en-US",{minimumFractionDigits:dp,maximumFractionDigits:dp})||"—"}</span>
+            {intel?.unit && <span className="font-mono ml-2" style={{ color:"var(--text-3)", fontSize:10 }}>per {intel.unit.split("/")[1]||intel.unit}</span>}
+          </div>
+          <div className="text-right">
+            {summary && <div className="font-mono" style={{ color:clr(summary.dayPct), fontSize:13 }}>Day {fmt.pct(summary.dayPct)}</div>}
+            {summary && <div className="font-mono" style={{ color:clr(summary.m1Pct), fontSize:10 }}>1M {fmt.pct(summary.m1Pct)}</div>}
+          </div>
+        </div>
+
+        {chartData.length > 0 && (
+          <div style={{ height:190, marginBottom:12 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top:4, right:2, bottom:0, left:0 }}>
+                <defs>
+                  <linearGradient id={"cmg_"+item.id.replace(/[^a-z0-9]/gi,"")} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor={priceColor} stopOpacity={0.22}/>
+                    <stop offset="95%" stopColor={priceColor} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="t" tickFormatter={t=>{const d=new Date(t*1000);return(d.getMonth()+1)+"/"+d.getDate();}} tick={{fill:"#64748b",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={35}/>
+                <YAxis domain={["auto","auto"]} hide/>
+                <Tooltip contentStyle={{background:"var(--surface-2)",border:"1px solid rgba(15,23,42,0.18)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} labelFormatter={t=>new Date(t*1000).toLocaleDateString()} formatter={v=>["$"+v?.toFixed(dp),"Price"]}/>
+                <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5} fill={"url(#cmg_"+item.id.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {pct52 != null && (
+          <div className="mb-4">
+            <div className="flex justify-between font-mono mb-1" style={{ color:"var(--text-3)", fontSize:9 }}>
+              <span>52W LOW ${summary.lo52.toFixed(dp)}</span>
+              <span style={{ color:"var(--text-3)" }}>52-WEEK RANGE</span>
+              <span>${summary.hi52.toFixed(dp)} 52W HIGH</span>
+            </div>
+            <div style={{ position:"relative", height:4, background:"var(--surface-3)", borderRadius:2 }}>
+              <div style={{ position:"absolute", left:0, width:pct52+"%", height:"100%", background:pct52>70?"#059669":pct52<30?"#e11d48":"#b45309", borderRadius:2 }}/>
+              <div style={{ position:"absolute", left:pct52+"%", top:-3, width:2, height:10, background:"#0f172a", borderRadius:1, transform:"translateX(-50%)" }}/>
+            </div>
+          </div>
+        )}
+
+        {summary && (
+          <div className="grid mb-4" style={{ gridTemplateColumns:"repeat(4,1fr)", gap:"4px 8px" }}>
+            {[["1D",summary.dayPct],["1M",summary.m1Pct],["3M",summary.m3Pct],["YTD",summary.ytdPct]].map(([label,val])=>(
+              <div key={label} style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, padding:"6px 8px" }}>
+                <div className="font-mono" style={{ color:"var(--text-3)", fontSize:9 }}>{label}</div>
+                <div className="font-mono font-bold" style={{ color:clr(val), fontSize:13 }}>{fmt.pct(val)}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        <RelatedLinks itemId={item.id} onOpen={onOpen}/>
+      </div>
+    );
+  };
+
+  const renderProducers = () => !intel?.producers ? (
+    <div className="font-mono py-4" style={{ color:"var(--text-3)" }}>No producer data available.</div>
+  ) : (
+    <div>
+      <div className="font-mono mb-3" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Producers / Supply Sources</div>
+      <div style={{ borderTop:"1px solid rgba(15,23,42,0.09)" }}>
+        {intel.producers.map((p,i) => (
+          <div key={i} className="flex items-start justify-between py-2.5" style={{ borderBottom:"1px solid rgba(15,23,42,0.06)" }}>
+            <div>
+              <div className="font-mono" style={{ color:"var(--text-1)", fontSize:11 }}>{p.name}</div>
+              <div className="font-mono" style={{ color:"var(--text-3)", fontSize:9 }}>{p.note}</div>
+            </div>
+            <div className="font-mono" style={{ color:"#b45309", fontSize:11 }}>{p.share}</div>
+          </div>
+        ))}
+      </div>
+      <RelatedLinks itemId={item.id} onOpen={onOpen}/>
+    </div>
+  );
+
+  return (
+    <ResearchPanelShell title={item.label} subtitle={item.ticker} badge="Commodity" onClose={onClose}>
+      <ResearchTabBar tabs={TABS} active={activeTab} onSelect={setActiveTab}/>
+      {activeTab === "Overview"     && renderOverview()}
+      {activeTab === "Intelligence" && <div>{intel ? <IntelCard intel={intel} accentColor="#b45309"/> : <div className="font-mono py-4" style={{color:"var(--text-3)"}}>No data.</div>}<div className="mt-4"><RelatedLinks itemId={item.id} onOpen={onOpen}/></div></div>}
+      {activeTab === "Producers"    && renderProducers()}
+    </ResearchPanelShell>
+  );
+}
