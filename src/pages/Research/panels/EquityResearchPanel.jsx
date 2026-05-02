@@ -21,6 +21,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
   const [peers, setPeers]         = useState(null);
   const [peerQ, setPeerQ]         = useState({});
   const [peerM, setPeerM]         = useState({});
+  const [yahooStats, setYahooStats] = useState(null);
   const loadedTabs = useRef(new Set(["Overview"]));
 
   useEffect(() => {
@@ -30,15 +31,22 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
     loadedTabs.current = new Set(["Overview"]);
     setEarnings(null); setRecs(null); setPt(undefined);
     setNews(null); setPeers(null); setPeerQ({}); setPeerM({});
+    setYahooStats(null);
 
     Promise.all([
       api("/quote?symbol=" + item.ticker),
       delay(150).then(() => api("/stock/profile2?symbol=" + item.ticker)),
       delay(300).then(() => api("/stock/metric?symbol=" + item.ticker + "&metric=all")),
-    ]).then(([q, p, metaRaw]) => {
+      delay(450).then(() =>
+        fetch("/api/quote-summary?ticker=" + encodeURIComponent(item.ticker))
+          .then(r => r.json())
+          .catch(() => null)
+      ),
+    ]).then(([q, p, metaRaw, ys]) => {
       setQuote(q);
       setProfile(p || {});
       setMetrics(metaRaw?.metric || null);
+      setYahooStats(ys?.quoteSummary?.result?.[0]?.defaultKeyStatistics || null);
       setLoadingBase(false);
     }).catch(() => { setLoadingBase(false); setBaseError(true); });
   }, [item.ticker]); // eslint-disable-line
@@ -118,14 +126,11 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
   const up  = quote?.dp >= 0;
   const priceColor = up ? "#059669" : "#e11d48";
 
-  // Compute P/E live from current price so it reflects today's quote, not
-  // Finnhub's cached snapshot (which can be weeks stale and significantly off).
-  const livePeTTM = quote?.c && m.epsBasicExclExtraItemsTTM && m.epsBasicExclExtraItemsTTM > 0
-    ? quote.c / m.epsBasicExclExtraItemsTTM
-    : null;
-  const livePeNorm = quote?.c && m.epsNormalizedAnnual && m.epsNormalizedAnnual > 0
-    ? quote.c / m.epsNormalizedAnnual
-    : null;
+  // P/E: prefer Yahoo Finance's trailingPE (GAAP diluted, current price, matches
+  // Google/Bloomberg) → fall back to Finnhub's stored value if Yahoo is unavailable.
+  const peTTM   = yahooStats?.trailingPE?.raw   ?? m.peBasicExclExtraTTM   ?? null;
+  const peForward = yahooStats?.forwardPE?.raw  ?? null;
+  const peNorm  = m.peNormalizedAnnual ?? null;
 
   const pct52 = m["52WeekHigh"] && m["52WeekLow"] && quote?.c
     ? Math.min(100, Math.max(0, ((quote.c - m["52WeekLow"]) / (m["52WeekHigh"] - m["52WeekLow"])) * 100))
@@ -215,8 +220,8 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
           <div style={{ borderTop:"1px solid rgba(15,23,42,0.09)" }}>
             {[
               ["Market Cap",      fmtMktCap(m.marketCapitalization)],
-              ["P/E (TTM)",       livePeTTM  != null ? fmtX(livePeTTM)  : fmtX(m.peBasicExclExtraTTM)],
-              ["P/E (Norm.)",     livePeNorm != null ? fmtX(livePeNorm) : fmtX(m.peNormalizedAnnual)],
+              ["P/E (TTM)",       fmtX(peTTM)],
+              ["P/E (Fwd.)",      fmtX(peForward)],
               ["EV/EBITDA",       fmtX(m.evEbitdaTTM)],
               ["Price/Book",      fmtX(m.pbAnnual)],
               ["Price/Sales",     fmtX(m.psAnnual)],
@@ -398,8 +403,9 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
         <div>
           <div className="font-mono mb-2" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Valuation Multiples</div>
           {[
-            ["P/E (TTM)",          livePeTTM  != null ? fmtX(livePeTTM)  : fmtX(m.peBasicExclExtraTTM)],
-            ["P/E (Normalized)",   livePeNorm != null ? fmtX(livePeNorm) : fmtX(m.peNormalizedAnnual)],
+            ["P/E (TTM)",          fmtX(peTTM)],
+            ["P/E (Forward)",      fmtX(peForward)],
+            ["P/E (Normalized)",   fmtX(peNorm)],
             ["EV/EBITDA (Annual)", fmtX(m.evEbitdaAnnual)],
             ["EV/EBITDA (TTM)",    fmtX(m.evEbitdaTTM)],
             ["Price/Sales (Ann.)", fmtX(m.psAnnual)],
@@ -540,7 +546,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
                 <td className="font-mono py-2 text-right" style={{ color:"var(--text-1)", fontSize:10, paddingRight:10 }}>{q?.c!=null?"$"+fmt.price(q.c):"—"}</td>
                 <td className="font-mono py-2 text-right" style={{ color:clr(q?.dp||0), fontSize:10, paddingRight:10 }}>{q?.dp!=null?fmt.pct(q.dp):"—"}</td>
                 <td className="font-mono py-2 text-right" style={{ color:"var(--text-1)", fontSize:10, paddingRight:10 }}>{fmtMktCap(pm.marketCapitalization)}</td>
-                <td className="font-mono py-2 text-right" style={{ color:"var(--text-1)", fontSize:10, paddingRight:10 }}>{fmtX(q?.c && pm.epsBasicExclExtraItemsTTM > 0 ? q.c / pm.epsBasicExclExtraItemsTTM : pm.peBasicExclExtraTTM)}</td>
+                <td className="font-mono py-2 text-right" style={{ color:"var(--text-1)", fontSize:10, paddingRight:10 }}>{fmtX(pm.peBasicExclExtraTTM)}</td>
                 <td className="font-mono py-2 text-right" style={{ color:"var(--text-1)", fontSize:10, paddingRight:10 }}>{fmtX(pm.evEbitdaTTM)}</td>
                 <td className="font-mono py-2 text-right" style={{ color:"var(--text-1)", fontSize:10, paddingRight:10 }}>{fmtX(pm.psAnnual)}</td>
                 <td className="font-mono py-2 text-right" style={{ color:clrM(pm.grossMarginAnnual), fontSize:10, paddingRight:10 }}>{fmtMgn(pm.grossMarginAnnual)}</td>
