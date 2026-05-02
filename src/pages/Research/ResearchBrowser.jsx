@@ -6,7 +6,7 @@ import { RESEARCH_CATALOG } from "../../data/researchData";
 import ResearchPanel         from "./panels/ResearchPanel";
 import ResearchHomeDashboard from "./panels/ResearchHomeDashboard";
 
-export default function ResearchBrowser({ pendingItem, onPendingConsumed }) {
+export default function ResearchBrowser({ pendingItem, onPendingConsumed, onContextUpdate }) {
   const [query, setQuery]               = useState("");
   const [suggestions, setSuggestions]   = useState([]);
   const [suggestionIdx, setSuggestionIdx] = useState(-1);
@@ -59,6 +59,15 @@ export default function ResearchBrowser({ pendingItem, onPendingConsumed }) {
   };
 
   const closePanel = id => setPanels(prev => prev.filter(p => p.id !== id));
+
+  // Serialize open research panels into copilot context
+  useEffect(() => {
+    if (!onContextUpdate) return;
+    onContextUpdate({
+      type: "research",
+      panels: panels.map(p => ({ id: p.id, label: p.label, type: p.type, ticker: p.ticker, category: p.category })),
+    });
+  }, [panels, onContextUpdate]);
 
   useEffect(() => {
     if (pendingItem) { openPanel(pendingItem); onPendingConsumed && onPendingConsumed(); }

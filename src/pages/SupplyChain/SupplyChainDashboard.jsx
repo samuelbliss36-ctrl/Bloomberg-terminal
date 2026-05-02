@@ -3,7 +3,7 @@ import { fetchChart } from "../../lib/api";
 import { clr, delay } from "../../lib/fmt";
 import { UniversalChart } from "../../components/charts/UniversalChart";
 
-export default function SupplyChainDashboard({ onOpenResearch }) {
+export default function SupplyChainDashboard({ onOpenResearch, onContextUpdate }) {
   const FRED_SERIES = [
     { id: "FEDFUNDS",    label: "Fed Funds Rate",          note: "FOMC policy rate",                src: "Federal Reserve", suffix: "%",  freq: "Monthly" },
     { id: "DGS10",       label: "US 10Y Treasury",         note: "Risk-free rate benchmark",        src: "US Treasury",     suffix: "%",  freq: "Daily"   },
@@ -79,6 +79,23 @@ export default function SupplyChainDashboard({ onOpenResearch }) {
     load();
     return () => { cancelled = true; };
   }, []); // eslint-disable-line
+
+  // Serialize live state into copilot context
+  useEffect(() => {
+    if (!onContextUpdate) return;
+    const macroSnapshot = FRED_SERIES.map(s => ({
+      ...s,
+      value:  fredData[s.id]?.value  ?? null,
+      change: fredData[s.id]?.change ?? null,
+      date:   fredData[s.id]?.date   ?? null,
+    }));
+    const commoditySnapshot = INDICES.map(c => ({
+      ...c,
+      price:     prices[c.ticker]?.price     ?? null,
+      changePct: prices[c.ticker]?.changePct ?? null,
+    }));
+    onContextUpdate({ type: "supplychain", macroSnapshot, commoditySnapshot });
+  }, [fredData, prices]); // eslint-disable-line
 
   const activeIndex = INDICES.find(c => c.ticker === active);
 

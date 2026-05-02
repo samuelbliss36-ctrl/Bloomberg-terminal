@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { api } from "../../lib/api";
 import { delay } from "../../lib/fmt";
 import { EC_NOTABLE, hourBg, hourClr, hourLabel, SECTOR_CLR } from "../../lib/constants";
@@ -32,7 +32,7 @@ function EventsCalendar({ earnings }) {
   );
 }
 
-export default function EarningsCalendarPage() {
+export default function EarningsCalendarPage({ onContextUpdate }) {
   const today    = useMemo(() => new Date(), []);
   const todayStr = useMemo(() => today.toISOString().slice(0,10), [today]);
 
@@ -94,6 +94,20 @@ export default function EarningsCalendarPage() {
   const bmoCount  = useMemo(() => (events||[]).filter(e => e.hour==="bmo").length, [events]);
   const amcCount  = useMemo(() => (events||[]).filter(e => e.hour==="amc").length, [events]);
   const selEvents = selDate ? (eventsByDate[selDate] || []) : [];
+
+  // Serialize earnings state into copilot context
+  useEffect(() => {
+    if (!onContextUpdate) return;
+    const month = viewDate.toLocaleString("en-US", { month: "long", year: "numeric" });
+    const eventsOnDate = selDate ? (eventsByDate[selDate] || []) : [];
+    onContextUpdate({
+      type: "earnings",
+      month,
+      eventCount: events?.length ?? null,
+      selectedDate: selDate,
+      eventsOnDate,
+    });
+  }, [events, selDate, viewDate, onContextUpdate]); // eslint-disable-line
 
   // ── Month nav ──
   const monthLabel = viewDate.toLocaleString("en-US", { month:"long", year:"numeric" });

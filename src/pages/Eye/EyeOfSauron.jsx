@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import GlobalIntelligenceGlobe from "./GlobalIntelligenceGlobe";
 import WeatherDashboard from "./WeatherDashboard";
 import TankerMap from "./TankerMap";
@@ -6,8 +6,15 @@ import FlightTracker from "./FlightTracker";
 import EnergyGrid from "./EnergyGrid";
 import GeopoliticalEvents from "./GeopoliticalEvents";
 
-export default function EyeOfSauron({ onOpenResearch }) {
+export default function EyeOfSauron({ onOpenResearch, onContextUpdate }) {
   const [active, setActive] = useState(null);
+
+  // When no module is active, fire a minimal context so copilot knows the page
+  useEffect(() => {
+    if (active === null && onContextUpdate) {
+      onContextUpdate({ type: "eye", activeModule: null });
+    }
+  }, [active, onContextUpdate]);
 
   const MODULES = [
     { id: "globe",   icon: "🌐", title: "Infrastructure Globe", desc: "Interactive 3D globe — oil routes, subsea cables, strategic chokepoints" },
@@ -24,7 +31,7 @@ export default function EyeOfSauron({ onOpenResearch }) {
     if (id === "vessels") return <TankerMap />;
     if (id === "flights") return <FlightTracker />;
     if (id === "energy")  return <EnergyGrid />;
-    if (id === "geo")     return <GeopoliticalEvents onOpenResearch={onOpenResearch} />;
+    if (id === "geo")     return <GeopoliticalEvents onOpenResearch={onOpenResearch} onContextUpdate={onContextUpdate} />;
     return null;
   };
 

@@ -3,7 +3,7 @@ import { fetchChart } from "../../lib/api";
 import { fmt, clr, delay } from "../../lib/fmt";
 import { UniversalChart } from "../../components/charts/UniversalChart";
 
-export default function CommoditiesDashboard() {
+export default function CommoditiesDashboard({ onContextUpdate }) {
   const COMMODITIES = [
     { ticker: "GC=F", label: "Gold", symbol: "XAU", unit: "$/oz", category: "Metals" },
     { ticker: "SI=F", label: "Silver", symbol: "XAG", unit: "$/oz", category: "Metals" },
@@ -44,6 +44,17 @@ export default function CommoditiesDashboard() {
     load();
     return () => { cancelled = true; };
   }, []); // eslint-disable-line
+
+  // Serialize live state into copilot context whenever prices or selection changes
+  useEffect(() => {
+    if (!onContextUpdate) return;
+    const snapshot = COMMODITIES.map(c => ({
+      ...c,
+      price:     prices[c.ticker]?.price     ?? null,
+      changePct: prices[c.ticker]?.changePct ?? null,
+    }));
+    onContextUpdate({ type: "commodities", active, snapshot });
+  }, [prices, active]); // eslint-disable-line
 
   const activeCommodity = COMMODITIES.find(c => c.ticker === active);
   const categories = ["Metals", "Energy", "Agriculture"];

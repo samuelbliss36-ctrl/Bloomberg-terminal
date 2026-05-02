@@ -43,7 +43,7 @@ function MarketSessionBadges() {
 
 export { MarketSessionBadges };
 
-export default function PortfolioTracker() {
+export default function PortfolioTracker({ onContextUpdate }) {
   const [holdings, setHoldings] = useState(() => {
     try { return JSON.parse(localStorage.getItem("ov_portfolio") || "[]"); }
     catch { return []; }
@@ -82,6 +82,12 @@ export default function PortfolioTracker() {
     };
     fetch_();
   }, [tickerKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Serialize holdings + live prices into copilot context
+  useEffect(() => {
+    if (!onContextUpdate) return;
+    onContextUpdate({ type: "portfolio", holdings, livePrices: quotes });
+  }, [holdings, quotes, onContextUpdate]);
 
   // Fetch equity curve via Finnhub candles
   const equityKey = tickerKey + "|" + equityTf;

@@ -3,7 +3,7 @@ import { api } from "../../lib/api";
 import { delay } from "../../lib/fmt";
 import { classifyGeoArticle, geoTimeAgo, GEO_CATEGORIES, GEO_IMPACT_COLOR, GEO_SIGNAL_COLOR, GEO_SIGNAL_ICON, GEO_ASSET_COLOR } from "../../data/geoData";
 
-export default function GeopoliticalEvents({ onOpenResearch }) {
+export default function GeopoliticalEvents({ onOpenResearch, onContextUpdate }) {
   const [events, setEvents]         = useState([]);
   const [loading, setLoading]       = useState(true);
   const [selected, setSelected]     = useState(null);
@@ -30,6 +30,23 @@ export default function GeopoliticalEvents({ onOpenResearch }) {
       setEvents(classified);
       if (classified.length > 0) setSelected(classified[0]);
       setLastRefresh(Date.now());
+      if (onContextUpdate) {
+        const topEvents = classified.slice(0, 20).map(e => ({
+          headline: e.headline,
+          impact:   e.impact,
+          category: e.category,
+          signal:   e.signal,
+          assets:   e.assets,
+          datetime: e.datetime,
+        }));
+        const sel = classified[0];
+        onContextUpdate({
+          type: "eye",
+          activeModule: "geo",
+          events: topEvents,
+          selectedEvent: sel ? { headline: sel.headline, summary: sel.summary?.slice(0, 300), impact: sel.impact, category: sel.category, assets: sel.assets } : null,
+        });
+      }
     } catch(e) {}
     setLoading(false);
   };

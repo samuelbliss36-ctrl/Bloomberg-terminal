@@ -4,7 +4,7 @@ import { SCREENER_UNIVERSE, FULL_UNIVERSE } from "../../screenerData";
 import { SECTOR_CLR, RATING_CLR, SCREENER_PRESETS } from "../../lib/constants";
 import { SC_COLS, SC_ROW_H, FMP_SECTOR_MAP } from "../../data/screenerData";
 
-export default function StockScreener({ onSelectTicker }) {
+export default function StockScreener({ onSelectTicker, onContextUpdate }) {
   const DEF = {
     sector:"All", mktCapTier:"All", rating:"All",
     peMin:"", peMax:"", fwdPeMax:"",
@@ -100,6 +100,17 @@ export default function StockScreener({ onSelectTicker }) {
     });
     return filtered;
   }, [f, sortCol, sortDir, universe]); // eslint-disable-line
+
+  // Serialize screener results into copilot context whenever filters change
+  useEffect(() => {
+    if (!onContextUpdate) return;
+    const presetName = activePreset != null ? SCREENER_PRESETS[activePreset]?.name ?? null : null;
+    const topResults = results.slice(0, 15).map(s => ({
+      ticker: s.ticker, name: s.name, sector: s.sector,
+      price: s.price, mktCap: s.mktCap, pe: s.pe, roe: s.roe,
+    }));
+    onContextUpdate({ type: "screener", presetName, filterCount: results.length, topResults });
+  }, [results, activePreset, onContextUpdate]);
 
   /* ── DOM virtualizer ───────────────────────────────────────────── */
   const rowVirtualizer = useVirtualizer({

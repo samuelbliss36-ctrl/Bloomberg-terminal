@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { MdText } from '../ui/MdText';
 
-export function buildCopilotContext(activePage, ticker, quote, metrics, profile, news) {
+export function buildCopilotContext(activePage, ticker, quote, metrics, profile, news, pageContext) {
   const m   = metrics?.metric || {};
   const fmt = v => v != null ? (+v).toFixed(2) : null;
   const lines = [`Active Terminal Page: ${activePage}`];
 
+  // ── Financial ──────────────────────────────────────────────────────────────
   if (activePage === "financial" && ticker) {
     lines.push(`Ticker: ${ticker}${profile?.name ? ` — ${profile.name}` : ""}`);
     if (profile?.finnhubIndustry) lines.push(`Sector / Industry: ${profile.finnhubIndustry}`);
@@ -29,39 +30,245 @@ export function buildCopilotContext(activePage, ticker, quote, metrics, profile,
     }
   }
 
+  // ── Portfolio ──────────────────────────────────────────────────────────────
   if (activePage === "portfolio") {
-    try {
-      const holdings = JSON.parse(localStorage.getItem("ov_portfolio") || "[]");
-      if (holdings.length) {
-        lines.push(`Portfolio: ${holdings.length} positions`);
-        holdings.forEach(h => {
-          const pos = `${h.ticker}: ${h.shares} shares @ $${h.avgCost} avg cost`;
-          lines.push(`  • ${pos}`);
-        });
-      } else {
-        lines.push("Portfolio: no positions entered yet.");
+    if (pageContext?.type === "portfolio" && pageContext.holdings?.length) {
+      const { holdings, livePrices } = pageContext;
+      let totalValue = 0, totalCost = 0;
+      lines.push(`Portfolio: ${holdings.length} position${holdings.length !== 1 ? "s" : ""}`);
+      holdings.forEach(h => {
+        const lp = livePrices?.[h.ticker];
+        const currentPrice = lp?.price ?? null;
+        const currentValue = currentPrice != null ? currentPrice * h.shares : null;
+        const cost = h.avgCost * h.shares;
+        const gainLoss = currentValue != null ? currentValue - cost : null;
+        const gainLossPct = gainLoss != null && cost > 0 ? (gainLoss / cost) * 100 : null;
+        if (currentValue != null) totalValue += currentValue;
+        totalCost += cost;
+        let pos = `${h.ticker}: ${h.shares} sh @ $${h.avgCost} avg`;
+        if (currentPrice != null) pos += ` | now $${currentPrice.toFixed(2)}`;
+        if (gainLoss != null) pos += ` | P&L ${gainLoss >= 0 ? "+" : ""}$${gainLoss.toFixed(0)} (${gainLossPct >= 0 ? "+" : ""}${gainLossPct?.toFixed(1)}%)`;
+        lines.push(`  • ${pos}`);
+      });
+      if (totalValue > 0) {
+        const totalGL = totalValue - totalCost;
+        lines.push(`Total Value: $${totalValue.toFixed(0)} | Total P&L: ${totalGL >= 0 ? "+" : ""}$${totalGL.toFixed(0)} (${(totalGL/totalCost*100).toFixed(1)}%)`);
       }
-    } catch(e) {}
+    } else {
+      try {
+        const holdings = JSON.parse(localStorage.getItem("ov_portfolio") || "[]");
+        if (holdings.length) {
+          lines.push(`Portfolio: ${holdings.length} positions`);
+          holdings.forEach(h => lines.push(`  • ${h.ticker}: ${h.shares} shares @ $${h.avgCost} avg cost`));
+        } else {
+          lines.push("Portfolio: no positions entered yet.");
+        }
+      } catch(e) {}
+    }
   }
 
+  // ── Screener ───────────────────────────────────────────────────────────────
   if (activePage === "screener") {
-    lines.push("The user is on the Stock Screener page, browsing a universe of thousands of equities.");
-    lines.push("They can filter by P/E, P/B, ROE, margins, market cap, sector, div yield, beta, and more.");
+    if (pageContext?.type === "screener") {
+      const { presetName, filterCount, topResults } = pageContext;
+      lines.push(`Stock Screener — ${filterCount} stocks match current filters${presetName ? ` (preset: "${presetName}")` : ""}`);
+      if (topResults?.length) {
+        lines.push("Top results by market cap:");
+        topResults.slice(0, 12).forEach(s => {
+          let row = `  • ${s.ticker} (${s.name}) | ${s.sector} | $${s.price?.toFixed(2) ?? "—"}`;
+          if (s.mktCap != null) row += ` | MCap $${s.mktCap.toFixed(1)}B`;
+          if (s.pe != null)     row += ` | P/E ${s.pe.toFixed(1)}x`;
+          if (s.roe != null)    row += ` | ROE ${(s.roe * 100).toFixed(1)}%`;
+          lines.push(row);
+        });
+      }
+    } else {
+      lines.push("Stock Screener — filter thousands of equities by P/E, ROE, margins, market cap, sector, and more.");
+    }
   }
 
+  // ── Earnings ───────────────────────────────────────────────────────────────
   if (activePage === "earnings") {
-    lines.push("The user is viewing the Earnings Calendar — upcoming earnings announcements with beat/miss history and whisper numbers.");
+    if (pageContext?.type === "earnings") {
+      const { month, eventCount, selectedDate, eventsOnDate } = pageContext;
+      lines.push(`Earnings Calendar — ${month} — ${eventCount ?? 0} notable earnings`);
+      if (selectedDate && eventsOnDate?.length) {
+        lines.push(`Selected date: ${selectedDate}`);
+        eventsOnDate.forEach(e => {
+          let row = `  • ${e.symbol}`;
+          if (e.epsEstimate != null)     row += ` | EPS est $${e.epsEstimate}`;
+          if (e.revenueEstimate != null) row += ` | Rev est $${(e.revenueEstimate/1e9).toFixed(1)}B`;
+          if (e.hour)                    row += ` | ${e.hour === "bmo" ? "Before Open" : e.hour === "amc" ? "After Close" : e.hour}`;
+          lines.push(row);
+        });
+      } else if (selectedDate) {
+        lines.push(`Selected date: ${selectedDate} — no notable earnings`);
+      }
+    } else {
+      lines.push("Earnings Calendar — upcoming earnings announcements with beat/miss history and whisper numbers.");
+    }
   }
 
+  // ── Technical Analysis ─────────────────────────────────────────────────────
   if (activePage === "technical") {
-    lines.push(`The user is viewing the Technical Analysis page for: ${ticker}`);
+    lines.push(`Technical Analysis — ${ticker}${pageContext?.range ? ` (${pageContext.range} range)` : ""}`);
     if (quote?.c) lines.push(`Current Price: $${fmt(quote.c)}`);
+    if (pageContext?.type === "technical") {
+      const { lastRSI, lastMACD, lastSignal, rsiLabel, macdSignal, bbSignal } = pageContext;
+      if (lastRSI  != null) lines.push(`RSI(14): ${lastRSI.toFixed(1)} — ${rsiLabel}`);
+      if (lastMACD != null) lines.push(`MACD(12,26,9): ${lastMACD.toFixed(4)} | Signal: ${lastSignal?.toFixed(4) ?? "—"} — ${macdSignal}`);
+      if (bbSignal)         lines.push(`Bollinger Bands(20,2): price is ${bbSignal}`);
+    }
+  }
+
+  // ── Commodities ────────────────────────────────────────────────────────────
+  if (activePage === "commodities") {
+    if (pageContext?.type === "commodities") {
+      const { active: activeTicker, snapshot } = pageContext;
+      const activeCom = snapshot?.find(c => c.ticker === activeTicker);
+      lines.push(`Commodities Futures Dashboard — active chart: ${activeCom?.label ?? activeTicker}`);
+      const available = (snapshot ?? []).filter(c => c.price != null);
+      if (available.length) {
+        lines.push("Current futures prices:");
+        ["Metals","Energy","Agriculture"].forEach(cat => {
+          const group = available.filter(c => c.category === cat);
+          if (!group.length) return;
+          lines.push(`  ${cat}:`);
+          group.forEach(c => {
+            const chg = c.changePct != null ? ` (${c.changePct >= 0 ? "+" : ""}${c.changePct.toFixed(2)}%)` : "";
+            lines.push(`    • ${c.label} (${c.symbol}): ${c.price.toFixed(2)} ${c.unit}${chg}`);
+          });
+        });
+      }
+    } else {
+      lines.push("Commodities Futures Dashboard — metals, energy, agriculture futures.");
+    }
+  }
+
+  // ── Crypto ─────────────────────────────────────────────────────────────────
+  if (activePage === "crypto") {
+    if (pageContext?.type === "crypto") {
+      const { active: activeTicker, snapshot } = pageContext;
+      const activeCoin = snapshot?.find(c => c.ticker === activeTicker);
+      lines.push(`Crypto Markets Dashboard — active chart: ${activeCoin?.label ?? activeTicker}`);
+      const available = (snapshot ?? []).filter(c => c.price != null);
+      if (available.length) {
+        lines.push("Current prices:");
+        available.forEach(c => {
+          const chg = c.changePct != null ? ` (${c.changePct >= 0 ? "+" : ""}${c.changePct.toFixed(2)}%)` : "";
+          const p = c.price < 0.01 ? c.price.toFixed(6) : c.price < 1 ? c.price.toFixed(4) : c.price < 1000 ? c.price.toFixed(2) : c.price.toFixed(0);
+          lines.push(`  • ${c.label} (${c.symbol}): $${p}${chg}`);
+        });
+      }
+    } else {
+      lines.push("Crypto Markets Dashboard — top cryptocurrencies by market cap.");
+    }
+  }
+
+  // ── FX ─────────────────────────────────────────────────────────────────────
+  if (activePage === "fx") {
+    if (pageContext?.type === "fx") {
+      const { active: activeTicker, snapshot, cbRates } = pageContext;
+      const activePair = snapshot?.find(p => p.ticker === activeTicker);
+      lines.push(`FX Dashboard — active pair: ${activePair?.label ?? activeTicker}`);
+      const available = (snapshot ?? []).filter(p => p.price != null);
+      if (available.length) {
+        lines.push("FX Rates:");
+        available.forEach(p => {
+          const dec = p.dec ?? 4;
+          const chg = p.changePct != null ? ` (${p.changePct >= 0 ? "+" : ""}${p.changePct.toFixed(3)}%)` : "";
+          lines.push(`  • ${p.label}: ${p.price.toFixed(dec)}${chg}`);
+        });
+      }
+      const cbArr = cbRates ? Object.values(cbRates).filter(r => r?.value != null) : [];
+      if (cbArr.length) {
+        lines.push("Central Bank Policy Rates:");
+        cbArr.forEach(r => lines.push(`  • ${r.flag} ${r.label} (${r.bank}): ${r.value.toFixed(2)}%`));
+      }
+    } else {
+      lines.push("FX Dashboard — major currency pairs and central bank rates.");
+    }
+  }
+
+  // ── Supply Chain / Macro ───────────────────────────────────────────────────
+  if (activePage === "supplychain") {
+    if (pageContext?.type === "supplychain") {
+      const { macroSnapshot, commoditySnapshot } = pageContext;
+      lines.push("Macro Intelligence Dashboard — FRED macro series + commodity proxies");
+      if (macroSnapshot?.length) {
+        lines.push("FRED Series (latest readings):");
+        macroSnapshot.filter(s => s.value != null).forEach(s => {
+          const chg = s.change != null ? ` Δ${s.change >= 0 ? "+" : ""}${s.change.toFixed(2)}` : "";
+          lines.push(`  • ${s.label}: ${s.value.toFixed(2)}${s.suffix}${chg} — ${s.note}`);
+        });
+      }
+      const comAvail = (commoditySnapshot ?? []).filter(c => c.price != null);
+      if (comAvail.length) {
+        lines.push("Commodity Proxies:");
+        comAvail.forEach(c => {
+          const chg = c.changePct != null ? ` (${c.changePct >= 0 ? "+" : ""}${c.changePct.toFixed(2)}%)` : "";
+          lines.push(`  • ${c.label}: $${c.price.toFixed(2)}${chg} — ${c.desc}`);
+        });
+      }
+    } else {
+      lines.push("Macro Intelligence Dashboard — Fed Funds, yield curve, CPI, PCE, GDP, M2 and supply chain indicators.");
+    }
+  }
+
+  // ── Eye of Sauron ──────────────────────────────────────────────────────────
+  if (activePage === "eye") {
+    if (pageContext?.type === "eye" && pageContext.activeModule === "geo" && pageContext.events?.length) {
+      const { events: geoEvents, selectedEvent } = pageContext;
+      lines.push(`Geopolitical Intelligence Feed — ${geoEvents.length} market-moving events`);
+      ["High","Medium","Low"].forEach(impact => {
+        const group = geoEvents.filter(e => e.impact === impact).slice(0, 5);
+        if (!group.length) return;
+        lines.push(`  ${impact} Impact:`);
+        group.forEach(e => {
+          let row = `    • [${e.category}] ${e.headline}`;
+          if (e.signal) row += ` | Signal: ${e.signal}`;
+          if (e.assets?.length) row += ` | Assets: ${e.assets.join(", ")}`;
+          lines.push(row);
+        });
+      });
+      if (selectedEvent) {
+        lines.push(`\nFocused event: ${selectedEvent.headline}`);
+        if (selectedEvent.summary) lines.push(`Summary: ${selectedEvent.summary}`);
+        if (selectedEvent.assets?.length) lines.push(`Affected assets: ${selectedEvent.assets.join(", ")}`);
+      }
+    } else if (pageContext?.type === "eye" && pageContext.activeModule) {
+      lines.push(`Eye of Sauron — active module: ${pageContext.activeModule}`);
+    } else {
+      lines.push("Eye of Sauron — global intelligence feeds: globe, weather, vessel tracker, flights, energy grid, geopolitical events.");
+    }
+  }
+
+  // ── Global Markets ─────────────────────────────────────────────────────────
+  if (activePage === "markets") {
+    if (pageContext?.type === "markets" && pageContext.country) {
+      const { country } = pageContext;
+      lines.push(`Global Markets — ${country.flag ?? ""} ${country.name} (currency: ${country.currency ?? "—"})`);
+    } else {
+      lines.push("Global Markets — country-level equity market dashboards.");
+    }
+  }
+
+  // ── Research Browser ───────────────────────────────────────────────────────
+  if (activePage === "research") {
+    if (pageContext?.type === "research" && pageContext.panels?.length) {
+      lines.push(`Research Browser — ${pageContext.panels.length} open panel${pageContext.panels.length !== 1 ? "s" : ""}:`);
+      pageContext.panels.forEach(p => {
+        lines.push(`  • [${(p.type ?? "?").toUpperCase()}] ${p.label} (${p.ticker ?? p.id})`);
+      });
+    } else {
+      lines.push("Research Browser — no panels open. User can search equities, commodities, FX, macro, and topics.");
+    }
   }
 
   return lines.join("\n");
 }
 
-export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news, onClose }) {
+export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news, pageContext, onClose }) {
   const [msgs,       setMsgs]      = useState([]);
   const [input,      setInput]     = useState("");
   const [loading,    setLoading]   = useState(false);
@@ -72,7 +279,7 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
   const bottomRef = useRef(null);
   const inputRef  = useRef(null);
 
-  const context = buildCopilotContext(activePage, ticker, quote, metrics, profile, news);
+  const context = buildCopilotContext(activePage, ticker, quote, metrics, profile, news, pageContext);
 
   // Suggested prompts change based on active page
   const SUGGESTIONS = useMemo(() => {
@@ -84,7 +291,7 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
     ];
     if (activePage === "portfolio")  return [
       "How concentrated is my portfolio?",
-      "Which positions have the most risk?",
+      "Which positions carry the most risk?",
       "Suggest ways to diversify my holdings",
       "What would you trim or add to?",
     ];
@@ -92,14 +299,61 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
       "What criteria would you use to find quality growth stocks?",
       "How would you screen for deep value plays?",
       "Explain a capital-efficient investing strategy",
+      "What does this filtered list of stocks suggest?",
     ];
     if (activePage === "technical")  return [
-      `Describe a trading plan for ${ticker} based on technicals`,
+      `Describe a trading plan for ${ticker} based on these technicals`,
+      `Is ${ticker} currently overbought or oversold?`,
       "What signals should I watch for a trend reversal?",
+      "Explain what RSI and MACD are telling me",
     ];
     if (activePage === "earnings")   return [
       "What should I look for in earnings releases this week?",
+      "Which upcoming earnings could be market-moving?",
       "How do I trade an earnings announcement safely?",
+      "Explain EPS estimates and what a beat or miss means",
+    ];
+    if (activePage === "commodities") return [
+      "Which commodity is showing the strongest momentum?",
+      "What's driving crude oil prices right now?",
+      "Explain the relationship between gold and the US dollar",
+      "Which commodities are the best inflation hedges?",
+    ];
+    if (activePage === "crypto") return [
+      "Analyze current crypto market conditions",
+      "Compare BTC vs ETH risk/reward today",
+      "What macro factors move crypto markets?",
+      "Which coins show relative strength today?",
+    ];
+    if (activePage === "fx") return [
+      "Which currency pairs offer the best carry trade opportunity?",
+      "What do current CB rate differentials signal for the USD?",
+      "Explain the macro implications of EUR/USD movement",
+      "Which pairs are most sensitive to US rate policy?",
+    ];
+    if (activePage === "supplychain") return [
+      "Interpret the current yield curve signal",
+      "Is inflation trending up or down based on this data?",
+      "Summarize current macro conditions in 3 bullets",
+      "What does the macro environment mean for equities?",
+    ];
+    if (activePage === "eye") return [
+      "Which geopolitical events pose the highest market risk?",
+      "Summarize the top intelligence events and their impact",
+      "Which sectors benefit from current geopolitical tensions?",
+      "What assets are most at risk from current events?",
+    ];
+    if (activePage === "markets") return [
+      "Give me an investment overview of this market",
+      "What are the key risks in this country's economy?",
+      "How does this market compare to US equities?",
+      "What ETFs give me exposure to this market?",
+    ];
+    if (activePage === "research") return [
+      "Summarize what I'm currently researching",
+      "Compare the open research panels",
+      "What investment themes do my open panels share?",
+      "What should I add to my research list?",
     ];
     return ["What can you help me with?", "Explain the current market environment"];
   }, [activePage, ticker]);
@@ -148,6 +402,22 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
     : provider === "openai"
     ? { label:"GPT-4o mini",    color:"#059669" }
     : null;
+
+  // Human-readable label for the context badge
+  const contextLabel =
+    activePage === "financial"   ? `${ticker} · Financial View`     :
+    activePage === "portfolio"   ? "Portfolio Tracker"               :
+    activePage === "screener"    ? "Stock Screener"                  :
+    activePage === "technical"   ? `${ticker} · Technical Analysis`  :
+    activePage === "earnings"    ? "Earnings Calendar"               :
+    activePage === "commodities" ? "Commodities Dashboard"           :
+    activePage === "crypto"      ? "Crypto Markets"                  :
+    activePage === "fx"          ? "FX Dashboard"                    :
+    activePage === "supplychain" ? "Macro Intelligence"              :
+    activePage === "eye"         ? "Eye of Sauron"                   :
+    activePage === "markets"     ? "Global Markets"                  :
+    activePage === "research"    ? "Research Browser"                :
+    activePage.charAt(0).toUpperCase() + activePage.slice(1);
 
   const panelStyle = {
     position:"fixed", bottom:40, right:16, width:400, height:580,
@@ -208,18 +478,15 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
       <div style={{ padding:"6px 14px", borderBottom:"1px solid var(--border-solid)", flexShrink:0, display:"flex", gap:8, alignItems:"center", background:"var(--surface-1)" }}>
         <span style={{ fontSize:9, color:"var(--text-3)", fontFamily:"'IBM Plex Mono',monospace" }}>Context:</span>
         <span style={{ fontSize:9, fontWeight:600, color:"#2563eb", fontFamily:"'IBM Plex Mono',monospace" }}>
-          {activePage === "financial" ? `${ticker} · Financial View` :
-           activePage === "portfolio" ? "Portfolio Tracker" :
-           activePage === "screener"  ? "Stock Screener" :
-           activePage === "technical" ? `${ticker} · Technical Analysis` :
-           activePage === "earnings"  ? "Earnings Calendar" :
-           activePage.charAt(0).toUpperCase() + activePage.slice(1)}
+          {contextLabel}
         </span>
         {quote?.c && activePage === "financial" &&
           <span style={{ fontSize:9, color:"var(--text-3)", fontFamily:"'IBM Plex Mono',monospace" }}>
             ${quote.c.toFixed(2)}
             <span style={{ color: quote.dp >= 0 ? "#059669" : "#e11d48" }}> ({quote.dp >= 0 ? "+" : ""}{quote.dp?.toFixed(2)}%)</span>
           </span>}
+        {pageContext && activePage !== "financial" &&
+          <span style={{ fontSize:8, color:"#059669", fontFamily:"'IBM Plex Mono',monospace", marginLeft:"auto" }}>● live data</span>}
       </div>
 
       {/* ── Message thread ─────────────────────────────────────── */}

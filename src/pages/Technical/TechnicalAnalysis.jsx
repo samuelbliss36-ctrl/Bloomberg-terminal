@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { AreaChart, Area, BarChart, Bar, Cell, ReferenceLine, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-export default function TechnicalAnalysis({ ticker }) {
+export default function TechnicalAnalysis({ ticker, onContextUpdate }) {
   const [data, setData] = useState([]);
   const [tf, setTf] = useState("3M");
   const [loading, setLoading] = useState(true);
@@ -103,6 +103,23 @@ export default function TechnicalAnalysis({ ticker }) {
   const rsiLabel = lastRSI > 70 ? "OVERBOUGHT" : lastRSI < 30 ? "OVERSOLD" : "NEUTRAL";
   const macdSignal = lastMACD > lastSignal ? "BULLISH" : "BEARISH";
   const bbSignal = lastClose > lastBBU ? "OVERBOUGHT" : lastClose < lastBBL ? "OVERSOLD" : "NEUTRAL";
+
+  // Serialize computed indicators into copilot context when data updates
+  useEffect(() => {
+    if (!onContextUpdate || !data.length) return;
+    const last = data[data.length - 1];
+    if (!last) return;
+    const _rsi    = last.rsi;
+    const _macd   = last.macd;
+    const _sig    = last.signal;
+    const _close  = last.close;
+    const _bbu    = last.bbUpper;
+    const _bbl    = last.bbLower;
+    const _rsiLbl = _rsi > 70 ? "OVERBOUGHT" : _rsi < 30 ? "OVERSOLD" : "NEUTRAL";
+    const _macdSg = _macd > _sig ? "BULLISH" : "BEARISH";
+    const _bbSg   = _close > _bbu ? "OVERBOUGHT" : _close < _bbl ? "OVERSOLD" : "NEUTRAL";
+    onContextUpdate({ type: "technical", ticker, range: tf, lastRSI: _rsi, lastMACD: _macd, lastSignal: _sig, rsiLabel: _rsiLbl, macdSignal: _macdSg, bbSignal: _bbSg, lastClose: _close });
+  }, [data, tf, ticker, onContextUpdate]); // eslint-disable-line
 
   const minP = data.length ? Math.min(...data.map(d => d.close)) * 0.99 : 0;
   const maxP = data.length ? Math.max(...data.map(d => d.close)) * 1.01 : 0;

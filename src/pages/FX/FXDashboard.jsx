@@ -3,7 +3,7 @@ import { fetchChart } from "../../lib/api";
 import { clr, delay } from "../../lib/fmt";
 import { UniversalChart } from "../../components/charts/UniversalChart";
 
-export default function FXDashboard({ onOpenResearch }) {
+export default function FXDashboard({ onOpenResearch, onContextUpdate }) {
   const FX_PAIRS = [
     { ticker: "EURUSD=X",  label: "EUR/USD",  region: "Eurozone", dec: 4 },
     { ticker: "GBPUSD=X",  label: "GBP/USD",  region: "UK",       dec: 4 },
@@ -70,6 +70,17 @@ export default function FXDashboard({ onOpenResearch }) {
       )
     ).then(results => setCbRates(Object.fromEntries(results)));
   }, []); // eslint-disable-line
+
+  // Serialize live state into copilot context
+  useEffect(() => {
+    if (!onContextUpdate) return;
+    const snapshot = FX_PAIRS.map(p => ({
+      ...p,
+      price:     prices[p.ticker]?.price     ?? null,
+      changePct: prices[p.ticker]?.changePct ?? null,
+    }));
+    onContextUpdate({ type: "fx", active, snapshot, cbRates });
+  }, [prices, active, cbRates]); // eslint-disable-line
 
   const activePairCfg = FX_PAIRS.find(p => p.ticker === active);
   const activeDec = activePairCfg?.dec ?? 4;

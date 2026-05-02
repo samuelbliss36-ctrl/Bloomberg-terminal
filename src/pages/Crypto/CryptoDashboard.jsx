@@ -3,7 +3,7 @@ import { fetchChart } from "../../lib/api";
 import { fmt, clr, delay } from "../../lib/fmt";
 import { UniversalChart } from "../../components/charts/UniversalChart";
 
-export default function CryptoDashboard() {
+export default function CryptoDashboard({ onContextUpdate }) {
   const COINS = [
     { ticker: "BTC-USD", label: "Bitcoin", symbol: "BTC" },
     { ticker: "ETH-USD", label: "Ethereum", symbol: "ETH" },
@@ -22,6 +22,17 @@ export default function CryptoDashboard() {
   const [prices, setPrices] = useState({});
   const [active, setActive] = useState("BTC-USD");
   const activeCoin = COINS.find(c => c.ticker === active);
+
+  // Serialize live state into copilot context
+  useEffect(() => {
+    if (!onContextUpdate) return;
+    const snapshot = COINS.map(c => ({
+      ...c,
+      price:     prices[c.ticker]?.price     ?? null,
+      changePct: prices[c.ticker]?.changePct ?? null,
+    }));
+    onContextUpdate({ type: "crypto", active, snapshot });
+  }, [prices, active]); // eslint-disable-line
 
   useEffect(() => {
     let cancelled = false;

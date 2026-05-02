@@ -1,11 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { COUNTRY_CONFIG } from "../../data/countryData";
 import CountryDashboard from "./CountryDashboard";
 
-export default function GlobalMarketsModule({ onOpenResearch }) {
+export default function GlobalMarketsModule({ onOpenResearch, onContextUpdate }) {
   const [selected, setSelected] = useState("CA");
   const countries = Object.values(COUNTRY_CONFIG);
   const country   = COUNTRY_CONFIG[selected];
+
+  useEffect(() => {
+    if (!onContextUpdate || !country) return;
+    onContextUpdate({
+      type: "markets",
+      country: { id: selected, name: country.name, flag: country.flag, currency: country.currency },
+    });
+  }, [selected, onContextUpdate]); // eslint-disable-line
+
   return (
     <div className="flex flex-col flex-1" style={{ overflow:"hidden" }}>
       {/* ── Country selector bar ── */}

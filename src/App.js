@@ -24,6 +24,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settings, setSettings] = useState(() => ({ showTickerTape: true, darkMode: false, ...loadSettings() }));
   const [copilotOpen, setCopilotOpen] = useState(false);
+  const [pageContext, setPageContext] = useState(null);
 
   const toggleTape = useCallback(() => setSettings(s => { const n = {...s, showTickerTape: !s.showTickerTape}; saveSettings(n); return n; }), []);
   const toggleDark = useCallback(() => setSettings(s => { const n = {...s, darkMode: !s.darkMode}; saveSettings(n); return n; }), []);
@@ -80,6 +81,9 @@ export default function App() {
     fetchTape();
   }, []);
 
+  // Clear stale page context whenever the user navigates to a different page
+  useEffect(() => { setPageContext(null); }, [activePage]);
+
   const openResearch = (item) => { setPendingResearchItem(item); setActivePage("research"); };
 
   return (
@@ -115,17 +119,17 @@ export default function App() {
             news={news}
           />
         )}
-        {activePage === "commodities"  && <CommoditiesDashboard />}
-        {activePage === "crypto"       && <CryptoDashboard />}
-        {activePage === "supplychain"  && <SupplyChainDashboard onOpenResearch={openResearch} />}
-        {activePage === "fx"           && <FXDashboard onOpenResearch={openResearch} />}
-        {activePage === "technical"    && <TechnicalAnalysis ticker={ticker} />}
-        {activePage === "eye"          && <EyeOfSauron onOpenResearch={openResearch} />}
-        {activePage === "markets"      && <GlobalMarketsModule onOpenResearch={openResearch} />}
-        {activePage === "portfolio"    && <PortfolioTracker />}
-        {activePage === "screener"     && <StockScreener onSelectTicker={t => { setTicker(t); setActivePage("financial"); }} />}
-        {activePage === "research"     && <ResearchBrowser pendingItem={pendingResearchItem} onPendingConsumed={() => setPendingResearchItem(null)} />}
-        {activePage === "earnings"     && <EarningsCalendarPage />}
+        {activePage === "commodities"  && <CommoditiesDashboard onContextUpdate={setPageContext} />}
+        {activePage === "crypto"       && <CryptoDashboard onContextUpdate={setPageContext} />}
+        {activePage === "supplychain"  && <SupplyChainDashboard onOpenResearch={openResearch} onContextUpdate={setPageContext} />}
+        {activePage === "fx"           && <FXDashboard onOpenResearch={openResearch} onContextUpdate={setPageContext} />}
+        {activePage === "technical"    && <TechnicalAnalysis ticker={ticker} onContextUpdate={setPageContext} />}
+        {activePage === "eye"          && <EyeOfSauron onOpenResearch={openResearch} onContextUpdate={setPageContext} />}
+        {activePage === "markets"      && <GlobalMarketsModule onOpenResearch={openResearch} onContextUpdate={setPageContext} />}
+        {activePage === "portfolio"    && <PortfolioTracker onContextUpdate={setPageContext} />}
+        {activePage === "screener"     && <StockScreener onSelectTicker={t => { setTicker(t); setActivePage("financial"); }} onContextUpdate={setPageContext} />}
+        {activePage === "research"     && <ResearchBrowser pendingItem={pendingResearchItem} onPendingConsumed={() => setPendingResearchItem(null)} onContextUpdate={setPageContext} />}
+        {activePage === "earnings"     && <EarningsCalendarPage onContextUpdate={setPageContext} />}
         {activePage === "settings" && (
           <div style={{ padding:24, maxWidth:480 }}>
             <div style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:13, color:"var(--text-1)", marginBottom:16 }}>Settings</div>
@@ -171,6 +175,7 @@ export default function App() {
           metrics={metrics}
           profile={profile}
           news={news}
+          pageContext={pageContext}
           onClose={() => setCopilotOpen(false)}
         />
       )}
