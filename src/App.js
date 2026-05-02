@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { AlertsProvider } from './context/AlertsContext';
+import SignInPage from './pages/Auth/SignInPage';
+import OnboardingWizard from './pages/Onboarding/OnboardingWizard';
+import { watchlist as dbWatchlist } from './lib/db';
 import { api } from './lib/api';
 import { delay, loadSettings, saveSettings } from './lib/fmt';
-import { WATCHLIST } from './lib/constants';
 import { CopilotPanel } from './components/copilot/CopilotPanel';
 import { GlobalTopBar } from './layout/GlobalTopBar';
 import { SidebarNav } from './layout/SidebarNav';
 import { RightPanelShell } from './layout/RightPanelShell';
-import { AuthProvider } from './context/AuthContext';
 import CommoditiesDashboard from './pages/Commodities/CommoditiesDashboard';
 import CryptoDashboard from './pages/Crypto/CryptoDashboard';
 import FXDashboard from './pages/FX/FXDashboard';
@@ -22,10 +25,57 @@ import EarningsCalendarPage from './pages/Earnings/EarningsCalendarPage';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 
 export default function App() {
+  return (
+    <AuthProvider>
+      <AlertsProvider>
+        <AppRouter />
+      </AlertsProvider>
+    </AuthProvider>
+  );
+}
+
+// Handles auth gating + onboarding before mounting the heavy terminal shell.
+// Onboarding status is stored in Supabase user metadata so it persists across
+// all devices — localStorage is only a fast cache to avoid a flicker on reload.
+function AppRouter() {
+  const { user, loading: authLoading } = useAuth();
+
+  // True if either localStorage (fast) or Supabase user_metadata (cross-device) says done
+  const isDone = (u) =>
+    localStorage.getItem('ov_onboarding_done') === 'true' ||
+    u?.user_metadata?.onboarding_done === true;
+
+  const [onboardingDone, setOnboardingDone] = useState(() => isDone(null));
+
+  // When auth loads and we have a user, re-check metadata in case they completed
+  // onboarding on another device (metadata comes in with the session object).
+  useEffect(() => {
+    if (user && isDone(user)) {
+      localStorage.setItem('ov_onboarding_done', 'true'); // cache it locally too
+      setOnboardingDone(true);
+    }
+  }, [user]); // eslint-disable-line
+
+  if (authLoading) {
+    return (
+      <div style={{ position:'fixed', inset:0, background:'#0f172a', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <div style={{ width:8, height:8, borderRadius:'50%', background:'#2563eb', boxShadow:'0 0 14px rgba(37,99,235,0.80)' }} />
+      </div>
+    );
+  }
+  if (!user) return <SignInPage />;
+  if (!onboardingDone) return <OnboardingWizard onComplete={() => setOnboardingDone(true)} />;
+  return <AppInner />;
+}
+
+function AppInner() {
+  const { user } = useAuth();
   const [activePage, setActivePage] = useState("financial");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settings, setSettings] = useState(() => ({ showTickerTape: true, darkMode: false, ...loadSettings() }));
   const [copilotOpen, setCopilotOpen] = useState(false);
+  const [pageContext, setPageContext] = useState(null);
+  const [subscribedToast, setSubscribedToast] = useState(false);
 
   const toggleTape = useCallback(() => setSettings(s => { const n = {...s, showTickerTape: !s.showTickerTape}; saveSettings(n); return n; }), []);
   const toggleDark = useCallback(() => setSettings(s => { const n = {...s, darkMode: !s.darkMode}; saveSettings(n); return n; }), []);
@@ -35,11 +85,17 @@ export default function App() {
   const [profile, setProfile] = useState(null);
   const [news, setNews] = useState(null);
   const [earnings, setEarnings] = useState(null);
+  // Structured financial data for AI copilot context
+  const [earningsHistory, setEarningsHistory] = useState([]);
+  const [recommendation,  setRecommendation]  = useState(null);
+  const [priceTarget,     setPriceTarget]     = useState(null);
+  const [peerTickers,     setPeerTickers]     = useState([]);
+  const [peerMetrics,     setPeerMetrics]     = useState({});
   const [tapeData, setTapeData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pendingResearchItem, setPendingResearchItem] = useState(null);
   const [statusTime, setStatusTime] = useState(() => new Date().toLocaleTimeString());
-  const [subscribedToast, setSubscribedToast] = useState(false);
+  const [watchlistTickers, setWatchlistTickers] = useState(() => dbWatchlist.load());
 
   // Check for ?subscribed=true after Stripe redirect
   useEffect(() => {
@@ -61,6 +117,7 @@ export default function App() {
   useEffect(() => {
     setLoading(true);
     setQuote(null); setMetrics(null); setProfile(null); setNews(null); setEarnings(null);
+    setEarningsHistory([]); setRecommendation(null); setPriceTarget(null); setPeerTickers([]); setPeerMetrics({});
     const today = new Date().toISOString().split("T")[0];
     const monthAgo = new Date(Date.now()-30*24*3600*1000).toISOString().split("T")[0];
     const yearAhead = new Date(Date.now()+365*24*3600*1000).toISOString().split("T")[0];
@@ -78,26 +135,95 @@ export default function App() {
     }).catch(()=>setLoading(false));
   }, [ticker]);
 
+  // Structured AI-context data: earnings history, analyst consensus, price target, peer multiples.
   useEffect(() => {
-    // Stagger to respect Finnhub rate limits; single state update at end to avoid 8 re-renders
+    let cancelled = false;
+    const load = async () => {
+      const twoYearsAgo = new Date(Date.now() - 730*24*3600*1000).toISOString().split("T")[0];
+      const today       = new Date().toISOString().split("T")[0];
+      try {
+        const [hist, recs, pt] = await Promise.all([
+          api("/calendar/earnings?symbol="+ticker+"&from="+twoYearsAgo+"&to="+today),
+          delay(150).then(() => api("/stock/recommendation?symbol="+ticker)),
+          delay(300).then(() => api("/stock/price-target?symbol="+ticker).catch(() => null)),
+        ]);
+        if (cancelled) return;
+        const histQ = (hist?.earningsCalendar || [])
+          .filter(e => e.epsActual != null)
+          .sort((a, b) => (b.date > a.date ? 1 : -1))
+          .slice(0, 4);
+        setEarningsHistory(histQ);
+        setRecommendation(Array.isArray(recs) ? (recs[0] || null) : null);
+        setPriceTarget(pt?.targetMean ? pt : null);
+      } catch(e) {}
+      try {
+        const list = await delay(400).then(() => api("/stock/peers?symbol="+ticker));
+        if (cancelled) return;
+        const top4 = (list || []).filter(x => x !== ticker).slice(0, 4);
+        setPeerTickers(top4);
+        const mMap = {};
+        for (let i = 0; i < top4.length; i++) {
+          if (cancelled) return;
+          if (i > 0) await delay(220);
+          try {
+            const pm = await api("/stock/metric?symbol="+top4[i]+"&metric=all");
+            mMap[top4[i]] = pm?.metric || {};
+          } catch(e) {}
+        }
+        if (!cancelled) setPeerMetrics({ ...mMap });
+      } catch(e) {}
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [ticker]); // eslint-disable-line
+
+  // Fetch live prices for watchlist — re-runs when tickers change
+  useEffect(() => {
+    if (!watchlistTickers.length) { setTapeData([]); return; }
+    let cancelled = false;
     const fetchTape = async () => {
       const results = [];
-      for (let i = 0; i < WATCHLIST.length; i++) {
+      for (let i = 0; i < watchlistTickers.length; i++) {
+        if (cancelled) return;
         if (i > 0) await delay(150);
         try {
-          const q = await api("/quote?symbol=" + WATCHLIST[i]);
-          results.push({ symbol: WATCHLIST[i], price: q.c, changePct: q.dp });
+          const q = await api("/quote?symbol=" + watchlistTickers[i]);
+          if (!cancelled) results.push({ symbol: watchlistTickers[i], price: q.c, changePct: q.dp });
         } catch(e) {}
       }
-      setTapeData(results);
+      if (!cancelled) setTapeData(results);
     };
     fetchTape();
+    return () => { cancelled = true; };
+  }, [watchlistTickers]); // eslint-disable-line
+
+  // Re-read watchlist when cloud sync completes
+  useEffect(() => {
+    const handler = () => setWatchlistTickers(dbWatchlist.load());
+    window.addEventListener('ov:data-synced', handler);
+    return () => window.removeEventListener('ov:data-synced', handler);
   }, []);
+
+  const addToWatchlist = useCallback((sym) => {
+    const s = sym.trim().toUpperCase();
+    if (!s || watchlistTickers.includes(s)) return;
+    const updated = [...watchlistTickers, s];
+    setWatchlistTickers(updated);
+    dbWatchlist.save(updated, user?.id);
+  }, [watchlistTickers, user]);
+
+  const removeFromWatchlist = useCallback((sym) => {
+    const updated = watchlistTickers.filter(t => t !== sym);
+    setWatchlistTickers(updated);
+    dbWatchlist.save(updated, user?.id);
+  }, [watchlistTickers, user]);
+
+  // Clear stale page context whenever the user navigates to a different page
+  useEffect(() => { setPageContext(null); }, [activePage]);
 
   const openResearch = (item) => { setPendingResearchItem(item); setActivePage("research"); };
 
   return (
-    <AuthProvider>
     <div className={"app-shell" + (sidebarOpen ? " sidebar-open" : "") + (settings.darkMode ? " dark" : "")} style={{ fontFamily:"'Inter','IBM Plex Sans',sans-serif" }}>
       {/* ── Global Top Bar ─────────────────────────────────── */}
       <GlobalTopBar
@@ -130,18 +256,18 @@ export default function App() {
             news={news}
           />
         )}
-        {activePage === "commodities"  && <CommoditiesDashboard />}
-        {activePage === "crypto"       && <CryptoDashboard />}
-        {activePage === "supplychain"  && <SupplyChainDashboard onOpenResearch={openResearch} />}
-        {activePage === "fx"           && <FXDashboard onOpenResearch={openResearch} />}
-        {activePage === "technical"    && <TechnicalAnalysis ticker={ticker} />}
-        {activePage === "eye"          && <EyeOfSauron onOpenResearch={openResearch} />}
-        {activePage === "markets"      && <GlobalMarketsModule onOpenResearch={openResearch} />}
-        {activePage === "portfolio"    && <PortfolioTracker />}
-        {activePage === "screener"     && <StockScreener onSelectTicker={t => { setTicker(t); setActivePage("financial"); }} />}
-        {activePage === "research"     && <ResearchBrowser pendingItem={pendingResearchItem} onPendingConsumed={() => setPendingResearchItem(null)} />}
-        {activePage === "earnings"     && <EarningsCalendarPage />}
-        {activePage === "admin" && <AdminDashboard />}
+        {activePage === "commodities"  && <CommoditiesDashboard onContextUpdate={setPageContext} />}
+        {activePage === "crypto"       && <CryptoDashboard onContextUpdate={setPageContext} />}
+        {activePage === "supplychain"  && <SupplyChainDashboard onOpenResearch={openResearch} onContextUpdate={setPageContext} />}
+        {activePage === "fx"           && <FXDashboard onOpenResearch={openResearch} onContextUpdate={setPageContext} />}
+        {activePage === "technical"    && <TechnicalAnalysis ticker={ticker} onContextUpdate={setPageContext} />}
+        {activePage === "eye"          && <EyeOfSauron onOpenResearch={openResearch} onContextUpdate={setPageContext} />}
+        {activePage === "markets"      && <GlobalMarketsModule onOpenResearch={openResearch} onContextUpdate={setPageContext} />}
+        {activePage === "portfolio"    && <PortfolioTracker onContextUpdate={setPageContext} />}
+        {activePage === "screener"     && <StockScreener onSelectTicker={t => { setTicker(t); setActivePage("financial"); }} onContextUpdate={setPageContext} />}
+        {activePage === "research"     && <ResearchBrowser pendingItem={pendingResearchItem} onPendingConsumed={() => setPendingResearchItem(null)} onContextUpdate={setPageContext} />}
+        {activePage === "earnings"     && <EarningsCalendarPage onContextUpdate={setPageContext} />}
+        {activePage === "admin"        && <AdminDashboard />}
         {activePage === "settings" && (
           <div style={{ padding:24, maxWidth:480 }}>
             <div style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:13, color:"var(--text-1)", marginBottom:16 }}>Settings</div>
@@ -167,6 +293,8 @@ export default function App() {
         onSelectTicker={t => { setTicker(t); setActivePage("financial"); }}
         earnings={earnings}
         activeTicker={ticker}
+        onAddToWatchlist={addToWatchlist}
+        onRemoveFromWatchlist={removeFromWatchlist}
       />
 
       {/* ── Status Bar ─────────────────────────────────────── */}
@@ -202,6 +330,8 @@ export default function App() {
           metrics={metrics}
           profile={profile}
           news={news}
+          pageContext={pageContext}
+          structured={{ earningsHistory, recommendation, priceTarget, peerTickers, peerMetrics }}
           onClose={() => setCopilotOpen(false)}
         />
       )}
@@ -223,6 +353,5 @@ export default function App() {
         🤖
       </button>
     </div>
-    </AuthProvider>
   );
 }
