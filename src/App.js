@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AlertsProvider } from './context/AlertsContext';
+import SignInPage from './pages/Auth/SignInPage';
+import OnboardingWizard from './pages/Onboarding/OnboardingWizard';
 import { watchlist as dbWatchlist } from './lib/db';
 import { api } from './lib/api';
 import { delay, loadSettings, saveSettings } from './lib/fmt';
@@ -25,10 +27,29 @@ export default function App() {
   return (
     <AuthProvider>
       <AlertsProvider>
-        <AppInner />
+        <AppRouter />
       </AlertsProvider>
     </AuthProvider>
   );
+}
+
+// Handles auth gating + onboarding before mounting the heavy terminal shell.
+function AppRouter() {
+  const { user, loading: authLoading } = useAuth();
+  const [onboardingDone, setOnboardingDone] = useState(
+    () => localStorage.getItem('ov_onboarding_done') === 'true'
+  );
+
+  if (authLoading) {
+    return (
+      <div style={{ position:'fixed', inset:0, background:'#0f172a', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <div style={{ width:8, height:8, borderRadius:'50%', background:'#2563eb', boxShadow:'0 0 14px rgba(37,99,235,0.80)' }} />
+      </div>
+    );
+  }
+  if (!user) return <SignInPage />;
+  if (!onboardingDone) return <OnboardingWizard onComplete={() => setOnboardingDone(true)} />;
+  return <AppInner />;
 }
 
 function AppInner() {

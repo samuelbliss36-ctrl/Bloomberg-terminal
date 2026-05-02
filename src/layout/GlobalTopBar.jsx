@@ -4,8 +4,25 @@ import { fmt, clr, bg } from '../lib/fmt';
 import { _apiCache } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useAlerts } from '../context/AlertsContext';
-import AuthModal from '../components/auth/AuthModal';
 import { AlertsPanel } from '../components/alerts/AlertsPanel';
+
+// ─── Sign-out button (used in account dropdown) ───────────────────────────────
+function SignOutButton({ onClose }) {
+  const { signOut } = useAuth();
+  const handle = async () => {
+    onClose();
+    localStorage.removeItem('ov_onboarding_done');
+    await signOut();
+  };
+  return (
+    <button onClick={handle}
+      style={{ width:'100%', padding:'9px 14px', background:'none', border:'none', cursor:'pointer', textAlign:'left', fontSize:11, color:'#e11d48', fontWeight:600, fontFamily:"'Inter',sans-serif", display:'flex', alignItems:'center', gap:7, transition:'background 0.12s' }}
+      onMouseEnter={e => e.currentTarget.style.background = 'rgba(225,29,72,0.06)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+      Sign Out
+    </button>
+  );
+}
 
 // ─── TICKER TAPE (standalone) ─────────────────────────────────────────────────
 export const TickerTape = memo(function TickerTape({ tapeData }) {
@@ -280,38 +297,40 @@ export function GlobalTopBar({ ticker, setTicker, tapeData, quote, loading, sett
           )}
         </button>
 
-        {/* Cloud sync / auth button */}
-        <button
-          onClick={() => setAuthOpen(true)}
-          title={user ? `Signed in as ${user.email}` : "Sign in to sync data"}
-          style={{
-            display:"flex", alignItems:"center", gap:4, padding:"3px 8px",
-            background: user ? "rgba(5,150,105,0.10)" : "transparent",
-            border: `1px solid ${user ? "rgba(5,150,105,0.30)" : "var(--border)"}`,
-            borderRadius:6, cursor:"pointer", transition:"all 0.15s",
-            color: user ? "#34d399" : "var(--text-3)",
-          }}
-          onMouseEnter={e => e.currentTarget.style.opacity = "0.75"}
-          onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-        >
-          {user ? (
-            <>
-              <span style={{ width:7, height:7, borderRadius:"50%", background: syncing ? "#f59e0b" : "#10b981", display:"inline-block" }} />
-              <span style={{ fontSize:9, fontFamily:"'Inter',sans-serif", fontWeight:700, letterSpacing:"0.05em" }}>
-                {user.email[0].toUpperCase()}
+        {/* Account button */}
+        {user && (
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setAuthOpen(o => !o)}
+              title={`Signed in as ${user.email}`}
+              style={{
+                display:"flex", alignItems:"center", gap:5, padding:"3px 8px",
+                background: authOpen ? "rgba(5,150,105,0.16)" : "rgba(5,150,105,0.08)",
+                border: "1px solid rgba(5,150,105,0.28)",
+                borderRadius:6, cursor:"pointer", transition:"all 0.15s", color:"#34d399",
+              }}
+              onMouseEnter={e => e.currentTarget.style.opacity = "0.80"}
+              onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+            >
+              <span style={{ width:7, height:7, borderRadius:"50%", background: syncing ? "#f59e0b" : "#10b981", display:"inline-block", flexShrink:0 }} />
+              <span style={{ fontSize:9, fontFamily:"'Inter',sans-serif", fontWeight:700, letterSpacing:"0.05em", maxWidth:72, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                {user.email}
               </span>
-            </>
-          ) : (
-            <>
-              <span style={{ fontSize:10 }}>☁</span>
-              <span style={{ fontSize:9, fontFamily:"'Inter',sans-serif", fontWeight:600, letterSpacing:"0.05em" }}>SYNC</span>
-            </>
-          )}
-        </button>
-      </div>
+            </button>
 
-      {/* Auth modal */}
-      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
+            {/* Sign-out dropdown */}
+            {authOpen && (
+              <div style={{ position:'absolute', top:'calc(100% + 6px)', right:0, zIndex:9999, background:'var(--surface-1, #fff)', border:'1px solid rgba(15,23,42,0.12)', borderRadius:8, boxShadow:'0 8px 24px rgba(15,23,42,0.14)', minWidth:160, overflow:'hidden' }}>
+                <div style={{ padding:'10px 14px 8px', borderBottom:'1px solid rgba(15,23,42,0.08)' }}>
+                  <div style={{ fontSize:9, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:2 }}>Signed in as</div>
+                  <div style={{ fontSize:11, color:'var(--text-1)', fontWeight:600, wordBreak:'break-all' }}>{user.email}</div>
+                </div>
+                <SignOutButton onClose={() => setAuthOpen(false)} />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Price alerts panel */}
       {alertsOpen && <AlertsPanel onClose={() => setAlertsOpen(false)} />}
