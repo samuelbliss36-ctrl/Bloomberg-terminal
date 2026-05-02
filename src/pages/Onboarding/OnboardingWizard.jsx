@@ -1,12 +1,22 @@
 // Post-login onboarding wizard — runs once after first sign-in.
 // Lets users optionally configure Telegram alerts and AI Copilot API key.
-// Completion is tracked via localStorage 'ov_onboarding_done'.
+// Completion flag is written to Supabase user_metadata (cross-device) AND
+// localStorage (fast cache) so the wizard never re-appears on any device.
 
 import { useState } from 'react';
 import { Zap, Bell, Bot, CheckCircle, ArrowRight, ChevronRight, Send, Key, Eye, EyeOff } from 'lucide-react';
 import { useAlerts } from '../../context/AlertsContext';
+import { supabase } from '../../lib/supabase';
 
 const LS_DONE = 'ov_onboarding_done';
+
+async function markOnboardingDone() {
+  localStorage.setItem(LS_DONE, 'true');
+  // Write to Supabase user metadata — survives across devices
+  try {
+    if (supabase) await supabase.auth.updateUser({ data: { onboarding_done: true } });
+  } catch (e) { console.warn('Could not save onboarding flag to Supabase:', e.message); }
+}
 
 const BG = {
   position: 'fixed', inset: 0, zIndex: 99998,
@@ -301,7 +311,7 @@ export default function OnboardingWizard({ onComplete }) {
   const [step, setStep] = useState(0);
   const next = () => setStep(s => s + 1);
   const finish = () => {
-    localStorage.setItem(LS_DONE, 'true');
+    markOnboardingDone(); // writes localStorage + Supabase user_metadata
     onComplete();
   };
 

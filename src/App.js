@@ -34,11 +34,26 @@ export default function App() {
 }
 
 // Handles auth gating + onboarding before mounting the heavy terminal shell.
+// Onboarding status is stored in Supabase user metadata so it persists across
+// all devices — localStorage is only a fast cache to avoid a flicker on reload.
 function AppRouter() {
   const { user, loading: authLoading } = useAuth();
-  const [onboardingDone, setOnboardingDone] = useState(
-    () => localStorage.getItem('ov_onboarding_done') === 'true'
-  );
+
+  // True if either localStorage (fast) or Supabase user_metadata (cross-device) says done
+  const isDone = (u) =>
+    localStorage.getItem('ov_onboarding_done') === 'true' ||
+    u?.user_metadata?.onboarding_done === true;
+
+  const [onboardingDone, setOnboardingDone] = useState(() => isDone(null));
+
+  // When auth loads and we have a user, re-check metadata in case they completed
+  // onboarding on another device (metadata comes in with the session object).
+  useEffect(() => {
+    if (user && isDone(user)) {
+      localStorage.setItem('ov_onboarding_done', 'true'); // cache it locally too
+      setOnboardingDone(true);
+    }
+  }, [user]); // eslint-disable-line
 
   if (authLoading) {
     return (

@@ -9,7 +9,7 @@ import { AlertsPanel } from '../components/alerts/AlertsPanel';
 // ─── Sign-out button (used in account dropdown) ───────────────────────────────
 // Keys that are local-only and should be wiped when switching accounts
 const LOCAL_ONLY_KEYS = [
-  'ov_onboarding_done',
+  'ov_onboarding_done', // cleared locally; Supabase metadata is the source of truth
   'ov_alerts',
   'ov_telegram',
   'ov_copilot_key',
