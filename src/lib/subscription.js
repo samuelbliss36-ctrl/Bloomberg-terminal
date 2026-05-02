@@ -16,7 +16,7 @@ export async function startCheckout() {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
   if (!token) throw new Error('Not signed in');
-  const r = await fetch('/api/stripe/checkout', {
+  const r = await fetch('/api/stripe?action=checkout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
   });
@@ -29,7 +29,7 @@ export async function openPortal() {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
   if (!token) throw new Error('Not signed in');
-  const r = await fetch('/api/stripe/portal', {
+  const r = await fetch('/api/stripe?action=portal', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
   });

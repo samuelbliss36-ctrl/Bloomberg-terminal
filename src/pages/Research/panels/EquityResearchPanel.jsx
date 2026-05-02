@@ -672,7 +672,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
     let apiKey;
     try { apiKey = localStorage.getItem("ov_copilot_key") || undefined; } catch {}
     try {
-      const r = await fetch("/api/sec-summary", {
+      const r = await fetch("/api/sec?mode=summarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
