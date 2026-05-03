@@ -3,6 +3,7 @@
 // Response shape: { whatThisIs, currentNarrative, keyRisks[], bullCase, bearCase }
 
 import { createClient } from '@supabase/supabase-js';
+import { checkRateLimit, incrementUsage, rateLimitedResponse } from './_rateLimit.js';
 
 const OWNER_EMAIL      = 'samuelbliss36@gmail.com';
 const OPENAI_KEY_RE    = /^sk-[A-Za-z0-9\-_]{20,}$/;
@@ -61,12 +62,14 @@ export default async function handler(req, res) {
   const token = req.headers.authorization?.replace("Bearer ", "");
   let serverKeyAllowed = false;
   let isOwnerUser = false;
+  let authedUser = null;
 
   if (token) {
     try {
       const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY);
       const { data: { user }, error } = await supabase.auth.getUser(token);
       if (!error && user) {
+        authedUser = user;
         if (user.email === OWNER_EMAIL) {
           serverKeyAllowed = true;
           isOwnerUser = true;
@@ -102,6 +105,13 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Invalid API key format." });
   }
 
+  // ── Rate limit check ──────────────────────────────────────────────────────
+  const useServerKey = serverKeyAllowed && rawKey !== userApiKey;
+  if (useServerKey && authedUser && !isOwnerUser) {
+    const rl = await checkRateLimit(authedUser.id, authedUser.email);
+    if (!rl.allowed) return res.status(429).json(rateLimitedResponse(rl.remaining, rl.limit));
+  }
+
   const safeContext = typeof context === "string" ? context.slice(0, MAX_CONTEXT_LEN) : null;
 
   const userPrompt = `Generate intelligence cards for the following financial asset.
@@ -113,6 +123,7 @@ Return a JSON object with keys: whatThisIs, currentNarrative, keyRisks (array of
 
   try {
     let text;
+    let tokensUsed = 0;
 
     if (isPerplexity) {
       const r = await fetch("https://api.perplexity.ai/chat/completions", {
@@ -130,6 +141,7 @@ Return a JSON object with keys: whatThisIs, currentNarrative, keyRisks (array of
       const d = await r.json();
       if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
       text = d.choices?.[0]?.message?.content || "";
+      tokensUsed = (d.usage?.prompt_tokens || 0) + (d.usage?.completion_tokens || 0);
     } else if (isAnthropic) {
       const r = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
@@ -148,6 +160,7 @@ Return a JSON object with keys: whatThisIs, currentNarrative, keyRisks (array of
       const d = await r.json();
       if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
       text = d.content?.[0]?.text || "";
+      tokensUsed = (d.usage?.input_tokens || 0) + (d.usage?.output_tokens || 0);
     } else {
       const r = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
@@ -165,6 +178,11 @@ Return a JSON object with keys: whatThisIs, currentNarrative, keyRisks (array of
       const d = await r.json();
       if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
       text = d.choices?.[0]?.message?.content || "";
+      tokensUsed = (d.usage?.prompt_tokens || 0) + (d.usage?.completion_tokens || 0);
+    }
+
+    if (useServerKey && authedUser && !isOwnerUser && tokensUsed > 0) {
+      incrementUsage(authedUser.id, authedUser.email, tokensUsed).catch(() => {});
     }
 
     // Strip markdown fences if the model added them despite instructions

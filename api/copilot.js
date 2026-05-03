@@ -8,6 +8,7 @@
 // Server key priority: PERPLEXITY_KEY → OPENAI_KEY → ANTHROPIC_KEY
 
 import { createClient } from '@supabase/supabase-js';
+import { checkRateLimit, incrementUsage, rateLimitedResponse } from './_rateLimit.js';
 
 const OWNER_EMAIL = 'samuelbliss36@gmail.com';
 
@@ -65,7 +66,11 @@ async function callPerplexity(key, systemPrompt, safeMessages) {
   });
   const d = await r.json();
   if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
-  return { text: d.choices?.[0]?.message?.content || "(no response)", provider: "perplexity" };
+  return {
+    text: d.choices?.[0]?.message?.content || "(no response)",
+    provider: "perplexity",
+    tokens: (d.usage?.prompt_tokens || 0) + (d.usage?.completion_tokens || 0),
+  };
 }
 
 async function callOpenAI(key, systemPrompt, safeMessages) {
@@ -83,7 +88,11 @@ async function callOpenAI(key, systemPrompt, safeMessages) {
   });
   const d = await r.json();
   if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
-  return { text: d.choices?.[0]?.message?.content || "(no response)", provider: "openai" };
+  return {
+    text: d.choices?.[0]?.message?.content || "(no response)",
+    provider: "openai",
+    tokens: (d.usage?.prompt_tokens || 0) + (d.usage?.completion_tokens || 0),
+  };
 }
 
 async function callAnthropic(key, systemPrompt, safeMessages) {
@@ -103,7 +112,11 @@ async function callAnthropic(key, systemPrompt, safeMessages) {
   });
   const d = await r.json();
   if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
-  return { text: d.content?.[0]?.text || "(no response)", provider: "anthropic" };
+  return {
+    text: d.content?.[0]?.text || "(no response)",
+    provider: "anthropic",
+    tokens: (d.usage?.input_tokens || 0) + (d.usage?.output_tokens || 0),
+  };
 }
 
 export default async function handler(req, res) {
@@ -123,6 +136,7 @@ export default async function handler(req, res) {
   const token = req.headers.authorization?.replace("Bearer ", "");
   let serverKeyAllowed = false;
   let isOwnerUser = false;
+  let authedUser  = null;
 
   if (token) {
     try {
@@ -132,6 +146,7 @@ export default async function handler(req, res) {
       );
       const { data: { user }, error } = await supabase.auth.getUser(token);
       if (!error && user) {
+        authedUser = user;
         if (user.email === OWNER_EMAIL) {
           serverKeyAllowed = true;
           isOwnerUser = true;
@@ -196,6 +211,15 @@ export default async function handler(req, res) {
     });
   }
 
+  // ── Rate limit check (server-key subscribers only) ───────────────────────
+  const useServerKey = keySource !== "user";
+  if (useServerKey && authedUser && !isOwnerUser) {
+    const rl = await checkRateLimit(authedUser.id, authedUser.email);
+    if (!rl.allowed) {
+      return res.status(429).json(rateLimitedResponse(rl.remaining, rl.limit));
+    }
+  }
+
   // ── Sanitise messages & context ──────────────────────────────────────────
   const safeMessages = messages.slice(-MAX_MESSAGES).map(m => ({
     role: m.role === "assistant" ? "assistant" : "user",
@@ -222,10 +246,16 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: "Invalid API key format." });
     }
 
+    // Increment usage for server-key subscribers (fire-and-forget)
+    if (useServerKey && authedUser && !isOwnerUser && result.tokens > 0) {
+      incrementUsage(authedUser.id, authedUser.email, result.tokens).catch(() => {});
+    }
+
     res.json({
       message:  result.text,
       provider: result.provider,
       isOwner:  isOwnerUser,
+      tokens_used: result.tokens || 0,
     });
   } catch (err) {
     console.error("copilot error:", err.message);

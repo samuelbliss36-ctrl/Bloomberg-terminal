@@ -116,3 +116,37 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users read own subscription"
   ON subscriptions FOR SELECT USING (auth.uid() = user_id);
+
+
+-- ── ai_usage ──────────────────────────────────────────────────────────────────
+-- Tracks monthly token consumption per user across all AI features.
+-- Resets automatically each calendar month (new row per month).
+CREATE TABLE IF NOT EXISTS ai_usage (
+  user_id   uuid    NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  month     text    NOT NULL,          -- "YYYY-MM"
+  tokens    bigint  NOT NULL DEFAULT 0,
+  requests  integer NOT NULL DEFAULT 0,
+  PRIMARY KEY (user_id, month)
+);
+
+ALTER TABLE ai_usage ENABLE ROW LEVEL SECURITY;
+
+-- Users can read their own usage (for displaying quota in the UI)
+CREATE POLICY "Users read own ai_usage"
+  ON ai_usage FOR SELECT USING (auth.uid() = user_id);
+
+-- Atomic upsert — called server-side via service role key
+-- SECURITY DEFINER runs as table owner, bypassing RLS
+CREATE OR REPLACE FUNCTION increment_ai_usage(
+  p_user_id uuid,
+  p_month   text,
+  p_tokens  integer
+) RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  INSERT INTO ai_usage (user_id, month, tokens, requests)
+  VALUES (p_user_id, p_month, p_tokens, 1)
+  ON CONFLICT (user_id, month) DO UPDATE
+    SET tokens   = ai_usage.tokens   + EXCLUDED.tokens,
+        requests = ai_usage.requests + 1;
+END;
+$$;
