@@ -4,6 +4,7 @@ import { api } from "../../../lib/api";
 import { fmt, clr, delay, fmtMktCap, fmtX, fmtN, fmtMgn, fmtGr, clrM } from "../../../lib/fmt";
 import { IntelCard } from "../../../components/ui/IntelCard";
 import { useIntelCard } from "../../../hooks/useIntelCard";
+import { supabase } from "../../../lib/supabase";
 import RelatedLinks from "./RelatedLinks";
 
 export default function EquityResearchPanel({ item, onClose, onOpen }) {
@@ -671,10 +672,15 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
     setSecSummaryLoading(true);
     let apiKey;
     try { apiKey = localStorage.getItem("ov_copilot_key") || undefined; } catch {}
+    let authHeader = {};
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) authHeader = { Authorization: `Bearer ${session.access_token}` };
+    } catch {}
     try {
       const r = await fetch("/api/sec?mode=summarize", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({
           ticker:      item.ticker,
           entityName:  secEntityName,
@@ -812,6 +818,25 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
             {/* Summary cards */}
             {secSummary && (
               <div className="flex flex-col gap-4">
+                {/* Sentiment verdict */}
+                {secSummary.sentiment && (() => {
+                  const s = secSummary.sentiment;
+                  const isBull = s === "Bullish";
+                  const isBear = s === "Bearish";
+                  const color  = isBull ? "#059669" : isBear ? "#e11d48" : "#b45309";
+                  const bg     = isBull ? "rgba(5,150,105,0.08)" : isBear ? "rgba(225,29,72,0.07)" : "rgba(180,83,9,0.08)";
+                  const border = isBull ? "rgba(5,150,105,0.25)" : isBear ? "rgba(225,29,72,0.25)" : "rgba(180,83,9,0.25)";
+                  const icon   = isBull ? "▲ Bullish" : isBear ? "▼ Bearish" : "◆ Neutral";
+                  return (
+                    <div style={{ background:bg, border:`1px solid ${border}`, borderRadius:6, padding:"10px 14px", display:"flex", alignItems:"center", gap:10 }}>
+                      <span className="font-mono" style={{ color, fontSize:13, fontWeight:700, flexShrink:0 }}>{icon}</span>
+                      {secSummary.sentimentRationale && (
+                        <span className="font-mono" style={{ color:"var(--text-1)", fontSize:10, lineHeight:1.5 }}>{secSummary.sentimentRationale}</span>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 {/* Headline */}
                 <div style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:6, padding:"10px 14px" }}>
                   <div className="font-mono mb-1" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Takeaway</div>

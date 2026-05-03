@@ -7,9 +7,13 @@
 //   POST /api/sec?mode=summarize   body: { ticker, entityName, formType, period, filingDate, sections, apiKey }
 //     → { headline, financialHighlights, riskFactors, mdaInsights, outlook, watchPoints }
 
+import { createClient } from '@supabase/supabase-js';
+
 // ── SEC Summary (AI) constants ────────────────────────────────────────────────
+const OWNER_EMAIL      = 'samuelbliss36@gmail.com';
 const OPENAI_KEY_RE    = /^sk-[A-Za-z0-9\-_]{20,}$/;
 const ANTHROPIC_KEY_RE = /^sk-ant-[A-Za-z0-9\-_]{20,}$/;
+const PERPLEXITY_KEY_RE = /^pplx-[A-Za-z0-9]{20,}$/;
 const MAX_SECTION_LEN  = 6_000;
 
 function safeAiError(err) {
@@ -26,6 +30,8 @@ Generate a structured, professional analysis. Respond ONLY with valid JSON — n
 
 Return exactly this structure:
 {
+  "sentiment": "Bullish" | "Bearish" | "Neutral",
+  "sentimentRationale": "One sentence explaining the sentiment verdict (≤20 words)",
   "headline": "One sentence capturing the single most important takeaway from this filing (≤20 words)",
   "financialHighlights": ["highlight 1", "highlight 2", "highlight 3"],
   "riskFactors": ["key risk 1", "key risk 2", "key risk 3"],
@@ -35,6 +41,8 @@ Return exactly this structure:
 }
 
 Rules:
+- sentiment: overall filing tone — "Bullish" if results and outlook are positive, "Bearish" if concerning, "Neutral" if mixed
+- sentimentRationale: one sharp sentence explaining WHY you assigned that sentiment
 - financialHighlights: extract specific numbers, percentages, or dollar figures mentioned in the text
 - riskFactors: focus on risks that are NEW, ELEVATED, or given prominent placement in Item 1A
 - mdaInsights: paraphrase management's own framing — don't editorialize
@@ -44,19 +52,51 @@ Rules:
 - Keep all strings concise and professional`;
 
 async function handleSummarize(req, res) {
-  const { ticker, entityName, formType, period, filingDate, sections, apiKey } = req.body || {};
+  const { ticker, entityName, formType, period, filingDate, sections, apiKey: userApiKey } = req.body || {};
   if (!ticker || !sections) return res.status(400).json({ error: "ticker and sections required" });
 
-  const key = process.env.OPENAI_KEY || process.env.ANTHROPIC_KEY || apiKey;
-  if (!key) {
+  // ── Auth check: identify owner / active subscriber ──────────────────────────
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  let serverKeyAllowed = false;
+  let isOwnerUser = false;
+
+  if (token) {
+    try {
+      const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY);
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (!error && user) {
+        if (user.email === OWNER_EMAIL) {
+          serverKeyAllowed = true;
+          isOwnerUser = true;
+        } else {
+          const admin = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+          const { data: sub } = await admin.from('subscriptions').select('status').eq('user_id', user.id).single();
+          if (sub?.status === 'active') serverKeyAllowed = true;
+        }
+      }
+    } catch {}
+  }
+
+  // ── Key resolution ────────────────────────────────────────────────────────
+  let rawKey = null;
+  if (serverKeyAllowed) {
+    rawKey = process.env.PERPLEXITY_KEY || process.env.OPENAI_KEY || process.env.ANTHROPIC_KEY || null;
+  }
+  if (!rawKey && userApiKey) rawKey = userApiKey;
+
+  if (!rawKey) {
+    if (isOwnerUser) {
+      return res.status(503).json({ error: "no_server_key", message: "No server AI key configured. Add PERPLEXITY_KEY to Vercel environment variables." });
+    }
     return res.status(401).json({
       error: "no_key",
       message: "No API key configured. Enter your OpenAI or Anthropic key in the AI Copilot settings.",
     });
   }
 
-  const isAnthropic = key.startsWith("sk-ant");
-  if (!(isAnthropic ? ANTHROPIC_KEY_RE : OPENAI_KEY_RE).test(key)) {
+  const isPerplexity = PERPLEXITY_KEY_RE.test(rawKey);
+  const isAnthropic  = rawKey.startsWith("sk-ant");
+  if (!isPerplexity && !(isAnthropic ? ANTHROPIC_KEY_RE : OPENAI_KEY_RE).test(rawKey)) {
     return res.status(401).json({ error: "Invalid API key format." });
   }
 
@@ -78,10 +118,23 @@ Generate a structured JSON analysis. Return the JSON object directly — no mark
 
   try {
     let text;
-    if (isAnthropic) {
+    if (isPerplexity) {
+      const r = await fetch("https://api.perplexity.ai/chat/completions", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + rawKey, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "sonar-pro",
+          max_tokens: 1000,
+          messages: [{ role: "system", content: SEC_SUMMARY_SYSTEM }, { role: "user", content: userPrompt }],
+        }),
+      });
+      const d = await r.json();
+      if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
+      text = d.choices?.[0]?.message?.content || "";
+    } else if (isAnthropic) {
       const r = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+        headers: { "x-api-key": rawKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
         body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 1000, system: SEC_SUMMARY_SYSTEM, messages: [{ role: "user", content: userPrompt }] }),
       });
       const d = await r.json();
@@ -90,7 +143,7 @@ Generate a structured JSON analysis. Return the JSON object directly — no mark
     } else {
       const r = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
-        headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
+        headers: { "Authorization": "Bearer " + rawKey, "Content-Type": "application/json" },
         body: JSON.stringify({ model: "gpt-4o-mini", max_tokens: 1000, response_format: { type: "json_object" }, messages: [{ role: "system", content: SEC_SUMMARY_SYSTEM }, { role: "user", content: userPrompt }] }),
       });
       const d = await r.json();
