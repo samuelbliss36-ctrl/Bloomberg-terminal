@@ -455,20 +455,41 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
       )}
 
       {/* ── Suggested prompts ──────────────────────────────────── */}
-      {!(showUpgrade && !apiKey) && msgs.length === 0 && (
-        <div style={{ padding:"0 14px 8px", display:"flex", flexWrap:"wrap", gap:5, flexShrink:0 }}>
-          {SUGGESTIONS.map((s, i) => (
-            <button key={i} onClick={() => send(s)}
-              style={{ fontSize:9, padding:"3px 9px", borderRadius:99, cursor:"pointer", fontFamily:"'Inter',sans-serif",
-                background:"var(--surface-2)", border:"1px solid var(--border-solid)", color:"var(--text-1)",
-                transition:"border-color 0.15s" }}
-              onMouseEnter={e => e.currentTarget.style.borderColor="#2563eb"}
-              onMouseLeave={e => e.currentTarget.style.borderColor=""}>
-              {s}
-            </button>
-          ))}
-        </div>
-      )}
+      {!(showUpgrade && !apiKey) && (() => {
+        // Always show suggestions — collapsed when there are messages, expanded when empty
+        const expanded = msgs.length === 0;
+        return (
+          <div style={{ borderTop: expanded ? "none" : "1px solid var(--border-solid)", flexShrink:0 }}>
+            {!expanded && (
+              <button
+                onClick={() => {
+                  const el = document.getElementById("ov-copilot-suggestions");
+                  if (el) el.style.display = el.style.display === "none" ? "flex" : "none";
+                }}
+                style={{ width:"100%", background:"none", border:"none", borderBottom:"1px solid var(--border-solid)",
+                  cursor:"pointer", padding:"4px 14px", display:"flex", alignItems:"center", gap:5,
+                  color:"var(--text-3)", fontSize:9, fontFamily:"'IBM Plex Mono',monospace", textAlign:"left" }}>
+                <span style={{ fontSize:8 }}>✦</span> Suggested questions
+                <span style={{ marginLeft:"auto", fontSize:9 }}>▾</span>
+              </button>
+            )}
+            <div id="ov-copilot-suggestions"
+              style={{ padding:"6px 14px 8px", display: expanded ? "flex" : "none",
+                flexWrap:"wrap", gap:5 }}>
+              {SUGGESTIONS.map((s, i) => (
+                <button key={i} onClick={() => send(s)}
+                  style={{ fontSize:9, padding:"3px 9px", borderRadius:99, cursor:"pointer",
+                    fontFamily:"'Inter',sans-serif", background:"var(--surface-2)",
+                    border:"1px solid var(--border-solid)", color:"var(--text-1)", transition:"border-color 0.15s" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="#2563eb"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor=""}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Input bar ──────────────────────────────────────────── */}
       {!(showUpgrade && !apiKey) && (
