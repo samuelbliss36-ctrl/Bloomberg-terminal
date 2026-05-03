@@ -188,10 +188,26 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [msgs, loading]);
 
+  // Restore API key from Supabase user metadata if localStorage was wiped (e.g. after sign-out)
+  useEffect(() => {
+    if (!user) return;
+    const stored = localStorage.getItem("ov_copilot_key");
+    if (!stored && user?.user_metadata?.copilot_key) {
+      const k = user.user_metadata.copilot_key;
+      localStorage.setItem("ov_copilot_key", k);
+      setApiKey(k);
+    }
+  }, [user]);
+
   const saveKey = () => {
     const k = keyDraft.trim();
     setApiKey(k);
     localStorage.setItem("ov_copilot_key", k);
+    // Persist to Supabase so it survives sign-out / sign-in on any device
+    if (supabase && user) {
+      supabase.auth.updateUser({ data: { copilot_key: k } })
+        .catch(e => console.warn("copilot key sync failed:", e.message));
+    }
     setShowConfig(false);
     setKeyDraft("");
   };
