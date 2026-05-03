@@ -35,9 +35,10 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
   const [secExtract, setSecExtract]   = useState(null);
   const [secExtractLoading, setSecExtractLoading] = useState(false);
   const [secExtractError, setSecExtractError]     = useState(null);
-  const [secSummary, setSecSummary]   = useState(null);
+  const [secSummary, setSecSummary]               = useState(null);
   const [secSummaryLoading, setSecSummaryLoading] = useState(false);
   const [secSummaryError, setSecSummaryError]     = useState(null);
+  const [secRequiresUpgrade, setSecRequiresUpgrade] = useState(false);
   const loadedTabs = useRef(new Set(["Overview"]));
 
   useEffect(() => {
@@ -52,7 +53,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
     setSecCik(null); setSecEntityName(null);
     setActiveFiling(null); setSecExtract(null);
     setSecExtractLoading(false); setSecExtractError(null);
-    setSecSummary(null); setSecSummaryLoading(false); setSecSummaryError(null);
+    setSecSummary(null); setSecSummaryLoading(false); setSecSummaryError(null); setSecRequiresUpgrade(false);
 
     Promise.all([
       api("/quote?symbol=" + item.ticker),
@@ -214,7 +215,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
     return lines.join("\n");
   }, [quote, profile, metrics, yahooStats, recs, pt, item.ticker, item.label]); // eslint-disable-line
 
-  const { intel, loading: intelLoading, error: intelError, refresh: intelRefresh } = useIntelCard(
+  const { intel, loading: intelLoading, error: intelError, requiresUpgrade: intelRequiresUpgrade, refresh: intelRefresh } = useIntelCard(
     item.ticker,
     intelContext,
     { enabled: activeTab === "Intelligence" }
@@ -650,6 +651,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
     setActiveFiling(filing);
     setSecExtract(null); setSecExtractError(null); setSecExtractLoading(true);
     setSecSummary(null); setSecSummaryError(null); setSecSummaryLoading(false);
+    setSecRequiresUpgrade(false);
 
     // Step 1: extract text from the filing document
     let sections;
@@ -691,6 +693,11 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
           apiKey,
         }),
       });
+      if (r.status === 402) {
+        setSecRequiresUpgrade(true);
+        setSecSummaryLoading(false);
+        return;
+      }
       const d = await r.json();
       if (d.error) throw new Error(d.message || d.error);
       setSecSummary(d);
@@ -815,6 +822,30 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
               </div>
             )}
 
+            {/* Upgrade wall for SEC AI summary */}
+            {secRequiresUpgrade && (
+              <div style={{
+                background:"var(--surface-1)", border:"1px solid var(--border-solid)",
+                borderRadius:10, padding:"24px 20px", textAlign:"center",
+                display:"flex", flexDirection:"column", alignItems:"center", gap:12, marginBottom:8,
+              }}>
+                <div style={{ fontSize:24 }}>🔒</div>
+                <div>
+                  <div style={{ fontSize:12, fontWeight:700, color:"var(--text-1)", marginBottom:3 }}>Pro Feature</div>
+                  <div style={{ fontSize:10, color:"var(--text-3)", lineHeight:1.5, maxWidth:240 }}>
+                    AI SEC filing analysis requires a Pro subscription.
+                  </div>
+                </div>
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("ov:open-copilot-upgrade"))}
+                  style={{ background:"#2563eb", color:"#fff", border:"none", borderRadius:8, padding:"8px 20px", fontSize:11, fontWeight:700, cursor:"pointer" }}
+                >
+                  Upgrade to Pro — $9.99/mo
+                </button>
+                <div style={{ fontSize:9, color:"var(--text-3)" }}>Secure checkout via Stripe · Cancel any time</div>
+              </div>
+            )}
+
             {/* Summary cards */}
             {secSummary && (
               <div className="flex flex-col gap-4">
@@ -928,11 +959,12 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
           intel={intel}
           loading={intelLoading}
           error={intelError}
+          requiresUpgrade={intelRequiresUpgrade}
           onRefresh={intelRefresh}
           accentColor="#2563eb"
         />
       )}
-      {!intelLoading && !intelError && intel && (
+      {!intelLoading && !intelError && !intelRequiresUpgrade && intel && (
         <div className="mt-4"><RelatedLinks itemId={item.id} onOpen={onOpen} /></div>
       )}
     </div>

@@ -8,7 +8,45 @@
  *   bullCase         — conditions for upside
  *   bearCase         — conditions for downside
  */
-export function IntelCard({ intel, loading, error, onRefresh, accentColor = "#b45309" }) {
+export function IntelCard({ intel, loading, error, requiresUpgrade, onRefresh, accentColor = "#b45309" }) {
+  // ── Upgrade wall ───────────────────────────────────────────────────────────
+  if (requiresUpgrade) {
+    return (
+      <div style={{
+        background: "var(--surface-1)", border: "1px solid var(--border-solid)",
+        borderRadius: 10, padding: "28px 20px", textAlign: "center",
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 14,
+      }}>
+        <div style={{ fontSize: 28 }}>🔒</div>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-1)", marginBottom: 4 }}>
+            Pro Feature
+          </div>
+          <div style={{ fontSize: 11, color: "var(--text-3)", lineHeight: 1.5, maxWidth: 260 }}>
+            AI Intelligence Cards require a Pro subscription.<br />
+            Upgrade to unlock real-time analysis for every asset.
+          </div>
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 22, fontWeight: 800, color: "var(--text-1)" }}>$9.99<span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-3)" }}>/mo</span></div>
+          <div style={{ fontSize: 9, color: "var(--text-3)", marginTop: 2 }}>Cancel any time</div>
+        </div>
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent("ov:open-copilot-upgrade"))}
+          style={{
+            background: "#2563eb", color: "#fff", border: "none", borderRadius: 8,
+            padding: "9px 22px", fontSize: 11, fontWeight: 700, cursor: "pointer",
+          }}
+        >
+          Upgrade to Pro
+        </button>
+        <div style={{ fontSize: 9, color: "var(--text-3)" }}>
+          Secure checkout via Stripe
+        </div>
+      </div>
+    );
+  }
+
   // ── Loading state ──────────────────────────────────────────────────────────
   if (loading) {
     return (

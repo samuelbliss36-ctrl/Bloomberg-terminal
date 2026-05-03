@@ -56,9 +56,10 @@ export default function PortfolioTracker() {
   const [equityHistory, setEquityHistory] = useState([]);
   const [equityLoading, setEquityLoading] = useState(false);
   const [equityTf, setEquityTf] = useState("3M");
-  const [aiAnalysis, setAiAnalysis] = useState(null);
-  const [aiLoading,  setAiLoading]  = useState(false);
-  const [aiError,    setAiError]    = useState("");
+  const [aiAnalysis,        setAiAnalysis]        = useState(null);
+  const [aiLoading,         setAiLoading]         = useState(false);
+  const [aiError,           setAiError]           = useState("");
+  const [aiRequiresUpgrade, setAiRequiresUpgrade] = useState(false);
 
   useEffect(() => {
     db.portfolio.save(holdings, user?.id);
@@ -227,6 +228,7 @@ export default function PortfolioTracker() {
     setAiLoading(true);
     setAiAnalysis(null);
     setAiError("");
+    setAiRequiresUpgrade(false);
 
     const lines = [
       "PORTFOLIO SNAPSHOT",
@@ -278,6 +280,11 @@ export default function PortfolioTracker() {
           apiKey: savedKey,
         }),
       });
+      if (r.status === 402) {
+        setAiRequiresUpgrade(true);
+        setAiLoading(false);
+        return;
+      }
       const data = await r.json();
       if (data.error === "no_key") {
         setAiError("No API key found. Open the 🤖 Copilot button and enter your OpenAI or Anthropic key first.");
@@ -348,6 +355,30 @@ export default function PortfolioTracker() {
                 </button>
               )}
             </div>
+
+            {aiRequiresUpgrade && (
+              <div className="mt-2" style={{
+                background:"var(--surface-1)", border:"1px solid var(--border-solid)",
+                borderRadius:10, padding:"20px", textAlign:"center",
+                display:"flex", flexDirection:"column", alignItems:"center", gap:10,
+              }}>
+                <div style={{ fontSize:22 }}>🔒</div>
+                <div>
+                  <div className="font-mono" style={{ fontSize:12, fontWeight:700, color:"var(--text-1)", marginBottom:3 }}>Pro Feature</div>
+                  <div className="font-mono" style={{ fontSize:10, color:"var(--text-3)", lineHeight:1.5 }}>
+                    AI Portfolio Analysis requires a Pro subscription.
+                  </div>
+                </div>
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("ov:open-copilot-upgrade"))}
+                  className="font-mono"
+                  style={{ background:"#2563eb", color:"#fff", border:"none", borderRadius:8, padding:"8px 20px", fontSize:11, fontWeight:700, cursor:"pointer" }}
+                >
+                  Upgrade to Pro — $9.99/mo
+                </button>
+                <div className="font-mono" style={{ fontSize:9, color:"var(--text-3)" }}>Secure checkout via Stripe · Cancel any time</div>
+              </div>
+            )}
 
             {aiError && (
               <div className="font-mono mt-2 p-3" style={{ background:"var(--surface-0)", border:"1px solid #e11d48", borderRadius:8, color:"#e11d48", fontSize:11, lineHeight:1.6 }}>

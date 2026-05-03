@@ -20,9 +20,10 @@ const CACHE_TTL = 3_600_000; // 1 hour
  *   refresh — function to bypass cache and re-generate
  */
 export function useIntelCard(id, context, { enabled = true } = {}) {
-  const [intel,   setIntel]   = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState(null);
+  const [intel,            setIntel]           = useState(null);
+  const [loading,          setLoading]         = useState(false);
+  const [error,            setError]           = useState(null);
+  const [requiresUpgrade,  setRequiresUpgrade] = useState(false);
 
   // Tracks whether we've already kicked off a fetch for the current `id`
   // so a context change (data arriving late) doesn't cause a duplicate call.
@@ -34,6 +35,7 @@ export function useIntelCard(id, context, { enabled = true } = {}) {
     setIntel(null);
     setLoading(false);
     setError(null);
+    setRequiresUpgrade(false);
   }, [id]);
 
   const doFetch = useCallback(async (ctx) => {
@@ -52,6 +54,10 @@ export function useIntelCard(id, context, { enabled = true } = {}) {
         headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({ id, context: ctx || "", apiKey }),
       });
+      if (r.status === 402) {
+        setRequiresUpgrade(true);
+        return;
+      }
       const d = await r.json();
       if (!r.ok || d.error) {
         throw new Error(d.message || d.error || `HTTP ${r.status}`);
@@ -96,5 +102,5 @@ export function useIntelCard(id, context, { enabled = true } = {}) {
     doFetch(context);
   }, [id, context, doFetch]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { intel, loading, error, refresh };
+  return { intel, loading, error, requiresUpgrade, refresh };
 }

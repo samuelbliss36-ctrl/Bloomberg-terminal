@@ -90,9 +90,9 @@ export default async function handler(req, res) {
     if (isOwnerUser) {
       return res.status(503).json({ error: "no_server_key", message: "No server AI key configured. Add PERPLEXITY_KEY to Vercel environment variables." });
     }
-    return res.status(401).json({
-      error: "no_key",
-      message: "No API key configured. Enter your OpenAI or Anthropic key in the AI Copilot settings panel.",
+    return res.status(402).json({
+      error: "subscription_required",
+      message: "A Pro subscription is required to use AI features. Upgrade at any time from the AI Copilot panel.",
     });
   }
 

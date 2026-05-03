@@ -105,6 +105,13 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
     if (!user || isOwner(user)) return;
     getSubscription().then(sub => setSubscription(sub));
   }, [user]);
+
+  // Listen for upgrade requests from other AI feature walls
+  useEffect(() => {
+    const handler = () => { if (!isOwner(user)) setShowUpgrade(true); };
+    window.addEventListener('ov:open-copilot-upgrade', handler);
+    return () => window.removeEventListener('ov:open-copilot-upgrade', handler);
+  }, [user]);
   const bottomRef = useRef(null);
   const inputRef  = useRef(null);
 
