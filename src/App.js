@@ -337,23 +337,55 @@ function AppInner() {
           onClose={() => setCopilotOpen(false)}
         />
       )}
-      {/* Floating launcher button */}
-      <button
-        onClick={() => setCopilotOpen(o => !o)}
-        title="AI Copilot"
-        style={{
-          position:"fixed", bottom:48, right:16, zIndex:9997,
-          width:44, height:44, borderRadius:"50%", border:"none", cursor:"pointer",
-          background: copilotOpen ? "#1d4ed8" : "#2563eb",
-          color:"#fff", fontSize:20, boxShadow:"0 4px 16px rgba(37,99,235,0.45)",
-          display:"flex", alignItems:"center", justifyContent:"center",
-          transition:"background 0.15s, transform 0.15s",
-        }}
-        onMouseEnter={e => e.currentTarget.style.transform="scale(1.08)"}
-        onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}
-      >
-        🤖
-      </button>
+      {/* Floating AI Copilot launcher */}
+      <div style={{ position:"fixed", bottom:48, right:16, zIndex:9997, display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
+        {/* "Ask AI" label */}
+        {!copilotOpen && (
+          <div style={{
+            background:"linear-gradient(135deg,#7c3aed,#2563eb)",
+            color:"#fff", fontFamily:"'IBM Plex Mono',monospace",
+            fontSize:9, fontWeight:700, letterSpacing:"0.06em",
+            padding:"3px 8px", borderRadius:20, whiteSpace:"nowrap",
+            boxShadow:"0 2px 8px rgba(124,58,237,0.4)",
+            pointerEvents:"none",
+          }}>
+            ✦ Ask AI
+          </div>
+        )}
+        {/* Button + pulsing ring */}
+        <div style={{ position:"relative", display:"flex", alignItems:"center", justifyContent:"center" }}>
+          {!copilotOpen && (
+            <div style={{
+              position:"absolute", inset:-6, borderRadius:"50%",
+              border:"2px solid rgba(37,99,235,0.5)",
+              animation:"copilot-pulse 2.2s ease-out infinite",
+              pointerEvents:"none",
+            }} />
+          )}
+          <button
+            onClick={() => setCopilotOpen(o => !o)}
+            title="AI Copilot"
+            style={{
+              width:44, height:44, borderRadius:"50%", border:"none", cursor:"pointer",
+              background: copilotOpen ? "#1d4ed8" : "#2563eb",
+              color:"#fff", fontSize:20, boxShadow:"0 4px 16px rgba(37,99,235,0.45)",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              transition:"background 0.15s, transform 0.15s", position:"relative",
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform="scale(1.08)"}
+            onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}
+          >
+            🤖
+          </button>
+        </div>
+      </div>
+      <style>{`
+        @keyframes copilot-pulse {
+          0%   { transform: scale(1);   opacity: 0.9; }
+          70%  { transform: scale(1.6); opacity: 0;   }
+          100% { transform: scale(1.6); opacity: 0;   }
+        }
+      `}</style>
     </div>
   );
 }

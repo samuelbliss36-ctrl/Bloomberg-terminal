@@ -24,7 +24,18 @@ export function SidebarNav({ activePage, setActivePage, isOpen, onToggle }) {
               borderLeft: "2px solid #2563eb",
               color: "#2563eb",
             } : {}}>
-            <span className="sidebar-icon">{item.icon}</span>
+            <span className="sidebar-icon" style={{ position:"relative" }}>
+              {item.icon}
+              {item.ai && (
+                <span style={{
+                  position:"absolute", top:-3, right:-5,
+                  width:6, height:6, borderRadius:"50%",
+                  background:"linear-gradient(135deg,#7c3aed,#2563eb)",
+                  boxShadow:"0 0 5px rgba(124,58,237,0.7)",
+                  display:"block",
+                }} />
+              )}
+            </span>
             <span className="sidebar-label">{item.label}</span>
           </button>
         ))}

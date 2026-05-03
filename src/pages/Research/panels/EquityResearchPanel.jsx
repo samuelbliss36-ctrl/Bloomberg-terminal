@@ -987,8 +987,16 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
           <button key={t} onClick={() => setActiveTab(t)} className="font-mono"
             style={{ background:"none", border:"none", borderBottom:activeTab===t?"2px solid #58a6ff":"2px solid transparent",
               color:activeTab===t?"var(--text-1)":"var(--text-3)", fontSize:11, padding:"8px 12px", cursor:"pointer", transition:"color 0.15s",
-              whiteSpace:"nowrap", flexShrink:0 }}>
+              whiteSpace:"nowrap", flexShrink:0, display:"flex", alignItems:"center", gap:4 }}>
             {t}
+            {(t === "Intelligence" || t === "SEC") && (
+              <span style={{
+                fontSize:7, fontWeight:700, letterSpacing:"0.05em",
+                background:"linear-gradient(135deg,#7c3aed,#2563eb)",
+                color:"#fff", borderRadius:4, padding:"1px 4px",
+                lineHeight:1.4, textTransform:"uppercase",
+              }}>AI</span>
+            )}
           </button>
         ))}
       </div>

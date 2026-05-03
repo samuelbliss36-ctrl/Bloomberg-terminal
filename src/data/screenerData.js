@@ -49,9 +49,9 @@ export const NAV_ITEMS = [
   { key:"eye",         icon:"👁",  label:"Eye of Sauron"},
   { key:"fx",          icon:"💱", label:"FX"          },
   { key:"markets",     icon:"🌍", label:"Markets"     },
-  { key:"portfolio",   icon:"💼", label:"Portfolio"   },
-  { key:"screener",    icon:"🔍", label:"Screener"    },
-  { key:"research",    icon:"🔬", label:"Research"    },
+  { key:"portfolio",   icon:"💼", label:"Portfolio",  ai: true },
+  { key:"screener",    icon:"🔍", label:"Screener",   ai: true },
+  { key:"research",    icon:"🔬", label:"Research",   ai: true },
   { key:"earnings",    icon:"📅", label:"Earnings"    },
   { key:"pro",         icon:"⚡", label:"Pro"         },
 ];

@@ -299,11 +299,19 @@ export default function StockScreener({ onSelectTicker }) {
       <div style={{ padding:"10px 16px", borderBottom:"1px solid var(--border-solid)", background:"var(--surface-1)", flexShrink:0, display:"flex", flexDirection:"column", gap:8 }}>
 
         {/* AI Natural Language Search */}
+        <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:2 }}>
+          <span style={{
+            fontSize:8, fontWeight:700, letterSpacing:"0.07em", textTransform:"uppercase",
+            background:"linear-gradient(135deg,#7c3aed,#2563eb)", color:"#fff",
+            borderRadius:4, padding:"2px 6px",
+          }}>✦ AI</span>
+          <span className="font-mono" style={{ fontSize:10, color:"var(--text-3)" }}>Natural Language Stock Screen</span>
+        </div>
         <div style={{ display:"flex", alignItems:"center", gap:6 }}>
           <div style={{ flex:1, display:"flex", alignItems:"center", gap:6, padding:"5px 10px",
             background:"var(--surface-0)", border:"1px solid rgba(37,99,235,0.30)", borderRadius:8,
             boxShadow:"0 0 0 3px rgba(37,99,235,0.06)" }}>
-            <span style={{ fontSize:13 }}>🤖</span>
+            <span style={{ fontSize:13 }}>✦</span>
             <input
               ref={aiInputRef}
               value={aiQuery}

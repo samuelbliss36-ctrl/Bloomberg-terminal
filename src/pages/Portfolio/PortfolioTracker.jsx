@@ -331,6 +331,14 @@ export default function PortfolioTracker() {
         {/* AI Analyze button + result panel */}
         {holdings.length > 0 && (
           <div className="mt-2">
+            <div className="flex items-center gap-2 mb-2">
+              <span style={{
+                fontSize:8, fontWeight:700, letterSpacing:"0.07em", textTransform:"uppercase",
+                background:"linear-gradient(135deg,#7c3aed,#2563eb)", color:"#fff",
+                borderRadius:4, padding:"2px 6px",
+              }}>✦ AI</span>
+              <span className="font-mono" style={{ fontSize:10, color:"var(--text-3)" }}>AI-powered portfolio analysis</span>
+            </div>
             <div className="flex items-center gap-3">
               {/* Rainbow glow analyze button */}
               <div style={{ position: "relative", display: "inline-flex" }}>
