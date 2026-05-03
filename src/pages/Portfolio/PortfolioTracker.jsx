@@ -98,25 +98,29 @@ export default function PortfolioTracker() {
     fetch_();
   }, [tickerKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch equity curve via Finnhub candles
+  // Fetch equity curve via Yahoo Finance chart API (same source used by all other charts)
+  const EQ_TF_MAP = { "1M":"1mo", "3M":"3mo", "6M":"6mo", "1Y":"1y" };
   const equityKey = tickerKey + "|" + equityTf;
   useEffect(() => {
     if (!holdings.length) { setEquityHistory([]); return; }
     let cancelled = false;
     setEquityLoading(true);
-    const tfDays = { "1M": 30, "3M": 90, "6M": 180, "1Y": 365 }[equityTf] || 90;
-    const from = Math.floor((Date.now() - tfDays * 86400000) / 1000);
-    const to   = Math.floor(Date.now() / 1000);
     const build = async () => {
       const cmap = {};
+      const range = EQ_TF_MAP[equityTf] || "3mo";
       for (let i = 0; i < holdings.length; i++) {
         if (i > 0) await delay(350);
         try {
-          const c = await api(`/stock/candle?symbol=${holdings[i].ticker}&resolution=D&from=${from}&to=${to}`);
-          if (c.s === "ok" && c.t?.length) {
+          const r = await fetch(`/api/chart?ticker=${encodeURIComponent(holdings[i].ticker)}&range=${range}&interval=1d`);
+          const d = await r.json();
+          const result = d?.chart?.result?.[0];
+          if (result) {
+            const ts      = result.timestamp || [];
+            const closes  = result.indicators?.quote?.[0]?.close || [];
             cmap[holdings[i].ticker] = {};
-            c.t.forEach((ts, idx) => {
-              cmap[holdings[i].ticker][new Date(ts * 1000).toISOString().slice(0,10)] = c.c[idx];
+            ts.forEach((t, idx) => {
+              if (closes[idx] != null)
+                cmap[holdings[i].ticker][new Date(t * 1000).toISOString().slice(0, 10)] = closes[idx];
             });
           }
         } catch(e) {}
