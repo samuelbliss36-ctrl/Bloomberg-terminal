@@ -38,29 +38,32 @@ const HEATMAP_TICKERS = [
   'PLD','AMT','CCI','WELL','SPG','PSA','WM',
 ];
 
-const YF_FIELDS = [
-  'regularMarketPrice','regularMarketChange','regularMarketChangePercent',
-  'regularMarketVolume','marketCap','shortName',
-].join(',');
-
 const YF_HEADERS = { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' };
 
+// Use the spark endpoint — v7/quote requires auth now, spark is open
 async function fetchHeatmapBatch(symbols) {
-  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols.join(','))}&fields=${YF_FIELDS}`;
+  const url = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(symbols.join(','))}&range=1d&interval=1d`;
   const r = await fetch(url, { headers: YF_HEADERS });
-  if (!r.ok) throw new Error(`Yahoo Finance ${r.status}`);
+  if (!r.ok) throw new Error(`Yahoo Finance spark ${r.status}`);
   const data = await r.json();
-  const results = data?.quoteResponse?.result ?? [];
+  const results = data?.spark?.result ?? [];
   const map = {};
-  for (const q of results) {
-    if (!q?.symbol) continue;
-    map[q.symbol] = {
-      price:     q.regularMarketPrice          ?? null,
-      change:    q.regularMarketChange         ?? null,
-      changePct: q.regularMarketChangePercent  ?? null,
-      volume:    q.regularMarketVolume         ?? null,
-      marketCap: q.marketCap                   ?? null,
-      name:      q.shortName                   ?? q.symbol,
+  for (const item of results) {
+    if (!item?.symbol) continue;
+    const meta = item.response?.[0]?.meta;
+    if (!meta) continue;
+    const price = meta.regularMarketPrice ?? null;
+    const prev  = meta.chartPreviousClose ?? null;
+    const change    = price != null && prev != null ? price - prev : null;
+    const changePct = price != null && prev != null && prev !== 0
+      ? ((price - prev) / prev) * 100 : null;
+    map[item.symbol] = {
+      price,
+      change,
+      changePct,
+      volume:    meta.regularMarketVolume ?? null,
+      marketCap: null, // not in spark — front-end uses static marketCap for sizing
+      name:      meta.shortName ?? meta.longName ?? item.symbol,
     };
   }
   return map;
