@@ -49,7 +49,8 @@ export { MarketSessionBadges };
 
 export default function PortfolioTracker() {
   const { user } = useAuth();
-  const [holdings, setHoldings] = useState(() => db.portfolio.load());
+  // Start empty — populated once we know the user identity (see effect below)
+  const [holdings, setHoldings] = useState([]);
   const [quotes, setQuotes] = useState({});
   const [loadingQuotes, setLoadingQuotes] = useState(false);
   const today = new Date().toISOString().slice(0, 10);
@@ -68,16 +69,25 @@ export default function PortfolioTracker() {
   const [isDragging,   setIsDragging]   = useState(false);
   const [measureInfo,  setMeasureInfo]  = useState(null);
 
+  // Load the correct holdings whenever the logged-in user changes.
+  // Each account has its own localStorage key so they never bleed into each other.
+  useEffect(() => {
+    setHoldings(db.portfolio.load(user?.id));
+    setQuotes({});
+    setEquityHistory([]);
+    setAiAnalysis(null);
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     db.portfolio.save(holdings, user?.id);
   }, [holdings, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Re-read from db when cloud sync completes
   useEffect(() => {
-    const handler = () => setHoldings(db.portfolio.load());
+    const handler = () => setHoldings(db.portfolio.load(user?.id));
     window.addEventListener('ov:data-synced', handler);
     return () => window.removeEventListener('ov:data-synced', handler);
-  }, []);
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch live quotes
   const tickerKey = holdings.map(h => h.ticker).join(",");

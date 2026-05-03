@@ -14,8 +14,10 @@ function lsSet(key, val) {
 }
 
 // ─── Portfolio ─────────────────────────────────────────────────────────────────
-// Shape: [{ticker, shares, avgCost}]
-const LS_PORTFOLIO = 'ov_portfolio';
+// Shape: [{ticker, shares, avgCost, purchaseDate}]
+// localStorage key is user-scoped so different accounts on the same device
+// never share portfolio data.
+const lsPortfolioKey = (userId) => userId ? `ov_portfolio_${userId}` : 'ov_portfolio_guest';
 
 async function _syncPortfolioUp(userId, holdings) {
   if (!supabase || !userId) return;
@@ -24,11 +26,12 @@ async function _syncPortfolioUp(userId, holdings) {
     await supabase.from('portfolio_positions').delete().eq('user_id', userId);
     if (holdings.length) {
       const rows = holdings.map(h => ({
-        user_id:    userId,
-        ticker:     h.ticker,
-        shares:     h.shares,
-        avg_cost:   h.avgCost,
-        updated_at: new Date().toISOString(),
+        user_id:       userId,
+        ticker:        h.ticker,
+        shares:        h.shares,
+        avg_cost:      h.avgCost,
+        purchase_date: h.purchaseDate || null,
+        updated_at:    new Date().toISOString(),
       }));
       await supabase.from('portfolio_positions').insert(rows);
     }
@@ -36,10 +39,10 @@ async function _syncPortfolioUp(userId, holdings) {
 }
 
 export const portfolio = {
-  load() { return lsGet(LS_PORTFOLIO, []); },
+  load(userId) { return lsGet(lsPortfolioKey(userId), []); },
 
   save(holdings, userId) {
-    lsSet(LS_PORTFOLIO, holdings);
+    lsSet(lsPortfolioKey(userId), holdings);
     if (userId) _syncPortfolioUp(userId, holdings); // fire-and-forget
   },
 
@@ -49,8 +52,13 @@ export const portfolio = {
       const { data, error } = await supabase
         .from('portfolio_positions').select('*').eq('user_id', userId);
       if (error || !data?.length) return null;
-      const holdings = data.map(r => ({ ticker: r.ticker, shares: +r.shares, avgCost: +r.avg_cost }));
-      lsSet(LS_PORTFOLIO, holdings);
+      const holdings = data.map(r => ({
+        ticker:       r.ticker,
+        shares:       +r.shares,
+        avgCost:      +r.avg_cost,
+        purchaseDate: r.purchase_date || undefined,
+      }));
+      lsSet(lsPortfolioKey(userId), holdings);
       return holdings;
     } catch (e) { console.warn('portfolio sync-down failed:', e.message); return null; }
   },
