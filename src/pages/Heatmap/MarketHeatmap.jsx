@@ -210,7 +210,7 @@ export default function MarketHeatmap({ onOpenResearch, onContextUpdate }) {
 
   // Custom treemap content renderer
   const renderContent = useCallback((props) => {
-    const { x, y, width, height, root, depth, name } = props;
+    const { x, y, width, height, depth, name } = props;
     if (depth === 0) return null; // root node
 
     // Sector label row
