@@ -6,6 +6,7 @@ import { SC_COLS, SC_ROW_H, FMP_SECTOR_MAP } from "../../data/screenerData";
 import { db } from "../../lib/db";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
+import { startCheckout } from "../../lib/subscription";
 
 function genUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -34,9 +35,10 @@ export default function StockScreener({ onSelectTicker }) {
   const [liveStatus, setLiveStatus]     = useState("loading"); // "loading" | "live" | "synthetic"
   const [savedScreens, setSavedScreens] = useState(() => db.savedScreens.load());
   // AI screener state
-  const [aiQuery,     setAiQuery]     = useState("");
-  const [aiLoading,   setAiLoading]   = useState(false);
-  const [aiReasoning, setAiReasoning] = useState(null); // { description, chips[] }
+  const [aiQuery,            setAiQuery]           = useState("");
+  const [aiLoading,          setAiLoading]         = useState(false);
+  const [aiReasoning,        setAiReasoning]       = useState(null); // { description, chips[] }
+  const [aiRequiresUpgrade,  setAiRequiresUpgrade] = useState(false);
   const aiInputRef = useRef(null);
   const [saveNameInput, setSaveNameInput] = useState("");
   const [showSaveInput,  setShowSaveInput]  = useState(false);
@@ -87,6 +89,7 @@ export default function StockScreener({ onSelectTicker }) {
     if (!q || aiLoading) return;
     setAiLoading(true);
     setAiReasoning(null);
+    setAiRequiresUpgrade(false);
     const savedKey = localStorage.getItem("ov_copilot_key") || undefined;
     let authHeader = {};
     try {
@@ -99,6 +102,11 @@ export default function StockScreener({ onSelectTicker }) {
         headers: { "Content-Type": "application/json", ...authHeader },
         body: JSON.stringify({ query: q, apiKey: savedKey }),
       });
+      if (r.status === 402) {
+        setAiRequiresUpgrade(true);
+        setAiLoading(false);
+        return;
+      }
       const data = await r.json();
       if (data.error) {
         setAiReasoning({ description: data.message || data.error, chips: [], isError: true });
@@ -317,6 +325,30 @@ export default function StockScreener({ onSelectTicker }) {
             {aiLoading ? "⟳ Thinking…" : "AI Screen"}
           </button>
         </div>
+
+        {/* AI upgrade wall */}
+        {aiRequiresUpgrade && (
+          <div style={{
+            display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:10,
+            background:"var(--surface-1)", border:"1px solid var(--border-solid)",
+            borderRadius:8, padding:"10px 14px",
+          }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <span style={{ fontSize:16 }}>🔒</span>
+              <div>
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--text-1)" }}>Pro Feature</div>
+                <div style={{ fontSize:10, color:"var(--text-3)" }}>AI Screener requires a Pro subscription.</div>
+              </div>
+            </div>
+            <button
+              onClick={() => startCheckout().catch(() => {})}
+              style={{ background:"#2563eb", color:"#fff", border:"none", borderRadius:8,
+                padding:"7px 16px", fontSize:11, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap" }}
+            >
+              Start Pro — $9.99/month
+            </button>
+          </div>
+        )}
 
         {/* AI result chips */}
         {aiReasoning && (

@@ -2,7 +2,10 @@
 // GET  /api/screener          → FMP live universe (cached 12h)
 // POST /api/screener?mode=ai  → AI query → filter object  body: { query, apiKey }
 
+import { createClient } from '@supabase/supabase-js';
+
 // ── AI Screener constants ─────────────────────────────────────────────────────
+const OWNER_EMAIL      = 'samuelbliss36@gmail.com';
 const OPENAI_KEY_RE    = /^sk-[A-Za-z0-9\-_]{20,}$/;
 const ANTHROPIC_KEY_RE = /^sk-ant-[A-Za-z0-9\-_]{20,}$/;
 
@@ -79,13 +82,47 @@ Respond with a single valid JSON object (no markdown, no fences):
 reasoning: 2–4 short phrases (≤5 words each) explaining criteria applied.`;
 
 async function handleAiScreener(req, res) {
-  const { query, apiKey } = req.body || {};
+  const { query, apiKey: userApiKey } = req.body || {};
   if (!query?.trim()) return res.status(400).json({ error: "query required" });
 
-  const key = process.env.OPENAI_KEY || process.env.ANTHROPIC_KEY || apiKey;
-  if (!key) {
-    return res.status(401).json({ error: "no_key", message: "No API key configured." });
+  // ── Auth check: owner / active subscriber get server key ─────────────────
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  let serverKeyAllowed = false;
+  let isOwnerUser = false;
+  if (token) {
+    try {
+      const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY);
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (!error && user) {
+        if (user.email === OWNER_EMAIL) {
+          serverKeyAllowed = true;
+          isOwnerUser = true;
+        } else {
+          const admin = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+          const { data: sub } = await admin.from('subscriptions').select('status').eq('user_id', user.id).single();
+          if (sub?.status === 'active') serverKeyAllowed = true;
+        }
+      }
+    } catch {}
   }
+
+  // ── Key resolution ────────────────────────────────────────────────────────
+  let key = null;
+  if (serverKeyAllowed) {
+    key = process.env.OPENAI_KEY || process.env.ANTHROPIC_KEY || null;
+  }
+  if (!key && userApiKey) key = userApiKey;
+
+  if (!key) {
+    if (isOwnerUser) {
+      return res.status(503).json({ error: "no_server_key", message: "No server AI key configured. Add OPENAI_KEY to Vercel environment variables." });
+    }
+    return res.status(402).json({
+      error: "subscription_required",
+      message: "A Pro subscription is required to use AI Screener. Upgrade at any time from the AI Copilot panel.",
+    });
+  }
+
   const isAnthropic = key.startsWith("sk-ant");
   if (!(isAnthropic ? ANTHROPIC_KEY_RE : OPENAI_KEY_RE).test(key)) {
     return res.status(401).json({ error: "Invalid API key format." });
