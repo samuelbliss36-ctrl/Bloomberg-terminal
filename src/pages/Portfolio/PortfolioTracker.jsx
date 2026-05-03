@@ -334,15 +334,6 @@ export default function PortfolioTracker() {
             <div className="flex items-center gap-3">
               {/* Rainbow glow analyze button */}
               <div style={{ position: "relative", display: "inline-flex" }}>
-                {/* Outer glow halo */}
-                {!aiLoading && (
-                  <div style={{
-                    position: "absolute", inset: -5, borderRadius: 9999,
-                    background: "conic-gradient(from 0deg,#ff0080,#ff8000,#ffd700,#00ff88,#00cfff,#9333ea,#ff0080)",
-                    filter: "blur(10px)", opacity: 0.55,
-                    animation: "pf-rainbow 3s linear infinite",
-                  }} />
-                )}
                 {/* Crisp border ring */}
                 <div style={{
                   position: "relative", display: "inline-flex",
