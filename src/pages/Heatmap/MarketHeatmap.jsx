@@ -124,7 +124,7 @@ export default function MarketHeatmap({ onOpenResearch, onContextUpdate }) {
 
   const fetchQuotes = useCallback(async () => {
     try {
-      const r = await fetch("/api/heatmap");
+      const r = await fetch("/api/chart?type=heatmap");
       if (!r.ok) throw new Error("API error");
       const d = await r.json();
       setQuotes(d.quotes || {});
