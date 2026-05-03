@@ -582,23 +582,6 @@ tr:hover td { background: rgba(15,23,42,0.025) !important; }
 .dense-table td:first-child { text-align: left !important; }
 .dense-table tr:hover td { background: rgba(15,23,42,0.025) !important; }
 
-/* ── Order ticket ────────────────────────────────────────── */
-.order-ticket-input {
-  width: 100% !important;
-  background: var(--surface-2) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: var(--r-sm) !important;
-  color: var(--text-1) !important;
-  font-family: 'IBM Plex Mono', monospace !important;
-  font-size: 12px !important;
-  padding: 5px 8px !important;
-  outline: none !important;
-  transition: border-color var(--t-fast) !important;
-}
-.order-ticket-input:focus {
-  border-color: var(--border-active) !important;
-  box-shadow: var(--shadow-blue) !important;
-}
 
 /* ── TF range buttons ────────────────────────────────────── */
 .tf-btn-group {

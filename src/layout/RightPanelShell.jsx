@@ -30,23 +30,11 @@ function EventsCalendar({ earnings }) {
   );
 }
 
-// ─── RIGHT PANEL (Watchlist + Order Ticket) ───────────────────────────────────
+// ─── RIGHT PANEL (Watchlist + Events) ────────────────────────────────────────
 export function RightPanelShell({ tapeData, onSelectTicker, earnings, activeTicker, onAddToWatchlist, onRemoveFromWatchlist }) {
-  const [side, setSide] = useState("BUY");
-  const [qty, setQty] = useState("");
-  const [orderType, setOrderType] = useState("MKT");
-  const [limitPx, setLimitPx] = useState("");
-  const [orderMsg, setOrderMsg] = useState(null);
   const [addInput, setAddInput] = useState("");
   const [addFocused, setAddFocused] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
-
-  const handleOrder = () => {
-    if (!qty || isNaN(qty) || +qty <= 0) { setOrderMsg({ type:"error", text:"Enter valid quantity" }); return; }
-    setOrderMsg({ type:"ok", text: side + " " + qty + " " + activeTicker + " @ " + (orderType==="MKT"?"MKT":("$"+limitPx)) + " — Simulated ✓" });
-    setTimeout(() => setOrderMsg(null), 3500);
-    setQty(""); setLimitPx("");
-  };
 
   const handleAdd = () => {
     const sym = addInput.trim().toUpperCase();
@@ -143,62 +131,6 @@ export function RightPanelShell({ tapeData, onSelectTicker, earnings, activeTick
         </>
       )}
 
-      {/* Order Ticket */}
-      <div className="right-section-header">🎫  Order Ticket</div>
-      <div style={{ padding:"10px 12px", flexShrink:0 }}>
-        <div style={{ display:"flex", marginBottom:8, background:"var(--surface-0)", borderRadius:6, padding:2, border:"1px solid var(--border)" }}>
-          {["BUY","SELL"].map(s => (
-            <button key={s} onClick={() => setSide(s)}
-              style={{ flex:1, padding:"5px 0", border:"none", borderRadius:4, fontFamily:"'Inter',sans-serif",
-                fontSize:11, fontWeight:700, cursor:"pointer", transition:"all 0.15s",
-                background: side===s ? (s==="BUY"?"rgba(5,150,105,0.15)":"rgba(225,29,72,0.14)") : "transparent",
-                color: side===s ? (s==="BUY"?"#059669":"#e11d48") : "var(--text-3)" }}>
-              {s}
-            </button>
-          ))}
-        </div>
-        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"#2563eb", fontWeight:700, marginBottom:6, textAlign:"center" }}>
-          {activeTicker}
-        </div>
-        <div style={{ marginBottom:6 }}>
-          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600, color:"var(--text-3)", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:3 }}>Quantity</div>
-          <input className="order-ticket-input" type="number" placeholder="0" value={qty}
-            onChange={e => setQty(e.target.value)} min="1" step="1" />
-        </div>
-        <div style={{ marginBottom:6 }}>
-          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600, color:"var(--text-3)", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:3 }}>Type</div>
-          <select className="order-ticket-input" value={orderType} onChange={e => setOrderType(e.target.value)}
-            style={{ appearance:"none", cursor:"pointer" }}>
-            <option value="MKT">Market</option>
-            <option value="LMT">Limit</option>
-            <option value="STP">Stop</option>
-          </select>
-        </div>
-        {orderType !== "MKT" && (
-          <div style={{ marginBottom:6 }}>
-            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600, color:"var(--text-3)", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:3 }}>Price</div>
-            <input className="order-ticket-input" type="number" placeholder="0.00" value={limitPx}
-              onChange={e => setLimitPx(e.target.value)} step="0.01" />
-          </div>
-        )}
-        <button onClick={handleOrder}
-          style={{ width:"100%", padding:"7px 0", border:"none", borderRadius:6, fontFamily:"'Inter',sans-serif",
-            fontSize:11, fontWeight:700, cursor:"pointer", letterSpacing:"0.06em", marginTop:2,
-            background: side==="BUY"?"#059669":"#be123c", color:"#fff", transition:"opacity 0.15s" }}
-          onMouseEnter={e=>e.currentTarget.style.opacity="0.85"}
-          onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
-          PLACE {side} ORDER
-        </button>
-        {orderMsg && (
-          <div style={{ marginTop:6, fontFamily:"'IBM Plex Mono',monospace", fontSize:10, textAlign:"center",
-            color: orderMsg.type==="ok"?"#059669":"#e11d48" }}>
-            {orderMsg.text}
-          </div>
-        )}
-        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:"var(--text-3)", textAlign:"center", marginTop:6 }}>
-          Simulated — paper trading only
-        </div>
-      </div>
     </div>
   );
 }
