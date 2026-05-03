@@ -163,25 +163,84 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
       `What are the key risks for ${ticker}?`,
       `Is ${ticker} cheap or expensive vs its history?`,
       `Generate a bull and bear thesis for ${ticker}`,
+      `What do analysts think about ${ticker} right now?`,
     ];
-    if (activePage === "portfolio")  return [
+    if (activePage === "portfolio") return [
       "How concentrated is my portfolio?",
       "Which positions have the most risk?",
       "Suggest ways to diversify my holdings",
       "What would you trim or add to?",
+      "How is my portfolio positioned for a recession?",
     ];
-    if (activePage === "screener")   return [
+    if (activePage === "screener") return [
       "What criteria would you use to find quality growth stocks?",
       "How would you screen for deep value plays?",
       "Explain a capital-efficient investing strategy",
+      "What sectors look attractive right now?",
+      "How do I find stocks with improving fundamentals?",
     ];
-    if (activePage === "technical")  return [
+    if (activePage === "technical") return [
       `Describe a trading plan for ${ticker} based on technicals`,
       "What signals should I watch for a trend reversal?",
+      `Is ${ticker} overbought or oversold right now?`,
+      "What are the key support and resistance levels to watch?",
+      "Explain how to use RSI and MACD together",
     ];
-    if (activePage === "earnings")   return [
+    if (activePage === "earnings") return [
       "What should I look for in earnings releases this week?",
       "How do I trade an earnings announcement safely?",
+      "Which upcoming earnings reports are highest risk?",
+      "What is an earnings whisper number?",
+      "How do options markets price in earnings risk?",
+    ];
+    if (activePage === "commodities") return [
+      "What is driving oil prices right now?",
+      "How does gold perform during market stress?",
+      "Explain the relationship between the dollar and commodities",
+      "What commodity markets should I be watching?",
+      "How do supply chain disruptions affect commodity prices?",
+    ];
+    if (activePage === "crypto") return [
+      "What is driving crypto markets right now?",
+      "How does Bitcoin correlate with risk assets?",
+      "What are the key risks in crypto markets?",
+      "Explain the difference between Bitcoin and Ethereum",
+      "How do macro conditions affect crypto?",
+    ];
+    if (activePage === "fx") return [
+      "What is the current dollar outlook?",
+      "How do interest rate differentials affect FX?",
+      "Which currency pairs are most volatile right now?",
+      "Explain carry trade strategy in FX",
+      "How does inflation affect currency values?",
+    ];
+    if (activePage === "supplychain") return [
+      "What are the biggest supply chain risks right now?",
+      "Which sectors are most exposed to supply disruptions?",
+      "How do I invest around supply chain themes?",
+      "Explain how shipping costs affect corporate margins",
+      "What geopolitical risks are most threatening to supply chains?",
+    ];
+    if (activePage === "eye") return [
+      "What are the biggest geopolitical risks to markets right now?",
+      "How do I hedge a portfolio against geopolitical shock?",
+      "Which regions pose the greatest economic risk?",
+      "How does energy security affect global markets?",
+      "What historical geopolitical events caused the biggest market moves?",
+    ];
+    if (activePage === "markets") return [
+      "What is the current macro market environment?",
+      "How are different asset classes performing this year?",
+      "What sectors are leading and lagging the market?",
+      "Where are we in the economic cycle?",
+      "What indicators should I watch for a market regime change?",
+    ];
+    if (activePage === "research") return [
+      "Summarize the key themes in global markets right now",
+      "What macro factors should I be tracking this quarter?",
+      "How do I build a research process like a professional analyst?",
+      "What are the best leading indicators for economic slowdowns?",
+      "Explain how to analyze a 10-K filing efficiently",
     ];
     return ["What can you help me with?", "Explain the current market environment"];
   }, [activePage, ticker]);
