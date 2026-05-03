@@ -23,6 +23,7 @@ import StockScreener from './pages/Screener/StockScreener';
 import ResearchBrowser from './pages/Research/ResearchBrowser';
 import EarningsCalendarPage from './pages/Earnings/EarningsCalendarPage';
 import AdminDashboard from './pages/Admin/AdminDashboard';
+import ProPage from './pages/Subscription/ProPage';
 
 export default function App() {
   return (
@@ -268,6 +269,7 @@ function AppInner() {
         {activePage === "research"     && <ResearchBrowser pendingItem={pendingResearchItem} onPendingConsumed={() => setPendingResearchItem(null)} onContextUpdate={setPageContext} />}
         {activePage === "earnings"     && <EarningsCalendarPage onContextUpdate={setPageContext} />}
         {activePage === "admin"        && <AdminDashboard />}
+        {activePage === "pro"          && <ProPage />}
         {activePage === "settings" && (
           <div style={{ padding:24, maxWidth:480 }}>
             <div style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:13, color:"var(--text-1)", marginBottom:16 }}>Settings</div>

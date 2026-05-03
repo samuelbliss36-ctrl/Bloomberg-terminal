@@ -19,7 +19,11 @@ export function SidebarNav({ activePage, setActivePage, isOpen, onToggle }) {
         {NAV_ITEMS.map(item => (
           <button key={item.key}
             className={"sidebar-item" + (activePage===item.key ? " active" : "")}
-            onClick={() => setActivePage(item.key)}>
+            onClick={() => setActivePage(item.key)}
+            style={item.key === "pro" && activePage !== "pro" ? {
+              borderLeft: "2px solid #2563eb",
+              color: "#2563eb",
+            } : {}}>
             <span className="sidebar-icon">{item.icon}</span>
             <span className="sidebar-label">{item.label}</span>
           </button>

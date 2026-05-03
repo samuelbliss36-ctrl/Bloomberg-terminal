@@ -53,4 +53,5 @@ export const NAV_ITEMS = [
   { key:"screener",    icon:"🔍", label:"Screener"    },
   { key:"research",    icon:"🔬", label:"Research"    },
   { key:"earnings",    icon:"📅", label:"Earnings"    },
+  { key:"pro",         icon:"⚡", label:"Pro"         },
 ];
