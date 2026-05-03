@@ -1,14 +1,23 @@
-// Telegram Bot API proxy — keeps the request server-side to avoid CORS issues
-// POST { token, chatId, message }
+// Telegram Bot API proxy — requires authenticated Supabase session
+// POST { token, chatId, message }  |  Authorization: Bearer <jwt>
+import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
   if (req.method === "OPTIONS") {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     return res.status(204).end();
   }
   if (req.method !== "POST") return res.status(405).end();
+
+  // ── Auth gate ─────────────────────────────────────────────────────────────
+  const authHeader = req.headers.authorization || '';
+  const jwt = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!jwt) return res.status(401).json({ error: 'Unauthorized' });
+  const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY);
+  const { data: { user }, error: authErr } = await supabase.auth.getUser(jwt);
+  if (authErr || !user) return res.status(401).json({ error: 'Unauthorized' });
 
   const { token, chatId, message } = req.body || {};
 

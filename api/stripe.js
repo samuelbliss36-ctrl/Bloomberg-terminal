@@ -103,7 +103,17 @@ export default async function handler(req, res) {
   if (error || !user) return res.status(401).json({ error: 'Unauthorized' });
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-  const origin = req.headers.origin || 'https://bloomberg-terminal-gamma.vercel.app';
+
+  // Whitelist valid origins — never trust req.headers.origin directly
+  const ALLOWED_ORIGINS = new Set([
+    'https://bloomberg-terminal-gamma.vercel.app',
+    'http://localhost:3000',
+  ]);
+  const rawOrigin = req.headers.origin || '';
+  const origin = ALLOWED_ORIGINS.has(rawOrigin)
+    ? rawOrigin
+    : 'https://bloomberg-terminal-gamma.vercel.app';
+
   const supabaseAdmin = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
   // ── CHECKOUT ──────────────────────────────────────────────────────────────
