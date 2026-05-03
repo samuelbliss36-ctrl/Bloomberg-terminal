@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Area, BarChart, Bar, Line, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart } from 'recharts';
+import { Area, BarChart, Bar, Line, Cell, XAxis, YAxis, CartesianGrid, Tooltip,
+         ResponsiveContainer, ComposedChart, ReferenceArea } from 'recharts';
 import { CandlestickBar, useOHLC, ChartTypeBtn } from './CandlestickBar';
 import { TIMEFRAMES } from '../../lib/constants';
 
@@ -8,6 +9,47 @@ export function UniversalChart({ ticker, height = 220, showVolume = false, color
   const [chartType, setChartType] = useState(defaultType);
   const { data, loading } = useOHLC(ticker, tf);
 
+  // ── Drag-to-measure state ──────────────────────────────────────────────────
+  const [refAreaLeft,  setRefAreaLeft]  = useState(null);
+  const [refAreaRight, setRefAreaRight] = useState(null);
+  const [isDragging,   setIsDragging]   = useState(false);
+  const [measureInfo,  setMeasureInfo]  = useState(null);
+
+  const onChartMouseDown = (e) => {
+    if (!e?.activeLabel) return;
+    setRefAreaLeft(e.activeLabel);
+    setRefAreaRight(null);
+    setMeasureInfo(null);
+    setIsDragging(true);
+  };
+
+  const onChartMouseMove = (e) => {
+    if (!isDragging || !e?.activeLabel) return;
+    setRefAreaRight(e.activeLabel);
+  };
+
+  const onChartMouseUp = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    if (!refAreaLeft || !refAreaRight || refAreaLeft === refAreaRight) {
+      setRefAreaLeft(null); setRefAreaRight(null); setMeasureInfo(null);
+      return;
+    }
+    const i1 = data.findIndex(d => d.date === refAreaLeft);
+    const i2 = data.findIndex(d => d.date === refAreaRight);
+    if (i1 === -1 || i2 === -1) return;
+    const [lo, hi] = i1 < i2 ? [i1, i2] : [i2, i1];
+    const p1 = data[lo].close, p2 = data[hi].close;
+    const chgPts = p2 - p1;
+    const pct    = (chgPts / p1) * 100;
+    setMeasureInfo({ pct, chgPts, startDate: data[lo].date, endDate: data[hi].date, startPrice: p1, endPrice: p2 });
+  };
+
+  const clearMeasure = () => {
+    setRefAreaLeft(null); setRefAreaRight(null); setMeasureInfo(null); setIsDragging(false);
+  };
+
+  // ── Chart internals ────────────────────────────────────────────────────────
   const startC  = data[0]?.close  || 0;
   const endC    = data[data.length - 1]?.close || 0;
   const chg     = endC - startC;
@@ -23,6 +65,27 @@ export function UniversalChart({ ticker, height = 220, showVolume = false, color
   const tickStyle    = { fill:"var(--text-3)", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" };
   const fmt2 = v => v != null ? prefix + (+v).toFixed(decimals) : "—";
 
+  const measureColor = measureInfo?.chgPts >= 0 ? "#059669" : "#e11d48";
+
+  // Shared props injected into every ComposedChart for drag-to-measure
+  const dragProps = {
+    onMouseDown: onChartMouseDown,
+    onMouseMove: onChartMouseMove,
+    onMouseUp:   onChartMouseUp,
+  };
+
+  // ReferenceArea shown while dragging or after measurement
+  const refArea = (refAreaLeft && (refAreaRight || isDragging)) ? (
+    <ReferenceArea
+      x1={refAreaLeft}
+      x2={refAreaRight || refAreaLeft}
+      fill="rgba(37,99,235,0.09)"
+      stroke="rgba(37,99,235,0.40)"
+      strokeWidth={1}
+      ifOverflow="visible"
+    />
+  ) : null;
+
   const commonAxes = (
     <>
       <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" vertical={false} />
@@ -30,39 +93,41 @@ export function UniversalChart({ ticker, height = 220, showVolume = false, color
       <YAxis domain={[minP, maxP]} tick={tickStyle} tickLine={false} axisLine={false}
         tickFormatter={v => prefix + v.toFixed(decimals <= 2 ? 0 : decimals)} width={decimals > 2 ? 68 : 52} />
       <Tooltip contentStyle={tooltipStyle} labelStyle={{ color:"var(--text-3)" }}
-        formatter={(v, name) => [fmt2(v), name]} />
+        formatter={(v, name) => [fmt2(v), name]}
+        active={isDragging ? false : undefined} />
     </>
   );
 
   const renderChart = () => {
     if (chartType === "candle") {
       return (
-        <ComposedChart data={data} margin={{ top:4, right:2, left:0, bottom:0 }}>
+        <ComposedChart data={data} margin={{ top:4, right:2, left:0, bottom:0 }} {...dragProps}>
           {commonAxes}
-          {/* Candlestick via Bar with custom shape */}
           <Bar dataKey="high" shape={<CandlestickBar />} isAnimationActive={false}>
             {data.map((d, i) => <Cell key={i} fill={d.close >= d.open ? colorUp : colorDown} />)}
           </Bar>
           {data.some(d => d.sma20) && (
             <Line type="monotone" dataKey="sma20" stroke="#b45309" strokeWidth={1} dot={false} isAnimationActive={false} name="SMA 20" connectNulls />
           )}
+          {refArea}
         </ComposedChart>
       );
     }
     if (chartType === "line") {
       return (
-        <ComposedChart data={data} margin={{ top:4, right:2, left:0, bottom:0 }}>
+        <ComposedChart data={data} margin={{ top:4, right:2, left:0, bottom:0 }} {...dragProps}>
           {commonAxes}
           <Line type="monotone" dataKey="close" stroke={lc} strokeWidth={1.5} dot={false} isAnimationActive={false} name="Price" />
           {data.some(d => d.sma20) && (
             <Line type="monotone" dataKey="sma20" stroke="#b45309" strokeWidth={1} dot={false} isAnimationActive={false} name="SMA 20" connectNulls strokeDasharray="4 2" />
           )}
+          {refArea}
         </ComposedChart>
       );
     }
     // area (default)
     return (
-      <ComposedChart data={data} margin={{ top:4, right:2, left:0, bottom:0 }}>
+      <ComposedChart data={data} margin={{ top:4, right:2, left:0, bottom:0 }} {...dragProps}>
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%"  stopColor={lc} stopOpacity={0.18} />
@@ -74,6 +139,7 @@ export function UniversalChart({ ticker, height = 220, showVolume = false, color
         {data.some(d => d.sma20) && (
           <Line type="monotone" dataKey="sma20" stroke="#b45309" strokeWidth={1} dot={false} isAnimationActive={false} name="SMA 20" connectNulls strokeDasharray="4 2" />
         )}
+        {refArea}
       </ComposedChart>
     );
   };
@@ -108,8 +174,52 @@ export function UniversalChart({ ticker, height = 220, showVolume = false, color
           </div>
         </div>
       </div>
+
       {/* Chart area */}
-      <div style={{ flex:1, minHeight: height }}>
+      <div style={{ flex:1, minHeight: height, position:"relative",
+                    cursor: isDragging ? "col-resize" : "crosshair",
+                    userSelect: isDragging ? "none" : "auto" }}>
+
+        {/* ── Measurement badge ──────────────────────────────────────────── */}
+        {measureInfo && !isDragging && (
+          <div style={{
+            position:"absolute", top:6, left:"50%", transform:"translateX(-50%)",
+            background:"var(--surface-1)",
+            border:`1px solid ${measureColor}55`,
+            borderRadius:8, padding:"6px 14px",
+            display:"flex", alignItems:"center", gap:14,
+            zIndex:20, boxShadow:"0 2px 16px rgba(0,0,0,0.18)",
+            whiteSpace:"nowrap",
+          }}>
+            <span className="font-mono" style={{ fontSize:12, fontWeight:700, color:measureColor }}>
+              {measureInfo.chgPts >= 0 ? "▲" : "▼"}&nbsp;
+              {prefix}{Math.abs(measureInfo.chgPts).toFixed(decimals)}&nbsp;&nbsp;
+              {measureInfo.pct >= 0 ? "+" : ""}{measureInfo.pct.toFixed(2)}%
+            </span>
+            <span className="font-mono" style={{ fontSize:9, color:"var(--text-3)" }}>
+              {measureInfo.startDate} → {measureInfo.endDate}
+            </span>
+            <button
+              onClick={clearMeasure}
+              style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-3)",
+                       fontSize:11, padding:"0 2px", lineHeight:1 }}
+              onMouseEnter={e => e.currentTarget.style.color="var(--text-1)"}
+              onMouseLeave={e => e.currentTarget.style.color="var(--text-3)"}
+            >✕</button>
+          </div>
+        )}
+
+        {/* ── Hint (shown when no measurement active) ───────────────────── */}
+        {!measureInfo && !isDragging && data.length > 0 && (
+          <div style={{
+            position:"absolute", bottom:4, right:4, zIndex:10,
+            fontFamily:"'IBM Plex Mono',monospace", fontSize:8,
+            color:"var(--text-3)", pointerEvents:"none", opacity:0.6,
+          }}>
+            drag to measure
+          </div>
+        )}
+
         {loading ? (
           <div className="flex items-center justify-center h-full font-mono" style={{ color:"var(--text-3)", fontSize:11 }}>Loading…</div>
         ) : data.length === 0 ? (
@@ -120,6 +230,7 @@ export function UniversalChart({ ticker, height = 220, showVolume = false, color
           </ResponsiveContainer>
         )}
       </div>
+
       {/* Volume bar (optional) */}
       {showVolume && !loading && data.length > 0 && (
         <div style={{ height:36, marginTop:2 }}>
