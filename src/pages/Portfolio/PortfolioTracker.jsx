@@ -8,6 +8,7 @@ import { MdText } from "../../components/ui/MdText";
 import { db } from "../../lib/db";
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from "../../lib/supabase";
+import { startCheckout } from "../../lib/subscription";
 
 function MarketSessionBadges() {
   const SESSIONS = [
@@ -370,11 +371,11 @@ export default function PortfolioTracker() {
                   </div>
                 </div>
                 <button
-                  onClick={() => window.dispatchEvent(new CustomEvent("ov:open-copilot-upgrade"))}
+                  onClick={() => startCheckout().catch(() => {})}
                   className="font-mono"
                   style={{ background:"#2563eb", color:"#fff", border:"none", borderRadius:8, padding:"8px 20px", fontSize:11, fontWeight:700, cursor:"pointer" }}
                 >
-                  Upgrade to Pro — $9.99/mo
+                  Start Pro — $9.99/month
                 </button>
                 <div className="font-mono" style={{ fontSize:9, color:"var(--text-3)" }}>Secure checkout via Stripe · Cancel any time</div>
               </div>

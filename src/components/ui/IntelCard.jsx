@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { startCheckout } from '../../lib/subscription';
+
 /**
  * IntelCard — renders AI-generated intelligence cards for any financial asset.
  *
@@ -9,6 +12,18 @@
  *   bearCase         — conditions for downside
  */
 export function IntelCard({ intel, loading, error, requiresUpgrade, onRefresh, accentColor = "#b45309" }) {
+  const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const [upgradeErr,     setUpgradeErr]     = useState(null);
+
+  const handleUpgrade = async () => {
+    setUpgradeErr(null);
+    setUpgradeLoading(true);
+    try { await startCheckout(); } catch (e) {
+      setUpgradeErr(e.message);
+      setUpgradeLoading(false);
+    }
+  };
+
   // ── Upgrade wall ───────────────────────────────────────────────────────────
   if (requiresUpgrade) {
     return (
@@ -32,16 +47,19 @@ export function IntelCard({ intel, loading, error, requiresUpgrade, onRefresh, a
           <div style={{ fontSize: 9, color: "var(--text-3)", marginTop: 2 }}>Cancel any time</div>
         </div>
         <button
-          onClick={() => window.dispatchEvent(new CustomEvent("ov:open-copilot-upgrade"))}
+          onClick={handleUpgrade}
+          disabled={upgradeLoading}
           style={{
-            background: "#2563eb", color: "#fff", border: "none", borderRadius: 8,
-            padding: "9px 22px", fontSize: 11, fontWeight: 700, cursor: "pointer",
+            background: upgradeLoading ? "#94a3b8" : "#2563eb", color: "#fff",
+            border: "none", borderRadius: 8, padding: "9px 22px",
+            fontSize: 11, fontWeight: 700, cursor: upgradeLoading ? "default" : "pointer",
           }}
         >
-          Upgrade to Pro
+          {upgradeLoading ? "Loading…" : "Start Pro — $9.99/month"}
         </button>
+        {upgradeErr && <div style={{ fontSize: 10, color: "#e11d48" }}>{upgradeErr}</div>}
         <div style={{ fontSize: 9, color: "var(--text-3)" }}>
-          Secure checkout via Stripe
+          Secure checkout via Stripe · Cancel any time
         </div>
       </div>
     );

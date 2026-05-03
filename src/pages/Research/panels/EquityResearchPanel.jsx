@@ -5,6 +5,7 @@ import { fmt, clr, delay, fmtMktCap, fmtX, fmtN, fmtMgn, fmtGr, clrM } from "../
 import { IntelCard } from "../../../components/ui/IntelCard";
 import { useIntelCard } from "../../../hooks/useIntelCard";
 import { supabase } from "../../../lib/supabase";
+import { startCheckout } from "../../../lib/subscription";
 import RelatedLinks from "./RelatedLinks";
 
 export default function EquityResearchPanel({ item, onClose, onOpen }) {
@@ -837,10 +838,10 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
                   </div>
                 </div>
                 <button
-                  onClick={() => window.dispatchEvent(new CustomEvent("ov:open-copilot-upgrade"))}
+                  onClick={() => startCheckout().catch(() => {})}
                   style={{ background:"#2563eb", color:"#fff", border:"none", borderRadius:8, padding:"8px 20px", fontSize:11, fontWeight:700, cursor:"pointer" }}
                 >
-                  Upgrade to Pro — $9.99/mo
+                  Start Pro — $9.99/month
                 </button>
                 <div style={{ fontSize:9, color:"var(--text-3)" }}>Secure checkout via Stripe · Cancel any time</div>
               </div>
