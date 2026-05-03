@@ -11,6 +11,13 @@ const ALLOWED_MODULES = new Set([
 export default async function handler(req, res) {
   const { ticker, modules = "defaultKeyStatistics" } = req.query;
 
+  if (!ticker || typeof ticker !== 'string') {
+    return res.status(400).json({ error: 'ticker required' });
+  }
+  if (!/^[A-Z0-9.^=-]{1,10}$/i.test(ticker)) {
+    return res.status(400).json({ error: 'Invalid ticker' });
+  }
+
   // Allowlist every module — never inject raw user input into URLs
   const safeModules = String(modules)
     .split(',')
@@ -32,6 +39,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('quote-summary error:', err.message);
+    res.status(500).json({ error: 'Quote summary request failed' });
   }
 }

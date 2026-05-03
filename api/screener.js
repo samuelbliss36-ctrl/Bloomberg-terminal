@@ -85,6 +85,7 @@ reasoning: 2–4 short phrases (≤5 words each) explaining criteria applied.`;
 async function handleAiScreener(req, res) {
   const { query, apiKey: userApiKey } = req.body || {};
   if (!query?.trim()) return res.status(400).json({ error: "query required" });
+  if (query.length > 2000) return res.status(400).json({ error: "Query too long (max 2000 chars)" });
 
   // ── Auth check: owner / active subscriber get server key ─────────────────
   const token = req.headers.authorization?.replace("Bearer ", "");
@@ -235,6 +236,6 @@ export default async function handler(req, res) {
     res.json(normalised);
   } catch (err) {
     console.error("screener error:", err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "Screener data unavailable" });
   }
 }

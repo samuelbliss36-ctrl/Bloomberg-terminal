@@ -181,6 +181,7 @@ export default function PortfolioTracker() {
     const c = parseFloat(form.avgCost);
     const d = form.purchaseDate;
     if (!t) { setFormError("Enter a ticker symbol"); return; }
+    if (t.length > 10) { setFormError("Ticker too long"); return; }
     if (!s || s <= 0) { setFormError("Enter a valid share count"); return; }
     if (!c || c <= 0) { setFormError("Enter a valid average cost"); return; }
     if (!d) { setFormError("Enter a purchase date"); return; }

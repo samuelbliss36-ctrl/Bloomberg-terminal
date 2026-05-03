@@ -63,13 +63,15 @@ async function getYahooCrumb() {
 
 export default async function handler(req, res) {
   const { ticker, date } = req.query;
-  if (!ticker) return res.status(400).json({ error: "ticker required" });
+  if (!ticker || typeof ticker !== "string") return res.status(400).json({ error: "ticker required" });
+  if (!/^[A-Z0-9.^=-]{1,10}$/i.test(ticker)) return res.status(400).json({ error: "Invalid ticker" });
+  if (date && !/^\d{1,10}$/.test(date)) return res.status(400).json({ error: "Invalid date" });
 
   try {
     const { crumb, cookies } = await getYahooCrumb();
 
     const safe      = encodeURIComponent(ticker.toUpperCase());
-    const dateParam = date ? `&date=${date}` : "";
+    const dateParam = date ? `&date=${encodeURIComponent(date)}` : "";
     const url = `https://query2.finance.yahoo.com/v7/finance/options/${safe}?crumb=${encodeURIComponent(crumb)}${dateParam}`;
 
     const response = await fetch(url, {
@@ -100,6 +102,6 @@ export default async function handler(req, res) {
   } catch (err) {
     _crumb = null; // bust cache on any error so next attempt retries auth
     console.error("options proxy error:", err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "Options data request failed" });
   }
 }

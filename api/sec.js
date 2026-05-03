@@ -119,8 +119,13 @@ async function handleSummarize(req, res) {
 
   if (!textParts.length) return res.status(400).json({ error: "No extractable text in this filing" });
 
-  const userPrompt = `Analyze the following SEC ${formType || "10-K/10-Q"} filing for ${entityName || ticker} (${ticker}).
-Filing date: ${filingDate || "unknown"} | Period: ${period || "unknown"}
+  const safeFormType   = String(formType   || "").replace(/[^\w\-/]/g, "").slice(0, 20)   || "10-K/10-Q";
+  const safeEntityName = String(entityName || "").replace(/[^\w\s.,&()-]/g, "").slice(0, 100) || ticker;
+  const safeFilingDate = String(filingDate || "").replace(/[^\d\-]/g, "").slice(0, 10)    || "unknown";
+  const safePeriod     = String(period     || "").replace(/[^\w\s\-/]/g, "").slice(0, 20) || "unknown";
+
+  const userPrompt = `Analyze the following SEC ${safeFormType} filing for ${safeEntityName} (${ticker}).
+Filing date: ${safeFilingDate} | Period: ${safePeriod}
 
 ${textParts.join("\n\n")}
 
@@ -362,6 +367,7 @@ export default async function handler(req, res) {
   try {
     if (mode === "filings") {
       if (!ticker) return res.status(400).json({ error: "ticker required" });
+      if (!/^[A-Z0-9.^=-]{1,10}$/i.test(ticker)) return res.status(400).json({ error: "Invalid ticker" });
       await handleFilings(ticker, res);
     } else if (mode === "extract") {
       if (!cik || !accession || !doc) return res.status(400).json({ error: "cik, accession, doc required" });

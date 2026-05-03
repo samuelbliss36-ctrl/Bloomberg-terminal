@@ -35,26 +35,25 @@ function lsSet(key, val) {
 
 async function sendTelegram(token, chatId, text) {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const jwt = session?.access_token;
+    if (!jwt) return false;
     const r = await fetch('/api/telegram', {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ token, chatId, message: text }),
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${jwt}`,
+      },
+      body: JSON.stringify({ token, chatId, message: text }),
     });
     return r.ok;
   } catch { return false; }
 }
 
-// Read telegram config: localStorage first (fast), then user metadata (cross-device)
+// Read telegram config from localStorage only — never from user_metadata
+// (bot tokens must not live in the JWT)
 function loadTelegram(user) {
-  const local = lsGet(telegramKey(user?.id), null);
-  if (local?.token) return local;
-  const meta = user?.user_metadata || {};
-  if (meta.telegram_token) {
-    const cfg = { token: meta.telegram_token, chatId: meta.telegram_chat_id || '' };
-    if (user?.id) lsSet(telegramKey(user.id), cfg); // cache locally
-    return cfg;
-  }
-  return { token: '', chatId: '' };
+  return lsGet(telegramKey(user?.id), { token: '', chatId: '' });
 }
 
 export function AlertsProvider({ children }) {
@@ -96,15 +95,11 @@ export function AlertsProvider({ children }) {
     dbAlerts.save(list, userRef.current?.id);
   }, []);
 
-  // Save telegram: localStorage (instant) + Supabase user metadata (cross-device)
+  // Save telegram: localStorage only — bot tokens must not be stored in Supabase
+  // user_metadata because they are embedded in the JWT and visible to any decoder.
   const setTelegram = useCallback((cfg) => {
     setTgState(cfg);
     lsSet(telegramKey(userRef.current?.id), cfg);
-    if (supabase && userRef.current) {
-      supabase.auth.updateUser({
-        data: { telegram_token: cfg.token, telegram_chat_id: cfg.chatId },
-      }).catch(e => console.warn('telegram metadata sync failed:', e.message));
-    }
   }, []);
 
   // ── CRUD ─────────────────────────────────────────────────────────────────
