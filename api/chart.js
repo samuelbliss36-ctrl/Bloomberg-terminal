@@ -70,7 +70,7 @@ async function fetchHeatmapBatch(symbols) {
 }
 
 async function handleHeatmap(res) {
-  const BATCH = 50;
+  const BATCH = 20; // spark endpoint max is 20 symbols per request
   const batches = [];
   for (let i = 0; i < HEATMAP_TICKERS.length; i += BATCH) {
     batches.push(HEATMAP_TICKERS.slice(i, i + BATCH));
