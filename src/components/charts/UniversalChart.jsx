@@ -65,7 +65,20 @@ export function UniversalChart({ ticker, height = 220, showVolume = false, color
   const tickStyle    = { fill:"var(--text-3)", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" };
   const fmt2 = v => v != null ? prefix + (+v).toFixed(decimals) : "—";
 
-  const measureColor = measureInfo?.chgPts >= 0 ? "#059669" : "#e11d48";
+  // Live drag color — updates in real-time as user drags
+  const getDragColor = () => {
+    if (!refAreaLeft || !refAreaRight) return "#64748b";
+    const i1 = data.findIndex(d => d.date === refAreaLeft);
+    const i2 = data.findIndex(d => d.date === refAreaRight);
+    if (i1 === -1 || i2 === -1) return "#64748b";
+    const [lo, hi] = i1 < i2 ? [i1, i2] : [i2, i1];
+    const diff = data[hi].close - data[lo].close;
+    return diff > 0 ? "#059669" : diff < 0 ? "#e11d48" : "#64748b";
+  };
+  const dragColor    = getDragColor();
+  const measureColor = measureInfo
+    ? (measureInfo.chgPts > 0 ? "#059669" : measureInfo.chgPts < 0 ? "#e11d48" : "#64748b")
+    : dragColor;
 
   // Shared props injected into every ComposedChart for drag-to-measure
   const dragProps = {
@@ -74,13 +87,13 @@ export function UniversalChart({ ticker, height = 220, showVolume = false, color
     onMouseUp:   onChartMouseUp,
   };
 
-  // ReferenceArea shown while dragging or after measurement
+  // ReferenceArea — color reflects positive/negative/neutral in real-time
   const refArea = (refAreaLeft && (refAreaRight || isDragging)) ? (
     <ReferenceArea
       x1={refAreaLeft}
       x2={refAreaRight || refAreaLeft}
-      fill="rgba(37,99,235,0.09)"
-      stroke="rgba(37,99,235,0.40)"
+      fill={measureColor + "18"}
+      stroke={measureColor + "55"}
       strokeWidth={1}
       ifOverflow="visible"
     />

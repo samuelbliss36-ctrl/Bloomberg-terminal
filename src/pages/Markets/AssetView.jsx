@@ -780,12 +780,12 @@ export default function AssetView({ ticker, quote, metrics, profile, news }) {
             <div style={{
               position:"absolute", top:6, left:"50%", transform:"translateX(-50%)",
               background:"var(--surface-1)",
-              border:`1px solid ${measureInfo.chgPts >= 0 ? "rgba(5,150,105,0.45)" : "rgba(225,29,72,0.45)"}`,
+              border:`1px solid ${(measureInfo.chgPts > 0 ? "#059669" : measureInfo.chgPts < 0 ? "#e11d48" : "#64748b")}55`,
               borderRadius:8, padding:"5px 14px",
               display:"flex", alignItems:"center", gap:14,
               zIndex:20, boxShadow:"0 2px 16px rgba(0,0,0,0.18)", whiteSpace:"nowrap",
             }}>
-              <span className="font-mono" style={{ fontSize:12, fontWeight:700, color: measureInfo.chgPts >= 0 ? "#059669" : "#e11d48" }}>
+              <span className="font-mono" style={{ fontSize:12, fontWeight:700, color: measureInfo.chgPts > 0 ? "#059669" : measureInfo.chgPts < 0 ? "#e11d48" : "#64748b" }}>
                 {measureInfo.chgPts >= 0 ? "▲" : "▼"}&nbsp;
                 ${Math.abs(measureInfo.chgPts).toFixed(2)}&nbsp;&nbsp;
                 {measureInfo.pct >= 0 ? "+" : ""}{measureInfo.pct.toFixed(2)}%
@@ -829,10 +829,19 @@ export default function AssetView({ ticker, quote, metrics, profile, news }) {
                   active={isDragging ? false : undefined} />
                 <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5}
                   fill={"url(#avg_"+ticker.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false} />
-                {refAreaLeft && (refAreaRight || isDragging) && (
-                  <ReferenceArea x1={refAreaLeft} x2={refAreaRight || refAreaLeft}
-                    fill="rgba(37,99,235,0.09)" stroke="rgba(37,99,235,0.40)" strokeWidth={1} />
-                )}
+                {refAreaLeft && (refAreaRight || isDragging) && (() => {
+                  const i1 = chartData.findIndex(d => d.t === refAreaLeft);
+                  const i2 = chartData.findIndex(d => d.t === (refAreaRight || refAreaLeft));
+                  const [lo, hi] = i1 < i2 ? [i1, i2] : [i2, i1];
+                  const col = (i1 === -1 || i2 === -1 || i1 === i2) ? "#64748b"
+                    : chartData[hi].v > chartData[lo].v ? "#059669"
+                    : chartData[hi].v < chartData[lo].v ? "#e11d48"
+                    : "#64748b";
+                  return (
+                    <ReferenceArea x1={refAreaLeft} x2={refAreaRight || refAreaLeft}
+                      fill={col + "18"} stroke={col + "55"} strokeWidth={1} />
+                  );
+                })()}
               </AreaChart>
             </ResponsiveContainer>
           )}
