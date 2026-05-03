@@ -23,13 +23,13 @@ export const fmtX   = v => v == null || isNaN(v) ? "—" : v.toFixed(1) + "x";
 export const fmtN   = (v, d=2) => v == null || isNaN(v) ? "—" : (+v).toFixed(d);
 export const fmtMgn = v => v == null || isNaN(v) ? "—" : (+v).toFixed(1) + "%";
 export const fmtGr  = v => v == null || isNaN(v) ? "—" : (v >= 0 ? "+" : "") + (+v).toFixed(1) + "%";
-export const clrM   = v => v == null ? "#64748b" : v > 0 ? "#059669" : "#e11d48";
+export const clrM   = v => v == null ? "var(--text-3)" : v > 0 ? "#059669" : "#e11d48";
 export function clrM2(v) {
-  if (typeof v !== "string") return "#0f172a";
+  if (typeof v !== "string") return "var(--text-1)";
   const n = parseFloat(v);
-  if (isNaN(n)) return "#0f172a";
+  if (isNaN(n)) return "var(--text-1)";
   if (v.includes("%")) return n > 0 ? "#059669" : "#e11d48";
-  return "#0f172a";
+  return "var(--text-1)";
 }
 
 export const RB_TYPE_COLOR = { equity:"#2563eb", commodity:"#b45309", fx:"#059669", macro:"#7c3aed", topic:"#ea580c" };

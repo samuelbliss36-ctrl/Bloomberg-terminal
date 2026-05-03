@@ -67,12 +67,12 @@ export default function CryptoDashboard({ onContextUpdate }) {
             return (
               <div key={c.ticker} onClick={() => setActive(c.ticker)}
                 className="flex items-center justify-between p-2 rounded cursor-pointer transition-colors"
-                style={{ background: isActive ? "#eff6ff" : "transparent", border: "1px solid", borderColor: isActive ? "#2563eb33" : "#e2e8f0" }}>
+                style={{ background: isActive ? "var(--blue-dim)" : "transparent", border: "1px solid", borderColor: isActive ? "#2563eb33" : "var(--border-solid)" }}>
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded flex items-center justify-center text-xs font-mono font-bold"
-                    style={{ background: "#e2e8f0", color: isActive ? "#2563eb" : "#64748b" }}>{c.symbol.slice(0,1)}</div>
+                    style={{ background: "var(--border-solid)", color: isActive ? "#2563eb" : "var(--text-3)" }}>{c.symbol.slice(0,1)}</div>
                   <div>
-                    <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#2563eb" : "#0f172a" }}>{c.label}</div>
+                    <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#2563eb" : "var(--text-1)" }}>{c.label}</div>
                     <div className="text-xs font-mono" style={{ color: "var(--text-3)" }}>{c.symbol}</div>
                   </div>
                 </div>

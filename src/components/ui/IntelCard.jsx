@@ -207,7 +207,7 @@ export function IntelCard({ intel, loading, error, requiresUpgrade, onRefresh, a
       </div>
 
       {/* AI badge + refresh */}
-      <div className="flex items-center justify-between" style={{ paddingTop: 4, borderTop: "1px solid rgba(15,23,42,0.08)" }}>
+      <div className="flex items-center justify-between" style={{ paddingTop: 4, borderTop: "1px solid var(--border-subtle)" }}>
         <span className="font-mono" style={{ color: "var(--text-3)", fontSize: 9 }}>
           ✦ AI-generated · cached 1h
         </span>

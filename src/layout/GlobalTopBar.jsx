@@ -59,7 +59,7 @@ export const TickerTape = memo(function TickerTape({ tapeData }) {
             <span style={{ color: "var(--text-3)", fontWeight: 600 }}>{t.symbol}</span>
             <span style={{ color: "var(--text-1)" }}>${fmt.price(t.price)}</span>
             <span style={{ color: clr(t.changePct) }}>{t.changePct >= 0 ? "▲" : "▼"}{Math.abs(t.changePct || 0).toFixed(2)}%</span>
-            <span style={{ color: "#e2e8f0", marginLeft: 8 }}>|</span>
+            <span style={{ color: "var(--border-solid)", marginLeft: 8 }}>|</span>
           </span>
         ))}
       </div>
@@ -132,7 +132,7 @@ export function TopNav({ ticker, setTicker, quote, loading, onSettingsClick }) {
         <button onClick={onSettingsClick} title="Settings" style={{ color: "var(--text-3)", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center" }}>
           <Settings size={13} />
         </button>
-        <div style={{ width: 1, height: 14, background: "#e2e8f0" }} />
+        <div style={{ width: 1, height: 14, background: "var(--border-solid)" }} />
         <span style={{ color: "var(--text-3)", fontSize: 9, fontFamily: "'IBM Plex Mono', monospace", letterSpacing: "0.08em" }}>LIVE</span>
         <span className="live-dot" style={{ width: 6, height: 6, borderRadius: "50%", display: "inline-block" }} />
       </div>
@@ -187,7 +187,7 @@ export function GlobalTopBar({ ticker, setTicker, tapeData, quote, loading, sett
   return (
     <div className="global-topbar">
       {/* Logo */}
-      <div style={{ display:"flex", alignItems:"center", gap:7, flexShrink:0, paddingRight:12, borderRight:"1px solid rgba(15,23,42,0.09)", marginRight:12 }}>
+      <div style={{ display:"flex", alignItems:"center", gap:7, flexShrink:0, paddingRight:12, borderRight:"1px solid var(--border)", marginRight:12 }}>
         <Zap size={13} style={{ color:"#2563eb" }} />
         <span style={{ fontFamily:"'Inter',sans-serif", fontWeight:700, fontSize:12, color:"var(--text-1)", letterSpacing:"0.12em" }}>OMNES</span>
       </div>
@@ -203,7 +203,7 @@ export function GlobalTopBar({ ticker, setTicker, tapeData, quote, loading, sett
                 <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:clr(t.changePct) }}>
                   {t.changePct >= 0 ? "▲" : "▼"}{Math.abs(t.changePct||0).toFixed(2)}%
                 </span>
-                <span style={{ color:"rgba(15,23,42,0.20)", marginLeft:6 }}>|</span>
+                <span style={{ color:"var(--border-hover)", marginLeft:6 }}>|</span>
               </span>
             ))}
           </div>
@@ -213,7 +213,7 @@ export function GlobalTopBar({ ticker, setTicker, tapeData, quote, loading, sett
 
       {/* Search */}
       <div style={{ display:"flex", alignItems:"center", gap:6, padding:"4px 8px", background:"var(--surface-0)",
-          border:"1px solid"+(focused?"rgba(37,99,235,0.40)":"rgba(15,23,42,0.16)"), borderRadius:8,
+          border:"1px solid"+(focused?"rgba(37,99,235,0.40)":"var(--border)"), borderRadius:8,
           transition:"border-color 0.15s, box-shadow 0.15s", boxShadow:focused?"0 0 0 3px rgba(37,99,235,0.12)":"none",
           marginLeft:12, flexShrink:0, minWidth:180 }}>
         <Search size={11} style={{ color:"var(--text-3)", flexShrink:0 }} />
@@ -329,8 +329,8 @@ export function GlobalTopBar({ ticker, setTicker, tapeData, quote, loading, sett
 
             {/* Sign-out dropdown */}
             {authOpen && (
-              <div style={{ position:'absolute', top:'calc(100% + 6px)', right:0, zIndex:9999, background:'var(--surface-1, #fff)', border:'1px solid rgba(15,23,42,0.12)', borderRadius:8, boxShadow:'0 8px 24px rgba(15,23,42,0.14)', minWidth:160, overflow:'hidden' }}>
-                <div style={{ padding:'10px 14px 8px', borderBottom:'1px solid rgba(15,23,42,0.08)' }}>
+              <div style={{ position:'absolute', top:'calc(100% + 6px)', right:0, zIndex:9999, background:'var(--surface-1)', border:'1px solid var(--border)', borderRadius:8, boxShadow:'var(--shadow)', minWidth:160, overflow:'hidden' }}>
+                <div style={{ padding:'10px 14px 8px', borderBottom:'1px solid var(--border-subtle)' }}>
                   <div style={{ fontSize:9, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:2 }}>Signed in as</div>
                   <div style={{ fontSize:11, color:'var(--text-1)', fontWeight:600, wordBreak:'break-all' }}>{user.email}</div>
                 </div>

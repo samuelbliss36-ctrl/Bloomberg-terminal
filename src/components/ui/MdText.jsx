@@ -10,7 +10,7 @@ export function MdText({ text }) {
         const parts    = (isBullet ? content : line).split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
         const rendered = parts.map((p, j) => {
           if (p.startsWith("**") && p.endsWith("**")) return <strong key={j}>{p.slice(2,-2)}</strong>;
-          if (p.startsWith("`")  && p.endsWith("`"))  return <code key={j} style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:"0.9em", background:"rgba(15,23,42,0.07)", padding:"1px 4px", borderRadius:3 }}>{p.slice(1,-1)}</code>;
+          if (p.startsWith("`")  && p.endsWith("`"))  return <code key={j} style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:"0.9em", background:"var(--surface-3)", padding:"1px 4px", borderRadius:3 }}>{p.slice(1,-1)}</code>;
           return p;
         });
         if (isBullet) return <div key={i} style={{ display:"flex", gap:6, marginBottom:2 }}><span style={{ flexShrink:0, color:"#2563eb" }}>•</span><span>{rendered}</span></div>;

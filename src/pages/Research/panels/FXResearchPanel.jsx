@@ -112,9 +112,9 @@ export default function FXResearchPanel({ item, onClose, onOpen }) {
                     <stop offset="95%" stopColor={priceColor} stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="t" tickFormatter={t=>{const d=new Date(t*1000);return(d.getMonth()+1)+"/"+d.getDate();}} tick={{fill:"#64748b",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={35}/>
+                <XAxis dataKey="t" tickFormatter={t=>{const d=new Date(t*1000);return(d.getMonth()+1)+"/"+d.getDate();}} tick={{fill:"var(--text-3)",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={35}/>
                 <YAxis domain={["auto","auto"]} hide/>
-                <Tooltip contentStyle={{background:"var(--surface-2)",border:"1px solid rgba(15,23,42,0.18)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} labelFormatter={t=>new Date(t*1000).toLocaleDateString()} formatter={v=>[v?.toFixed(dp),"Rate"]}/>
+                <Tooltip contentStyle={{background:"var(--surface-2)",border:"1px solid var(--border)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} labelFormatter={t=>new Date(t*1000).toLocaleDateString()} formatter={v=>[v?.toFixed(dp),"Rate"]}/>
                 <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5} fill={"url(#fxg_"+item.id.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
               </AreaChart>
             </ResponsiveContainer>
@@ -130,7 +130,7 @@ export default function FXResearchPanel({ item, onClose, onOpen }) {
             </div>
             <div style={{ position:"relative", height:4, background:"var(--surface-3)", borderRadius:2 }}>
               <div style={{ position:"absolute", left:0, width:pct52+"%", height:"100%", background:pct52>70?"#059669":pct52<30?"#e11d48":"#b45309", borderRadius:2 }}/>
-              <div style={{ position:"absolute", left:pct52+"%", top:-3, width:2, height:10, background:"#0f172a", borderRadius:1, transform:"translateX(-50%)" }}/>
+              <div style={{ position:"absolute", left:pct52+"%", top:-3, width:2, height:10, background:"var(--text-1)", borderRadius:1, transform:"translateX(-50%)" }}/>
             </div>
           </div>
         )}
@@ -138,7 +138,7 @@ export default function FXResearchPanel({ item, onClose, onOpen }) {
         {summary && (
           <div className="grid mb-4" style={{ gridTemplateColumns:"repeat(3,1fr)", gap:"4px 8px" }}>
             {[["1D",summary.dayPct],["1M",summary.m1Pct],["3M",summary.m3Pct]].map(([label,val])=>(
-              <div key={label} style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, padding:"6px 8px" }}>
+              <div key={label} style={{ background:"var(--surface-0)", border:"1px solid var(--border)", borderRadius:10, padding:"6px 8px" }}>
                 <div className="font-mono" style={{ color:"var(--text-3)", fontSize:9 }}>{label}</div>
                 <div className="font-mono font-bold" style={{ color:clr(val), fontSize:13 }}>{fmt.pct(val)}</div>
               </div>
@@ -174,7 +174,7 @@ export default function FXResearchPanel({ item, onClose, onOpen }) {
         <div className="grid mb-4" style={{ gridTemplateColumns:"1fr 1fr", gap:8 }}>
           {[{ label:pair.baseLabel, val:baseLatest?.v, color:"#2563eb", date:baseLatest?.t },
             { label:pair.quoteLabel||"N/A", val:quoteLatest?.v, color:"#b45309", date:quoteLatest?.t }].map(({label,val,color,date})=>(
-            <div key={label} style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:6, padding:"10px 12px" }}>
+            <div key={label} style={{ background:"var(--surface-0)", border:"1px solid var(--border)", borderRadius:6, padding:"10px 12px" }}>
               <div className="font-mono mb-1" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase" }}>{label}</div>
               <div className="font-mono font-bold" style={{ color, fontSize:20 }}>{val!=null?val.toFixed(2)+"%":"—"}</div>
               {date && <div className="font-mono" style={{ color:"var(--text-3)", fontSize:9 }}>as of {date}</div>}
@@ -183,7 +183,7 @@ export default function FXResearchPanel({ item, onClose, onOpen }) {
         </div>
 
         {diff != null && (
-          <div className="mb-4 p-3" style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:6 }}>
+          <div className="mb-4 p-3" style={{ background:"var(--surface-0)", border:"1px solid var(--border)", borderRadius:6 }}>
             <div className="font-mono" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase" }}>Differential (USD minus {pair.quoteCCY})</div>
             <div className="font-mono font-bold" style={{ color:diff>=0?"#2563eb":"#b45309", fontSize:20 }}>{diff>=0?"+":""}{diff} pp</div>
             <div className="font-mono mt-0.5" style={{ color:"var(--text-3)", fontSize:10 }}>
@@ -204,10 +204,10 @@ export default function FXResearchPanel({ item, onClose, onOpen }) {
                       <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="t" tick={{fill:"#64748b",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={11}/>
+                  <XAxis dataKey="t" tick={{fill:"var(--text-3)",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={11}/>
                   <YAxis domain={["auto","auto"]} hide/>
                   <ReferenceLine y={0} stroke="#cbd5e1" strokeDasharray="3 3"/>
-                  <Tooltip contentStyle={{background:"var(--surface-2)",border:"1px solid rgba(15,23,42,0.18)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} formatter={v=>[v?.toFixed(2)+"pp","Differential"]}/>
+                  <Tooltip contentStyle={{background:"var(--surface-2)",border:"1px solid var(--border)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} formatter={v=>[v?.toFixed(2)+"pp","Differential"]}/>
                   <Area type="monotone" dataKey="diff" stroke="#2563eb" strokeWidth={1.5} fill={"url(#rdg_"+item.id.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
                 </AreaChart>
               </ResponsiveContainer>

@@ -264,10 +264,10 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
                   </defs>
                   <XAxis dataKey="t"
                     tickFormatter={t => { const d = new Date(t*1000); return (d.getMonth()+1)+"/"+(d.getDate()); }}
-                    tick={{ fill:"#64748b", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }} tickLine={false} axisLine={false} interval={35} />
+                    tick={{ fill:"var(--text-3)", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }} tickLine={false} axisLine={false} interval={35} />
                   <YAxis domain={["auto","auto"]} hide />
                   <Tooltip
-                    contentStyle={{ background:"var(--surface-2)", border:"1px solid rgba(15,23,42,0.18)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }}
+                    contentStyle={{ background:"var(--surface-2)", border:"1px solid var(--border)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }}
                     labelFormatter={t => new Date(t*1000).toLocaleDateString()}
                     formatter={(v,n) => [v != null ? "$"+v.toFixed(2) : "—", n==="v" ? "Price" : "MA 50"]} />
                   <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5} fill={"url(#eqg_"+item.ticker.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false} />
@@ -286,7 +286,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
               </div>
               <div style={{ position:"relative", height:4, background:"var(--surface-3)", borderRadius:2 }}>
                 <div style={{ position:"absolute", left:0, width:pct52+"%", height:"100%", background: pct52>70?"#059669":pct52<30?"#e11d48":"#b45309", borderRadius:2 }} />
-                <div style={{ position:"absolute", left:pct52+"%", top:-3, width:2, height:10, background:"#0f172a", borderRadius:1, transform:"translateX(-50%)" }} />
+                <div style={{ position:"absolute", left:pct52+"%", top:-3, width:2, height:10, background:"var(--text-1)", borderRadius:1, transform:"translateX(-50%)" }} />
               </div>
             </div>
           )}
@@ -303,7 +303,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
 
         <div>
           <div className="font-mono mb-2" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Statistics</div>
-          <div style={{ borderTop:"1px solid rgba(15,23,42,0.09)" }}>
+          <div style={{ borderTop:"1px solid var(--border)" }}>
             {[
               ["Market Cap",      fmtMktCap(m.marketCapitalization)],
               ["P/E (TTM)",       fmtX(peTTM)],
@@ -321,7 +321,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
               ["Avg Vol (10D)",   m["10DayAverageTradingVolume"] != null ? (m["10DayAverageTradingVolume"]).toFixed(2)+"M" : "—"],
               ["Shares Out.",     m.shareOutstanding != null ? fmtMktCap(m.shareOutstanding) : "—"],
             ].map(([k,v]) => (
-              <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid rgba(15,23,42,0.06)" }}>
+              <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid var(--border-subtle)" }}>
                 <span style={{ color:"var(--text-3)", fontSize:10 }}>{k}</span>
                 <span style={{ color:"var(--text-1)", fontSize:10 }}>{v || "—"}</span>
               </div>
@@ -400,7 +400,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
             ["EPS Growth (3Y CAGR)", m.epsGrowth3Y],
             ["EPS Growth (5Y CAGR)", m.epsGrowth5Y],
           ].map(([k,v]) => (
-            <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid rgba(15,23,42,0.06)" }}>
+            <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid var(--border-subtle)" }}>
               <span style={{ color:"var(--text-3)", fontSize:10 }}>{k}</span>
               <span style={{ color:clrM(v), fontSize:10 }}>{fmtGr(v)}</span>
             </div>
@@ -418,7 +418,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
             ["FCF/Share (TTM)",   m.freeCashFlowPerShareTTM != null ? "$"+fmtN(m.freeCashFlowPerShareTTM) : "—"],
             ["Net Int. Coverage", fmtN(m.netInterestCoverageAnnual)],
           ].map(([k,v]) => (
-            <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid rgba(15,23,42,0.06)" }}>
+            <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid var(--border-subtle)" }}>
               <span style={{ color:"var(--text-3)", fontSize:10 }}>{k}</span>
               <span style={{ color:"var(--text-1)", fontSize:10 }}>{v}</span>
             </div>
@@ -447,7 +447,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
                       <td className="font-mono py-1.5 text-right" style={{ color:"var(--text-3)", fontSize:10, paddingRight:8 }}>{e.date}</td>
                       <td className="font-mono py-1.5 text-right" style={{ color:"var(--text-1)", fontSize:10, paddingRight:8 }}>${fmtN(e.epsActual)}</td>
                       <td className="font-mono py-1.5 text-right" style={{ color:"var(--text-3)", fontSize:10, paddingRight:8 }}>${fmtN(e.epsEstimate)}</td>
-                      <td className="font-mono py-1.5 text-right" style={{ color: surp != null ? clr(surp) : "#64748b", fontSize:10, paddingRight:8 }}>
+                      <td className="font-mono py-1.5 text-right" style={{ color: surp != null ? clr(surp) : "var(--text-3)", fontSize:10, paddingRight:8 }}>
                         {surp != null ? (surp>=0?"+":"")+surp.toFixed(1)+"%" : "—"}
                       </td>
                       <td className="font-mono py-1.5 text-right" style={{ color:"var(--text-1)", fontSize:10, paddingRight:8 }}>
@@ -503,7 +503,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
             ["EV/FCF (Ann.)",      fmtX(m["currentEv/freeCashFlowAnnual"])],
             ["EV/FCF (TTM)",       fmtX(m["currentEv/freeCashFlowTTM"])],
           ].map(([k,v]) => (
-            <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid rgba(15,23,42,0.06)" }}>
+            <div key={k} className="flex justify-between py-1.5 font-mono" style={{ borderBottom:"1px solid var(--border-subtle)" }}>
               <span style={{ color:"var(--text-3)", fontSize:10 }}>{k}</span>
               <span style={{ color:"var(--text-1)", fontSize:10 }}>{v}</span>
             </div>
@@ -586,9 +586,9 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
           const timeStr = dAgo===0?"Today":dAgo===1?"Yesterday":dAgo!=null?dAgo+"d ago":"";
           return (
             <a key={i} href={n.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
-              <div className="p-3" style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:4 }}
-                onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"}
-                onMouseLeave={e=>e.currentTarget.style.borderColor="#e2e8f0"}>
+              <div className="p-3" style={{ background:"var(--surface-0)", border:"1px solid var(--border)", borderRadius:4 }}
+                onMouseEnter={e=>e.currentTarget.style.borderColor="var(--border-hover)"}
+                onMouseLeave={e=>e.currentTarget.style.borderColor="var(--border-solid)"}>
                 <div className="flex items-start justify-between gap-3 mb-1">
                   <span className="font-mono" style={{ color:"var(--text-1)", fontSize:11, lineHeight:1.5 }}>{n.headline}</span>
                   <span className="font-mono flex-shrink-0" style={{ color:"var(--text-3)", fontSize:9 }}>{timeStr}</span>
@@ -623,8 +623,8 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
           </thead>
           <tbody>
             {allRows.map(({ ticker, q, pm, isSelf }) => (
-              <tr key={ticker} style={{ borderTop:"1px solid rgba(15,23,42,0.09)", background:isSelf?"#f8fafc":"transparent" }}>
-                <td className="font-mono py-2" style={{ color:isSelf?"#2563eb":"#0f172a", fontSize:11, fontWeight:isSelf?"bold":"normal" }}>
+              <tr key={ticker} style={{ borderTop:"1px solid var(--border)", background:isSelf?"var(--surface-0)":"transparent" }}>
+                <td className="font-mono py-2" style={{ color:isSelf?"#2563eb":"var(--text-1)", fontSize:11, fontWeight:isSelf?"bold":"normal" }}>
                   {ticker}
                   {!isSelf && <button onClick={()=>onOpen({id:ticker,label:ticker,type:"equity",ticker,category:"Equities"})}
                     className="font-mono ml-2" style={{ color:"#2563eb", background:"none", border:"none", cursor:"pointer", fontSize:9 }}>→</button>}
@@ -738,10 +738,10 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
             <div className="font-mono mb-3" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>
               Recent SEC Filings — {secEntityName || item.ticker}
             </div>
-            <div style={{ borderTop:"1px solid rgba(15,23,42,0.09)" }}>
+            <div style={{ borderTop:"1px solid var(--border)" }}>
               {secFilings.map((f, i) => (
                 <div key={i} className="flex items-center justify-between py-2.5"
-                  style={{ borderBottom:"1px solid rgba(15,23,42,0.06)", cursor: f.primaryDoc ? "pointer" : "default" }}
+                  style={{ borderBottom:"1px solid var(--border-subtle)", cursor: f.primaryDoc ? "pointer" : "default" }}
                   onClick={() => f.primaryDoc && loadFilingSummary(f)}
                   onMouseEnter={e => { if (f.primaryDoc) e.currentTarget.style.background = "var(--surface-0)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>
@@ -870,7 +870,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
                 })()}
 
                 {/* Headline */}
-                <div style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:6, padding:"10px 14px" }}>
+                <div style={{ background:"var(--surface-0)", border:"1px solid var(--border)", borderRadius:6, padding:"10px 14px" }}>
                   <div className="font-mono mb-1" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Takeaway</div>
                   <p className="font-mono" style={{ color:"var(--text-1)", fontSize:12, lineHeight:1.6, margin:0, fontWeight:500 }}>{secSummary.headline}</p>
                 </div>
@@ -892,11 +892,11 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
 
                 {/* MD&A + Outlook side-by-side */}
                 <div className="grid gap-3" style={{ gridTemplateColumns:"1fr 1fr" }}>
-                  <div style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:6, padding:"10px 12px" }}>
+                  <div style={{ background:"var(--surface-0)", border:"1px solid var(--border)", borderRadius:6, padding:"10px 12px" }}>
                     <div className="font-mono mb-1.5" style={{ color:"#2563eb", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>MD&amp;A Insights</div>
                     <p className="font-mono" style={{ color:"var(--text-1)", fontSize:10, lineHeight:1.65, margin:0 }}>{secSummary.mdaInsights}</p>
                   </div>
-                  <div style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:6, padding:"10px 12px" }}>
+                  <div style={{ background:"var(--surface-0)", border:"1px solid var(--border)", borderRadius:6, padding:"10px 12px" }}>
                     <div className="font-mono mb-1.5" style={{ color:"#b45309", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Outlook / Guidance</div>
                     <p className="font-mono" style={{ color:"var(--text-1)", fontSize:10, lineHeight:1.65, margin:0 }}>{secSummary.outlook}</p>
                   </div>
@@ -933,7 +933,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
                 )}
 
                 {/* Footer */}
-                <div className="flex items-center gap-2" style={{ paddingTop:4, borderTop:"1px solid rgba(15,23,42,0.08)" }}>
+                <div className="flex items-center gap-2" style={{ paddingTop:4, borderTop:"1px solid var(--border-subtle)" }}>
                   <span className="font-mono" style={{ color:"var(--text-3)", fontSize:9 }}>
                     ✦ AI analysis of SEC {activeFiling.form} · EDGAR free public data
                   </span>
@@ -973,7 +973,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
 
   return (
     <div className="terminal-panel terminal-glow flex flex-col" style={{ minHeight:520 }}>
-      <div className="flex items-center justify-between px-4 pt-3 pb-0" style={{ borderBottom:"1px solid rgba(15,23,42,0.09)", flexShrink:0 }}>
+      <div className="flex items-center justify-between px-4 pt-3 pb-0" style={{ borderBottom:"1px solid var(--border)", flexShrink:0 }}>
         <div className="flex items-center gap-3 flex-wrap">
           <span className="font-mono font-bold" style={{ color:"var(--text-1)", fontSize:15 }}>{item.ticker}</span>
           <span className="font-mono" style={{ color:"var(--text-3)", fontSize:12 }}>{profile?.name || item.label}</span>
@@ -982,11 +982,11 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
         </div>
         <button onClick={onClose} style={{ color:"var(--text-3)", background:"none", border:"none", cursor:"pointer", fontSize:14, marginLeft:8 }}>✕</button>
       </div>
-      <div className="flex px-4" style={{ borderBottom:"1px solid rgba(15,23,42,0.09)", flexShrink:0, overflowX:"auto" }}>
+      <div className="flex px-4" style={{ borderBottom:"1px solid var(--border)", flexShrink:0, overflowX:"auto" }}>
         {TABS.map(t => (
           <button key={t} onClick={() => setActiveTab(t)} className="font-mono"
             style={{ background:"none", border:"none", borderBottom:activeTab===t?"2px solid #58a6ff":"2px solid transparent",
-              color:activeTab===t?"#0f172a":"#64748b", fontSize:11, padding:"8px 12px", cursor:"pointer", transition:"color 0.15s",
+              color:activeTab===t?"var(--text-1)":"var(--text-3)", fontSize:11, padding:"8px 12px", cursor:"pointer", transition:"color 0.15s",
               whiteSpace:"nowrap", flexShrink:0 }}>
             {t}
           </button>

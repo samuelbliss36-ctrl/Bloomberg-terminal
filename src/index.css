@@ -343,6 +343,12 @@ tr:hover td { background: rgba(15,23,42,0.025) !important; }
   50%       { box-shadow: 0 0 9px rgba(63,185,80,0.70); }
 }
 .dark .live-dot                  { animation: live-pulse-dark 2.4s ease-in-out infinite !important; }
+.dark .dense-table td            { border-bottom-color: rgba(255,255,255,0.05) !important; }
+.dark .dense-table tr:hover td   { background: rgba(255,255,255,0.03) !important; }
+.dark .tf-btn:hover              { background: rgba(255,255,255,0.07) !important; color: var(--text-1) !important; }
+.dark .tf-button:hover           { background: rgba(255,255,255,0.06) !important; }
+.dark .terminal-nav button:hover { background: rgba(255,255,255,0.05) !important; }
+.dark .recharts-tooltip-wrapper  { filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5)) !important; }
 
 /* ── App shell grid ──────────────────────────────────────── */
 .app-shell {

@@ -102,9 +102,9 @@ export default function WeatherDashboard() {
             return (
               <div key={c.name} onClick={() => setActive(c.name)}
                 className="p-2 rounded cursor-pointer transition-colors"
-                style={{ background: isActive ? "#eff6ff" : "#f8fafc", border: "1px solid", borderColor: isActive ? "#2563eb33" : "#e2e8f0" }}>
+                style={{ background: isActive ? "var(--blue-dim)" : "var(--surface-0)", border: "1px solid", borderColor: isActive ? "rgba(37,99,235,0.25)" : "var(--border-solid)" }}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-mono font-bold" style={{ color: isActive ? "#2563eb" : "#0f172a" }}>{c.flag} {c.name}</span>
+                  <span className="text-xs font-mono font-bold" style={{ color: isActive ? "#2563eb" : "var(--text-1)" }}>{c.flag} {c.name}</span>
                   <span style={{ fontSize: 16 }}>{wmo(w?.code).icon}</span>
                 </div>
                 <div className="text-lg font-mono font-bold" style={{ color: "var(--text-1)" }}>{w ? w.temp + "°C" : "..."}</div>
@@ -125,9 +125,9 @@ export default function WeatherDashboard() {
             return (
               <div key={c.name} onClick={() => setActive(c.name)}
                 className="p-2 rounded cursor-pointer transition-colors"
-                style={{ background: isActive ? "#eff6ff" : "#f8fafc", border: "1px solid", borderColor: isActive ? "#2563eb33" : "#e2e8f0" }}>
+                style={{ background: isActive ? "var(--blue-dim)" : "var(--surface-0)", border: "1px solid", borderColor: isActive ? "rgba(37,99,235,0.25)" : "var(--border-solid)" }}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-mono font-bold" style={{ color: isActive ? "#2563eb" : "#0f172a" }}>{c.flag} {c.name}</span>
+                  <span className="text-xs font-mono font-bold" style={{ color: isActive ? "#2563eb" : "var(--text-1)" }}>{c.flag} {c.name}</span>
                   <span style={{ fontSize: 16 }}>{wmo(w?.code).icon}</span>
                 </div>
                 <div className="text-lg font-mono font-bold" style={{ color: "var(--text-1)" }}>{w ? w.temp + "°C" : "..."}</div>

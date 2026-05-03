@@ -10,10 +10,10 @@ export function SidebarNav({ activePage, setActivePage, isOpen, onToggle }) {
       <div>
         {/* Toggle button */}
         <button onClick={onToggle}
-          style={{ width:"100%", padding:"10px 0", background:"none", border:"none", borderBottom:"1px solid rgba(15,23,42,0.08)",
+          style={{ width:"100%", padding:"10px 0", background:"none", border:"none", borderBottom:"1px solid var(--border-subtle)",
             color:"var(--text-3)", fontSize:14, cursor:"pointer", transition:"color 0.15s" }}
           onMouseEnter={e=>e.currentTarget.style.color="#475569"}
-          onMouseLeave={e=>e.currentTarget.style.color="#64748b"}>
+          onMouseLeave={e=>e.currentTarget.style.color="var(--text-3)"}>
           {isOpen ? "◂" : "▸"}
         </button>
         {NAV_ITEMS.map(item => (
@@ -30,7 +30,7 @@ export function SidebarNav({ activePage, setActivePage, isOpen, onToggle }) {
         ))}
       </div>
       {/* Bottom: settings + admin (owner only) */}
-      <div style={{ borderTop:"1px solid rgba(15,23,42,0.08)" }}>
+      <div style={{ borderTop:"1px solid var(--border-subtle)" }}>
         {isOwner(user) && (
           <button
             className={"sidebar-item" + (activePage==="admin" ? " active" : "")}

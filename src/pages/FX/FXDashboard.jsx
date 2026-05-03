@@ -141,7 +141,7 @@ export default function FXDashboard({ onOpenResearch, onContextUpdate }) {
           {onOpenResearch && (
             <button onClick={() => onOpenResearch({ id:active, label:activePairCfg?.label||active, type:"fx", ticker:active, category:"FX" })}
               className="font-mono px-2 py-1 text-xs rounded"
-              style={{ background:"#eff6ff", border:"1px solid #3fb95033", color:"#059669", cursor:"pointer" }}>
+              style={{ background:"var(--blue-dim)", border:"1px solid #3fb95033", color:"#059669", cursor:"pointer" }}>
               → Research
             </button>
           )}
@@ -162,7 +162,7 @@ export default function FXDashboard({ onOpenResearch, onContextUpdate }) {
                   {r?.value != null ? r.value.toFixed(2) + "%" : "—"}
                 </div>
                 <div className="text-xs font-mono" style={{ color:"var(--text-3)" }}>{s.label}</div>
-                {r?.date && <div className="text-xs font-mono" style={{ color:"#e2e8f0" }}>As of {r.date}</div>}
+                {r?.date && <div className="text-xs font-mono" style={{ color:"var(--border-solid)" }}>As of {r.date}</div>}
               </div>
             );
           })}
@@ -177,14 +177,14 @@ export default function FXDashboard({ onOpenResearch, onContextUpdate }) {
             const d = prices[p.ticker];
             const pct = d?.changePct;
             const intensity = pct != null ? Math.min(Math.abs(pct)/0.8, 1) : 0;
-            const bgColor = pct == null ? "#f8fafc"
+            const bgColor = pct == null ? "var(--surface-0)"
               : pct >= 0 ? "rgba(5,150,105," + (0.08 + intensity*0.15) + ")"
               : "rgba(225,29,72," + (0.08 + intensity*0.15) + ")";
             return (
               <div key={p.ticker} onClick={() => setActive(p.ticker)} className="p-2 rounded cursor-pointer"
-                style={{ background:bgColor, border:"1px solid", borderColor:active===p.ticker?"#05966955":"#e2e8f0" }}>
+                style={{ background:bgColor, border:"1px solid", borderColor:active===p.ticker?"#05966955":"var(--border-solid)" }}>
                 <div className="text-xs font-mono font-bold" style={{ color:"var(--text-1)" }}>{p.label}</div>
-                <div className="text-xs font-mono" style={{ color:pct==null?"#64748b":clr(pct) }}>
+                <div className="text-xs font-mono" style={{ color:pct==null?"var(--text-3)":clr(pct) }}>
                   {pct != null ? (pct>=0?"▲":"▼") + Math.abs(pct).toFixed(3)+"%" : "…"}
                 </div>
               </div>

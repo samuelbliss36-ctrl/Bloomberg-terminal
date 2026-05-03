@@ -95,9 +95,9 @@ export default function CommodityResearchPanel({ item, onClose, onOpen }) {
                     <stop offset="95%" stopColor={priceColor} stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="t" tickFormatter={t=>{const d=new Date(t*1000);return(d.getMonth()+1)+"/"+d.getDate();}} tick={{fill:"#64748b",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={35}/>
+                <XAxis dataKey="t" tickFormatter={t=>{const d=new Date(t*1000);return(d.getMonth()+1)+"/"+d.getDate();}} tick={{fill:"var(--text-3)",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={35}/>
                 <YAxis domain={["auto","auto"]} hide/>
-                <Tooltip contentStyle={{background:"var(--surface-2)",border:"1px solid rgba(15,23,42,0.18)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} labelFormatter={t=>new Date(t*1000).toLocaleDateString()} formatter={v=>["$"+v?.toFixed(dp),"Price"]}/>
+                <Tooltip contentStyle={{background:"var(--surface-2)",border:"1px solid var(--border)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} labelFormatter={t=>new Date(t*1000).toLocaleDateString()} formatter={v=>["$"+v?.toFixed(dp),"Price"]}/>
                 <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5} fill={"url(#cmg_"+item.id.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
               </AreaChart>
             </ResponsiveContainer>
@@ -113,7 +113,7 @@ export default function CommodityResearchPanel({ item, onClose, onOpen }) {
             </div>
             <div style={{ position:"relative", height:4, background:"var(--surface-3)", borderRadius:2 }}>
               <div style={{ position:"absolute", left:0, width:pct52+"%", height:"100%", background:pct52>70?"#059669":pct52<30?"#e11d48":"#b45309", borderRadius:2 }}/>
-              <div style={{ position:"absolute", left:pct52+"%", top:-3, width:2, height:10, background:"#0f172a", borderRadius:1, transform:"translateX(-50%)" }}/>
+              <div style={{ position:"absolute", left:pct52+"%", top:-3, width:2, height:10, background:"var(--text-1)", borderRadius:1, transform:"translateX(-50%)" }}/>
             </div>
           </div>
         )}
@@ -121,7 +121,7 @@ export default function CommodityResearchPanel({ item, onClose, onOpen }) {
         {summary && (
           <div className="grid mb-4" style={{ gridTemplateColumns:"repeat(4,1fr)", gap:"4px 8px" }}>
             {[["1D",summary.dayPct],["1M",summary.m1Pct],["3M",summary.m3Pct],["YTD",summary.ytdPct]].map(([label,val])=>(
-              <div key={label} style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, padding:"6px 8px" }}>
+              <div key={label} style={{ background:"var(--surface-0)", border:"1px solid var(--border)", borderRadius:10, padding:"6px 8px" }}>
                 <div className="font-mono" style={{ color:"var(--text-3)", fontSize:9 }}>{label}</div>
                 <div className="font-mono font-bold" style={{ color:clr(val), fontSize:13 }}>{fmt.pct(val)}</div>
               </div>
@@ -138,9 +138,9 @@ export default function CommodityResearchPanel({ item, onClose, onOpen }) {
   ) : (
     <div>
       <div className="font-mono mb-3" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Producers / Supply Sources</div>
-      <div style={{ borderTop:"1px solid rgba(15,23,42,0.09)" }}>
+      <div style={{ borderTop:"1px solid var(--border)" }}>
         {staticIntel.producers.map((p,i) => (
-          <div key={i} className="flex items-start justify-between py-2.5" style={{ borderBottom:"1px solid rgba(15,23,42,0.06)" }}>
+          <div key={i} className="flex items-start justify-between py-2.5" style={{ borderBottom:"1px solid var(--border-subtle)" }}>
             <div>
               <div className="font-mono" style={{ color:"var(--text-1)", fontSize:11 }}>{p.name}</div>
               <div className="font-mono" style={{ color:"var(--text-3)", fontSize:9 }}>{p.note}</div>

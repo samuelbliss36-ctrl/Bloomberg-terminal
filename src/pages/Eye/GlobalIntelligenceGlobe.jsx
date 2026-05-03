@@ -150,19 +150,19 @@ export default function GlobalIntelligenceGlobe({ onOpenResearch }) {
         <div className="font-mono font-bold text-xs mb-2" style={{ color:"var(--text-1)" }}>{d.name}</div>
 
         {d._layer === "chokepoints" && <>
-          <div className="flex gap-1 mb-2 flex-wrap">{badge(d.type,"#b45309")}{badge(d.importance||"","#64748b")}</div>
+          <div className="flex gap-1 mb-2 flex-wrap">{badge(d.type,"#b45309")}{badge(d.importance||"","var(--text-3)")}</div>
           <div className="text-xs font-mono mb-1" style={{ color:"var(--text-3)" }}>Oil flow: <span style={{ color:"#f0a500" }}>{d.oil}</span></div>
           <div className="text-xs font-mono leading-relaxed" style={{ color:"var(--text-3)" }}>{d.note}</div>
         </>}
 
         {d._layer === "oilRoutes" && <>
-          <div className="flex gap-1 mb-2">{badge("Oil Route","#f0a500")}{badge(d.importance||"","#64748b")}</div>
+          <div className="flex gap-1 mb-2">{badge("Oil Route","#f0a500")}{badge(d.importance||"","var(--text-3)")}</div>
           <div className="text-xs font-mono mb-1" style={{ color:"var(--text-3)" }}>Region: <span style={{ color:"var(--text-1)" }}>{d.region}</span></div>
           <div className="text-xs font-mono" style={{ color:"#f0a500" }}>Volume: {d.vol}</div>
         </>}
 
         {d._layer === "pipelines" && <>
-          <div className="flex gap-1 mb-2">{badge(d.type,"#e85d04")}{badge(d.importance||"","#64748b")}</div>
+          <div className="flex gap-1 mb-2">{badge(d.type,"#e85d04")}{badge(d.importance||"","var(--text-3)")}</div>
           <div className="text-xs font-mono mb-1" style={{ color:"var(--text-3)" }}>Region: <span style={{ color:"var(--text-1)" }}>{d.region}</span></div>
           <div className="text-xs font-mono" style={{ color:"#e85d04" }}>Volume: {d.vol}</div>
         </>}
@@ -180,7 +180,7 @@ export default function GlobalIntelligenceGlobe({ onOpenResearch }) {
         </>}
 
         {d._layer === "conflictZones" && <>
-          <div className="flex gap-1 mb-2 flex-wrap">{badge(d.intensity+" Risk","#ff3333")}{badge(d.type,"#64748b")}</div>
+          <div className="flex gap-1 mb-2 flex-wrap">{badge(d.intensity+" Risk","#ff3333")}{badge(d.type,"var(--text-3)")}</div>
           <div className="text-xs font-mono mb-1" style={{ color:"var(--text-3)" }}>Since: <span style={{ color:"var(--text-1)" }}>{d.started}</span></div>
           <div className="text-xs font-mono mb-1" style={{ color:"#e11d48" }}>Market impact: {d.impact}</div>
           <div className="text-xs font-mono leading-relaxed" style={{ color:"var(--text-3)" }}>{d.note}</div>
@@ -194,13 +194,13 @@ export default function GlobalIntelligenceGlobe({ onOpenResearch }) {
         </>}
 
         {d._layer === "majorPorts" && <>
-          <div className="flex gap-1 mb-2">{badge(d.type,"#06b6d4")}{badge(`Rank #${d.rank}`,"#64748b")}</div>
+          <div className="flex gap-1 mb-2">{badge(d.type,"#06b6d4")}{badge(`Rank #${d.rank}`,"var(--text-3)")}</div>
           <div className="text-xs font-mono mb-1" style={{ color:"var(--text-3)" }}>Country: <span style={{ color:"var(--text-1)" }}>{d.country}</span></div>
           <div className="text-xs font-mono" style={{ color:"#06b6d4" }}>Volume: {d.vol}</div>
         </>}
 
         {d._layer === "tradeFlows" && <>
-          <div className="flex gap-1 mb-2">{badge(d.type,"#a78bfa")}{badge(d.importance||"","#64748b")}</div>
+          <div className="flex gap-1 mb-2">{badge(d.type,"#a78bfa")}{badge(d.importance||"","var(--text-3)")}</div>
           <div className="text-xs font-mono mb-1" style={{ color:"var(--text-3)" }}>Corridor: <span style={{ color:"var(--text-1)" }}>{d.region}</span></div>
           <div className="text-xs font-mono" style={{ color:"#a78bfa" }}>Trade volume: {d.vol}</div>
         </>}
@@ -209,13 +209,13 @@ export default function GlobalIntelligenceGlobe({ onOpenResearch }) {
           {research && onOpenResearch && (
             <button onClick={() => onOpenResearch(research)}
               className="text-xs font-mono px-2 py-1 rounded"
-              style={{ background:"#eff6ff", border:"1px solid #58a6ff33", color:"#2563eb", cursor:"pointer" }}>
+              style={{ background:"var(--blue-dim)", border:"1px solid rgba(37,99,235,0.25)", color:"#2563eb", cursor:"pointer" }}>
               → Research
             </button>
           )}
           <button onClick={() => setSelected(null)}
             className="text-xs font-mono px-2 py-1 rounded"
-            style={{ background:"transparent", border:"1px solid rgba(15,23,42,0.12)", color:"var(--text-3)", cursor:"pointer" }}>
+            style={{ background:"transparent", border:"1px solid var(--border)", color:"var(--text-3)", cursor:"pointer" }}>
             ✕ Close
           </button>
         </div>
@@ -275,10 +275,10 @@ export default function GlobalIntelligenceGlobe({ onOpenResearch }) {
               <button key={val} onClick={() => setImportance(val)}
                 className="flex-1 text-xs font-mono py-1 rounded"
                 style={{
-                  background: importance === val ? "#eff6ff" : "transparent",
+                  background: importance === val ? "var(--blue-dim)" : "transparent",
                   border:"1px solid",
-                  borderColor: importance === val ? "#2563eb33" : "#e2e8f0",
-                  color: importance === val ? "#2563eb" : "#64748b",
+                  borderColor: importance === val ? "rgba(37,99,235,0.25)" : "var(--border-solid)",
+                  color: importance === val ? "#2563eb" : "var(--text-3)",
                   cursor:"pointer",
                 }}>{lbl}</button>
             ))}
@@ -304,7 +304,7 @@ export default function GlobalIntelligenceGlobe({ onOpenResearch }) {
                   <div className="flex items-center gap-1.5">
                     {counts.active > 0 && (
                       <span className="text-xs font-mono px-1.5 py-0.5 rounded"
-                        style={{ background:"#eff6ff", color:"#2563eb", fontSize:9 }}>
+                        style={{ background:"var(--blue-dim)", color:"#2563eb", fontSize:9 }}>
                         {counts.active}/{counts.total}
                       </span>
                     )}
@@ -319,14 +319,14 @@ export default function GlobalIntelligenceGlobe({ onOpenResearch }) {
                       <button key={id} onClick={() => toggleLayer(id)}
                         className="w-full flex items-start gap-2 p-2 rounded text-left"
                         style={{
-                          background: layer.enabled ? "#eff6ff" : "transparent",
+                          background: layer.enabled ? "var(--blue-dim)" : "transparent",
                           border:"1px solid",
-                          borderColor: layer.enabled ? layer.color+"44" : "#e2e8f0",
+                          borderColor: layer.enabled ? layer.color+"44" : "var(--border-solid)",
                           cursor:"pointer",
                         }}>
-                        <div style={{ width:7, height:7, borderRadius:"50%", background:layer.enabled ? layer.color : "#64748b", flexShrink:0, marginTop:3 }} />
+                        <div style={{ width:7, height:7, borderRadius:"50%", background:layer.enabled ? layer.color : "var(--text-3)", flexShrink:0, marginTop:3 }} />
                         <div>
-                          <div className="font-mono font-bold" style={{ fontSize:11, color:layer.enabled?"#0f172a":"#64748b" }}>
+                          <div className="font-mono font-bold" style={{ fontSize:11, color:layer.enabled?"var(--text-1)":"var(--text-3)" }}>
                             {layer.icon} {layer.label}
                           </div>
                           <div className="font-mono" style={{ fontSize:9, color:"var(--text-3)", lineHeight:1.4 }}>{layer.desc}</div>
@@ -345,7 +345,7 @@ export default function GlobalIntelligenceGlobe({ onOpenResearch }) {
               className="w-full flex items-center justify-between py-1.5 px-1"
               style={{ cursor:"pointer", background:"transparent", border:"none" }}>
               <span className="text-xs font-mono font-bold" style={{ color:"var(--text-3)" }}>Coming Soon</span>
-              <span className="text-xs font-mono" style={{ color:"#e2e8f0" }}>{openCats.soon ? "▾" : "▸"}</span>
+              <span className="text-xs font-mono" style={{ color:"var(--border-solid)" }}>{openCats.soon ? "▾" : "▸"}</span>
             </button>
             {openCats.soon && (
               <div className="flex flex-col gap-1 ml-1">
@@ -423,7 +423,7 @@ export default function GlobalIntelligenceGlobe({ onOpenResearch }) {
         {/* Status bar */}
         <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-3 py-1.5"
           style={{ background:"var(--surface-0)", borderTop:"1px solid var(--border)", pointerEvents:"none" }}>
-          <div className="text-xs font-mono" style={{ color: hovered ? "#0f172a" : "#64748b" }}>
+          <div className="text-xs font-mono" style={{ color: hovered ? "var(--text-1)" : "var(--text-3)" }}>
             {hovered ? hovered.name : "Drag to rotate · Scroll to zoom · Click for detail"}
           </div>
           <div className="flex items-center gap-3">

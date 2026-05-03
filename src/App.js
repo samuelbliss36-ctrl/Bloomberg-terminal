@@ -59,7 +59,7 @@ function AppRouter() {
 
   if (authLoading) {
     return (
-      <div style={{ position:'fixed', inset:0, background:'#0f172a', display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <div style={{ position:'fixed', inset:0, background:'var(--surface-0)', display:'flex', alignItems:'center', justifyContent:'center' }}>
         <div style={{ width:8, height:8, borderRadius:'50%', background:'#2563eb', boxShadow:'0 0 14px rgba(37,99,235,0.80)' }} />
       </div>
     );
@@ -273,7 +273,7 @@ function AppInner() {
         {activePage === "settings" && (
           <div style={{ padding:24, maxWidth:480 }}>
             <div style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:13, color:"var(--text-1)", marginBottom:16 }}>Settings</div>
-            <div style={{ background:"var(--surface-1)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, padding:16 }}>
+            <div style={{ background:"var(--surface-1)", border:"1px solid var(--border)", borderRadius:10, padding:16 }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                 <div>
                   <div style={{ fontFamily:"'Inter',sans-serif", fontSize:12, color:"var(--text-1)", fontWeight:500 }}>Ticker Tape</div>
@@ -303,7 +303,7 @@ function AppInner() {
       <div className="status-bar" style={{ gridArea:"status", display:"flex", alignItems:"center", gap:16, padding:"0 12px", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" }}>
         <div style={{ width:6, height:6, borderRadius:"50%", background:"#059669", boxShadow:"0 0 6px rgba(5,150,105,0.60)" }} />
         <span>OMNES VIDENTES · LIVE DATA</span>
-        <span style={{ color:"rgba(15,23,42,0.20)" }}>|</span>
+        <span style={{ color:"var(--border-hover)" }}>|</span>
         <MarketSessionBadges />
         <span style={{ marginLeft:"auto" }}>{statusTime}</span>
       </div>

@@ -17,9 +17,9 @@ export default function ResearchHomeDashboard({ onOpen }) {
                 if (!item) return null;
                 return (
                   <button key={id} onClick={() => onOpen(item)} className="text-left font-mono px-2 py-1.5"
-                    style={{ background:"transparent", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, color:"var(--text-1)", fontSize:12, cursor:"pointer", transition:"all 0.15s" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"; e.currentTarget.style.background="#f8fafc"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor="#e2e8f0"; e.currentTarget.style.background="transparent"; }}>
+                    style={{ background:"transparent", border:"1px solid var(--border)", borderRadius:10, color:"var(--text-1)", fontSize:12, cursor:"pointer", transition:"all 0.15s" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor="var(--border-hover)"; e.currentTarget.style.background="var(--surface-0)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor="var(--border-solid)"; e.currentTarget.style.background="transparent"; }}>
                     <span style={{ color }}>{item.label}</span>
                     <span style={{ color:"var(--text-3)", marginLeft:8, fontSize:10 }}>{item.id}</span>
                   </button>

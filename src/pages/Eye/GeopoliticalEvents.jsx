@@ -70,17 +70,17 @@ export default function GeopoliticalEvents({ onOpenResearch, onContextUpdate }) 
     <div className="flex flex-col" style={{ height:"100%", overflow:"hidden" }}>
 
       {/* ── Filter bar ── */}
-      <div className="px-4 py-2 flex items-center gap-3 flex-wrap" style={{ borderBottom:"1px solid rgba(15,23,42,0.09)", background:"var(--surface-0)", flexShrink:0 }}>
-        <span className="font-mono" style={{ background:"#eff6ff", color:"#2563eb", border:"1px solid #58a6ff33", borderRadius:6, padding:"2px 8px", fontSize:10 }}>● LIVE</span>
+      <div className="px-4 py-2 flex items-center gap-3 flex-wrap" style={{ borderBottom:"1px solid var(--border)", background:"var(--surface-0)", flexShrink:0 }}>
+        <span className="font-mono" style={{ background:"var(--blue-dim)", color:"#2563eb", border:"1px solid rgba(37,99,235,0.25)", borderRadius:6, padding:"2px 8px", fontSize:10 }}>● LIVE</span>
 
         <div className="flex items-center gap-1">
           <span className="font-mono" style={{ color:"var(--text-3)", fontSize:9 }}>IMPACT:</span>
           {["All","High","Medium","Low"].map(v => (
             <button key={v} onClick={() => setFilterImpact(v)} className="font-mono"
               style={{ padding:"2px 8px", fontSize:10, borderRadius:6, border:"1px solid", cursor:"pointer",
-                background: filterImpact===v ? (GEO_IMPACT_COLOR[v]||"#e2e8f0")+"22" : "transparent",
-                borderColor: filterImpact===v ? (GEO_IMPACT_COLOR[v]||"#2563eb") : "#e2e8f0",
-                color: filterImpact===v ? (GEO_IMPACT_COLOR[v]||"#2563eb") : "#64748b" }}>
+                background: filterImpact===v ? (GEO_IMPACT_COLOR[v]||"var(--border-solid)")+"22" : "transparent",
+                borderColor: filterImpact===v ? (GEO_IMPACT_COLOR[v]||"var(--blue)") : "var(--border-solid)",
+                color: filterImpact===v ? (GEO_IMPACT_COLOR[v]||"#2563eb") : "var(--text-3)" }}>
               {v}
             </button>
           ))}
@@ -93,9 +93,9 @@ export default function GeopoliticalEvents({ onOpenResearch, onContextUpdate }) 
             return (
               <button key={v} onClick={() => setFilterCat(v)} className="font-mono"
                 style={{ padding:"2px 8px", fontSize:10, borderRadius:6, border:"1px solid", cursor:"pointer",
-                  background: filterCat===v ? (cfg?.bg||"#e2e8f0") : "transparent",
-                  borderColor: filterCat===v ? (cfg?.color||"#2563eb") : "#e2e8f0",
-                  color: filterCat===v ? (cfg?.color||"#2563eb") : "#64748b" }}>
+                  background: filterCat===v ? (cfg?.bg||"var(--border-solid)") : "transparent",
+                  borderColor: filterCat===v ? (cfg?.color||"var(--blue)") : "var(--border-solid)",
+                  color: filterCat===v ? (cfg?.color||"#2563eb") : "var(--text-3)" }}>
                 {v}
               </button>
             );
@@ -107,16 +107,16 @@ export default function GeopoliticalEvents({ onOpenResearch, onContextUpdate }) 
           {["1H","6H","24H"].map(v => (
             <button key={v} onClick={() => setFilterTime(v)} className="font-mono"
               style={{ padding:"2px 8px", fontSize:10, borderRadius:6, border:"1px solid", cursor:"pointer",
-                background: filterTime===v ? "#eff6ff" : "transparent",
-                borderColor: filterTime===v ? "#2563eb" : "#e2e8f0",
-                color: filterTime===v ? "#2563eb" : "#64748b" }}>
+                background: filterTime===v ? "var(--blue-dim)" : "transparent",
+                borderColor: filterTime===v ? "var(--blue)" : "var(--border-solid)",
+                color: filterTime===v ? "#2563eb" : "var(--text-3)" }}>
               {v}
             </button>
           ))}
         </div>
 
         <button onClick={fetchEvents} disabled={loading} className="font-mono"
-          style={{ padding:"2px 10px", fontSize:10, borderRadius:6, border:"1px solid var(--border-solid)", background:"transparent", color:loading?"#64748b":"#2563eb", cursor:loading?"wait":"pointer", marginLeft:"auto" }}>
+          style={{ padding:"2px 10px", fontSize:10, borderRadius:6, border:"1px solid var(--border-solid)", background:"transparent", color:loading?"var(--text-3)":"#2563eb", cursor:loading?"wait":"pointer", marginLeft:"auto" }}>
           {loading ? "⟳ Updating…" : "⟳ Refresh"}
         </button>
         {lastRefresh && (
@@ -143,9 +143,9 @@ export default function GeopoliticalEvents({ onOpenResearch, onContextUpdate }) 
             const isNew      = ageSec < 1800 && !isBreaking;
             return (
               <div key={event.id} onClick={() => setSelected(event)}
-                style={{ borderBottom:"1px solid rgba(15,23,42,0.06)", borderLeft:"3px solid " + (isSelected ? cfg.color : GEO_IMPACT_COLOR[event.impact]),
+                style={{ borderBottom:"1px solid var(--border-subtle)", borderLeft:"3px solid " + (isSelected ? cfg.color : GEO_IMPACT_COLOR[event.impact]),
                   background: isSelected ? cfg.bg : "transparent", padding:"10px 14px", cursor:"pointer", transition:"background 0.15s" }}
-                onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background="#f8fafc"; }}
+                onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background="var(--surface-0)"; }}
                 onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background="transparent"; }}>
 
                 <div className="flex items-center gap-1.5 mb-1 flex-wrap">
@@ -167,7 +167,7 @@ export default function GeopoliticalEvents({ onOpenResearch, onContextUpdate }) 
 
                 <div className="flex flex-wrap gap-1 items-center">
                   {event.assets.slice(0,3).map(a => (
-                    <span key={a.id} className="font-mono" style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:2, padding:"1px 6px", fontSize:9, color:"var(--text-3)" }}>
+                    <span key={a.id} className="font-mono" style={{ background:"var(--surface-0)", border:"1px solid var(--border)", borderRadius:2, padding:"1px 6px", fontSize:9, color:"var(--text-3)" }}>
                       {a.label}
                     </span>
                   ))}
@@ -215,7 +215,7 @@ export default function GeopoliticalEvents({ onOpenResearch, onContextUpdate }) 
 
                 {/* Summary */}
                 {selected.summary && (
-                  <div className="mb-4 p-3" style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:4 }}>
+                  <div className="mb-4 p-3" style={{ background:"var(--surface-0)", border:"1px solid var(--border)", borderRadius:4 }}>
                     <div className="font-mono mb-1.5" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Summary</div>
                     <p className="font-mono leading-relaxed" style={{ color:"var(--text-3)", fontSize:12 }}>{selected.summary}</p>
                   </div>
@@ -228,7 +228,7 @@ export default function GeopoliticalEvents({ onOpenResearch, onContextUpdate }) 
                 </div>
 
                 {/* Signal + link row */}
-                <div className="flex items-center gap-4 mb-4 p-3" style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:4 }}>
+                <div className="flex items-center gap-4 mb-4 p-3" style={{ background:"var(--surface-0)", border:"1px solid var(--border)", borderRadius:4 }}>
                   <div>
                     <div className="font-mono mb-1" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase" }}>Directional Signal</div>
                     <div className="font-mono font-bold" style={{ color:GEO_SIGNAL_COLOR[selected.signal], fontSize:18 }}>
@@ -254,9 +254,9 @@ export default function GeopoliticalEvents({ onOpenResearch, onContextUpdate }) 
                       <button key={a.id}
                         onClick={() => onOpenResearch && onOpenResearch(a)}
                         className="font-mono"
-                        style={{ background:"var(--surface-0)", border:"1px solid var(--border-solid)", borderRadius:10, padding:"7px 14px", fontSize:12, color:GEO_ASSET_COLOR[a.type]||"#64748b", cursor:onOpenResearch?"pointer":"default", transition:"all 0.15s" }}
+                        style={{ background:"var(--surface-0)", border:"1px solid var(--border-solid)", borderRadius:10, padding:"7px 14px", fontSize:12, color:GEO_ASSET_COLOR[a.type]||"var(--text-3)", cursor:onOpenResearch?"pointer":"default", transition:"all 0.15s" }}
                         onMouseEnter={e => { if (onOpenResearch) { e.currentTarget.style.borderColor=cfg.color; e.currentTarget.style.background=cfg.bg; } }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"; e.currentTarget.style.background="#f8fafc"; }}>
+                        onMouseLeave={e => { e.currentTarget.style.borderColor="var(--border-hover)"; e.currentTarget.style.background="var(--surface-0)"; }}>
                         {a.label}{onOpenResearch ? " ↗" : ""}
                       </button>
                     ))}
@@ -274,7 +274,7 @@ export default function GeopoliticalEvents({ onOpenResearch, onContextUpdate }) 
                     ["Regions",   selected.regions.length ? selected.regions.map(r => r.split(" ").slice(1).join(" ")).join(", ") : "Global"],
                     ["Published", geoTimeAgo(selected.datetime)],
                   ].map(([k, v]) => (
-                    <div key={k} className="p-2" style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:4 }}>
+                    <div key={k} className="p-2" style={{ background:"var(--surface-0)", border:"1px solid var(--border)", borderRadius:4 }}>
                       <div className="font-mono" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase" }}>{k}</div>
                       <div className="font-mono" style={{ color:"var(--text-1)", fontSize:11 }}>{v}</div>
                     </div>

@@ -264,7 +264,7 @@ export default function StockScreener({ onSelectTicker }) {
       case "name":        return <span style={{ color:"var(--text-1)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", display:"block" }}>{s.name}</span>;
       case "sector":      return (
         <span style={{ fontSize:9, fontWeight:600, padding:"1px 6px", borderRadius:99, whiteSpace:"nowrap",
-          background:`${SECTOR_CLR[s.sector]||"#64748b"}14`, color:SECTOR_CLR[s.sector]||"#64748b" }}>
+          background:`${SECTOR_CLR[s.sector]||"var(--text-3)"}14`, color:SECTOR_CLR[s.sector]||"var(--text-3)" }}>
           {s.sector}
         </span>);
       case "price":       return <span style={{ ...mono, color:"var(--text-1)" }}>{s.price==null?"—":"$"+s.price.toFixed(2)}</span>;
@@ -285,7 +285,7 @@ export default function StockScreener({ onSelectTicker }) {
       case "volume":      return <span style={{ ...mono, color:"var(--text-3)" }}>{s.volume==null?"—":s.volume.toFixed(2)}</span>;
       case "rating":      return (
         <span style={{ fontSize:9, fontWeight:700, padding:"1px 7px", borderRadius:99,
-          background:`${RATING_CLR[s.rating]||"#64748b"}14`, color:RATING_CLR[s.rating]||"#64748b" }}>
+          background:`${RATING_CLR[s.rating]||"var(--text-3)"}14`, color:RATING_CLR[s.rating]||"var(--text-3)" }}>
           {s.rating}
         </span>);
       default: return null;

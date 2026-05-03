@@ -42,7 +42,7 @@ export default function EyeOfSauron({ onOpenResearch, onContextUpdate }) {
         <div className="flex items-center gap-3 px-4 py-2" style={{ borderBottom: "1px solid var(--border)" }}>
           <button onClick={() => setActive(null)}
             className="text-xs font-mono px-3 py-1 rounded transition-colors"
-            style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #58a6ff33" }}>
+            style={{ background: "var(--blue-dim)", color: "var(--blue)", border: "1px solid var(--border-active)" }}>
             ← Back
           </button>
           <span style={{ fontSize: 18 }}>{mod.icon}</span>
@@ -68,12 +68,12 @@ export default function EyeOfSauron({ onOpenResearch, onContextUpdate }) {
             className="eye-card p-4 transition-all"
             style={{ cursor: mod.tag ? "default" : "pointer", minHeight: 140 }}>
             <div style={{ fontSize: 36 }} className="mb-3">{mod.icon}</div>
-            <div className="font-mono font-bold text-sm mb-1" style={{ color: mod.tag ? "#64748b" : "#0f172a" }}>{mod.title}</div>
+            <div className="font-mono font-bold text-sm mb-1" style={{ color: mod.tag ? "var(--text-3)" : "var(--text-1)" }}>{mod.title}</div>
             <div className="font-mono text-xs leading-relaxed mb-3" style={{ color: "var(--text-3)" }}>{mod.desc}</div>
             {mod.tag ? (
               <span className="text-xs font-mono px-2 py-1 rounded" style={{ border: "1px solid #7d8590", color: "#2563eb33" }}>Coming Soon</span>
             ) : (
-              <span className="text-xs font-mono px-2 py-1 rounded" style={{ border: "1px solid #58a6ff33", color: "#2563eb" }}>● Click to Open</span>
+              <span className="text-xs font-mono px-2 py-1 rounded" style={{ border: "1px solid rgba(37,99,235,0.25)", color: "#2563eb" }}>● Click to Open</span>
             )}
           </div>
         ))}

@@ -34,37 +34,37 @@ export default function AdminDashboard() {
     return (
       <div style={{ padding: 40, fontFamily: "'Inter',sans-serif" }}>
         <div style={{ fontSize: 14, color: '#e11d48', fontWeight: 600 }}>Access Denied</div>
-        <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>This page is restricted to the site owner.</div>
+        <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 4 }}>This page is restricted to the site owner.</div>
       </div>
     );
   }
 
   const cardStyle = {
-    background: '#fff',
-    border: '1px solid #e2e8f0',
+    background: 'var(--surface-1)',
+    border: '1px solid var(--border-solid)',
     borderRadius: 10,
     padding: '20px 24px',
     minWidth: 160,
     flex: '1 1 160px',
   };
   const cardLabel = { fontSize: 10, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 };
-  const cardValue = { fontSize: 28, fontWeight: 700, color: '#0f172a', lineHeight: 1 };
-  const cardSub   = { fontSize: 11, color: '#64748b', marginTop: 4 };
+  const cardValue = { fontSize: 28, fontWeight: 700, color: 'var(--text-1)', lineHeight: 1 };
+  const cardSub   = { fontSize: 11, color: 'var(--text-3)', marginTop: 4 };
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: 900, fontFamily: "'Inter',sans-serif" }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
         <div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Admin Dashboard</div>
-          <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>Site analytics — owner only</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)' }}>Admin Dashboard</div>
+          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>Site analytics — owner only</div>
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
           <a
             href="https://vercel.com/dashboard"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ fontSize: 11, padding: '6px 14px', borderRadius: 6, background: '#0f172a', color: '#fff', textDecoration: 'none', fontWeight: 500 }}>
+            style={{ fontSize: 11, padding: '6px 14px', borderRadius: 6, background: 'var(--text-1)', color: 'var(--surface-0)', textDecoration: 'none', fontWeight: 500 }}>
             Vercel
           </a>
           <a
@@ -115,8 +115,8 @@ export default function AdminDashboard() {
           </div>
 
           {/* Recent activity table */}
-          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, overflow: 'hidden' }}>
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid #e2e8f0', fontSize: 12, fontWeight: 600, color: '#0f172a' }}>
+          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border-solid)', borderRadius: 10, overflow: 'hidden' }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-solid)', fontSize: 12, fontWeight: 600, color: 'var(--text-1)' }}>
               Recent Subscription Activity
             </div>
             {stats.recentActivity.length === 0 ? (
@@ -124,24 +124,24 @@ export default function AdminDashboard() {
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
                 <thead>
-                  <tr style={{ background: '#f8fafc' }}>
-                    <th style={{ padding: '8px 20px', textAlign: 'left', color: '#64748b', fontWeight: 600, borderBottom: '1px solid #e2e8f0' }}>Customer</th>
-                    <th style={{ padding: '8px 20px', textAlign: 'left', color: '#64748b', fontWeight: 600, borderBottom: '1px solid #e2e8f0' }}>Status</th>
-                    <th style={{ padding: '8px 20px', textAlign: 'left', color: '#64748b', fontWeight: 600, borderBottom: '1px solid #e2e8f0' }}>Period End</th>
-                    <th style={{ padding: '8px 20px', textAlign: 'left', color: '#64748b', fontWeight: 600, borderBottom: '1px solid #e2e8f0' }}>Updated</th>
+                  <tr style={{ background: 'var(--surface-0)' }}>
+                    <th style={{ padding: '8px 20px', textAlign: 'left', color: 'var(--text-3)', fontWeight: 600, borderBottom: '1px solid var(--border-solid)' }}>Customer</th>
+                    <th style={{ padding: '8px 20px', textAlign: 'left', color: 'var(--text-3)', fontWeight: 600, borderBottom: '1px solid var(--border-solid)' }}>Status</th>
+                    <th style={{ padding: '8px 20px', textAlign: 'left', color: 'var(--text-3)', fontWeight: 600, borderBottom: '1px solid var(--border-solid)' }}>Period End</th>
+                    <th style={{ padding: '8px 20px', textAlign: 'left', color: 'var(--text-3)', fontWeight: 600, borderBottom: '1px solid var(--border-solid)' }}>Updated</th>
                   </tr>
                 </thead>
                 <tbody>
                   {stats.recentActivity.map((row, i) => (
                     <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '10px 20px', color: '#0f172a', fontFamily: "'IBM Plex Mono',monospace", fontSize: 10 }}>
+                      <td style={{ padding: '10px 20px', color: 'var(--text-1)', fontFamily: "'IBM Plex Mono',monospace", fontSize: 10 }}>
                         {row.stripe_customer_id || '—'}
                       </td>
                       <td style={{ padding: '10px 20px' }}>
                         <span style={{
                           fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 99,
                           background: row.status === 'active' ? '#dcfce7' : row.status === 'past_due' ? '#fef3c7' : '#f1f5f9',
-                          color:      row.status === 'active' ? '#059669' : row.status === 'past_due' ? '#d97706' : '#64748b',
+                          color:      row.status === 'active' ? '#059669' : row.status === 'past_due' ? '#d97706' : 'var(--text-3)',
                         }}>
                           {row.status}
                         </span>

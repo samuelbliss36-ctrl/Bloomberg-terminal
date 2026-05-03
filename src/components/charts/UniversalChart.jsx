@@ -19,8 +19,8 @@ export function UniversalChart({ ticker, height = 220, showVolume = false, color
   const maxP = data.length ? Math.max(...allHighs) * 1.0005 : 0;
   const xi   = Math.max(1, Math.floor(data.length / 6));
   const gradId = "ucg_" + ticker.replace(/[^a-z0-9]/gi, "") + "_" + tf;
-  const tooltipStyle = { background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" };
-  const tickStyle    = { fill:"#64748b", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" };
+  const tooltipStyle = { background:"var(--surface-0)", border:"1px solid var(--border)", borderRadius:10, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" };
+  const tickStyle    = { fill:"var(--text-3)", fontSize:9, fontFamily:"'IBM Plex Mono',monospace" };
   const fmt2 = v => v != null ? prefix + (+v).toFixed(decimals) : "—";
 
   const commonAxes = (
@@ -98,10 +98,10 @@ export function UniversalChart({ ticker, height = 220, showVolume = false, color
             <ChartTypeBtn value="candle" active={chartType==="candle"} onClick={setChartType}>Candle</ChartTypeBtn>
           </div>
           {/* Timeframe */}
-          <div className="flex overflow-hidden rounded" style={{ border:"1px solid rgba(15,23,42,0.12)" }}>
+          <div className="flex overflow-hidden rounded" style={{ border:"1px solid var(--border)" }}>
             {TIMEFRAMES.map(t => (
               <button key={t} onClick={() => setTf(t)} className="font-mono"
-                style={{ padding:"2px 8px", fontSize:10, background:tf===t?"#eff6ff":"transparent", color:tf===t?"#2563eb":"#64748b", borderRight:"1px solid var(--border)", cursor:"pointer" }}>
+                style={{ padding:"2px 8px", fontSize:10, background:tf===t?"var(--blue-dim)":"transparent", color:tf===t?"#2563eb":"var(--text-3)", borderRight:"1px solid var(--border)", cursor:"pointer" }}>
                 {t}
               </button>
             ))}

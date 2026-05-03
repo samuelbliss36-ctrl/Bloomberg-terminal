@@ -66,7 +66,7 @@ function AnalystData({ ticker }) {
         {!targets ? <div className="text-xs font-mono" style={{ color: "var(--text-3)" }}>Loading...</div> :
          !targets.targetMean ? <div className="text-xs font-mono" style={{ color: "var(--text-3)" }}>Not available on free tier</div> : (
           <div className="flex flex-col gap-1">
-            {[["High", targets.targetHigh, "#059669"], ["Average", targets.targetMean, "#2563eb"], ["Low", targets.targetLow, "#e11d48"], ["Updated", targets.lastUpdated, "#64748b"]].map(([l, v, c]) => (
+            {[["High", targets.targetHigh, "#059669"], ["Average", targets.targetMean, "#2563eb"], ["Low", targets.targetLow, "#e11d48"], ["Updated", targets.lastUpdated, "var(--text-3)"]].map(([l, v, c]) => (
               <div key={l} className="flex justify-between py-1" style={{ borderBottom: "1px solid var(--border)" }}>
                 <span className="text-xs font-mono" style={{ color: "var(--text-3)" }}>{l}</span>
                 <span className="text-xs font-mono font-bold" style={{ color: c }}>{l === "Updated" ? v?.slice(0,10) : v ? "$" + v.toFixed(2) : "N/A"}</span>
@@ -204,7 +204,7 @@ function PeerComparison({ ticker, metrics, quote }) {
           <tr style={{ position: "sticky", top: 0, background: "var(--surface-1)", zIndex: 1 }}>
             <th style={{ textAlign: "left", padding: "6px 10px", color: "var(--text-3)", fontWeight: 500, borderBottom: "2px solid var(--border-solid)", minWidth: 120 }}>Metric</th>
             {allTickers.map(t => (
-              <th key={t} style={{ textAlign: "right", padding: "6px 10px", borderBottom: "2px solid var(--border-solid)", minWidth: 90, color: t === ticker ? "#2563eb" : "#64748b", fontWeight: t === ticker ? 700 : 500 }}>{t}</th>
+              <th key={t} style={{ textAlign: "right", padding: "6px 10px", borderBottom: "2px solid var(--border-solid)", minWidth: 90, color: t === ticker ? "#2563eb" : "var(--text-3)", fontWeight: t === ticker ? 700 : 500 }}>{t}</th>
             ))}
           </tr>
         </thead>
@@ -213,7 +213,7 @@ function PeerComparison({ ticker, metrics, quote }) {
             const best = getBest(m, allTickers, allData);
             return (
               <tr key={m.label} style={{ borderBottom: "1px solid var(--border)" }}
-                onMouseEnter={e => e.currentTarget.style.background = "#ffffff"}
+                onMouseEnter={e => e.currentTarget.style.background = "var(--surface-2)"}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                 <td style={{ padding: "5px 10px", color: "var(--text-3)", fontWeight: 500 }}>{m.label}</td>
                 {allTickers.map(t => {
@@ -222,7 +222,7 @@ function PeerComparison({ ticker, metrics, quote }) {
                   const isBest = best === t;
                   const isMain = t === ticker;
                   return (
-                    <td key={t} style={{ textAlign: "right", padding: "5px 10px", color: isBest ? "#059669" : isMain ? "#0f172a" : "#64748b", fontWeight: isMain ? 600 : 400, background: isBest ? "rgba(5,150,105,0.05)" : "transparent" }}>
+                    <td key={t} style={{ textAlign: "right", padding: "5px 10px", color: isBest ? "#059669" : isMain ? "var(--text-1)" : "var(--text-3)", fontWeight: isMain ? 600 : 400, background: isBest ? "rgba(5,150,105,0.05)" : "transparent" }}>
                       {val}
                       {isBest && " ★"}
                     </td>
@@ -272,7 +272,7 @@ function FinancialStatements({ ticker }) {
           <div className="flex items-center gap-3">
             <span className="terminal-header">📊 Financial Statements — {ticker}</span>
             <div className="flex">
-              {tabs.map(t => <button key={t.key} onClick={()=>setTab(t.key)} className="px-3 py-1 text-xs font-mono border-b-2 transition-colors" style={{ borderBottomColor: tab===t.key?"#2563eb":"transparent", color: tab===t.key?"#2563eb":"#64748b", background:"transparent" }}>{t.label}</button>)}
+              {tabs.map(t => <button key={t.key} onClick={()=>setTab(t.key)} className="px-3 py-1 text-xs font-mono border-b-2 transition-colors" style={{ borderBottomColor: tab===t.key?"#2563eb":"transparent", color: tab===t.key?"#2563eb":"var(--text-3)", background:"transparent" }}>{t.label}</button>)}
             </div>
           </div>
           <button onClick={() => setExpanded(false)} style={{ color: "var(--text-3)", background: "var(--surface-1)", border: "1px solid var(--border-solid)", borderRadius: 10, padding: "4px 12px", cursor: "pointer", fontSize: 12, fontFamily: "monospace" }}>✕ Close</button>
@@ -287,10 +287,10 @@ function FinancialStatements({ ticker }) {
             </thead>
             <tbody>
               {cols.map(([key, label]) => (
-                <tr key={key} style={{ borderBottom: "1px solid var(--border)" }} onMouseEnter={e => e.currentTarget.style.background="#ffffff"} onMouseLeave={e => e.currentTarget.style.background="transparent"}>
+                <tr key={key} style={{ borderBottom: "1px solid var(--border)" }} onMouseEnter={e => e.currentTarget.style.background="var(--surface-2)"} onMouseLeave={e => e.currentTarget.style.background="transparent"}>
                   <td style={{ padding: "7px 12px", color: "var(--text-3)", fontWeight: 500 }}>{label}</td>
                   {rows.map((r, i) => (
-                    <td key={i} style={{ textAlign: "right", padding: "7px 12px", color: r[key] < 0 ? "#e11d48" : "#0f172a", fontWeight: 500 }}>
+                    <td key={i} style={{ textAlign: "right", padding: "7px 12px", color: r[key] < 0 ? "#e11d48" : "var(--text-1)", fontWeight: 500 }}>
                       {r[key] < 0 ? "-$" + Math.abs(r[key]).toFixed(2) : "$" + (r[key] || 0).toFixed(2)}
                     </td>
                   ))}
@@ -305,9 +305,9 @@ function FinancialStatements({ ticker }) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between border-b mb-2" style={{ borderColor: "#e2e8f0" }}>
+      <div className="flex items-center justify-between border-b mb-2" style={{ borderColor: "var(--border-solid)" }}>
         <div className="flex">
-          {tabs.map(t => <button key={t.key} onClick={()=>setTab(t.key)} className="px-3 py-1.5 text-xs font-mono border-b-2 transition-colors" style={{ borderBottomColor: tab===t.key?"#2563eb":"transparent", color: tab===t.key?"#2563eb":"#64748b", background:"transparent" }}>{t.label}</button>)}
+          {tabs.map(t => <button key={t.key} onClick={()=>setTab(t.key)} className="px-3 py-1.5 text-xs font-mono border-b-2 transition-colors" style={{ borderBottomColor: tab===t.key?"#2563eb":"transparent", color: tab===t.key?"#2563eb":"var(--text-3)", background:"transparent" }}>{t.label}</button>)}
         </div>
         <button onClick={() => setExpanded(true)} style={{ color: "var(--text-3)", background: "none", border: "none", cursor: "pointer", fontSize: 10, fontFamily: "monospace", padding: "2px 8px" }}>⤢ Expand</button>
       </div>
@@ -450,7 +450,7 @@ export default function AssetView({ ticker, quote, metrics, profile, news }) {
           return (
             <a key={i} href={n.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
               <div className="news-card" style={{ padding:"8px 10px", background:"var(--surface-0)" }}
-                onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"}
+                onMouseEnter={e=>e.currentTarget.style.borderColor="var(--border-hover)"}
                 onMouseLeave={e=>e.currentTarget.style.borderColor=""}>
                 <div style={{ display:"flex", justifyContent:"space-between", gap:10, marginBottom:3 }}>
                   <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:500, color:"var(--text-1)", lineHeight:1.4 }}>{n.headline}</span>
@@ -543,11 +543,11 @@ export default function AssetView({ ticker, quote, metrics, profile, news }) {
           <div style={{ display:"flex", flexDirection:"column" }}>
             <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600, textTransform:"uppercase",
               letterSpacing:"0.08em", color:"var(--text-3)", padding:"5px 14px 6px",
-              borderBottom:"1px solid rgba(15,23,42,0.07)", textAlign:"center" }}>STRIKE</div>
+              borderBottom:"1px solid var(--border-subtle)", textAlign:"center" }}>STRIKE</div>
             {allStrikes.map(k => {
               const atm = Math.abs(k - spot) / spot < 0.006;
               return (
-                <div key={k} style={{ padding:"4px 14px", borderBottom:"1px solid rgba(15,23,42,0.05)",
+                <div key={k} style={{ padding:"4px 14px", borderBottom:"1px solid var(--border-subtle)",
                   fontFamily:"'IBM Plex Mono',monospace", fontSize:11, fontWeight:700,
                   color: atm ? "#2563eb" : "#475569", textAlign:"center",
                   background: atm ? "rgba(37,99,235,0.08)" : "transparent" }}>
@@ -615,8 +615,8 @@ export default function AssetView({ ticker, quote, metrics, profile, news }) {
           {rows.map(([k,a,t]) => (
             <tr key={k}>
               <td style={{ color:"var(--text-3)", textAlign:"left" }}>{k}</td>
-              <td style={{ color: a!=="—"?clrM2(a):"#64748b" }}>{a||"—"}</td>
-              <td style={{ color: t!=="—"?clrM2(t):"#64748b" }}>{t||"—"}</td>
+              <td style={{ color: a!=="—"?clrM2(a):"var(--text-3)" }}>{a||"—"}</td>
+              <td style={{ color: t!=="—"?clrM2(t):"var(--text-3)" }}>{t||"—"}</td>
             </tr>
           ))}
         </tbody>

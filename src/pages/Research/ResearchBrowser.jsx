@@ -89,7 +89,7 @@ export default function ResearchBrowser({ pendingItem, onPendingConsumed }) {
   return (
     <div className="flex flex-col flex-1" style={{ height:"calc(100vh - 90px)", overflow:"hidden" }}>
       {/* ── Search bar ── */}
-      <div className="px-4 py-3" style={{ borderBottom:"1px solid rgba(15,23,42,0.09)", background:"var(--surface-0)", flexShrink:0 }}>
+      <div className="px-4 py-3" style={{ borderBottom:"1px solid var(--border)", background:"var(--surface-0)", flexShrink:0 }}>
         <div style={{ position:"relative", maxWidth:680 }}>
           <div className="flex items-center gap-2 px-3 py-2"
             style={{ background:"var(--surface-1)", border:"1px solid " + (searchFocused ? "#2563eb" : "#cbd5e1"), borderRadius:6 }}
@@ -123,7 +123,7 @@ export default function ResearchBrowser({ pendingItem, onPendingConsumed }) {
                         onMouseEnter={() => setSuggestionIdx(idx)}
                         style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"7px 12px", cursor:"pointer", background:active?"#f1f5f9":"transparent", borderLeft:active?"2px solid #1f6feb":"2px solid transparent" }}>
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-mono font-bold" style={{ color:RB_TYPE_COLOR[item.type]||"#64748b", fontSize:11, width:80, flexShrink:0 }}>{item.id}</span>
+                          <span className="font-mono font-bold" style={{ color:RB_TYPE_COLOR[item.type]||"var(--text-3)", fontSize:11, width:80, flexShrink:0 }}>{item.id}</span>
                           <span className="font-mono truncate" style={{ color:"var(--text-1)", fontSize:12 }}>{item.label}</span>
                         </div>
                         <span className="font-mono" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", marginLeft:8, flexShrink:0 }}>{item.type}</span>
@@ -143,9 +143,9 @@ export default function ResearchBrowser({ pendingItem, onPendingConsumed }) {
               <span className="font-mono" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase" }}>Recent:</span>
               {recentSearches.map(r => (
                 <button key={r.id} onClick={() => openPanel(r)} className="font-mono"
-                  style={{ background:"var(--surface-1)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:6, padding:"2px 8px", color:RB_TYPE_COLOR[r.type]||"#64748b", fontSize:10, cursor:"pointer" }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"}
-                  onMouseLeave={e => e.currentTarget.style.borderColor="#e2e8f0"}>
+                  style={{ background:"var(--surface-1)", border:"1px solid var(--border)", borderRadius:6, padding:"2px 8px", color:RB_TYPE_COLOR[r.type]||"var(--text-3)", fontSize:10, cursor:"pointer" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="var(--border-hover)"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor="var(--border-solid)"}>
                   {r.label}
                 </button>
               ))}

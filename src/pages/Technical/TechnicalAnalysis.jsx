@@ -119,8 +119,8 @@ function findLastCrossover(macd, signal) {
 // Component
 // ─────────────────────────────────────────────────────────────────────────────
 
-const AXIS   = { fill: "#64748b", fontSize: 9, fontFamily: "monospace" };
-const TT     = { background: "var(--surface-2)", border: "1px solid rgba(15,23,42,0.18)", borderRadius: 10, fontSize: 10, fontFamily: "'IBM Plex Mono',monospace", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" };
+const AXIS   = { fill: "var(--text-3)", fontSize: 9, fontFamily: "monospace" };
+const TT     = { background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 10, fontFamily: "'IBM Plex Mono',monospace", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" };
 const MONO   = { fontFamily: "'IBM Plex Mono',monospace" };
 const TF_MAP = { "1M": "1mo", "3M": "3mo", "6M": "6mo", "1Y": "1y" };
 
@@ -228,12 +228,12 @@ export default function TechnicalAnalysis({ ticker, onContextUpdate }) {
   const crossover  = findLastCrossover(macdArr, sigArr);
 
   const rsiLabel   = !last.rsi ? "—" : last.rsi > 70 ? "OVERBOUGHT" : last.rsi < 30 ? "OVERSOLD" : "NEUTRAL";
-  const rsiColor   = !last.rsi ? "var(--text-3)" : last.rsi > 70 ? "#e11d48" : last.rsi < 30 ? "#059669" : "#64748b";
+  const rsiColor   = !last.rsi ? "var(--text-3)" : last.rsi > 70 ? "#e11d48" : last.rsi < 30 ? "#059669" : "var(--text-3)";
   const macdBull   = last.macd != null && last.signal != null && last.macd > last.signal;
   const bbSig      = !last.bbUpper ? "—" : last.close > last.bbUpper ? "ABOVE UPPER" : last.close < last.bbLower ? "BELOW LOWER" : "INSIDE BANDS";
   const squeeze    = last.bWidth != null && last.bWidth < 4;
   const stochLabel = !last.stochK ? "—" : last.stochK > 80 ? "OVERBOUGHT" : last.stochK < 20 ? "OVERSOLD" : "NEUTRAL";
-  const stochColor = !last.stochK ? "var(--text-3)" : last.stochK > 80 ? "#e11d48" : last.stochK < 20 ? "#059669" : "#64748b";
+  const stochColor = !last.stochK ? "var(--text-3)" : last.stochK > 80 ? "#e11d48" : last.stochK < 20 ? "#059669" : "var(--text-3)";
   const atrPct     = last.atr && last.close ? (last.atr / last.close * 100).toFixed(1) : null;
 
   // Bull / bear scoring
@@ -341,7 +341,7 @@ export default function TechnicalAnalysis({ ticker, onContextUpdate }) {
               <button key={t} onClick={() => setTf(t)}
                 style={{ padding: "2px 10px", fontSize: 10, ...MONO, borderRadius: 4, cursor: "pointer",
                   background: tf === t ? "rgba(37,99,235,0.12)" : "transparent",
-                  color:      tf === t ? "#2563eb" : "#64748b",
+                  color:      tf === t ? "#2563eb" : "var(--text-3)",
                   border:     `1px solid ${tf === t ? "#2563eb" : "#cbd5e1"}` }}>
                 {t}
               </button>
@@ -359,7 +359,7 @@ export default function TechnicalAnalysis({ ticker, onContextUpdate }) {
                   <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f020" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-solid)" vertical={false} />
               <XAxis dataKey="date" tick={AXIS} tickLine={false} axisLine={false} interval={xi} />
               <YAxis domain={[minP, maxP]} tick={AXIS} tickLine={false} axisLine={false}
                 tickFormatter={v => "$" + v.toFixed(0)} width={52} />
@@ -382,7 +382,7 @@ export default function TechnicalAnalysis({ ticker, onContextUpdate }) {
         <ChartPanel title="RSI (14) — Relative Strength Index" height={185} loading={loading}>
           <ResponsiveContainer width="100%" height={133}>
             <ComposedChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f020" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-solid)" vertical={false} />
               <XAxis dataKey="date" tick={AXIS} tickLine={false} axisLine={false} interval={xi} />
               <YAxis domain={[0, 100]} tick={AXIS} tickLine={false} axisLine={false} width={28} />
               <Tooltip contentStyle={TT} labelStyle={{ color: "var(--text-3)" }} />
@@ -401,7 +401,7 @@ export default function TechnicalAnalysis({ ticker, onContextUpdate }) {
         <ChartPanel title="MACD (12,26,9) — Histogram · MACD Line · Signal Line" height={200} loading={loading}>
           <ResponsiveContainer width="100%" height={148}>
             <ComposedChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f020" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-solid)" vertical={false} />
               <XAxis dataKey="date" tick={AXIS} tickLine={false} axisLine={false} interval={xi} />
               <YAxis tick={AXIS} tickLine={false} axisLine={false} width={42} />
               <Tooltip contentStyle={TT} labelStyle={{ color: "var(--text-3)" }} />
@@ -421,7 +421,7 @@ export default function TechnicalAnalysis({ ticker, onContextUpdate }) {
         <ChartPanel title="Stochastic Oscillator (14,3) — %K (fast) · %D (slow)" height={185} loading={loading}>
           <ResponsiveContainer width="100%" height={133}>
             <ComposedChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f020" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-solid)" vertical={false} />
               <XAxis dataKey="date" tick={AXIS} tickLine={false} axisLine={false} interval={xi} />
               <YAxis domain={[0, 100]} tick={AXIS} tickLine={false} axisLine={false} width={28} />
               <Tooltip contentStyle={TT} labelStyle={{ color: "var(--text-3)" }} />

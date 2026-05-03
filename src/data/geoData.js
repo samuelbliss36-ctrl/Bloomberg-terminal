@@ -164,7 +164,7 @@ export function geoTimeAgo(ts) {
 }
 
 export const GEO_IMPACT_COLOR = { High:"#e11d48", Medium:"#b45309", Low:"#059669" };
-export const GEO_SIGNAL_COLOR = { Bullish:"#059669", Bearish:"#e11d48", Neutral:"#64748b" };
+export const GEO_SIGNAL_COLOR = { Bullish:"#059669", Bearish:"#e11d48", Neutral:"var(--text-3)" };
 export const GEO_SIGNAL_ICON  = { Bullish:"▲", Bearish:"▼", Neutral:"◆" };
 
 

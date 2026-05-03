@@ -74,7 +74,7 @@ export function RightPanelShell({ tapeData, onSelectTicker, earnings, activeTick
 
       {/* Add ticker input */}
       {showAdd && (
-        <div style={{ padding:"6px 10px", borderBottom:"1px solid rgba(15,23,42,0.08)", display:"flex", gap:5 }}>
+        <div style={{ padding:"6px 10px", borderBottom:"1px solid var(--border-subtle)", display:"flex", gap:5 }}>
           <input
             autoFocus
             value={addInput}
@@ -85,7 +85,7 @@ export function RightPanelShell({ tapeData, onSelectTicker, earnings, activeTick
             placeholder="Ticker…"
             style={{ flex:1, fontSize:11, padding:"4px 7px", borderRadius:5,
               background:"var(--surface-0)", fontFamily:"'IBM Plex Mono',monospace",
-              border:`1px solid ${addFocused ? "#2563eb" : "rgba(15,23,42,0.15)"}`,
+              border:`1px solid ${addFocused ? "#2563eb" : "var(--border)"}`,
               color:"var(--text-1)", outline:"none" }} />
           <button onClick={handleAdd}
             style={{ padding:"4px 8px", fontSize:10, fontWeight:700, borderRadius:5,
@@ -107,14 +107,14 @@ export function RightPanelShell({ tapeData, onSelectTicker, earnings, activeTick
           <div key={t.symbol}
             style={{ display:"flex", alignItems:"center",
               background: activeTicker===t.symbol?"rgba(37,99,235,0.06)":"transparent",
-              borderBottom:"1px solid rgba(15,23,42,0.06)", transition:"background 0.12s" }}
+              borderBottom:"1px solid var(--border-subtle)", transition:"background 0.12s" }}
             onMouseEnter={e => { e.currentTarget.querySelector('.wl-remove').style.opacity = "1"; }}
             onMouseLeave={e => { e.currentTarget.querySelector('.wl-remove').style.opacity = "0"; }}>
             <button onClick={() => onSelectTicker(t.symbol)}
               style={{ flex:1, display:"flex", justifyContent:"space-between", alignItems:"center",
                 padding:"7px 8px 7px 12px", background:"transparent", border:"none", cursor:"pointer" }}>
               <span style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:11,
-                color: activeTicker===t.symbol?"#2563eb":"#0f172a" }}>{t.symbol}</span>
+                color: activeTicker===t.symbol?"var(--blue)":"var(--text-1)" }}>{t.symbol}</span>
               <div style={{ textAlign:"right" }}>
                 <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"var(--text-1)" }}>${fmt.price(t.price)}</div>
                 <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:clr(t.changePct) }}>
@@ -137,7 +137,7 @@ export function RightPanelShell({ tapeData, onSelectTicker, earnings, activeTick
       {earnings && (
         <>
           <div className="right-section-header">📅  Upcoming Events</div>
-          <div style={{ padding:"4px 0 6px", borderBottom:"1px solid rgba(15,23,42,0.08)" }}>
+          <div style={{ padding:"4px 0 6px", borderBottom:"1px solid var(--border-subtle)" }}>
             <EventsCalendar earnings={earnings} />
           </div>
         </>
@@ -146,13 +146,13 @@ export function RightPanelShell({ tapeData, onSelectTicker, earnings, activeTick
       {/* Order Ticket */}
       <div className="right-section-header">🎫  Order Ticket</div>
       <div style={{ padding:"10px 12px", flexShrink:0 }}>
-        <div style={{ display:"flex", marginBottom:8, background:"var(--surface-0)", borderRadius:6, padding:2, border:"1px solid rgba(15,23,42,0.11)" }}>
+        <div style={{ display:"flex", marginBottom:8, background:"var(--surface-0)", borderRadius:6, padding:2, border:"1px solid var(--border)" }}>
           {["BUY","SELL"].map(s => (
             <button key={s} onClick={() => setSide(s)}
               style={{ flex:1, padding:"5px 0", border:"none", borderRadius:4, fontFamily:"'Inter',sans-serif",
                 fontSize:11, fontWeight:700, cursor:"pointer", transition:"all 0.15s",
                 background: side===s ? (s==="BUY"?"rgba(5,150,105,0.15)":"rgba(225,29,72,0.14)") : "transparent",
-                color: side===s ? (s==="BUY"?"#059669":"#e11d48") : "#64748b" }}>
+                color: side===s ? (s==="BUY"?"#059669":"#e11d48") : "var(--text-3)" }}>
               {s}
             </button>
           ))}

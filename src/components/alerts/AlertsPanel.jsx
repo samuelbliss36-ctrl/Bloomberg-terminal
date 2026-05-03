@@ -14,18 +14,18 @@ const PANEL = {
   width: 340,
   zIndex: 99998,
   background: 'var(--surface-1, #fff)',
-  borderLeft: '1px solid rgba(15,23,42,0.12)',
+  borderLeft: '1px solid var(--border)',
   display: 'flex',
   flexDirection: 'column',
   fontFamily: "'Inter','IBM Plex Sans',sans-serif",
-  boxShadow: '-4px 0 24px rgba(15,23,42,0.09)',
+  boxShadow: 'var(--shadow-lg)',
 };
 
 const OVERLAY = {
   position: 'fixed',
   inset: 0,
   zIndex: 99997,
-  background: 'rgba(15,23,42,0.18)',
+  background: 'rgba(0,0,0,0.25)',
 };
 
 function pctAway(current, target) {
@@ -59,13 +59,13 @@ function AddForm({ onAdd, telegramConnected }) {
   const label = { fontSize: 9, fontWeight: 700, color: 'var(--text-3, #94a3b8)', textTransform: 'uppercase', letterSpacing: '0.07em' };
   const inp = {
     fontSize: 11, padding: '5px 8px', borderRadius: 6,
-    border: '1px solid rgba(15,23,42,0.15)', background: 'var(--surface-0, #f8fafc)',
-    color: 'var(--text-1, #0f172a)', fontFamily: "'IBM Plex Mono',monospace",
+    border: '1px solid var(--border)', background: 'var(--surface-0)',
+    color: 'var(--text-1)', fontFamily: "'IBM Plex Mono',monospace",
     outline: 'none', width: '100%', boxSizing: 'border-box',
   };
 
   return (
-    <div style={{ padding: '10px 14px 12px', borderBottom: '1px solid rgba(15,23,42,0.08)' }}>
+    <div style={{ padding: '10px 14px 12px', borderBottom: '1px solid var(--border-subtle)' }}>
       {/* Header row with Telegram status */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-1)', letterSpacing: '0.06em' }}>NEW ALERT</div>
@@ -92,13 +92,13 @@ function AddForm({ onAdd, telegramConnected }) {
       </div>
       <div style={{ ...row, marginBottom: 8 }}>
         <span style={label}>Condition</span>
-        <div style={{ display: 'flex', background: 'var(--surface-0)', borderRadius: 6, padding: 2, border: '1px solid rgba(15,23,42,0.11)' }}>
+        <div style={{ display: 'flex', background: 'var(--surface-0)', borderRadius: 6, padding: 2, border: '1px solid var(--border)' }}>
           {['above', 'below'].map(c => (
             <button key={c} onClick={() => setCondition(c)}
               style={{ flex: 1, padding: '4px 0', border: 'none', borderRadius: 5, cursor: 'pointer', transition: 'all 0.15s',
                 fontSize: 10, fontWeight: 700, fontFamily: "'Inter',sans-serif",
                 background: condition === c ? (c === 'above' ? 'rgba(5,150,105,0.14)' : 'rgba(225,29,72,0.12)') : 'transparent',
-                color: condition === c ? (c === 'above' ? '#059669' : '#e11d48') : '#64748b' }}>
+                color: condition === c ? (c === 'above' ? '#059669' : '#e11d48') : 'var(--text-3)' }}>
               {c === 'above' ? '▲ ABOVE' : '▼ BELOW'}
             </button>
           ))}
@@ -169,7 +169,7 @@ function TelegramSection() {
 
   const inp = {
     fontSize: 10, padding: '5px 8px', borderRadius: 6,
-    border: '1px solid rgba(15,23,42,0.15)', background: 'var(--surface-0)',
+    border: '1px solid var(--border)', background: 'var(--surface-0)',
     color: 'var(--text-1)', fontFamily: "'IBM Plex Mono',monospace",
     outline: 'none', width: '100%', boxSizing: 'border-box',
   };
@@ -177,7 +177,7 @@ function TelegramSection() {
   const connected = telegram.token && telegram.chatId;
 
   return (
-    <div style={{ borderTop: '1px solid rgba(15,23,42,0.08)', padding: '10px 14px' }}>
+    <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '10px 14px' }}>
       <button onClick={() => setOpen(o => !o)}
         style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0, width: '100%' }}>
         <Send size={11} style={{ color: connected ? '#2563eb' : 'var(--text-3)' }} />
@@ -241,7 +241,7 @@ export function AlertsPanel({ onClose }) {
       <div style={PANEL}>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', borderBottom: '1px solid rgba(15,23,42,0.10)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
           <Bell size={14} style={{ color: activeCount > 0 ? '#f59e0b' : 'var(--text-3)' }} />
           <span style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-1)', letterSpacing: '0.08em', flex: 1 }}>PRICE ALERTS</span>
           {activeCount > 0 && (
@@ -263,7 +263,7 @@ export function AlertsPanel({ onClose }) {
         <AddForm onAdd={addAlert} telegramConnected={telegramConnected} />
 
         {/* Tabs */}
-        <div style={{ display: 'flex', borderBottom: '1px solid rgba(15,23,42,0.08)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
           {['active', 'history'].map(t => (
             <button key={t} onClick={() => setTab(t)}
               style={{ flex: 1, padding: '7px 0', border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 700,
@@ -288,7 +288,7 @@ export function AlertsPanel({ onClose }) {
                   const dir = a.condition === 'above' ? '▲' : '▼';
                   const clr = a.condition === 'above' ? '#059669' : '#e11d48';
                   return (
-                    <div key={a.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 14px', borderBottom: '1px solid rgba(15,23,42,0.06)' }}>
+                    <div key={a.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 14px', borderBottom: '1px solid var(--border-subtle)' }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                           <span style={{ fontFamily: "'Inter',sans-serif", fontWeight: 700, fontSize: 12, color: 'var(--text-1)' }}>{a.ticker}</span>
@@ -322,7 +322,7 @@ export function AlertsPanel({ onClose }) {
             triggered.length === 0
               ? <div style={{ padding: 20, fontSize: 11, color: 'var(--text-3)', fontFamily: "'IBM Plex Mono',monospace", textAlign: 'center' }}>No triggered alerts yet.</div>
               : triggered.map(a => (
-                  <div key={a.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 14px', borderBottom: '1px solid rgba(15,23,42,0.06)' }}>
+                  <div key={a.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 14px', borderBottom: '1px solid var(--border-subtle)' }}>
                     <BellOff size={12} style={{ color: '#94a3b8', flexShrink: 0, marginTop: 2 }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>

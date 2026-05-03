@@ -36,7 +36,7 @@ function MarketSessionBadges() {
         const closeMins = s.close.h * 60 + s.close.m;
         const isOpen = localMins >= openMins && localMins < closeMins;
         return (
-          <span key={s.name} className="font-mono" style={{ color: isOpen ? "#059669" : "#64748b", fontSize:9 }}>
+          <span key={s.name} className="font-mono" style={{ color: isOpen ? "#059669" : "var(--text-3)", fontSize:9 }}>
             {s.flag} {s.name} {isOpen ? "●" : "○"}
           </span>
         );

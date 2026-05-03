@@ -68,7 +68,7 @@ export default function CommoditiesDashboard({ onContextUpdate }) {
           {categories.map(cat => (
             <button key={cat} onClick={() => setCategory(cat)}
               className="px-3 py-1 text-xs font-mono border rounded transition-colors"
-              style={{ borderColor: category === cat ? "#2563eb" : "#e2e8f0", color: category === cat ? "#2563eb" : "#64748b", background: category === cat ? "#eff6ff" : "transparent" }}>
+              style={{ borderColor: category === cat ? "#2563eb" : "var(--border-solid)", color: category === cat ? "#2563eb" : "var(--text-3)", background: category === cat ? "var(--blue-dim)" : "transparent" }}>
               {cat}
             </button>
           ))}
@@ -80,9 +80,9 @@ export default function CommoditiesDashboard({ onContextUpdate }) {
             return (
               <div key={c.ticker} onClick={() => setActive(c.ticker)}
                 className="flex items-center justify-between p-2 rounded cursor-pointer transition-colors"
-                style={{ background: isActive ? "#eff6ff" : "transparent", border: "1px solid", borderColor: isActive ? "#2563eb33" : "#e2e8f0" }}>
+                style={{ background: isActive ? "var(--blue-dim)" : "transparent", border: "1px solid", borderColor: isActive ? "#2563eb33" : "var(--border-solid)" }}>
                 <div>
-                  <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#2563eb" : "#0f172a" }}>{c.label}</div>
+                  <div className="text-xs font-mono font-bold" style={{ color: isActive ? "#2563eb" : "var(--text-1)" }}>{c.label}</div>
                   <div className="text-xs font-mono" style={{ color: "var(--text-3)" }}>{c.symbol} · {c.unit}</div>
                 </div>
                 <div className="text-right">

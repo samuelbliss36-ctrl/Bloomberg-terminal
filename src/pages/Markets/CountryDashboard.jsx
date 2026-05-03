@@ -292,11 +292,11 @@ function CountryDashboard({ country, onOpenResearch }) {
           {/* All Indices */}
           <div className="terminal-panel p-3">
             <div className="font-mono mb-3" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Market Indices</div>
-            <div style={{ borderTop:"1px solid rgba(15,23,42,0.09)" }}>
+            <div style={{ borderTop:"1px solid var(--border)" }}>
               {country.indices.map(idx => {
                 const d = indexData[idx.ticker];
                 return (
-                  <div key={idx.ticker} className="flex items-center justify-between py-2" style={{ borderBottom:"1px solid rgba(15,23,42,0.06)" }}>
+                  <div key={idx.ticker} className="flex items-center justify-between py-2" style={{ borderBottom:"1px solid var(--border-subtle)" }}>
                     <div>
                       <div className="font-mono" style={{ color:"var(--text-1)", fontSize:11 }}>{idx.label}</div>
                       <div className="font-mono" style={{ color:"var(--text-3)", fontSize:9 }}>{idx.ticker}</div>
@@ -327,9 +327,9 @@ function CountryDashboard({ country, onOpenResearch }) {
                     <button key={m.series}
                       onClick={() => onOpenResearch({ id:m.series, label:m.label, type:"macro", series:m.series, category:"Macro" })}
                       className="text-left p-2"
-                      style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, cursor:"pointer" }}
-                      onMouseEnter={e => e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"}
-                      onMouseLeave={e => e.currentTarget.style.borderColor="#e2e8f0"}>
+                      style={{ background:"var(--surface-0)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer" }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor="var(--border-hover)"}
+                      onMouseLeave={e => e.currentTarget.style.borderColor="var(--border-solid)"}>
                       <div className="font-mono" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase" }}>{m.label}</div>
                       <div className="font-mono font-bold" style={{ color:"#7c3aed", fontSize:18 }}>
                         {d?.latest != null ? d.latest.toFixed(2) : "—"}
@@ -351,9 +351,9 @@ function CountryDashboard({ country, onOpenResearch }) {
                 <button key={c.id}
                   onClick={() => onOpenResearch({ id:c.id, label:c.label, type:"commodity", ticker:c.id, category:"Commodities" })}
                   className="flex items-center justify-between py-2 px-2 text-left"
-                  style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, cursor:"pointer" }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"}
-                  onMouseLeave={e => e.currentTarget.style.borderColor="#e2e8f0"}>
+                  style={{ background:"var(--surface-0)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="var(--border-hover)"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor="var(--border-solid)"}>
                   <div className="flex items-center gap-2">
                     <span className="font-mono" style={{ color:"#b45309", fontSize:11 }}>{c.label}</span>
                     <span className="font-mono" style={{ color:"var(--text-3)", fontSize:9 }}>{c.id}</span>
@@ -371,15 +371,15 @@ function CountryDashboard({ country, onOpenResearch }) {
           {/* Key Companies */}
           <div className="terminal-panel p-3">
             <div className="font-mono mb-3" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Key Companies</div>
-            <div style={{ borderTop:"1px solid rgba(15,23,42,0.09)" }}>
+            <div style={{ borderTop:"1px solid var(--border)" }}>
               {country.topStocks.map(s => {
                 const d = stockData[s.ticker];
                 return (
                   <button key={s.ticker}
                     onClick={() => onOpenResearch({ id:s.ticker, label:s.label, type:"equity", ticker:s.ticker, category:"Equities" })}
                     className="w-full flex items-center justify-between py-2 px-1 text-left"
-                    style={{ borderBottom:"1px solid rgba(15,23,42,0.06)", cursor:"pointer", background:"transparent" }}
-                    onMouseEnter={e => e.currentTarget.style.background="#f8fafc"}
+                    style={{ borderBottom:"1px solid var(--border-subtle)", cursor:"pointer", background:"transparent" }}
+                    onMouseEnter={e => e.currentTarget.style.background="var(--surface-0)"}
                     onMouseLeave={e => e.currentTarget.style.background="transparent"}>
                     <div>
                       <div className="font-mono" style={{ color:"var(--text-1)", fontSize:11 }}>{s.label}</div>
@@ -437,14 +437,14 @@ export default function GlobalMarketsModule({ onOpenResearch }) {
   return (
     <div className="flex flex-col flex-1" style={{ overflow:"hidden" }}>
       {/* ── Country selector bar ── */}
-      <div className="flex items-center gap-2 px-4 py-2 flex-wrap" style={{ borderBottom:"1px solid rgba(15,23,42,0.09)", flexShrink:0 }}>
+      <div className="flex items-center gap-2 px-4 py-2 flex-wrap" style={{ borderBottom:"1px solid var(--border)", flexShrink:0 }}>
         <span className="font-mono" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", marginRight:4 }}>Markets:</span>
         {countries.map(c => (
           <button key={c.id} onClick={() => setSelected(c.id)} className="font-mono"
             style={{
               borderRadius:10, border:"1px solid", padding:"3px 10px", fontSize:10, cursor:"pointer",
-              borderColor: selected===c.id ? c.accentColor : "#e2e8f0",
-              color:        selected===c.id ? c.accentColor : "#64748b",
+              borderColor: selected===c.id ? c.accentColor : "var(--border-solid)",
+              color:        selected===c.id ? c.accentColor : "var(--text-3)",
               background:   selected===c.id ? c.accentColor+"18" : "transparent",
             }}>
             {c.flag} {c.name}

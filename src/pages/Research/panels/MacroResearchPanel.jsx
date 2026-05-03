@@ -83,8 +83,8 @@ export default function MacroResearchPanel({ item, onClose, onOpen }) {
         <div className="font-mono mb-3" style={{ color:"var(--text-3)", fontSize:10 }}>As of {latest?.t}</div>
 
         {trend != null && (
-          <div className="flex items-center gap-2 mb-3 px-2 py-1.5" style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:4 }}>
-            <span className="font-mono" style={{ color:Math.abs(trend)<0.01?"#64748b":trend>0?"#059669":"#e11d48", fontSize:14 }}>
+          <div className="flex items-center gap-2 mb-3 px-2 py-1.5" style={{ background:"var(--surface-0)", border:"1px solid var(--border)", borderRadius:4 }}>
+            <span className="font-mono" style={{ color:Math.abs(trend)<0.01?"var(--text-3)":trend>0?"#059669":"#e11d48", fontSize:14 }}>
               {Math.abs(trend)<0.01?"→":trend>0?"↗":"↘"}
             </span>
             <span className="font-mono" style={{ color:"var(--text-3)", fontSize:10 }}>
@@ -103,9 +103,9 @@ export default function MacroResearchPanel({ item, onClose, onOpen }) {
                   <stop offset="95%" stopColor="#7c3aed" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <XAxis dataKey="t" tick={{fill:"#64748b",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={11}/>
+              <XAxis dataKey="t" tick={{fill:"var(--text-3)",fontSize:9,fontFamily:"'IBM Plex Mono',monospace"}} tickLine={false} axisLine={false} interval={11}/>
               <YAxis domain={["auto","auto"]} hide/>
-              <Tooltip contentStyle={{background:"var(--surface-2)",border:"1px solid rgba(15,23,42,0.18)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} formatter={v=>[v?.toFixed(2),item.label]}/>
+              <Tooltip contentStyle={{background:"var(--surface-2)",border:"1px solid var(--border)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} formatter={v=>[v?.toFixed(2),item.label]}/>
               <Area type="monotone" dataKey="v" stroke="#7c3aed" strokeWidth={1.5} fill={"url(#mcg_"+item.series.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
             </AreaChart>
           </ResponsiveContainer>

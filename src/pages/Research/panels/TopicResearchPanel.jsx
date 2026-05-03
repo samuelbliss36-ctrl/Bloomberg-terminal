@@ -48,9 +48,9 @@ export default function TopicResearchPanel({ item, onClose, onOpen }) {
               return (
                 <button key={m.id} onClick={() => onOpen({ id:m.id, label:m.label, type:"macro", series:m.series, category:"Macro" })}
                   className="text-left p-2"
-                  style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:10, cursor:"pointer", transition:"border-color 0.15s" }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"}
-                  onMouseLeave={e => e.currentTarget.style.borderColor="#e2e8f0"}>
+                  style={{ background:"var(--surface-0)", border:"1px solid var(--border)", borderRadius:10, cursor:"pointer", transition:"border-color 0.15s" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="var(--border-hover)"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor="var(--border-solid)"}>
                   <div className="font-mono" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase" }}>{m.label}</div>
                   <div className="font-mono font-bold" style={{ color:"#7c3aed", fontSize:16 }}>
                     {d?.latest != null ? d.latest.toFixed(2) : "—"}
@@ -64,14 +64,14 @@ export default function TopicResearchPanel({ item, onClose, onOpen }) {
               );
             })}
           </div>
-          <div style={{ borderTop:"1px solid rgba(15,23,42,0.09)", paddingTop:8, marginBottom:4 }}>
+          <div style={{ borderTop:"1px solid var(--border)", paddingTop:8, marginBottom:4 }}>
             <div className="font-mono mb-2" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", letterSpacing:"0.08em" }}>Related Assets</div>
             <div className="flex flex-wrap gap-1.5">
               {cfg.assets.map(a => (
                 <button key={a.id} onClick={() => onOpen(a)} className="font-mono"
-                  style={{ background:"var(--surface-0)", border:"1px solid rgba(15,23,42,0.12)", borderRadius:6, padding:"3px 8px", fontSize:11, color:RB_TYPE_COLOR[a.type]||"#64748b", cursor:"pointer" }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"}
-                  onMouseLeave={e => e.currentTarget.style.borderColor="#e2e8f0"}>
+                  style={{ background:"var(--surface-0)", border:"1px solid var(--border)", borderRadius:6, padding:"3px 8px", fontSize:11, color:RB_TYPE_COLOR[a.type]||"var(--text-3)", cursor:"pointer" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor="var(--border-hover)"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor="var(--border-solid)"}>
                   {a.label}
                 </button>
               ))}

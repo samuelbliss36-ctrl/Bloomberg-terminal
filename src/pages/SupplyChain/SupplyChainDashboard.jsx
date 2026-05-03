@@ -123,8 +123,8 @@ export default function SupplyChainDashboard({ onOpenResearch, onContextUpdate }
             return (
               <div key={s.id} className="p-2 rounded" onClick={() => onOpenResearch && onOpenResearch(researchItem)}
                 style={{ background: "var(--surface-0)", border: "1px solid var(--border)", cursor: onOpenResearch ? "pointer" : "default" }}
-                onMouseEnter={e => { if (onOpenResearch) e.currentTarget.style.borderColor="rgba(15,23,42,0.28)"; }}
-                onMouseLeave={e => { if (onOpenResearch) e.currentTarget.style.borderColor="#e2e8f0"; }}>
+                onMouseEnter={e => { if (onOpenResearch) e.currentTarget.style.borderColor="var(--border-hover)"; }}
+                onMouseLeave={e => { if (onOpenResearch) e.currentTarget.style.borderColor="var(--border-solid)"; }}>
                 <div className="flex items-center justify-between mb-0.5">
                   <div>
                     <div className="text-xs font-mono font-bold" style={{ color: "var(--text-1)" }}>{s.label}</div>

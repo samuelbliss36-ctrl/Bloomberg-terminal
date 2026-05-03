@@ -91,9 +91,9 @@ export function ChartTypeBtn({ value, active, onClick, children }) {
   return (
     <button onClick={() => onClick(value)} className="font-mono"
       style={{ padding:"2px 8px", fontSize:10, borderRadius:6, border:"1px solid",
-        background: active ? "#eff6ff" : "transparent",
-        borderColor: active ? "#2563eb" : "#e2e8f0",
-        color: active ? "#2563eb" : "#64748b", cursor:"pointer" }}>
+        background: active ? "var(--blue-dim)" : "transparent",
+        borderColor: active ? "#2563eb" : "var(--border-solid)",
+        color: active ? "#2563eb" : "var(--text-3)", cursor:"pointer" }}>
       {children}
     </button>
   );
