@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Star, Plus, X } from 'lucide-react';
 import { fmt, clr } from '../lib/fmt';
+import { useAlerts } from '../context/AlertsContext';
 
 // ─── EVENTS CALENDAR (used inside RightPanelShell) ───────────────────────────
 function EventsCalendar({ earnings }) {
@@ -35,6 +36,27 @@ export function RightPanelShell({ tapeData, onSelectTicker, earnings, activeTick
   const [addInput, setAddInput] = useState("");
   const [addFocused, setAddFocused] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
+  const { alerts } = useAlerts();
+
+  // Map ticker → most recent triggered alert (for badge display)
+  const triggeredByTicker = alerts.reduce((acc, a) => {
+    if (!a.active && a.triggeredAt) {
+      if (!acc[a.ticker] || a.triggeredAt > acc[a.ticker].triggeredAt) {
+        acc[a.ticker] = a;
+      }
+    }
+    return acc;
+  }, {});
+
+  function timeAgo(iso) {
+    const diff = Date.now() - new Date(iso).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1)  return 'just now';
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
+  }
 
   const handleAdd = () => {
     const sym = addInput.trim().toUpperCase();
@@ -91,34 +113,55 @@ export function RightPanelShell({ tapeData, onSelectTicker, earnings, activeTick
             {showAdd ? "Add a ticker above to get started" : "Loading…"}
           </div>
         )}
-        {tapeData.map(t => (
-          <div key={t.symbol}
-            style={{ display:"flex", alignItems:"center",
-              background: activeTicker===t.symbol?"rgba(37,99,235,0.06)":"transparent",
-              borderBottom:"1px solid var(--border-subtle)", transition:"background 0.12s" }}
-            onMouseEnter={e => { e.currentTarget.querySelector('.wl-remove').style.opacity = "1"; }}
-            onMouseLeave={e => { e.currentTarget.querySelector('.wl-remove').style.opacity = "0"; }}>
-            <button onClick={() => onSelectTicker(t.symbol)}
-              style={{ flex:1, display:"flex", justifyContent:"space-between", alignItems:"center",
-                padding:"7px 8px 7px 12px", background:"transparent", border:"none", cursor:"pointer" }}>
-              <span style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:11,
-                color: activeTicker===t.symbol?"var(--blue)":"var(--text-1)" }}>{t.symbol}</span>
-              <div style={{ textAlign:"right" }}>
-                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"var(--text-1)" }}>${fmt.price(t.price)}</div>
-                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:clr(t.changePct) }}>
-                  {t.changePct>=0?"▲":"▼"}{Math.abs(t.changePct||0).toFixed(2)}%
+        {tapeData.map(t => {
+          const triggered = triggeredByTicker[t.symbol];
+          return (
+            <div key={t.symbol}
+              style={{ display:"flex", alignItems:"center",
+                background: activeTicker===t.symbol?"rgba(37,99,235,0.06)":"transparent",
+                borderBottom:"1px solid var(--border-subtle)", transition:"background 0.12s" }}
+              onMouseEnter={e => { e.currentTarget.querySelector('.wl-remove').style.opacity = "1"; }}
+              onMouseLeave={e => { e.currentTarget.querySelector('.wl-remove').style.opacity = "0"; }}>
+              <button onClick={() => onSelectTicker(t.symbol)}
+                style={{ flex:1, display:"flex", justifyContent:"space-between", alignItems:"center",
+                  padding:"7px 8px 7px 12px", background:"transparent", border:"none", cursor:"pointer" }}>
+                <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:2 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:5 }}>
+                    <span style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:11,
+                      color: activeTicker===t.symbol?"var(--blue)":"var(--text-1)" }}>{t.symbol}</span>
+                    {triggered && (
+                      <span title={`Alert triggered ${timeAgo(triggered.triggeredAt)} at $${triggered.triggeredPrice?.toFixed(2)}`}
+                        style={{ fontSize:9, background:"rgba(245,158,11,0.15)", color:"#f59e0b",
+                          border:"1px solid rgba(245,158,11,0.30)", borderRadius:4,
+                          padding:"1px 4px", fontFamily:"'IBM Plex Mono',monospace",
+                          lineHeight:1.4, whiteSpace:"nowrap" }}>
+                        🔔 {timeAgo(triggered.triggeredAt)}
+                      </span>
+                    )}
+                  </div>
+                  {triggered && (
+                    <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:"#f59e0b", paddingLeft:0 }}>
+                      hit ${triggered.triggeredPrice?.toFixed(2)} · {triggered.condition} ${Number(triggered.targetPrice).toFixed(2)}
+                    </span>
+                  )}
                 </div>
-              </div>
-            </button>
-            <button className="wl-remove"
-              onClick={() => onRemoveFromWatchlist?.(t.symbol)}
-              title={`Remove ${t.symbol}`}
-              style={{ opacity:0, transition:"opacity 0.15s", background:"none", border:"none",
-                cursor:"pointer", padding:"0 8px", color:"#94a3b8", display:"flex", alignItems:"center" }}>
-              <X size={10} />
-            </button>
-          </div>
-        ))}
+                <div style={{ textAlign:"right" }}>
+                  <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:"var(--text-1)" }}>${fmt.price(t.price)}</div>
+                  <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:clr(t.changePct) }}>
+                    {t.changePct>=0?"▲":"▼"}{Math.abs(t.changePct||0).toFixed(2)}%
+                  </div>
+                </div>
+              </button>
+              <button className="wl-remove"
+                onClick={() => onRemoveFromWatchlist?.(t.symbol)}
+                title={`Remove ${t.symbol}`}
+                style={{ opacity:0, transition:"opacity 0.15s", background:"none", border:"none",
+                  cursor:"pointer", padding:"0 8px", color:"#94a3b8", display:"flex", alignItems:"center" }}>
+                <X size={10} />
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       {/* Events — fills all remaining space */}

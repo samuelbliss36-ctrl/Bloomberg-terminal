@@ -5,6 +5,7 @@ import { useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Bell, BellOff, Plus, Trash2, RefreshCw, Send } from 'lucide-react';
 import { useAlerts } from '../../context/AlertsContext';
+import { supabase } from '../../lib/supabase';
 
 const PANEL = {
   position: 'fixed',
@@ -154,9 +155,12 @@ function TelegramSection() {
     if (!tok.trim() || !cid.trim()) return setStatus('Fill in token + chat ID first.');
     setStatus('Sending…');
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const jwt = session?.access_token;
+      if (!jwt) { setStatus('Not signed in'); return; }
       const r = await fetch('/api/telegram', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
         body: JSON.stringify({ token: tok.trim(), chatId: cid.trim(), message: '✅ <b>Omnes Videntes</b> — Telegram alerts are connected!' }),
       });
       const d = await r.json();
