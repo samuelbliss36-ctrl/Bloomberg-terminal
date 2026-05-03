@@ -42,6 +42,7 @@ export const FMP_SECTOR_MAP = {
 
 export const NAV_ITEMS = [
   { key:"financial",   icon:"📈", label:"Financial"   },
+  { key:"heatmap",     icon:"🌡️", label:"Heatmap"     },
   { key:"commodities", icon:"🛢", label:"Commodities" },
   { key:"crypto",      icon:"₿",  label:"Crypto"      },
   { key:"supplychain", icon:"📉", label:"Macro"       },

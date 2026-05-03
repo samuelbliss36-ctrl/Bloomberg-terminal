@@ -22,6 +22,7 @@ import PortfolioTracker, { MarketSessionBadges } from './pages/Portfolio/Portfol
 import StockScreener from './pages/Screener/StockScreener';
 import ResearchBrowser from './pages/Research/ResearchBrowser';
 import EarningsCalendarPage from './pages/Earnings/EarningsCalendarPage';
+import MarketHeatmap from './pages/Heatmap/MarketHeatmap';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import ProPage from './pages/Subscription/ProPage';
 
@@ -267,6 +268,7 @@ function AppInner() {
         {activePage === "portfolio"    && <PortfolioTracker onContextUpdate={setPageContext} />}
         {activePage === "screener"     && <StockScreener onSelectTicker={t => { setTicker(t); setActivePage("financial"); }} onContextUpdate={setPageContext} />}
         {activePage === "research"     && <ResearchBrowser pendingItem={pendingResearchItem} onPendingConsumed={() => setPendingResearchItem(null)} onContextUpdate={setPageContext} />}
+        {activePage === "heatmap"      && <MarketHeatmap onOpenResearch={openResearch} onContextUpdate={setPageContext} />}
         {activePage === "earnings"     && <EarningsCalendarPage onContextUpdate={setPageContext} />}
         {activePage === "admin"        && <AdminDashboard />}
         {activePage === "pro"          && <ProPage />}
