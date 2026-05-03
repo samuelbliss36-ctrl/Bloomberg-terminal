@@ -331,30 +331,69 @@ export default function PortfolioTracker() {
         {/* AI Analyze button + result panel */}
         {holdings.length > 0 && (
           <div className="mt-2">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={runPortfolioAnalysis}
-                disabled={aiLoading}
-                className="font-mono flex items-center gap-1.5"
-                style={{
-                  background: aiLoading ? "var(--surface-2)" : "linear-gradient(135deg,#1d4ed8,#2563eb)",
-                  border: "none", borderRadius: 8, padding: "6px 14px",
-                  fontSize: 11, cursor: aiLoading ? "not-allowed" : "pointer",
-                  color: "#fff", fontWeight: 600, letterSpacing: "0.03em",
-                  opacity: aiLoading ? 0.7 : 1,
-                  boxShadow: aiLoading ? "none" : "0 2px 8px rgba(37,99,235,0.35)",
-                }}
-              >
-                {aiLoading
-                  ? <><span style={{ display:"inline-block", animation:"spin 1s linear infinite" }}>⟳</span> Analyzing…</>
-                  : <>🤖 Analyze Portfolio</>}
-              </button>
+            <div className="flex items-center gap-3">
+              {/* Rainbow glow analyze button */}
+              <div style={{ position: "relative", display: "inline-flex" }}>
+                {/* Outer glow halo */}
+                {!aiLoading && (
+                  <div style={{
+                    position: "absolute", inset: -5, borderRadius: 9999,
+                    background: "conic-gradient(from 0deg,#ff0080,#ff8000,#ffd700,#00ff88,#00cfff,#9333ea,#ff0080)",
+                    filter: "blur(10px)", opacity: 0.55,
+                    animation: "pf-rainbow 3s linear infinite",
+                  }} />
+                )}
+                {/* Crisp border ring */}
+                <div style={{
+                  position: "relative", display: "inline-flex",
+                  padding: 3, borderRadius: 9999, overflow: "hidden",
+                }}>
+                  {/* Rotating rainbow fill */}
+                  {!aiLoading && (
+                    <div style={{
+                      position: "absolute",
+                      top: "50%", left: "50%",
+                      width: 500, height: 500,
+                      marginTop: -250, marginLeft: -250,
+                      background: "conic-gradient(from 0deg,#ff0080,#ff8000,#ffd700,#00ff88,#00cfff,#9333ea,#ff0080)",
+                      animation: "pf-rainbow 3s linear infinite",
+                    }} />
+                  )}
+                  <button
+                    onClick={runPortfolioAnalysis}
+                    disabled={aiLoading}
+                    className="font-mono flex items-center gap-2"
+                    style={{
+                      position: "relative", zIndex: 1,
+                      background: aiLoading ? "var(--surface-2)" : "var(--surface-0)",
+                      border: "none", borderRadius: 9999,
+                      padding: "10px 26px",
+                      fontSize: 12, fontWeight: 700, letterSpacing: "0.04em",
+                      cursor: aiLoading ? "not-allowed" : "pointer",
+                      color: aiLoading ? "var(--text-3)" : "var(--text-1)",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {aiLoading
+                      ? <><span style={{ display:"inline-block", animation:"spin 1s linear infinite" }}>⟳</span> Analyzing…</>
+                      : <>✦ Analyze Portfolio</>}
+                  </button>
+                </div>
+              </div>
+
               {aiAnalysis && !aiLoading && (
                 <button onClick={() => setAiAnalysis(null)} className="font-mono"
                   style={{ background:"var(--surface-2)", border:"1px solid var(--border-solid)", borderRadius:6, padding:"4px 10px", fontSize:10, cursor:"pointer", color:"var(--text-3)" }}>
                   Clear
                 </button>
               )}
+
+              <style>{`
+                @keyframes pf-rainbow {
+                  from { transform: rotate(0deg); }
+                  to   { transform: rotate(360deg); }
+                }
+              `}</style>
             </div>
 
             {aiRequiresUpgrade && (
