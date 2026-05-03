@@ -61,6 +61,7 @@ export default function PortfolioTracker() {
   const [aiLoading,         setAiLoading]         = useState(false);
   const [aiError,           setAiError]           = useState("");
   const [aiRequiresUpgrade, setAiRequiresUpgrade] = useState(false);
+  const [validatingTicker,  setValidatingTicker]  = useState(false);
   const [refAreaLeft,  setRefAreaLeft]  = useState("");
   const [refAreaRight, setRefAreaRight] = useState("");
   const [isDragging,   setIsDragging]   = useState(false);
@@ -138,13 +139,31 @@ export default function PortfolioTracker() {
     return () => { cancelled = true; };
   }, [equityKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const addHolding = () => {
+  const addHolding = async () => {
     const t = form.ticker.trim().toUpperCase();
     const s = parseFloat(form.shares);
     const c = parseFloat(form.avgCost);
     if (!t) { setFormError("Enter a ticker symbol"); return; }
     if (!s || s <= 0) { setFormError("Enter a valid share count"); return; }
     if (!c || c <= 0) { setFormError("Enter a valid average cost"); return; }
+
+    // Validate the ticker exists by fetching a live quote
+    setValidatingTicker(true);
+    setFormError("");
+    try {
+      const q = await api("/quote?symbol=" + t);
+      if (!q || q.c == null || q.c === 0) {
+        setFormError("Ticker \"" + t + "\" not found — check the symbol and try again");
+        setValidatingTicker(false);
+        return;
+      }
+    } catch {
+      setFormError("Could not verify ticker — check your connection and try again");
+      setValidatingTicker(false);
+      return;
+    }
+    setValidatingTicker(false);
+
     const idx = holdings.findIndex(h => h.ticker === t);
     if (idx >= 0) {
       const old = holdings[idx];
@@ -692,14 +711,14 @@ export default function PortfolioTracker() {
                   <input id={id} type={type} min={type === "number" ? "0" : undefined} step={type === "number" ? "any" : undefined}
                     value={key === "ticker" ? form.ticker : key === "shares" ? form.shares : form.avgCost}
                     onChange={e => setForm(f => ({ ...f, [key]: key === "ticker" ? e.target.value.toUpperCase() : e.target.value }))}
-                    onKeyDown={e => e.key === "Enter" && (next ? document.getElementById(next)?.focus() : addHolding())}
+                    onKeyDown={e => e.key === "Enter" && !validatingTicker && (next ? document.getElementById(next)?.focus() : addHolding())}
                     placeholder={placeholder} style={inputStyle} />
                 </div>
               ))}
               {formError && <div className="font-mono" style={{ color: "#e11d48", fontSize: 11 }}>{formError}</div>}
-              <button onClick={addHolding} className="font-mono font-semibold py-2 mt-1"
-                style={{ background: "#2563eb", border: "none", borderRadius: 10, color: "#fff", cursor: "pointer", fontSize: 12, letterSpacing: "0.05em" }}>
-                ADD POSITION
+              <button onClick={addHolding} disabled={validatingTicker} className="font-mono font-semibold py-2 mt-1"
+                style={{ background: validatingTicker ? "#1e3a6e" : "#2563eb", border: "none", borderRadius: 10, color: "#fff", cursor: validatingTicker ? "not-allowed" : "pointer", fontSize: 12, letterSpacing: "0.05em", opacity: validatingTicker ? 0.8 : 1 }}>
+                {validatingTicker ? "⟳ Checking ticker…" : "ADD POSITION"}
               </button>
               <div className="font-mono" style={{ color: "var(--text-3)", fontSize: 10 }}>Adding an existing ticker averages your cost basis.</div>
             </div>
