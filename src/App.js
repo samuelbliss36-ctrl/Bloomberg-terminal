@@ -73,7 +73,7 @@ function AppRouter() {
 function AppInner() {
   const { user } = useAuth();
   const [activePage, setActivePage] = useState("financial");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [settings, setSettings] = useState(() => ({ showTickerTape: true, darkMode: false, ...loadSettings() }));
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [pageContext, setPageContext] = useState(null);
