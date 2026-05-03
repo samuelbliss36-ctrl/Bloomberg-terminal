@@ -167,7 +167,7 @@ export const COUNTRY_CONFIG = {
   },
 };
 
-function CountryDashboard({ country, onOpenResearch }) {
+export default function CountryDashboard({ country, onOpenResearch }) {
   const [indexData,   setIndexData]   = useState({});
   const [fxData,      setFxData]      = useState(null);
   const [macroData,   setMacroData]   = useState({});
@@ -430,28 +430,3 @@ function CountryDashboard({ country, onOpenResearch }) {
   );
 }
 
-export default function GlobalMarketsModule({ onOpenResearch }) {
-  const [selected, setSelected] = useState("CA");
-  const countries = Object.values(COUNTRY_CONFIG);
-  const country   = COUNTRY_CONFIG[selected];
-  return (
-    <div className="flex flex-col flex-1" style={{ overflow:"hidden" }}>
-      {/* ── Country selector bar ── */}
-      <div className="flex items-center gap-2 px-4 py-2 flex-wrap" style={{ borderBottom:"1px solid var(--border)", flexShrink:0 }}>
-        <span className="font-mono" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase", marginRight:4 }}>Markets:</span>
-        {countries.map(c => (
-          <button key={c.id} onClick={() => setSelected(c.id)} className="font-mono"
-            style={{
-              borderRadius:10, border:"1px solid", padding:"3px 10px", fontSize:10, cursor:"pointer",
-              borderColor: selected===c.id ? c.accentColor : "var(--border-solid)",
-              color:        selected===c.id ? c.accentColor : "var(--text-3)",
-              background:   selected===c.id ? c.accentColor+"18" : "transparent",
-            }}>
-            {c.flag} {c.name}
-          </button>
-        ))}
-      </div>
-      <CountryDashboard key={selected} country={country} onOpenResearch={onOpenResearch} />
-    </div>
-  );
-}

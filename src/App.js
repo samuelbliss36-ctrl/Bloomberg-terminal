@@ -275,18 +275,7 @@ function AppInner() {
         {activePage === "settings" && (
           <div style={{ padding:24, maxWidth:480 }}>
             <div style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:13, color:"var(--text-1)", marginBottom:16 }}>Settings</div>
-            <div style={{ background:"var(--surface-1)", border:"1px solid var(--border)", borderRadius:10, padding:16 }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                <div>
-                  <div style={{ fontFamily:"'Inter',sans-serif", fontSize:12, color:"var(--text-1)", fontWeight:500 }}>Ticker Tape</div>
-                  <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:"var(--text-3)" }}>Scrolling prices in top bar</div>
-                </div>
-                <button onClick={() => setSettings(s => { const n={...s, showTickerTape:!s.showTickerTape}; saveSettings(n); return n; })}
-                  style={{ width:40, height:22, borderRadius:11, border:"none", cursor:"pointer", background:settings.showTickerTape?"#2563eb":"#cbd5e1", position:"relative", transition:"background 0.2s" }}>
-                  <div style={{ position:"absolute", top:3, left:settings.showTickerTape?21:3, width:16, height:16, borderRadius:"50%", background:"#fff", transition:"left 0.2s" }} />
-                </button>
-              </div>
-            </div>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:12, color:"var(--text-3)" }}>Use the controls in the top bar to manage your preferences.</div>
           </div>
         )}
       </div>
