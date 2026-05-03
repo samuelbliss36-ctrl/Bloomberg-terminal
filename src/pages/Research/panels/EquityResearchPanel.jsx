@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { AreaChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceArea } from "recharts";
 import { api } from "../../../lib/api";
 import { fmt, clr, delay, fmtMktCap, fmtX, fmtN, fmtMgn, fmtGr, clrM } from "../../../lib/fmt";
 import { IntelCard } from "../../../components/ui/IntelCard";
@@ -16,6 +16,10 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
   const [metrics, setMetrics]     = useState(null);
   const [chartData, setChartData] = useState([]);
   const [chartRange, setChartRange] = useState("1Y");
+  const [refAreaLeft,  setRefAreaLeft]  = useState("");
+  const [refAreaRight, setRefAreaRight] = useState("");
+  const [isDragging,   setIsDragging]   = useState(false);
+  const [measureInfo,  setMeasureInfo]  = useState(null);
   const [loadingBase, setLoadingBase] = useState(true);
   const [baseError, setBaseError]   = useState(false);
   const [earnings, setEarnings]   = useState(null);
@@ -47,6 +51,7 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
     setBaseError(false);
     setActiveTab("Overview");
     loadedTabs.current = new Set(["Overview"]);
+    setRefAreaLeft(""); setRefAreaRight(""); setIsDragging(false); setMeasureInfo(null);
     setEarnings(null); setRecs(null); setPt(undefined);
     setNews(null); setPeers(null); setPeerQ({}); setPeerM({});
     setYahooStats(null);
@@ -253,9 +258,25 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
             ))}
           </div>
           {chartData.length > 0 && (
-            <div style={{ height:220, marginBottom:10 }}>
+            <div style={{ position:"relative", height:220, marginBottom:10 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top:4, right:2, bottom:0, left:0 }}>
+                <AreaChart data={chartData} margin={{ top:4, right:2, bottom:0, left:0 }}
+                  onMouseDown={e => { if (e?.activeLabel != null) { setRefAreaLeft(e.activeLabel); setRefAreaRight(e.activeLabel); setIsDragging(true); setMeasureInfo(null); } }}
+                  onMouseMove={e => { if (isDragging && e?.activeLabel != null) setRefAreaRight(e.activeLabel); }}
+                  onMouseUp={() => {
+                    if (!isDragging) return;
+                    setIsDragging(false);
+                    const [l, r] = refAreaLeft <= refAreaRight ? [refAreaLeft, refAreaRight] : [refAreaRight, refAreaLeft];
+                    if (l === r) { setRefAreaLeft(""); setRefAreaRight(""); return; }
+                    const ptL = chartData.reduce((b, d) => Math.abs(d.t - l) < Math.abs(b.t - l) ? d : b, chartData[0]);
+                    const ptR = chartData.reduce((b, d) => Math.abs(d.t - r) < Math.abs(b.t - r) ? d : b, chartData[0]);
+                    const pct = (ptR.v - ptL.v) / ptL.v * 100;
+                    const pts = ptR.v - ptL.v;
+                    const color = pct > 0 ? "#059669" : pct < 0 ? "#e11d48" : "#94a3b8";
+                    setMeasureInfo({ pct, pts, dateL: new Date(ptL.t*1000).toLocaleDateString(), dateR: new Date(ptR.t*1000).toLocaleDateString(), color });
+                    setRefAreaLeft(l); setRefAreaRight(r);
+                  }}
+                  onMouseLeave={() => { if (isDragging) { setIsDragging(false); setRefAreaLeft(""); setRefAreaRight(""); } }}>
                   <defs>
                     <linearGradient id={"eqg_" + item.ticker.replace(/[^a-z0-9]/gi,"")} x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%"  stopColor={priceColor} stopOpacity={0.2} />
@@ -272,8 +293,27 @@ export default function EquityResearchPanel({ item, onClose, onOpen }) {
                     formatter={(v,n) => [v != null ? "$"+v.toFixed(2) : "—", n==="v" ? "Price" : "MA 50"]} />
                   <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5} fill={"url(#eqg_"+item.ticker.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false} />
                   <Line type="monotone" dataKey="ma50" stroke="#b45309" strokeWidth={1} dot={false} isAnimationActive={false} connectNulls={false} />
+                  {refAreaLeft !== "" && refAreaRight !== "" && refAreaLeft !== refAreaRight && (() => {
+                    const [l, r] = refAreaLeft <= refAreaRight ? [refAreaLeft, refAreaRight] : [refAreaRight, refAreaLeft];
+                    const ptL = chartData.reduce((b, d) => Math.abs(d.t - l) < Math.abs(b.t - l) ? d : b, chartData[0]);
+                    const ptR = chartData.reduce((b, d) => Math.abs(d.t - r) < Math.abs(b.t - r) ? d : b, chartData[0]);
+                    const pct = (ptR.v - ptL.v) / ptL.v * 100;
+                    const color = pct > 0 ? "#059669" : pct < 0 ? "#e11d48" : "#94a3b8";
+                    return <ReferenceArea x1={l} x2={r} fill={color+"18"} stroke={color+"55"} strokeOpacity={0.3} />;
+                  })()}
                 </AreaChart>
               </ResponsiveContainer>
+              {!measureInfo && (
+                <div style={{ position:"absolute", bottom:4, right:4, fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:"var(--text-3)", pointerEvents:"none", opacity:0.5 }}>drag to measure</div>
+              )}
+              {measureInfo && (
+                <div style={{ position:"absolute", top:6, left:"50%", transform:"translateX(-50%)", background:"var(--surface-2)", border:"1px solid "+measureInfo.color+"44", borderRadius:6, padding:"4px 10px", fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:measureInfo.color, display:"flex", alignItems:"center", gap:8, zIndex:10, whiteSpace:"nowrap", boxShadow:"0 4px 12px rgba(0,0,0,0.3)" }}>
+                  <span style={{ fontWeight:700 }}>{measureInfo.pct >= 0 ? "+" : ""}{measureInfo.pct.toFixed(2)}%</span>
+                  <span style={{ color:"var(--text-3)", fontSize:9 }}>{measureInfo.pts >= 0 ? "+" : ""}${Math.abs(measureInfo.pts).toFixed(2)}</span>
+                  <span style={{ color:"var(--text-3)", fontSize:9 }}>{measureInfo.dateL} → {measureInfo.dateR}</span>
+                  <button onClick={() => { setMeasureInfo(null); setRefAreaLeft(""); setRefAreaRight(""); }} style={{ color:"var(--text-3)", background:"none", border:"none", cursor:"pointer", fontSize:10, padding:"0 0 0 2px" }}>✕</button>
+                </div>
+              )}
             </div>
           )}
 

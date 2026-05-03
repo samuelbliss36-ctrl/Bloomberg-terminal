@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   ComposedChart, Area, Bar, Line, Cell,
-  ReferenceLine, XAxis, YAxis, CartesianGrid,
+  ReferenceLine, ReferenceArea, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from "recharts";
 
@@ -149,6 +149,11 @@ export default function TechnicalAnalysis({ ticker, onContextUpdate }) {
   const [data,    setData]    = useState([]);
   const [tf,      setTf]      = useState("3M");
   const [loading, setLoading] = useState(true);
+  const [refAreaLeft,  setRefAreaLeft]  = useState("");
+  const [refAreaRight, setRefAreaRight] = useState("");
+  const [isDragging,   setIsDragging]   = useState(false);
+  const [dragChart,    setDragChart]    = useState(null);
+  const [measureMap,   setMeasureMap]   = useState({});
 
   // ── Data fetch + indicator computation ──────────────────────────────────────
   useEffect(() => {
@@ -324,6 +329,59 @@ export default function TechnicalAnalysis({ ticker, onContextUpdate }) {
 
   const val = (v, dp = 2) => v != null ? v.toFixed(dp) : "—";
 
+  // ── Drag-to-measure helpers ──────────────────────────────────────────────────
+  const dragStart = (chartId, e) => {
+    if (e?.activeLabel) {
+      setRefAreaLeft(e.activeLabel); setRefAreaRight(e.activeLabel);
+      setIsDragging(true); setDragChart(chartId);
+      setMeasureMap(m => ({ ...m, [chartId]: null }));
+    }
+  };
+  const dragMove = (e) => {
+    if (isDragging && e?.activeLabel) setRefAreaRight(e.activeLabel);
+  };
+  const dragEnd = (chartId, valueKey) => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    const iL = data.findIndex(d => d.date === refAreaLeft);
+    const iR = data.findIndex(d => d.date === refAreaRight);
+    if (iL < 0 || iR < 0 || iL === iR) { setRefAreaLeft(""); setRefAreaRight(""); return; }
+    const [idxL, idxR] = iL <= iR ? [iL, iR] : [iR, iL];
+    const ptL = data[idxL], ptR = data[idxR];
+    const vL = ptL[valueKey], vR = ptR[valueKey];
+    if (vL == null || vR == null) { setRefAreaLeft(""); setRefAreaRight(""); return; }
+    const pct = (vR - vL) / Math.abs(vL) * 100;
+    const pts = vR - vL;
+    const color = pct > 0 ? "#059669" : pct < 0 ? "#e11d48" : "#94a3b8";
+    setMeasureMap(m => ({ ...m, [chartId]: { pct, pts, dateL: ptL.date, dateR: ptR.date, color } }));
+    const [left, right] = iL <= iR ? [refAreaLeft, refAreaRight] : [refAreaRight, refAreaLeft];
+    setRefAreaLeft(left); setRefAreaRight(right); setDragChart(chartId);
+  };
+  const dragLeave = () => { if (isDragging) { setIsDragging(false); setRefAreaLeft(""); setRefAreaRight(""); } };
+  const getReferenceArea = (chartId, valueKey) => {
+    if (!refAreaLeft || !refAreaRight || refAreaLeft === refAreaRight || dragChart !== chartId) return null;
+    const iL = data.findIndex(d => d.date === refAreaLeft);
+    const iR = data.findIndex(d => d.date === refAreaRight);
+    if (iL < 0 || iR < 0) return null;
+    const [idxL, idxR] = iL <= iR ? [iL, iR] : [iR, iL];
+    const vL = data[idxL][valueKey], vR = data[idxR][valueKey];
+    const pct = vL != null && vR != null ? (vR - vL) / Math.abs(vL) * 100 : 0;
+    const color = pct > 0 ? "#059669" : pct < 0 ? "#e11d48" : "#94a3b8";
+    const [l, r] = iL <= iR ? [refAreaLeft, refAreaRight] : [refAreaRight, refAreaLeft];
+    return <ReferenceArea x1={l} x2={r} fill={color+"18"} stroke={color+"55"} strokeOpacity={0.3} />;
+  };
+  const getMeasureBadge = (chartId) => {
+    const info = measureMap[chartId];
+    if (!info) return null;
+    return (
+      <div style={{ position:"absolute", top:6, left:"50%", transform:"translateX(-50%)", background:"var(--surface-2)", border:"1px solid "+info.color+"44", borderRadius:6, padding:"4px 10px", fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:info.color, display:"flex", alignItems:"center", gap:8, zIndex:10, whiteSpace:"nowrap", boxShadow:"0 4px 12px rgba(0,0,0,0.3)", pointerEvents:"auto" }}>
+        <span style={{ fontWeight:700 }}>{info.pct >= 0 ? "+" : ""}{info.pct.toFixed(2)}%</span>
+        <span style={{ color:"var(--text-3)", fontSize:9 }}>{info.dateL} → {info.dateR}</span>
+        <button onClick={() => { setMeasureMap(m => ({ ...m, [chartId]: null })); setRefAreaLeft(""); setRefAreaRight(""); }} style={{ color:"var(--text-3)", background:"none", border:"none", cursor:"pointer", fontSize:10, padding:"0 0 0 2px" }}>✕</button>
+      </div>
+    );
+  };
+
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <div style={{ display: "flex", height: "calc(100vh - 90px)", overflow: "hidden", background: "var(--surface-0)" }}>
@@ -351,89 +409,114 @@ export default function TechnicalAnalysis({ ticker, onContextUpdate }) {
 
         {/* 1 ── Price + Bollinger Bands + SMA 20/50 ──────────────────── */}
         <ChartPanel title="Price · Bollinger Bands (20,2) · SMA 20 · SMA 50" height={255} loading={loading}>
-          <ResponsiveContainer width="100%" height={202}>
-            <ComposedChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="tcPriceGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#2563eb" stopOpacity={0.12} />
-                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-solid)" vertical={false} />
-              <XAxis dataKey="date" tick={AXIS} tickLine={false} axisLine={false} interval={xi} />
-              <YAxis domain={[minP, maxP]} tick={AXIS} tickLine={false} axisLine={false}
-                tickFormatter={v => "$" + v.toFixed(0)} width={52} />
-              <Tooltip contentStyle={TT} labelStyle={{ color: "var(--text-3)" }} />
-              {/* BB bands */}
-              <Line type="monotone" dataKey="bbUpper"  stroke="#b45309" strokeWidth={1} strokeDasharray="4 3" dot={false} name="BB Upper" />
-              <Line type="monotone" dataKey="bbMiddle" stroke="#94a3b8" strokeWidth={1} dot={false} name="BB Mid" />
-              <Line type="monotone" dataKey="bbLower"  stroke="#b45309" strokeWidth={1} strokeDasharray="4 3" dot={false} name="BB Lower" />
-              {/* SMAs */}
-              <Line type="monotone" dataKey="sma20" stroke="#f59e0b" strokeWidth={1.5} dot={false} name="SMA 20" />
-              <Line type="monotone" dataKey="sma50" stroke="#a855f7" strokeWidth={1.5} dot={false} name="SMA 50" />
-              {/* Price */}
-              <Area type="monotone" dataKey="close" stroke="#2563eb" strokeWidth={2}
-                fill="url(#tcPriceGrad)" dot={false} name="Price" />
-            </ComposedChart>
-          </ResponsiveContainer>
+          <div style={{ position:"relative" }}>
+            <ResponsiveContainer width="100%" height={202}>
+              <ComposedChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
+                onMouseDown={e => dragStart("price", e)} onMouseMove={dragMove}
+                onMouseUp={() => dragEnd("price", "close")} onMouseLeave={dragLeave}>
+                <defs>
+                  <linearGradient id="tcPriceGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#2563eb" stopOpacity={0.12} />
+                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-solid)" vertical={false} />
+                <XAxis dataKey="date" tick={AXIS} tickLine={false} axisLine={false} interval={xi} />
+                <YAxis domain={[minP, maxP]} tick={AXIS} tickLine={false} axisLine={false}
+                  tickFormatter={v => "$" + v.toFixed(0)} width={52} />
+                <Tooltip contentStyle={TT} labelStyle={{ color: "var(--text-3)" }} />
+                <Line type="monotone" dataKey="bbUpper"  stroke="#b45309" strokeWidth={1} strokeDasharray="4 3" dot={false} name="BB Upper" />
+                <Line type="monotone" dataKey="bbMiddle" stroke="#94a3b8" strokeWidth={1} dot={false} name="BB Mid" />
+                <Line type="monotone" dataKey="bbLower"  stroke="#b45309" strokeWidth={1} strokeDasharray="4 3" dot={false} name="BB Lower" />
+                <Line type="monotone" dataKey="sma20" stroke="#f59e0b" strokeWidth={1.5} dot={false} name="SMA 20" />
+                <Line type="monotone" dataKey="sma50" stroke="#a855f7" strokeWidth={1.5} dot={false} name="SMA 50" />
+                <Area type="monotone" dataKey="close" stroke="#2563eb" strokeWidth={2}
+                  fill="url(#tcPriceGrad)" dot={false} name="Price" />
+                {getReferenceArea("price", "close")}
+              </ComposedChart>
+            </ResponsiveContainer>
+            {!measureMap["price"] && <div style={{ position:"absolute", bottom:4, right:4, fontFamily:"monospace", fontSize:8, color:"var(--text-3)", pointerEvents:"none", opacity:0.5 }}>drag to measure</div>}
+            {getMeasureBadge("price")}
+          </div>
         </ChartPanel>
 
         {/* 2 ── RSI (14) ──────────────────────────────────────────────── */}
         <ChartPanel title="RSI (14) — Relative Strength Index" height={185} loading={loading}>
-          <ResponsiveContainer width="100%" height={133}>
-            <ComposedChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-solid)" vertical={false} />
-              <XAxis dataKey="date" tick={AXIS} tickLine={false} axisLine={false} interval={xi} />
-              <YAxis domain={[0, 100]} tick={AXIS} tickLine={false} axisLine={false} width={28} />
-              <Tooltip contentStyle={TT} labelStyle={{ color: "var(--text-3)" }} />
-              <ReferenceLine y={70} stroke="#e11d48" strokeDasharray="4 2" strokeWidth={1}
-                label={{ value: "70", position: "right", fill: "#e11d48", fontSize: 8, fontFamily: "monospace" }} />
-              <ReferenceLine y={50} stroke="#cbd5e130" strokeWidth={1} />
-              <ReferenceLine y={30} stroke="#059669" strokeDasharray="4 2" strokeWidth={1}
-                label={{ value: "30", position: "right", fill: "#059669", fontSize: 8, fontFamily: "monospace" }} />
-              <Area type="monotone" dataKey="rsi" stroke="#2563eb" strokeWidth={1.5}
-                fill="rgba(37,99,235,0.06)" dot={false} name="RSI" />
-            </ComposedChart>
-          </ResponsiveContainer>
+          <div style={{ position:"relative" }}>
+            <ResponsiveContainer width="100%" height={133}>
+              <ComposedChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
+                onMouseDown={e => dragStart("rsi", e)} onMouseMove={dragMove}
+                onMouseUp={() => dragEnd("rsi", "rsi")} onMouseLeave={dragLeave}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-solid)" vertical={false} />
+                <XAxis dataKey="date" tick={AXIS} tickLine={false} axisLine={false} interval={xi} />
+                <YAxis domain={[0, 100]} tick={AXIS} tickLine={false} axisLine={false} width={28} />
+                <Tooltip contentStyle={TT} labelStyle={{ color: "var(--text-3)" }} />
+                <ReferenceLine y={70} stroke="#e11d48" strokeDasharray="4 2" strokeWidth={1}
+                  label={{ value: "70", position: "right", fill: "#e11d48", fontSize: 8, fontFamily: "monospace" }} />
+                <ReferenceLine y={50} stroke="#cbd5e130" strokeWidth={1} />
+                <ReferenceLine y={30} stroke="#059669" strokeDasharray="4 2" strokeWidth={1}
+                  label={{ value: "30", position: "right", fill: "#059669", fontSize: 8, fontFamily: "monospace" }} />
+                <Area type="monotone" dataKey="rsi" stroke="#2563eb" strokeWidth={1.5}
+                  fill="rgba(37,99,235,0.06)" dot={false} name="RSI" />
+                {getReferenceArea("rsi", "rsi")}
+              </ComposedChart>
+            </ResponsiveContainer>
+            {!measureMap["rsi"] && <div style={{ position:"absolute", bottom:4, right:4, fontFamily:"monospace", fontSize:8, color:"var(--text-3)", pointerEvents:"none", opacity:0.5 }}>drag to measure</div>}
+            {getMeasureBadge("rsi")}
+          </div>
         </ChartPanel>
 
         {/* 3 ── MACD (12,26,9): histogram + MACD line + signal line ───── */}
         <ChartPanel title="MACD (12,26,9) — Histogram · MACD Line · Signal Line" height={200} loading={loading}>
-          <ResponsiveContainer width="100%" height={148}>
-            <ComposedChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-solid)" vertical={false} />
-              <XAxis dataKey="date" tick={AXIS} tickLine={false} axisLine={false} interval={xi} />
-              <YAxis tick={AXIS} tickLine={false} axisLine={false} width={42} />
-              <Tooltip contentStyle={TT} labelStyle={{ color: "var(--text-3)" }} />
-              <ReferenceLine y={0} stroke="#cbd5e1" strokeWidth={1} />
-              <Bar dataKey="histogram" name="Histogram" maxBarSize={8} radius={[1, 1, 0, 0]}>
-                {data.map((d, i) => (
-                  <Cell key={i} fill={d.histogram >= 0 ? "#059669" : "#e11d48"} fillOpacity={0.75} />
-                ))}
-              </Bar>
-              <Line type="monotone" dataKey="macd"   stroke="#2563eb" strokeWidth={1.5} dot={false} name="MACD" />
-              <Line type="monotone" dataKey="signal" stroke="#f59e0b" strokeWidth={1.5} dot={false} name="Signal" />
-            </ComposedChart>
-          </ResponsiveContainer>
+          <div style={{ position:"relative" }}>
+            <ResponsiveContainer width="100%" height={148}>
+              <ComposedChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
+                onMouseDown={e => dragStart("macd", e)} onMouseMove={dragMove}
+                onMouseUp={() => dragEnd("macd", "macd")} onMouseLeave={dragLeave}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-solid)" vertical={false} />
+                <XAxis dataKey="date" tick={AXIS} tickLine={false} axisLine={false} interval={xi} />
+                <YAxis tick={AXIS} tickLine={false} axisLine={false} width={42} />
+                <Tooltip contentStyle={TT} labelStyle={{ color: "var(--text-3)" }} />
+                <ReferenceLine y={0} stroke="#cbd5e1" strokeWidth={1} />
+                <Bar dataKey="histogram" name="Histogram" maxBarSize={8} radius={[1, 1, 0, 0]}>
+                  {data.map((d, i) => (
+                    <Cell key={i} fill={d.histogram >= 0 ? "#059669" : "#e11d48"} fillOpacity={0.75} />
+                  ))}
+                </Bar>
+                <Line type="monotone" dataKey="macd"   stroke="#2563eb" strokeWidth={1.5} dot={false} name="MACD" />
+                <Line type="monotone" dataKey="signal" stroke="#f59e0b" strokeWidth={1.5} dot={false} name="Signal" />
+                {getReferenceArea("macd", "macd")}
+              </ComposedChart>
+            </ResponsiveContainer>
+            {!measureMap["macd"] && <div style={{ position:"absolute", bottom:4, right:4, fontFamily:"monospace", fontSize:8, color:"var(--text-3)", pointerEvents:"none", opacity:0.5 }}>drag to measure</div>}
+            {getMeasureBadge("macd")}
+          </div>
         </ChartPanel>
 
         {/* 4 ── Stochastic (14,3) ─────────────────────────────────────── */}
         <ChartPanel title="Stochastic Oscillator (14,3) — %K (fast) · %D (slow)" height={185} loading={loading}>
-          <ResponsiveContainer width="100%" height={133}>
-            <ComposedChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-solid)" vertical={false} />
-              <XAxis dataKey="date" tick={AXIS} tickLine={false} axisLine={false} interval={xi} />
-              <YAxis domain={[0, 100]} tick={AXIS} tickLine={false} axisLine={false} width={28} />
-              <Tooltip contentStyle={TT} labelStyle={{ color: "var(--text-3)" }} />
-              <ReferenceLine y={80} stroke="#e11d48" strokeDasharray="4 2" strokeWidth={1}
-                label={{ value: "80", position: "right", fill: "#e11d48", fontSize: 8, fontFamily: "monospace" }} />
-              <ReferenceLine y={50} stroke="#cbd5e130" strokeWidth={1} />
-              <ReferenceLine y={20} stroke="#059669" strokeDasharray="4 2" strokeWidth={1}
-                label={{ value: "20", position: "right", fill: "#059669", fontSize: 8, fontFamily: "monospace" }} />
-              <Line type="monotone" dataKey="stochK" stroke="#2563eb" strokeWidth={1.5} dot={false} name="%K" />
-              <Line type="monotone" dataKey="stochD" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="4 2" dot={false} name="%D" />
-            </ComposedChart>
-          </ResponsiveContainer>
+          <div style={{ position:"relative" }}>
+            <ResponsiveContainer width="100%" height={133}>
+              <ComposedChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
+                onMouseDown={e => dragStart("stoch", e)} onMouseMove={dragMove}
+                onMouseUp={() => dragEnd("stoch", "stochK")} onMouseLeave={dragLeave}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-solid)" vertical={false} />
+                <XAxis dataKey="date" tick={AXIS} tickLine={false} axisLine={false} interval={xi} />
+                <YAxis domain={[0, 100]} tick={AXIS} tickLine={false} axisLine={false} width={28} />
+                <Tooltip contentStyle={TT} labelStyle={{ color: "var(--text-3)" }} />
+                <ReferenceLine y={80} stroke="#e11d48" strokeDasharray="4 2" strokeWidth={1}
+                  label={{ value: "80", position: "right", fill: "#e11d48", fontSize: 8, fontFamily: "monospace" }} />
+                <ReferenceLine y={50} stroke="#cbd5e130" strokeWidth={1} />
+                <ReferenceLine y={20} stroke="#059669" strokeDasharray="4 2" strokeWidth={1}
+                  label={{ value: "20", position: "right", fill: "#059669", fontSize: 8, fontFamily: "monospace" }} />
+                <Line type="monotone" dataKey="stochK" stroke="#2563eb" strokeWidth={1.5} dot={false} name="%K" />
+                <Line type="monotone" dataKey="stochD" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="4 2" dot={false} name="%D" />
+                {getReferenceArea("stoch", "stochK")}
+              </ComposedChart>
+            </ResponsiveContainer>
+            {!measureMap["stoch"] && <div style={{ position:"absolute", bottom:4, right:4, fontFamily:"monospace", fontSize:8, color:"var(--text-3)", pointerEvents:"none", opacity:0.5 }}>drag to measure</div>}
+            {getMeasureBadge("stoch")}
+          </div>
         </ChartPanel>
 
       </div>

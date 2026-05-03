@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { AreaChart, Area, ReferenceLine, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, ReferenceLine, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceArea } from "recharts";
 import { fmt, clr } from "../../../lib/fmt";
 import { FX_RATE_PAIRS } from "../../../data/researchData";
 import { ResearchPanelShell, ResearchTabBar } from "../../../components/ui/ResearchPanelShell";
@@ -15,6 +15,10 @@ export default function FXResearchPanel({ item, onClose, onOpen }) {
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState(false);
   const [rateData, setRateData]   = useState({ base:[], quote:[] });
+  const [refAreaLeft,  setRefAreaLeft]  = useState("");
+  const [refAreaRight, setRefAreaRight] = useState("");
+  const [isDragging,   setIsDragging]   = useState(false);
+  const [measureInfo,  setMeasureInfo]  = useState(null);
   const [rateLoading, setRateLoading] = useState(false);
   const [rateError, setRateError]   = useState(false);
   const loadedTabs = useRef(new Set(["Overview"]));
@@ -23,6 +27,7 @@ export default function FXResearchPanel({ item, onClose, onOpen }) {
   useEffect(() => {
     setLoading(true); setError(false); setChartData([]); setSummary(null);
     setActiveTab("Overview"); loadedTabs.current = new Set(["Overview"]);
+    setRefAreaLeft(""); setRefAreaRight(""); setIsDragging(false); setMeasureInfo(null);
     fetch("/api/chart?ticker=" + encodeURIComponent(item.ticker) + "&range=1y&interval=1d")
       .then(r => r.json())
       .then(c => {
@@ -103,9 +108,25 @@ export default function FXResearchPanel({ item, onClose, onOpen }) {
         </div>
 
         {chartData.length > 0 && (
-          <div style={{ height:190, marginBottom:12 }}>
+          <div style={{ position:"relative", height:190, marginBottom:12 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top:4, right:2, bottom:0, left:0 }}>
+              <AreaChart data={chartData} margin={{ top:4, right:2, bottom:0, left:0 }}
+                onMouseDown={e => { if (e?.activeLabel != null) { setRefAreaLeft(e.activeLabel); setRefAreaRight(e.activeLabel); setIsDragging(true); setMeasureInfo(null); } }}
+                onMouseMove={e => { if (isDragging && e?.activeLabel != null) setRefAreaRight(e.activeLabel); }}
+                onMouseUp={() => {
+                  if (!isDragging) return;
+                  setIsDragging(false);
+                  const [l, r] = refAreaLeft <= refAreaRight ? [refAreaLeft, refAreaRight] : [refAreaRight, refAreaLeft];
+                  if (l === r) { setRefAreaLeft(""); setRefAreaRight(""); return; }
+                  const ptL = chartData.reduce((b, d) => Math.abs(d.t - l) < Math.abs(b.t - l) ? d : b, chartData[0]);
+                  const ptR = chartData.reduce((b, d) => Math.abs(d.t - r) < Math.abs(b.t - r) ? d : b, chartData[0]);
+                  const pct = (ptR.v - ptL.v) / ptL.v * 100;
+                  const pts = ptR.v - ptL.v;
+                  const color = pct > 0 ? "#059669" : pct < 0 ? "#e11d48" : "#94a3b8";
+                  setMeasureInfo({ pct, pts, dateL: new Date(ptL.t*1000).toLocaleDateString(), dateR: new Date(ptR.t*1000).toLocaleDateString(), color });
+                  setRefAreaLeft(l); setRefAreaRight(r);
+                }}
+                onMouseLeave={() => { if (isDragging) { setIsDragging(false); setRefAreaLeft(""); setRefAreaRight(""); } }}>
                 <defs>
                   <linearGradient id={"fxg_"+item.id.replace(/[^a-z0-9]/gi,"")} x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%"  stopColor={priceColor} stopOpacity={0.22}/>
@@ -116,8 +137,27 @@ export default function FXResearchPanel({ item, onClose, onOpen }) {
                 <YAxis domain={["auto","auto"]} hide/>
                 <Tooltip contentStyle={{background:"var(--surface-2)",border:"1px solid var(--border)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} labelFormatter={t=>new Date(t*1000).toLocaleDateString()} formatter={v=>[v?.toFixed(dp),"Rate"]}/>
                 <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5} fill={"url(#fxg_"+item.id.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
+                {refAreaLeft !== "" && refAreaRight !== "" && refAreaLeft !== refAreaRight && (() => {
+                  const [l, r] = refAreaLeft <= refAreaRight ? [refAreaLeft, refAreaRight] : [refAreaRight, refAreaLeft];
+                  const ptL = chartData.reduce((b, d) => Math.abs(d.t - l) < Math.abs(b.t - l) ? d : b, chartData[0]);
+                  const ptR = chartData.reduce((b, d) => Math.abs(d.t - r) < Math.abs(b.t - r) ? d : b, chartData[0]);
+                  const pct = (ptR.v - ptL.v) / ptL.v * 100;
+                  const color = pct > 0 ? "#059669" : pct < 0 ? "#e11d48" : "#94a3b8";
+                  return <ReferenceArea x1={l} x2={r} fill={color+"18"} stroke={color+"55"} strokeOpacity={0.3} />;
+                })()}
               </AreaChart>
             </ResponsiveContainer>
+            {!measureInfo && (
+              <div style={{ position:"absolute", bottom:4, right:4, fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:"var(--text-3)", pointerEvents:"none", opacity:0.5 }}>drag to measure</div>
+            )}
+            {measureInfo && (
+              <div style={{ position:"absolute", top:6, left:"50%", transform:"translateX(-50%)", background:"var(--surface-2)", border:"1px solid "+measureInfo.color+"44", borderRadius:6, padding:"4px 10px", fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:measureInfo.color, display:"flex", alignItems:"center", gap:8, zIndex:10, whiteSpace:"nowrap", boxShadow:"0 4px 12px rgba(0,0,0,0.3)" }}>
+                <span style={{ fontWeight:700 }}>{measureInfo.pct >= 0 ? "+" : ""}{measureInfo.pct.toFixed(2)}%</span>
+                <span style={{ color:"var(--text-3)", fontSize:9 }}>{measureInfo.pts >= 0 ? "+" : ""}{measureInfo.pts.toFixed(dp)}</span>
+                <span style={{ color:"var(--text-3)", fontSize:9 }}>{measureInfo.dateL} → {measureInfo.dateR}</span>
+                <button onClick={() => { setMeasureInfo(null); setRefAreaLeft(""); setRefAreaRight(""); }} style={{ color:"var(--text-3)", background:"none", border:"none", cursor:"pointer", fontSize:10, padding:"0 0 0 2px" }}>✕</button>
+              </div>
+            )}
           </div>
         )}
 
@@ -195,9 +235,24 @@ export default function FXResearchPanel({ item, onClose, onOpen }) {
         {diffData.length > 0 && (
           <div>
             <div className="font-mono mb-1" style={{ color:"var(--text-3)", fontSize:9, textTransform:"uppercase" }}>Rate Differential Over Time</div>
-            <div style={{ height:150, marginBottom:12 }}>
+            <div style={{ position:"relative", height:150, marginBottom:12 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={diffData} margin={{ top:4, right:2, bottom:0, left:0 }}>
+                <AreaChart data={diffData} margin={{ top:4, right:2, bottom:0, left:0 }}
+                  onMouseDown={e => { if (e?.activeLabel) { setRefAreaLeft(e.activeLabel); setRefAreaRight(e.activeLabel); setIsDragging(true); setMeasureInfo(null); } }}
+                  onMouseMove={e => { if (isDragging && e?.activeLabel) setRefAreaRight(e.activeLabel); }}
+                  onMouseUp={() => {
+                    if (!isDragging) return;
+                    setIsDragging(false);
+                    const [l, r] = refAreaLeft <= refAreaRight ? [refAreaLeft, refAreaRight] : [refAreaRight, refAreaLeft];
+                    if (l === r) { setRefAreaLeft(""); setRefAreaRight(""); return; }
+                    const ptL = diffData.find(d => d.t === l) || diffData[0];
+                    const ptR = diffData.find(d => d.t === r) || diffData[diffData.length - 1];
+                    const pts = ptR.diff - ptL.diff;
+                    const color = pts > 0 ? "#059669" : pts < 0 ? "#e11d48" : "#94a3b8";
+                    setMeasureInfo({ pct: null, pts, dateL: l, dateR: r, color });
+                    setRefAreaLeft(l); setRefAreaRight(r);
+                  }}
+                  onMouseLeave={() => { if (isDragging) { setIsDragging(false); setRefAreaLeft(""); setRefAreaRight(""); } }}>
                   <defs>
                     <linearGradient id={"rdg_"+item.id.replace(/[^a-z0-9]/gi,"")} x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%"  stopColor="#2563eb" stopOpacity={0.2}/>
@@ -209,8 +264,26 @@ export default function FXResearchPanel({ item, onClose, onOpen }) {
                   <ReferenceLine y={0} stroke="#cbd5e1" strokeDasharray="3 3"/>
                   <Tooltip contentStyle={{background:"var(--surface-2)",border:"1px solid var(--border)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} formatter={v=>[v?.toFixed(2)+"pp","Differential"]}/>
                   <Area type="monotone" dataKey="diff" stroke="#2563eb" strokeWidth={1.5} fill={"url(#rdg_"+item.id.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
+                  {refAreaLeft && refAreaRight && refAreaLeft !== refAreaRight && (() => {
+                    const [l, r] = refAreaLeft <= refAreaRight ? [refAreaLeft, refAreaRight] : [refAreaRight, refAreaLeft];
+                    const ptL = diffData.find(d => d.t === l) || diffData[0];
+                    const ptR = diffData.find(d => d.t === r) || diffData[diffData.length - 1];
+                    const pts = ptR.diff - ptL.diff;
+                    const color = pts > 0 ? "#059669" : pts < 0 ? "#e11d48" : "#94a3b8";
+                    return <ReferenceArea x1={l} x2={r} fill={color+"18"} stroke={color+"55"} strokeOpacity={0.3} />;
+                  })()}
                 </AreaChart>
               </ResponsiveContainer>
+              {!measureInfo && (
+                <div style={{ position:"absolute", bottom:4, right:4, fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:"var(--text-3)", pointerEvents:"none", opacity:0.5 }}>drag to measure</div>
+              )}
+              {measureInfo && (
+                <div style={{ position:"absolute", top:6, left:"50%", transform:"translateX(-50%)", background:"var(--surface-2)", border:"1px solid "+measureInfo.color+"44", borderRadius:6, padding:"4px 10px", fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:measureInfo.color, display:"flex", alignItems:"center", gap:8, zIndex:10, whiteSpace:"nowrap", boxShadow:"0 4px 12px rgba(0,0,0,0.3)" }}>
+                  <span style={{ fontWeight:700 }}>{measureInfo.pts >= 0 ? "+" : ""}{measureInfo.pts.toFixed(2)} pp</span>
+                  <span style={{ color:"var(--text-3)", fontSize:9 }}>{measureInfo.dateL} → {measureInfo.dateR}</span>
+                  <button onClick={() => { setMeasureInfo(null); setRefAreaLeft(""); setRefAreaRight(""); }} style={{ color:"var(--text-3)", background:"none", border:"none", cursor:"pointer", fontSize:10, padding:"0 0 0 2px" }}>✕</button>
+                </div>
+              )}
             </div>
           </div>
         )}

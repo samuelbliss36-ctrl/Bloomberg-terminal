@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceArea } from "recharts";
 import { fmt, clr } from "../../../lib/fmt";
 import { ResearchPanelShell, ResearchTabBar } from "../../../components/ui/ResearchPanelShell";
 import { IntelCard } from "../../../components/ui/IntelCard";
@@ -12,9 +12,14 @@ export default function MacroResearchPanel({ item, onClose, onOpen }) {
   const [data, setData]     = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState(false);
+  const [refAreaLeft,  setRefAreaLeft]  = useState("");
+  const [refAreaRight, setRefAreaRight] = useState("");
+  const [isDragging,   setIsDragging]   = useState(false);
+  const [measureInfo,  setMeasureInfo]  = useState(null);
 
   useEffect(() => {
     setLoading(true); setError(false); setActiveTab("Chart");
+    setRefAreaLeft(""); setRefAreaRight(""); setIsDragging(false); setMeasureInfo(null);
     fetch("/api/fred?series=" + item.series)
       .then(r => r.json())
       .then(d => {
@@ -94,9 +99,25 @@ export default function MacroResearchPanel({ item, onClose, onOpen }) {
           </div>
         )}
 
-        <div style={{ height:155, marginBottom:12 }}>
+        <div style={{ position:"relative", height:155, marginBottom:12 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top:4, right:2, bottom:0, left:0 }}>
+            <AreaChart data={data} margin={{ top:4, right:2, bottom:0, left:0 }}
+              onMouseDown={e => { if (e?.activeLabel) { setRefAreaLeft(e.activeLabel); setRefAreaRight(e.activeLabel); setIsDragging(true); setMeasureInfo(null); } }}
+              onMouseMove={e => { if (isDragging && e?.activeLabel) setRefAreaRight(e.activeLabel); }}
+              onMouseUp={() => {
+                if (!isDragging) return;
+                setIsDragging(false);
+                const [l, r] = refAreaLeft <= refAreaRight ? [refAreaLeft, refAreaRight] : [refAreaRight, refAreaLeft];
+                if (l === r) { setRefAreaLeft(""); setRefAreaRight(""); return; }
+                const ptL = data.find(d => d.t === l) || data[0];
+                const ptR = data.find(d => d.t === r) || data[data.length - 1];
+                const pct = (ptR.v - ptL.v) / ptL.v * 100;
+                const pts = ptR.v - ptL.v;
+                const color = pct > 0 ? "#059669" : pct < 0 ? "#e11d48" : "#94a3b8";
+                setMeasureInfo({ pct, pts, dateL: l, dateR: r, color });
+                setRefAreaLeft(l); setRefAreaRight(r);
+              }}
+              onMouseLeave={() => { if (isDragging) { setIsDragging(false); setRefAreaLeft(""); setRefAreaRight(""); } }}>
               <defs>
                 <linearGradient id={"mcg_"+item.series.replace(/[^a-z0-9]/gi,"")} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%"  stopColor="#7c3aed" stopOpacity={0.25}/>
@@ -107,8 +128,27 @@ export default function MacroResearchPanel({ item, onClose, onOpen }) {
               <YAxis domain={["auto","auto"]} hide/>
               <Tooltip contentStyle={{background:"var(--surface-2)",border:"1px solid var(--border)",borderRadius:10,fontSize:10,fontFamily:"'IBM Plex Mono',monospace",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}} formatter={v=>[v?.toFixed(2),item.label]}/>
               <Area type="monotone" dataKey="v" stroke="#7c3aed" strokeWidth={1.5} fill={"url(#mcg_"+item.series.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false}/>
+              {refAreaLeft && refAreaRight && refAreaLeft !== refAreaRight && (() => {
+                const [l, r] = refAreaLeft <= refAreaRight ? [refAreaLeft, refAreaRight] : [refAreaRight, refAreaLeft];
+                const ptL = data.find(d => d.t === l) || data[0];
+                const ptR = data.find(d => d.t === r) || data[data.length - 1];
+                const pct = (ptR.v - ptL.v) / ptL.v * 100;
+                const color = pct > 0 ? "#059669" : pct < 0 ? "#e11d48" : "#94a3b8";
+                return <ReferenceArea x1={l} x2={r} fill={color+"18"} stroke={color+"55"} strokeOpacity={0.3} />;
+              })()}
             </AreaChart>
           </ResponsiveContainer>
+          {!measureInfo && (
+            <div style={{ position:"absolute", bottom:4, right:4, fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:"var(--text-3)", pointerEvents:"none", opacity:0.5 }}>drag to measure</div>
+          )}
+          {measureInfo && (
+            <div style={{ position:"absolute", top:6, left:"50%", transform:"translateX(-50%)", background:"var(--surface-2)", border:"1px solid "+measureInfo.color+"44", borderRadius:6, padding:"4px 10px", fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:measureInfo.color, display:"flex", alignItems:"center", gap:8, zIndex:10, whiteSpace:"nowrap", boxShadow:"0 4px 12px rgba(0,0,0,0.3)" }}>
+              <span style={{ fontWeight:700 }}>{measureInfo.pct >= 0 ? "+" : ""}{measureInfo.pct.toFixed(2)}%</span>
+              <span style={{ color:"var(--text-3)", fontSize:9 }}>{measureInfo.pts >= 0 ? "+" : ""}{measureInfo.pts.toFixed(2)}</span>
+              <span style={{ color:"var(--text-3)", fontSize:9 }}>{measureInfo.dateL} → {measureInfo.dateR}</span>
+              <button onClick={() => { setMeasureInfo(null); setRefAreaLeft(""); setRefAreaRight(""); }} style={{ color:"var(--text-3)", background:"none", border:"none", cursor:"pointer", fontSize:10, padding:"0 0 0 2px" }}>✕</button>
+            </div>
+          )}
         </div>
 
         <div className="grid mb-3" style={{ gridTemplateColumns:"repeat(3,1fr)", gap:"4px 8px" }}>
