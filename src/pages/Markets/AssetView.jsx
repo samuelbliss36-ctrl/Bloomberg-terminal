@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceArea } from "recharts";
 import { api, fetchChart } from "../../lib/api";
 import { fmt, delay, fmtMktCap, fmtX, fmtN, fmtMgn, fmtGr, clrM2 } from "../../lib/fmt";
 
@@ -327,6 +327,43 @@ export default function AssetView({ ticker, quote, metrics, profile, news }) {
   const [chartData, setChartData] = useState([]);
   const [chartLoading, setChartLoading] = useState(true);
   const [histData, setHistData] = useState(null);
+
+  // ── Drag-to-measure ───────────────────────────────────────────────
+  const [refAreaLeft,  setRefAreaLeft]  = useState(null);
+  const [refAreaRight, setRefAreaRight] = useState(null);
+  const [isDragging,   setIsDragging]   = useState(false);
+  const [measureInfo,  setMeasureInfo]  = useState(null);
+
+  const onChartMouseDown = (e) => {
+    if (!e?.activeLabel) return;
+    setRefAreaLeft(e.activeLabel);
+    setRefAreaRight(null);
+    setMeasureInfo(null);
+    setIsDragging(true);
+  };
+  const onChartMouseMove = (e) => {
+    if (!isDragging || !e?.activeLabel) return;
+    setRefAreaRight(e.activeLabel);
+  };
+  const onChartMouseUp = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    if (!refAreaLeft || !refAreaRight || refAreaLeft === refAreaRight) {
+      setRefAreaLeft(null); setRefAreaRight(null); setMeasureInfo(null); return;
+    }
+    const i1 = chartData.findIndex(d => d.t === refAreaLeft);
+    const i2 = chartData.findIndex(d => d.t === refAreaRight);
+    if (i1 === -1 || i2 === -1) return;
+    const [lo, hi] = i1 < i2 ? [i1, i2] : [i2, i1];
+    const p1 = chartData[lo].v, p2 = chartData[hi].v;
+    const chgPts = p2 - p1;
+    const pct = (chgPts / p1) * 100;
+    const fmtDate = ts => new Date(ts * 1000).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"2-digit" });
+    setMeasureInfo({ chgPts, pct, startDate: fmtDate(chartData[lo].t), endDate: fmtDate(chartData[hi].t) });
+  };
+  const clearMeasure = () => {
+    setRefAreaLeft(null); setRefAreaRight(null); setMeasureInfo(null); setIsDragging(false);
+  };
 
   // ── Options chain state ───────────────────────────────────────────
   const [optChain, setOptChain]       = useState(null);
@@ -719,7 +756,9 @@ export default function AssetView({ ticker, quote, metrics, profile, news }) {
           </div>
         </div>
         {/* Chart — always reserve space; skeleton while loading */}
-        <div style={{ height:180, marginTop:8, position:"relative" }}>
+        <div style={{ height:180, marginTop:8, position:"relative",
+                      cursor: isDragging ? "col-resize" : "crosshair",
+                      userSelect: isDragging ? "none" : "auto" }}>
           {chartLoading && (
             <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center",
               background:"var(--surface-0)", borderRadius:6 }}>
@@ -735,9 +774,47 @@ export default function AssetView({ ticker, quote, metrics, profile, news }) {
               </span>
             </div>
           )}
+
+          {/* Measurement badge */}
+          {measureInfo && !isDragging && (
+            <div style={{
+              position:"absolute", top:6, left:"50%", transform:"translateX(-50%)",
+              background:"var(--surface-1)",
+              border:`1px solid ${measureInfo.chgPts >= 0 ? "rgba(5,150,105,0.45)" : "rgba(225,29,72,0.45)"}`,
+              borderRadius:8, padding:"5px 14px",
+              display:"flex", alignItems:"center", gap:14,
+              zIndex:20, boxShadow:"0 2px 16px rgba(0,0,0,0.18)", whiteSpace:"nowrap",
+            }}>
+              <span className="font-mono" style={{ fontSize:12, fontWeight:700, color: measureInfo.chgPts >= 0 ? "#059669" : "#e11d48" }}>
+                {measureInfo.chgPts >= 0 ? "▲" : "▼"}&nbsp;
+                ${Math.abs(measureInfo.chgPts).toFixed(2)}&nbsp;&nbsp;
+                {measureInfo.pct >= 0 ? "+" : ""}{measureInfo.pct.toFixed(2)}%
+              </span>
+              <span className="font-mono" style={{ fontSize:9, color:"var(--text-3)" }}>
+                {measureInfo.startDate} → {measureInfo.endDate}
+              </span>
+              <button onClick={clearMeasure}
+                style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-3)", fontSize:11, padding:"0 2px" }}
+                onMouseEnter={e => e.currentTarget.style.color="var(--text-1)"}
+                onMouseLeave={e => e.currentTarget.style.color="var(--text-3)"}>✕</button>
+            </div>
+          )}
+
+          {/* Drag hint */}
+          {!measureInfo && !isDragging && chartData.length > 0 && (
+            <div style={{ position:"absolute", bottom:4, right:4, zIndex:10,
+              fontFamily:"'IBM Plex Mono',monospace", fontSize:8,
+              color:"var(--text-3)", pointerEvents:"none", opacity:0.6 }}>
+              drag to measure
+            </div>
+          )}
+
           {chartData.length > 0 && (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top:4, right:0, bottom:0, left:0 }}>
+              <AreaChart data={chartData} margin={{ top:4, right:0, bottom:0, left:0 }}
+                onMouseDown={onChartMouseDown}
+                onMouseMove={onChartMouseMove}
+                onMouseUp={onChartMouseUp}>
                 <defs>
                   <linearGradient id={"avg_"+ticker.replace(/[^a-z0-9]/gi,"")} x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%"  stopColor={priceColor} stopOpacity={0.18}/>
@@ -748,9 +825,14 @@ export default function AssetView({ ticker, quote, metrics, profile, news }) {
                 <YAxis domain={["auto","auto"]} hide />
                 <Tooltip contentStyle={{ background:"var(--surface-2)", border:"1px solid var(--border-solid)", borderRadius:8, fontSize:10, fontFamily:"'IBM Plex Mono',monospace" }}
                   labelFormatter={t => new Date(t*1000).toLocaleDateString()}
-                  formatter={v=>["$"+v?.toFixed(2),"Price"]} />
+                  formatter={v=>["$"+v?.toFixed(2),"Price"]}
+                  active={isDragging ? false : undefined} />
                 <Area type="monotone" dataKey="v" stroke={priceColor} strokeWidth={1.5}
                   fill={"url(#avg_"+ticker.replace(/[^a-z0-9]/gi,"")+")"} dot={false} isAnimationActive={false} />
+                {refAreaLeft && (refAreaRight || isDragging) && (
+                  <ReferenceArea x1={refAreaLeft} x2={refAreaRight || refAreaLeft}
+                    fill="rgba(37,99,235,0.09)" stroke="rgba(37,99,235,0.40)" strokeWidth={1} />
+                )}
               </AreaChart>
             </ResponsiveContainer>
           )}
