@@ -84,8 +84,8 @@ export function RightPanelShell({ tapeData, onSelectTicker, earnings, activeTick
         </div>
       )}
 
-      {/* Watchlist rows */}
-      <div style={{ flex:1, overflowY:"auto", minHeight:0 }}>
+      {/* Watchlist rows — capped so events can fill remaining space */}
+      <div style={{ flexShrink:0, maxHeight:"42%", overflowY:"auto" }}>
         {tapeData.length === 0 && (
           <div style={{ padding:"12px 12px", fontFamily:"'IBM Plex Mono',monospace", color:"var(--text-3)", fontSize:10 }}>
             {showAdd ? "Add a ticker above to get started" : "Loading…"}
@@ -121,14 +121,14 @@ export function RightPanelShell({ tapeData, onSelectTicker, earnings, activeTick
         ))}
       </div>
 
-      {/* Events */}
+      {/* Events — fills all remaining space */}
       {earnings && (
-        <>
+        <div style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0 }}>
           <div className="right-section-header">📅  Upcoming Events</div>
-          <div style={{ padding:"4px 0 6px", borderBottom:"1px solid var(--border-subtle)" }}>
+          <div style={{ flex:1, overflowY:"auto", padding:"8px 10px" }}>
             <EventsCalendar earnings={earnings} />
           </div>
-        </>
+        </div>
       )}
 
     </div>
