@@ -52,11 +52,12 @@ export default function PortfolioTracker() {
   const [holdings, setHoldings] = useState(() => db.portfolio.load());
   const [quotes, setQuotes] = useState({});
   const [loadingQuotes, setLoadingQuotes] = useState(false);
-  const [form, setForm] = useState({ ticker: "", shares: "", avgCost: "" });
+  const today = new Date().toISOString().slice(0, 10);
+  const [form, setForm] = useState({ ticker: "", shares: "", avgCost: "", purchaseDate: today });
   const [formError, setFormError] = useState("");
   const [equityHistory, setEquityHistory] = useState([]);
   const [equityLoading, setEquityLoading] = useState(false);
-  const [equityTf, setEquityTf] = useState("3M");
+  const [equityTf, setEquityTf] = useState("ALL");
   const [aiAnalysis,        setAiAnalysis]        = useState(null);
   const [aiLoading,         setAiLoading]         = useState(false);
   const [aiError,           setAiError]           = useState("");
@@ -98,16 +99,28 @@ export default function PortfolioTracker() {
     fetch_();
   }, [tickerKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch equity curve via Yahoo Finance chart API (same source used by all other charts)
-  const EQ_TF_MAP = { "1M":"1mo", "3M":"3mo", "6M":"6mo", "1Y":"1y" };
-  const equityKey = tickerKey + "|" + equityTf;
+  // Equity curve — shows portfolio value over time, respecting each holding's purchase date
+  const EQ_TF_DAYS = { "1M": 30, "3M": 90, "6M": 180, "1Y": 365 };
+  const equityKey = holdings.map(h => `${h.ticker}:${h.purchaseDate||""}:${h.shares}`).join("|") + "|" + equityTf;
   useEffect(() => {
     if (!holdings.length) { setEquityHistory([]); return; }
     let cancelled = false;
     setEquityLoading(true);
     const build = async () => {
+      // Determine how far back to fetch data
+      let fromDate;
+      if (equityTf === "ALL") {
+        const dates = holdings.map(h => h.purchaseDate).filter(Boolean).sort();
+        fromDate = dates[0] || new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
+      } else {
+        const days = EQ_TF_DAYS[equityTf] || 90;
+        fromDate = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+      }
+      const daysAgo = Math.floor((Date.now() - new Date(fromDate)) / 86400000);
+      const range = daysAgo <= 30 ? "1mo" : daysAgo <= 90 ? "3mo" : daysAgo <= 180 ? "6mo" : daysAgo <= 365 ? "1y" : daysAgo <= 730 ? "2y" : "5y";
+
+      // Fetch price history for each holding
       const cmap = {};
-      const range = EQ_TF_MAP[equityTf] || "3mo";
       for (let i = 0; i < holdings.length; i++) {
         if (i > 0) await delay(350);
         try {
@@ -115,8 +128,8 @@ export default function PortfolioTracker() {
           const d = await r.json();
           const result = d?.chart?.result?.[0];
           if (result) {
-            const ts      = result.timestamp || [];
-            const closes  = result.indicators?.quote?.[0]?.close || [];
+            const ts     = result.timestamp || [];
+            const closes = result.indicators?.quote?.[0]?.close || [];
             cmap[holdings[i].ticker] = {};
             ts.forEach((t, idx) => {
               if (closes[idx] != null)
@@ -126,17 +139,26 @@ export default function PortfolioTracker() {
         } catch(e) {}
       }
       if (cancelled) return;
+
+      // Collect all trading days from fromDate onward
       const allDates = new Set();
-      Object.values(cmap).forEach(m => Object.keys(m).forEach(d => allDates.add(d)));
+      Object.values(cmap).forEach(m =>
+        Object.keys(m).filter(d => d >= fromDate).forEach(d => allDates.add(d))
+      );
       const sorted = [...allDates].sort();
-      const last = {};
-      holdings.forEach(h => { last[h.ticker] = h.avgCost; });
-      const cost = holdings.reduce((s, h) => s + h.avgCost * h.shares, 0);
+
+      // Build curve: for each date, only count holdings that were purchased on or before it
+      const lastPrice = {};
       const curve = sorted.map(date => {
-        holdings.forEach(h => { if (cmap[h.ticker]?.[date]) last[h.ticker] = cmap[h.ticker][date]; });
-        const val = holdings.reduce((s, h) => s + (last[h.ticker] || h.avgCost) * h.shares, 0);
-        return { date, value: +val.toFixed(2), cost: +cost.toFixed(2) };
+        // Update forward-filled price for each holding
+        holdings.forEach(h => { if (cmap[h.ticker]?.[date]) lastPrice[h.ticker] = cmap[h.ticker][date]; });
+        // Holdings active on this date
+        const active = holdings.filter(h => !h.purchaseDate || h.purchaseDate <= date);
+        const value = active.reduce((s, h) => s + (lastPrice[h.ticker] || h.avgCost) * h.shares, 0);
+        const cost  = active.reduce((s, h) => s + h.avgCost * h.shares, 0);
+        return { date, value: +value.toFixed(2), cost: +cost.toFixed(2) };
       });
+
       if (!cancelled) { setEquityHistory(curve); setEquityLoading(false); }
     };
     build();
@@ -147,9 +169,12 @@ export default function PortfolioTracker() {
     const t = form.ticker.trim().toUpperCase();
     const s = parseFloat(form.shares);
     const c = parseFloat(form.avgCost);
+    const d = form.purchaseDate;
     if (!t) { setFormError("Enter a ticker symbol"); return; }
     if (!s || s <= 0) { setFormError("Enter a valid share count"); return; }
     if (!c || c <= 0) { setFormError("Enter a valid average cost"); return; }
+    if (!d) { setFormError("Enter a purchase date"); return; }
+    if (d > new Date().toISOString().slice(0, 10)) { setFormError("Purchase date cannot be in the future"); return; }
 
     // Validate the ticker exists by fetching a live quote
     setValidatingTicker(true);
@@ -170,16 +195,18 @@ export default function PortfolioTracker() {
 
     const idx = holdings.findIndex(h => h.ticker === t);
     if (idx >= 0) {
+      // Average down: use weighted avg cost, keep the earlier purchase date
       const old = holdings[idx];
       const totalShares = old.shares + s;
       const newAvg = (old.shares * old.avgCost + s * c) / totalShares;
+      const earlierDate = old.purchaseDate && d ? (old.purchaseDate < d ? old.purchaseDate : d) : (old.purchaseDate || d);
       const updated = [...holdings];
-      updated[idx] = { ticker: t, shares: totalShares, avgCost: newAvg };
+      updated[idx] = { ticker: t, shares: totalShares, avgCost: newAvg, purchaseDate: earlierDate };
       setHoldings(updated);
     } else {
-      setHoldings([...holdings, { ticker: t, shares: s, avgCost: c }]);
+      setHoldings([...holdings, { ticker: t, shares: s, avgCost: c, purchaseDate: d }]);
     }
-    setForm({ ticker: "", shares: "", avgCost: "" });
+    setForm({ ticker: "", shares: "", avgCost: "", purchaseDate: new Date().toISOString().slice(0, 10) });
     setFormError("");
   };
 
@@ -328,7 +355,7 @@ export default function PortfolioTracker() {
   };
 
   const inputStyle = { background: "var(--surface-0)", border: "1px solid var(--border-solid)", borderRadius: 10, color: "var(--text-1)", fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, padding: "6px 8px", width: "100%" };
-  const TF_OPTS = ["1M", "3M", "6M", "1Y"];
+  const TF_OPTS = ["ALL", "1Y", "6M", "3M", "1M"];
 
   const curveUp = equityHistory.length > 1 ? equityHistory[equityHistory.length-1].value >= equityHistory[0].value : true;
   const curveClr = curveUp ? "#059669" : "#e11d48";
@@ -627,7 +654,7 @@ export default function PortfolioTracker() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--border-solid)" }}>
-                  {["Ticker", "Shares", "Avg Cost", "Price", "Mkt Value", "P&L ($)", "Return", "Day Chg", ""].map(h => (
+                  {["Ticker", "Shares", "Avg Cost", "Purchased", "Price", "Mkt Value", "P&L ($)", "Return", "Day Chg", ""].map(h => (
                     <th key={h} className="text-left px-2 py-2"
                       style={{ color: "var(--text-3)", fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
                   ))}
@@ -654,6 +681,9 @@ export default function PortfolioTracker() {
                       </td>
                       <td className="px-2 py-2 font-mono" style={{ color: "var(--text-1)", fontSize: 12 }}>{h.shares.toLocaleString()}</td>
                       <td className="px-2 py-2 font-mono" style={{ color: "var(--text-1)", fontSize: 12 }}>${fmt.price(h.avgCost)}</td>
+                      <td className="px-2 py-2 font-mono" style={{ color: h.purchaseDate ? "var(--text-2)" : "var(--text-3)", fontSize: 11 }}>
+                        {h.purchaseDate || "—"}
+                      </td>
                       <td className="px-2 py-2 font-mono" style={{ color: price !== null ? "var(--text-1)" : "var(--text-3)", fontSize: 12 }}>
                         {price !== null ? "$" + fmt.price(price) : loadingQuotes ? "…" : "—"}
                       </td>
@@ -680,7 +710,7 @@ export default function PortfolioTracker() {
               {holdings.length > 1 && (
                 <tfoot>
                   <tr style={{ borderTop: "1px solid var(--border-solid)" }}>
-                    <td className="px-2 py-2 font-mono font-bold" style={{ color: "var(--text-3)", fontSize: 11 }} colSpan={4}>TOTAL</td>
+                    <td className="px-2 py-2 font-mono font-bold" style={{ color: "var(--text-3)", fontSize: 11 }} colSpan={5}>TOTAL</td>
                     <td className="px-2 py-2 font-mono font-bold" style={{ color: "var(--text-1)", fontSize: 12 }}>
                       ${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
@@ -708,7 +738,7 @@ export default function PortfolioTracker() {
               {[
                 { label: "Ticker", key: "ticker", id: "pf-ticker", placeholder: "AAPL", type: "text",   next: "pf-shares" },
                 { label: "Shares", key: "shares", id: "pf-shares", placeholder: "100",  type: "number", next: "pf-cost"   },
-                { label: "Avg Cost / Share ($)", key: "avgCost", id: "pf-cost", placeholder: "150.00", type: "number", next: null },
+                { label: "Avg Cost / Share ($)", key: "avgCost", id: "pf-cost", placeholder: "150.00", type: "number", next: "pf-date" },
               ].map(({ label, key, id, placeholder, type, next }) => (
                 <div key={key}>
                   <div className="font-mono mb-1" style={{ color: "var(--text-3)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</div>
@@ -719,6 +749,15 @@ export default function PortfolioTracker() {
                     placeholder={placeholder} style={inputStyle} />
                 </div>
               ))}
+              <div>
+                <div className="font-mono mb-1" style={{ color: "var(--text-3)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>Purchase Date</div>
+                <input id="pf-date" type="date"
+                  value={form.purchaseDate}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={e => setForm(f => ({ ...f, purchaseDate: e.target.value }))}
+                  onKeyDown={e => e.key === "Enter" && !validatingTicker && addHolding()}
+                  style={{ ...inputStyle, colorScheme: "dark" }} />
+              </div>
               {formError && <div className="font-mono" style={{ color: "#e11d48", fontSize: 11 }}>{formError}</div>}
               <button onClick={addHolding} disabled={validatingTicker} className="font-mono font-semibold py-2 mt-1"
                 style={{ background: validatingTicker ? "#1e3a6e" : "#2563eb", border: "none", borderRadius: 10, color: "#fff", cursor: validatingTicker ? "not-allowed" : "pointer", fontSize: 12, letterSpacing: "0.05em", opacity: validatingTicker ? 0.8 : 1 }}>
