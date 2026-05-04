@@ -8,15 +8,15 @@ function changePctColor(pct) {
   if (pct >=  3)   return "#047857";
   if (pct >=  1.5) return "#059669";
   if (pct >=  0.5) return "#10b981";
-  if (pct >=  0)   return "#14301f";
-  if (pct > -0.5)  return "#4c1d2a";
+  if (pct >=  0)   return "#6ee7b7";
+  if (pct > -0.5)  return "#fda4af";
   if (pct > -1.5)  return "#e11d48";
   if (pct > -3)    return "#be123c";
   return "#9f1239";
 }
 function textColor(bg) {
-  // Lighter text on dark/mid backgrounds
-  if (bg === "#14301f" || bg === "#4c1d2a") return "#94a3b8";
+  // Dark text on light backgrounds, light text on dark/saturated backgrounds
+  if (bg === "#6ee7b7" || bg === "#fda4af") return "#0f172a";
   return "#fff";
 }
 
@@ -280,8 +280,8 @@ export default function MarketHeatmap({ onOpenResearch, onContextUpdate }) {
       {/* Colour legend */}
       <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
         {[
-          ["#047857",">+3%"], ["#059669","+1.5%"], ["#10b981","+0.5%"], ["#14301f","0%"],
-          ["#4c1d2a","0%"], ["#e11d48","-0.5%"], ["#be123c","-1.5%"], ["#9f1239","<-3%"],
+          ["#047857",">+3%"], ["#059669","+1.5%"], ["#10b981","+0.5%"], ["#6ee7b7","flat+"],
+          ["#fda4af","flat-"], ["#e11d48","-0.5%"], ["#be123c","-1.5%"], ["#9f1239","<-3%"],
         ].map(([c, label]) => (
           <div key={label} style={{ display: "flex", alignItems: "center", gap: 3 }}>
             <div style={{ width: 10, height: 10, borderRadius: 2, background: c }} />
