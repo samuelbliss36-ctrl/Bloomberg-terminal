@@ -25,6 +25,8 @@ export default function StockScreener({ onSelectTicker }) {
     grossMarginMin:"", netMarginMin:"",
     divYieldMin:"", betaMax:"",
     roeMin:"", pbMax:"", debtToEqMax:"",
+    changePctMin:"", changePctMax:"",
+    priceMin:"", priceMax:"",
     profitable:false, paysDividend:false,
   };
   const [f, setF]               = useState(DEF);
@@ -140,7 +142,7 @@ export default function StockScreener({ onSelectTicker }) {
             name:        s.companyName   || base.name   || s.symbol,
             sector:      FMP_SECTOR_MAP[s.sector] || s.sector || base.sector || "Other",
             price:       s.price         ?? base.price  ?? null,
-            changePct:   base.changePct  ?? null,
+            changePct:   s.changePercentage ?? base.changePct  ?? null,
             mktCap:      mktCapB > 0     ? mktCapB      : (base.mktCap ?? null),
             pe:          base.pe         ?? null,
             fwdPe:       base.fwdPe      ?? null,
@@ -187,6 +189,10 @@ export default function StockScreener({ onSelectTicker }) {
       if (f.profitable     && (s.netMargin   == null || s.netMargin   <= 0))                return false;
       if (f.paysDividend   && (s.divYield    == null || s.divYield    <= 0))                return false;
       if (f.rating !== "All" && s.rating !== f.rating) return false;
+      if (f.changePctMin   && (s.changePct   == null || s.changePct   < +f.changePctMin))   return false;
+      if (f.changePctMax   && (s.changePct   == null || s.changePct   > +f.changePctMax))   return false;
+      if (f.priceMin       && (s.price       == null || s.price       < +f.priceMin))       return false;
+      if (f.priceMax       && (s.price       == null || s.price       > +f.priceMax))       return false;
       return true;
     });
     filtered.sort((a, b) => {
@@ -473,6 +479,9 @@ export default function StockScreener({ onSelectTicker }) {
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:6 }}>
             {grpLbl("GROWTH / INCOME")}{numInput("Rev ≥","revGrowthMin")}{numInput("Rev ≤","revGrowthMax")}{numInput("Div ≥","divYieldMin")}{numInput("Beta ≤","betaMax",44)}
+          </div>
+          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+            {grpLbl("PRICE ACTION")}{numInput("Chg% ≥","changePctMin",52)}{numInput("Chg% ≤","changePctMax",52)}{numInput("Price ≥","priceMin",52)}{numInput("Price ≤","priceMax",52)}
           </div>
         </div>
       </div>

@@ -38,23 +38,27 @@ function AddForm({ onAdd, telegramConnected }) {
   const [ticker,    setTicker]    = useState('');
   const [target,    setTarget]    = useState('');
   const [condition, setCondition] = useState('above');
+  const [alertType, setAlertType] = useState('price'); // 'price' | 'changePct'
   const [note,      setNote]      = useState('');
   const [err,       setErr]       = useState('');
   const [success,   setSuccess]   = useState('');
 
+  const isChangePct = alertType === 'changePct';
+
   const submit = useCallback(() => {
     const sym = ticker.trim().toUpperCase();
-    const px  = parseFloat(target);
+    const val = parseFloat(target);
     if (!sym) return setErr('Enter a ticker symbol.');
-    if (!px || isNaN(px) || px <= 0) return setErr('Enter a valid price.');
+    if (isNaN(val)) return setErr(`Enter a valid ${isChangePct ? 'percentage' : 'price'}.`);
+    if (!isChangePct && val <= 0) return setErr('Price must be greater than 0.');
     setErr('');
-    onAdd({ ticker: sym, targetPrice: px, condition, note });
-    // Show success confirmation
+    onAdd({ ticker: sym, targetPrice: val, condition, note, type: alertType });
     const dir = condition === 'above' ? 'above' : 'below';
-    setSuccess(`✓ Alert set — ${sym} ${dir} $${px.toFixed(2)}${telegramConnected ? ' · Telegram ready' : ''}`);
+    const valStr = isChangePct ? `${val > 0 ? '+' : ''}${val}%` : `$${val.toFixed(2)}`;
+    setSuccess(`✓ Alert set — ${sym} ${dir} ${valStr}${telegramConnected ? ' · Telegram ready' : ''}`);
     setTimeout(() => setSuccess(''), 4000);
     setTicker(''); setTarget(''); setNote('');
-  }, [ticker, target, condition, note, onAdd, telegramConnected]);
+  }, [ticker, target, condition, note, alertType, isChangePct, onAdd, telegramConnected]);
 
   const row = { display: 'flex', flexDirection: 'column', gap: 3, marginBottom: 8 };
   const label = { fontSize: 9, fontWeight: 700, color: 'var(--text-3, #94a3b8)', textTransform: 'uppercase', letterSpacing: '0.07em' };
@@ -77,6 +81,25 @@ function AddForm({ onAdd, telegramConnected }) {
         </div>
       </div>
 
+      {/* Alert type toggle */}
+      <div style={{ ...row, marginBottom: 10 }}>
+        <span style={label}>Alert Type</span>
+        <div style={{ display: 'flex', background: 'var(--surface-0)', borderRadius: 6, padding: 2, border: '1px solid var(--border)' }}>
+          {[
+            { key: 'price',     label: '$ Price' },
+            { key: 'changePct', label: '% Day Change' },
+          ].map(t => (
+            <button key={t.key} onClick={() => { setAlertType(t.key); setTarget(''); }}
+              style={{ flex: 1, padding: '4px 0', border: 'none', borderRadius: 5, cursor: 'pointer', transition: 'all 0.15s',
+                fontSize: 10, fontWeight: 700, fontFamily: "'Inter',sans-serif",
+                background: alertType === t.key ? 'rgba(37,99,235,0.14)' : 'transparent',
+                color: alertType === t.key ? '#2563eb' : 'var(--text-3)' }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <div style={row}>
           <span style={label}>Ticker</span>
@@ -85,10 +108,24 @@ function AddForm({ onAdd, telegramConnected }) {
             onKeyDown={e => e.key === 'Enter' && submit()} />
         </div>
         <div style={row}>
-          <span style={label}>Target ($)</span>
-          <input style={inp} value={target} placeholder="500.00" type="number" step="0.01" min="0"
-            onChange={e => setTarget(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && submit()} />
+          <span style={label}>{isChangePct ? 'Target (%)' : 'Target ($)'}</span>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <span style={{ position: 'absolute', left: 8, fontSize: 11, color: 'var(--text-3)', fontFamily: "'IBM Plex Mono',monospace", pointerEvents: 'none' }}>
+              {isChangePct ? '%' : '$'}
+            </span>
+            <input style={{ ...inp, paddingLeft: 20 }}
+              value={target}
+              placeholder={isChangePct ? '3.0' : '500.00'}
+              type="number"
+              step={isChangePct ? '0.1' : '0.01'}
+              onChange={e => setTarget(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && submit()} />
+          </div>
+          {isChangePct && (
+            <span style={{ fontSize: 9, color: 'var(--text-3)', fontFamily: "'IBM Plex Mono',monospace", marginTop: 2 }}>
+              e.g. 3 = alert when up 3%, -2 = alert when down 2%
+            </span>
+          )}
         </div>
       </div>
       <div style={{ ...row, marginBottom: 8 }}>
@@ -100,7 +137,9 @@ function AddForm({ onAdd, telegramConnected }) {
                 fontSize: 10, fontWeight: 700, fontFamily: "'Inter',sans-serif",
                 background: condition === c ? (c === 'above' ? 'rgba(5,150,105,0.14)' : 'rgba(225,29,72,0.12)') : 'transparent',
                 color: condition === c ? (c === 'above' ? '#059669' : '#e11d48') : 'var(--text-3)' }}>
-              {c === 'above' ? '▲ ABOVE' : '▼ BELOW'}
+              {c === 'above'
+                ? (isChangePct ? '▲ UP MORE THAN' : '▲ ABOVE')
+                : (isChangePct ? '▼ DOWN MORE THAN' : '▼ BELOW')}
             </button>
           ))}
         </div>
@@ -225,7 +264,7 @@ function TelegramSection() {
 }
 
 export function AlertsPanel({ onClose }) {
-  const { alerts, addAlert, removeAlert, reActivate, prices, activeCount, telegram } = useAlerts();
+  const { alerts, addAlert, removeAlert, reActivate, prices, changePcts, activeCount, telegram } = useAlerts();
   const [tab, setTab] = useState('active');
   const telegramConnected = !!(telegram.token && telegram.chatId);
 
@@ -287,28 +326,50 @@ export function AlertsPanel({ onClose }) {
             active.length === 0
               ? <div style={{ padding: 20, fontSize: 11, color: 'var(--text-3)', fontFamily: "'IBM Plex Mono',monospace", textAlign: 'center' }}>No active alerts.<br />Add one above.</div>
               : active.map(a => {
-                  const cur = prices[a.ticker];
-                  const pct = pctAway(cur, a.targetPrice);
-                  const dir = a.condition === 'above' ? '▲' : '▼';
-                  const clr = a.condition === 'above' ? '#059669' : '#e11d48';
+                  const isChgPct = (a.type || 'price') === 'changePct';
+                  const curPrice = prices[a.ticker];
+                  const curChg   = changePcts[a.ticker];
+                  const curVal   = isChgPct ? curChg : curPrice;
+                  const pct      = !isChgPct ? pctAway(curPrice, a.targetPrice) : null;
+                  const dir      = a.condition === 'above' ? '▲' : '▼';
+                  const clr      = a.condition === 'above' ? '#059669' : '#e11d48';
+                  const targetStr = isChgPct
+                    ? `${Number(a.targetPrice) > 0 ? '+' : ''}${Number(a.targetPrice).toFixed(1)}%`
+                    : `$${Number(a.targetPrice).toFixed(2)}`;
                   return (
                     <div key={a.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 14px', borderBottom: '1px solid var(--border-subtle)' }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                           <span style={{ fontFamily: "'Inter',sans-serif", fontWeight: 700, fontSize: 12, color: 'var(--text-1)' }}>{a.ticker}</span>
-                          <span style={{ fontSize: 10, color: clr, fontWeight: 600 }}>{dir} ${Number(a.targetPrice).toFixed(2)}</span>
+                          <span style={{ fontSize: 9, background: isChgPct ? 'rgba(124,58,237,0.10)' : 'rgba(37,99,235,0.10)',
+                            color: isChgPct ? '#7c3aed' : '#2563eb', border: `1px solid ${isChgPct ? 'rgba(124,58,237,0.25)' : 'rgba(37,99,235,0.25)'}`,
+                            borderRadius: 4, padding: '1px 5px', fontFamily: "'IBM Plex Mono',monospace" }}>
+                            {isChgPct ? '% chg' : '$ price'}
+                          </span>
+                          <span style={{ fontSize: 10, color: clr, fontWeight: 600 }}>{dir} {targetStr}</span>
                         </div>
-                        {cur != null && (
+                        {curVal != null && (
                           <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, color: 'var(--text-3)' }}>
-                            Now: <span style={{ color: 'var(--text-1)' }}>${cur.toFixed(2)}</span>
-                            {pct != null && (
-                              <span style={{ color: Math.abs(pct) < 2 ? '#f59e0b' : 'var(--text-3)', marginLeft: 6 }}>
-                                {pct > 0 ? '+' : ''}{pct}% away
-                              </span>
+                            {isChgPct ? (
+                              <>
+                                Today: <span style={{ color: curChg >= 0 ? '#059669' : '#e11d48' }}>
+                                  {curChg >= 0 ? '+' : ''}{curChg.toFixed(2)}%
+                                </span>
+                                {curPrice != null && <span style={{ marginLeft: 6 }}>(${curPrice.toFixed(2)})</span>}
+                              </>
+                            ) : (
+                              <>
+                                Now: <span style={{ color: 'var(--text-1)' }}>${curPrice.toFixed(2)}</span>
+                                {pct != null && (
+                                  <span style={{ color: Math.abs(pct) < 2 ? '#f59e0b' : 'var(--text-3)', marginLeft: 6 }}>
+                                    {pct > 0 ? '+' : ''}{pct}% away
+                                  </span>
+                                )}
+                              </>
                             )}
                           </div>
                         )}
-                        {!cur && <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, color: 'var(--text-3)' }}>Pending first poll…</div>}
+                        {curVal == null && <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, color: 'var(--text-3)' }}>Pending first poll…</div>}
                         {a.note && <div style={{ fontFamily: "'Inter',sans-serif", fontSize: 10, color: 'var(--text-3)', marginTop: 1, fontStyle: 'italic' }}>{a.note}</div>}
                       </div>
                       <button onClick={() => removeAlert(a.id)} title="Remove alert"
@@ -325,18 +386,32 @@ export function AlertsPanel({ onClose }) {
           {tab === 'history' && (
             triggered.length === 0
               ? <div style={{ padding: 20, fontSize: 11, color: 'var(--text-3)', fontFamily: "'IBM Plex Mono',monospace", textAlign: 'center' }}>No triggered alerts yet.</div>
-              : triggered.map(a => (
+              : triggered.map(a => {
+                  const isChgPct = (a.type || 'price') === 'changePct';
+                  const targetStr = isChgPct
+                    ? `${Number(a.targetPrice) > 0 ? '+' : ''}${Number(a.targetPrice).toFixed(1)}%`
+                    : `$${Number(a.targetPrice).toFixed(2)}`;
+                  const hitStr = isChgPct
+                    ? `${a.triggeredPrice >= 0 ? '+' : ''}${Number(a.triggeredPrice).toFixed(2)}% move`
+                    : `$${Number(a.triggeredPrice).toFixed(2)}`;
+                  return (
                   <div key={a.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '9px 14px', borderBottom: '1px solid var(--border-subtle)' }}>
                     <BellOff size={12} style={{ color: '#94a3b8', flexShrink: 0, marginTop: 2 }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                         <span style={{ fontFamily: "'Inter',sans-serif", fontWeight: 700, fontSize: 12, color: 'var(--text-1)' }}>{a.ticker}</span>
+                        {isChgPct && (
+                          <span style={{ fontSize: 9, background: 'rgba(124,58,237,0.10)', color: '#7c3aed',
+                            border: '1px solid rgba(124,58,237,0.25)', borderRadius: 4, padding: '1px 5px', fontFamily: "'IBM Plex Mono',monospace" }}>
+                            % chg
+                          </span>
+                        )}
                         <span style={{ fontSize: 10, color: a.condition === 'above' ? '#059669' : '#e11d48', fontWeight: 600 }}>
-                          {a.condition === 'above' ? '▲' : '▼'} ${Number(a.targetPrice).toFixed(2)}
+                          {a.condition === 'above' ? '▲' : '▼'} {targetStr}
                         </span>
                       </div>
                       <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, color: 'var(--text-3)' }}>
-                        Hit ${a.triggeredPrice?.toFixed(2)} · {new Date(a.triggeredAt).toLocaleString()}
+                        Hit {hitStr} · {new Date(a.triggeredAt).toLocaleString()}
                       </div>
                       {a.note && <div style={{ fontFamily: "'Inter',sans-serif", fontSize: 10, color: 'var(--text-3)', marginTop: 1, fontStyle: 'italic' }}>{a.note}</div>}
                     </div>
@@ -355,7 +430,8 @@ export function AlertsPanel({ onClose }) {
                       </button>
                     </div>
                   </div>
-                ))
+                  );
+                })
           )}
         </div>
 

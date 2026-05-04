@@ -41,6 +41,10 @@ Return a JSON object with ONLY the keys listed below. Omit keys you don't want t
   "roeMin":        string (number) — minimum return on equity %
   "pbMax":         string (number) — maximum price-to-book ratio
   "debtToEqMax":   string (number) — maximum debt-to-equity ratio
+  "changePctMin":  string (number) — minimum day % change (e.g. "2" = up 2%+ today)
+  "changePctMax":  string (number) — maximum day % change (e.g. "-1" = down more than 1%)
+  "priceMin":      string (number) — minimum stock price in USD
+  "priceMax":      string (number) — maximum stock price in USD
   "profitable":    boolean — true = only include stocks with positive net margin
   "paysDividend":  boolean — true = only include dividend-paying stocks
 }
@@ -72,6 +76,12 @@ Return a JSON object with ONLY the keys listed below. Omit keys you don't want t
 - "high dividend" → paysDividend: true, divYieldMin: "4"
 - "low volatility", "defensive" → betaMax: "0.8"
 - "high quality" → roeMin: "15", profitable: true
+- "up today", "gaining today" → changePctMin: "0.5"
+- "down today", "losing today" → changePctMax: "-0.5"
+- "big movers up" → changePctMin: "3"
+- "big movers down" → changePctMax: "-3"
+- "penny stocks" → priceMax: "5"
+- "low price" → priceMax: "20"
 
 === OUTPUT FORMAT ===
 Respond with a single valid JSON object (no markdown, no fences):

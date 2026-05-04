@@ -17,6 +17,7 @@ const AlertsContext = createContext({
   setTelegram: () => {},
   activeCount: 0,
   prices:      {},
+  changePcts:  {},
 });
 
 export function useAlerts() { return useContext(AlertsContext); }
@@ -61,6 +62,7 @@ export function AlertsProvider({ children }) {
   const [alertList, setAlertList] = useState(() => dbAlerts.load());
   const [telegram,  setTgState]   = useState(() => loadTelegram(user));
   const [prices,    setPrices]    = useState({});
+  const [changePcts, setChangePcts] = useState({});
 
   // Refs so the polling closure always sees the latest values
   const alertsRef   = useRef(alertList);
@@ -103,19 +105,20 @@ export function AlertsProvider({ children }) {
   }, []);
 
   // ── CRUD ─────────────────────────────────────────────────────────────────
-  const addAlert = useCallback(({ ticker, targetPrice, condition, note = '' }) => {
+  const addAlert = useCallback(({ ticker, targetPrice, condition, note = '', type = 'price' }) => {
     const id = typeof crypto !== 'undefined' && crypto.randomUUID
       ? crypto.randomUUID()
       : Date.now().toString(36) + Math.random().toString(36).slice(2);
     const a = {
       id,
-      ticker:       ticker.trim().toUpperCase(),
-      targetPrice:  parseFloat(targetPrice),
+      ticker:         ticker.trim().toUpperCase(),
+      type,                 // 'price' | 'changePct'
+      targetPrice:    parseFloat(targetPrice),
       condition,            // 'above' | 'below'
-      note:         note.trim(),
-      active:       true,
-      createdAt:    new Date().toISOString(),
-      triggeredAt:  null,
+      note:           note.trim(),
+      active:         true,
+      createdAt:      new Date().toISOString(),
+      triggeredAt:    null,
       triggeredPrice: null,
     };
     saveAlerts([...alertsRef.current, a]);
@@ -141,30 +144,63 @@ export function AlertsProvider({ children }) {
 
       // Deduplicate tickers
       const tickers = [...new Set(active.map(a => a.ticker))];
-      const fresh   = {};
+      const fresh      = {};   // { sym: price }
+      const freshChgPct = {}; // { sym: dayChangePct }
 
       for (const sym of tickers) {
         try {
           const q = await api('/quote?symbol=' + sym);
-          if (q?.c) fresh[sym] = q.c;
+          if (q?.c)  fresh[sym]       = q.c;
+          if (q?.dp != null) freshChgPct[sym] = q.dp;
         } catch {}
         if (cancelled) return;
       }
 
       if (!Object.keys(fresh).length) return;
-      setPrices(prev => ({ ...prev, ...fresh }));
+      setPrices(prev    => ({ ...prev, ...fresh }));
+      setChangePcts(prev => ({ ...prev, ...freshChgPct }));
 
-      // Check each active alert against fresh prices
+      // Check each active alert against fresh data
       const updated = alertsRef.current.map(a => {
         if (!a.active) return a;
-        const price = fresh[a.ticker];
-        if (price == null) return a;
-        const hit = a.condition === 'above' ? price >= a.targetPrice : price <= a.targetPrice;
+        const alertType = a.type || 'price'; // backward compat
+
+        let currentValue;
+        if (alertType === 'changePct') {
+          currentValue = freshChgPct[a.ticker];
+        } else {
+          currentValue = fresh[a.ticker];
+        }
+        if (currentValue == null) return a;
+
+        const hit = a.condition === 'above'
+          ? currentValue >= a.targetPrice
+          : currentValue <= a.targetPrice;
         if (!hit) return a;
 
         // ── Triggered! ──
-        const title = `🔔 ${a.ticker} alert triggered`;
-        const body  = `${a.ticker} is $${price.toFixed(2)} — ${a.condition === 'above' ? 'above' : 'below'} your $${Number(a.targetPrice).toFixed(2)} target${a.note ? `. ${a.note}` : ''}`;
+        let title, body, telegramMsg;
+        const price = fresh[a.ticker];
+
+        if (alertType === 'changePct') {
+          const sign = currentValue >= 0 ? '+' : '';
+          title = `🔔 ${a.ticker} move alert triggered`;
+          body  = `${a.ticker} is ${sign}${currentValue.toFixed(2)}% today — ${a.condition === 'above' ? 'above' : 'below'} your ${Number(a.targetPrice).toFixed(1)}% threshold${a.note ? `. ${a.note}` : ''}`;
+          telegramMsg =
+            `<b>🔔 Day Change Alert Triggered</b>\n\n` +
+            `<b>${a.ticker}</b> is <b>${sign}${currentValue.toFixed(2)}%</b> today` +
+            (price ? ` (now $${price.toFixed(2)})` : '') + `\n` +
+            `Condition: ${a.condition === 'above' ? 'above' : 'below'} <b>${Number(a.targetPrice).toFixed(1)}%</b>` +
+            (a.note ? `\nNote: ${a.note}` : '');
+        } else {
+          title = `🔔 ${a.ticker} alert triggered`;
+          body  = `${a.ticker} is $${currentValue.toFixed(2)} — ${a.condition === 'above' ? 'above' : 'below'} your $${Number(a.targetPrice).toFixed(2)} target${a.note ? `. ${a.note}` : ''}`;
+          telegramMsg =
+            `<b>🔔 Price Alert Triggered</b>\n\n` +
+            `<b>${a.ticker}</b> hit <b>$${currentValue.toFixed(2)}</b>\n` +
+            `Condition: ${a.condition === 'above' ? 'above' : 'below'} <b>$${Number(a.targetPrice).toFixed(2)}</b>` +
+            (a.note ? `\nNote: ${a.note}` : '');
+        }
 
         // Browser notification
         if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
@@ -174,15 +210,15 @@ export function AlertsProvider({ children }) {
         // Telegram
         const tg = telegramRef.current;
         if (tg.token && tg.chatId) {
-          const msg =
-            `<b>🔔 Price Alert Triggered</b>\n\n` +
-            `<b>${a.ticker}</b> hit <b>$${price.toFixed(2)}</b>\n` +
-            `Condition: ${a.condition === 'above' ? 'above' : 'below'} <b>$${Number(a.targetPrice).toFixed(2)}</b>` +
-            (a.note ? `\nNote: ${a.note}` : '');
-          sendTelegram(tg.token, tg.chatId, msg);
+          sendTelegram(tg.token, tg.chatId, telegramMsg);
         }
 
-        return { ...a, active: false, triggeredAt: new Date().toISOString(), triggeredPrice: price };
+        return {
+          ...a,
+          active:         false,
+          triggeredAt:    new Date().toISOString(),
+          triggeredPrice: alertType === 'changePct' ? currentValue : currentValue,
+        };
       });
 
       if (!cancelled) saveAlerts(updated);
@@ -199,7 +235,7 @@ export function AlertsProvider({ children }) {
     <AlertsContext.Provider value={{
       alerts: alertList, addAlert, removeAlert, reActivate,
       telegram, setTelegram,
-      activeCount, prices,
+      activeCount, prices, changePcts,
     }}>
       {children}
     </AlertsContext.Provider>
