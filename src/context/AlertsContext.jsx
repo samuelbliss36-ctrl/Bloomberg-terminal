@@ -217,7 +217,7 @@ export function AlertsProvider({ children }) {
           ...a,
           active:         false,
           triggeredAt:    new Date().toISOString(),
-          triggeredPrice: alertType === 'changePct' ? currentValue : currentValue,
+          triggeredPrice: alertType === 'changePct' ? currentValue : price,
         };
       });
 

@@ -7,6 +7,8 @@
 // Usage: GET /api/finnhub?_q=/quote%3Fsymbol%3DAAPL
 // The _q param is the full Finnhub path + query string, URL-encoded.
 
+import { setCors } from './_cors.js';
+
 // Explicit allowlist of permitted Finnhub path prefixes — keeps the proxy narrow
 const ALLOWED = [
   "/quote",
@@ -39,6 +41,8 @@ function cacheTTL(path) {
 }
 
 export default async function handler(req, res) {
+  if (!setCors(req, res)) return;
+
   // Accept either name — REACT_APP_FINNHUB_KEY is already in Vercel from initial setup
   const FINNHUB_KEY = process.env.FINNHUB_KEY || process.env.REACT_APP_FINNHUB_KEY;
   if (!FINNHUB_KEY) {
@@ -70,7 +74,6 @@ export default async function handler(req, res) {
     const data = await r.json();
     const ttl  = cacheTTL(pathOnly);
 
-    res.setHeader("Access-Control-Allow-Origin", "*");
     // s-maxage = edge cache shared across all users
     // stale-while-revalidate = serve stale instantly while refreshing in background
     res.setHeader("Cache-Control", `s-maxage=${ttl}, stale-while-revalidate=${ttl * 2}`);

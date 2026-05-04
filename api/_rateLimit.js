@@ -5,7 +5,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const OWNER_EMAIL  = 'samuelbliss36@gmail.com';
+const OWNER_EMAIL  = process.env.OWNER_EMAIL;
 export const TOKEN_LIMIT = 500_000; // per user per calendar month
 
 function getMonth() {

@@ -1,3 +1,5 @@
+import { setCors } from './_cors.js';
+
 const ALLOWED_MODULES = new Set([
   'defaultKeyStatistics', 'financialData', 'summaryProfile', 'summaryDetail',
   'balanceSheetHistory', 'balanceSheetHistoryQuarterly',
@@ -9,6 +11,8 @@ const ALLOWED_MODULES = new Set([
 ]);
 
 export default async function handler(req, res) {
+  if (!setCors(req, res)) return;
+
   const { ticker, modules = "defaultKeyStatistics" } = req.query;
 
   if (!ticker || typeof ticker !== 'string') {
@@ -34,8 +38,10 @@ export default async function handler(req, res) {
         'Accept': 'application/json',
       }
     });
+    if (!response.ok) {
+      return res.status(response.status).json({ error: `Upstream error: ${response.status}` });
+    }
     const data = await response.json();
-    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
     res.json(data);
   } catch (err) {

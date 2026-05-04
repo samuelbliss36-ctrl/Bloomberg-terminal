@@ -9,8 +9,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit, incrementUsage, rateLimitedResponse } from './_rateLimit.js';
+import { setCors } from './_cors.js';
 
-const OWNER_EMAIL = 'samuelbliss36@gmail.com';
+const OWNER_EMAIL = process.env.OWNER_EMAIL;
 
 const OPENAI_KEY_RE    = /^sk-[A-Za-z0-9\-_]{20,}$/;
 const ANTHROPIC_KEY_RE = /^sk-ant-[A-Za-z0-9\-_]{20,}$/;
@@ -120,11 +121,7 @@ async function callAnthropic(key, systemPrompt, safeMessages) {
 }
 
 export default async function handler(req, res) {
-  // CORS preflight
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  if (req.method === "OPTIONS") return res.status(204).end();
+  if (!setCors(req, res, { allowedMethods: 'POST, OPTIONS' })) return;
   if (req.method !== "POST") return res.status(405).end();
 
   const { messages, context, apiKey: userApiKey } = req.body || {};

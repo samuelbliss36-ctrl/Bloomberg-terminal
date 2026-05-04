@@ -4,9 +4,10 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit, incrementUsage, rateLimitedResponse } from './_rateLimit.js';
+import { setCors } from './_cors.js';
 
 // ── AI Screener constants ─────────────────────────────────────────────────────
-const OWNER_EMAIL      = 'samuelbliss36@gmail.com';
+const OWNER_EMAIL      = process.env.OWNER_EMAIL;
 const OPENAI_KEY_RE    = /^sk-[A-Za-z0-9\-_]{20,}$/;
 const ANTHROPIC_KEY_RE = /^sk-ant-[A-Za-z0-9\-_]{20,}$/;
 
@@ -188,7 +189,6 @@ async function handleAiScreener(req, res) {
 
     if (!parsed.filters || !parsed.description) throw new Error("AI response missing required fields");
 
-    res.setHeader("Access-Control-Allow-Origin", "*");
     res.json({ filters: parsed.filters || {}, description: parsed.description || "", reasoning: Array.isArray(parsed.reasoning) ? parsed.reasoning : [] });
   } catch (err) {
     console.error("ai-screener error:", err.message);
@@ -198,9 +198,7 @@ async function handleAiScreener(req, res) {
 
 // ── Main handler ──────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (req.method === "OPTIONS") return res.status(204).end();
+  if (!setCors(req, res)) return;
 
   // AI mode: POST /api/screener?mode=ai
   if (req.method === "POST" && req.query?.mode === "ai") {

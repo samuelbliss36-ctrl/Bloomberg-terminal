@@ -6,8 +6,9 @@
 
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { setCors } from './_cors.js';
 
-const OWNER_EMAIL = 'samuelbliss36@gmail.com';
+const OWNER_EMAIL = process.env.OWNER_EMAIL;
 
 // Webhook requires raw body — parse it manually
 async function getRawBody(req) {
@@ -23,9 +24,7 @@ async function getRawBody(req) {
 export const config = { api: { bodyParser: false } };
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (!setCors(req, res)) return;
 
   const { action } = req.query;
 

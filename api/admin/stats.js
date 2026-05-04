@@ -1,11 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
+import { setCors } from '../_cors.js';
 
-const OWNER_EMAIL = 'samuelbliss36@gmail.com';
+const OWNER_EMAIL = process.env.OWNER_EMAIL;
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (!setCors(req, res)) return;
   if (req.method !== 'GET') return res.status(405).end();
 
   const token = req.headers.authorization?.replace('Bearer ', '');

@@ -1,14 +1,10 @@
 // Telegram Bot API proxy — requires authenticated Supabase session
 // POST { token, chatId, message }  |  Authorization: Bearer <jwt>
 import { createClient } from '@supabase/supabase-js';
+import { setCors } from './_cors.js';
 
 export default async function handler(req, res) {
-  if (req.method === "OPTIONS") {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    return res.status(204).end();
-  }
+  if (!setCors(req, res, { allowedMethods: 'POST, OPTIONS' })) return;
   if (req.method !== "POST") return res.status(405).end();
 
   // ── Auth gate ─────────────────────────────────────────────────────────────
@@ -51,7 +47,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: data.description || "Telegram API error" });
     }
 
-    res.setHeader("Access-Control-Allow-Origin", "*");
     res.json({ ok: true });
   } catch (err) {
     console.error("telegram error:", err.message);

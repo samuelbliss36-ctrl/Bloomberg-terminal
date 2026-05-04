@@ -2,6 +2,8 @@
 // GET /api/chart?ticker=AAPL&range=1y&interval=1d  → candle chart data
 // GET /api/chart?type=heatmap                       → S&P 500 batch quotes
 
+import { setCors } from './_cors.js';
+
 const VALID_RANGES    = new Set(["1d","5d","1mo","3mo","6mo","1y","2y","5y","10y","ytd","max"]);
 const VALID_INTERVALS = new Set(["1m","2m","5m","15m","30m","60m","90m","1h","1d","5d","1wk","1mo","3mo"]);
 
@@ -83,8 +85,7 @@ async function handleHeatmap(res) {
 
 // ── Main handler ──────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (!setCors(req, res)) return;
 
   const { type, ticker, range, interval } = req.query;
 

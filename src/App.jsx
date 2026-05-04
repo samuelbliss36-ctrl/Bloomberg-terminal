@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AlertsProvider } from './context/AlertsContext';
 import SignInPage from './pages/Auth/SignInPage';
@@ -10,50 +11,82 @@ import { CopilotPanel } from './components/copilot/CopilotPanel';
 import { GlobalTopBar } from './layout/GlobalTopBar';
 import { SidebarNav } from './layout/SidebarNav';
 import { RightPanelShell } from './layout/RightPanelShell';
-import CommoditiesDashboard from './pages/Commodities/CommoditiesDashboard';
-import CryptoDashboard from './pages/Crypto/CryptoDashboard';
-import FXDashboard from './pages/FX/FXDashboard';
-import SupplyChainDashboard from './pages/SupplyChain/SupplyChainDashboard';
-import TechnicalAnalysis from './pages/Technical/TechnicalAnalysis';
-import EyeOfSauron from './pages/Eye/EyeOfSauron';
-import GlobalMarketsModule from './pages/Markets/GlobalMarketsModule';
-import AssetView from './pages/Markets/AssetView';
-import PortfolioTracker, { MarketSessionBadges } from './pages/Portfolio/PortfolioTracker';
-import StockScreener from './pages/Screener/StockScreener';
-import ResearchBrowser from './pages/Research/ResearchBrowser';
-import EarningsCalendarPage from './pages/Earnings/EarningsCalendarPage';
-import MarketHeatmap from './pages/Heatmap/MarketHeatmap';
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import ProPage from './pages/Subscription/ProPage';
 
-export default function App() {
+// Eagerly loaded — always in the shell
+import AssetView from './pages/Markets/AssetView';
+import { MarketSessionBadges } from './components/MarketSessionBadges';
+
+// Lazily loaded — downloaded only when the page is first visited
+const CommoditiesDashboard = lazy(() => import('./pages/Commodities/CommoditiesDashboard'));
+const CryptoDashboard      = lazy(() => import('./pages/Crypto/CryptoDashboard'));
+const FXDashboard          = lazy(() => import('./pages/FX/FXDashboard'));
+const SupplyChainDashboard = lazy(() => import('./pages/SupplyChain/SupplyChainDashboard'));
+const TechnicalAnalysis    = lazy(() => import('./pages/Technical/TechnicalAnalysis'));
+const EyeOfSauron          = lazy(() => import('./pages/Eye/EyeOfSauron'));       // ~500 KB 3D globe
+const GlobalMarketsModule  = lazy(() => import('./pages/Markets/GlobalMarketsModule'));
+const PortfolioTracker     = lazy(() => import('./pages/Portfolio/PortfolioTracker'));
+const StockScreener        = lazy(() => import('./pages/Screener/StockScreener'));
+const ResearchBrowser      = lazy(() => import('./pages/Research/ResearchBrowser'));
+const EarningsCalendarPage = lazy(() => import('./pages/Earnings/EarningsCalendarPage'));
+const MarketHeatmap        = lazy(() => import('./pages/Heatmap/MarketHeatmap'));
+const AdminDashboard       = lazy(() => import('./pages/Admin/AdminDashboard'));
+const ProPage              = lazy(() => import('./pages/Subscription/ProPage'));
+
+// Maps URL path → sidebar nav key for active highlighting
+const PATH_TO_KEY = {
+  '/':             'financial',
+  '/heatmap':      'heatmap',
+  '/commodities':  'commodities',
+  '/crypto':       'crypto',
+  '/supply-chain': 'supplychain',
+  '/technical':    'technical',
+  '/eye':          'eye',
+  '/fx':           'fx',
+  '/markets':      'markets',
+  '/portfolio':    'portfolio',
+  '/screener':     'screener',
+  '/research':     'research',
+  '/earnings':     'earnings',
+  '/pro':          'pro',
+  '/admin':        'admin',
+  '/settings':     'settings',
+};
+const KEY_TO_PATH = Object.fromEntries(
+  Object.entries(PATH_TO_KEY).map(([path, key]) => [key, path])
+);
+
+function PageLoader() {
   return (
-    <AuthProvider>
-      <AlertsProvider>
-        <AppRouter />
-      </AlertsProvider>
-    </AuthProvider>
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%' }}>
+      <div style={{ width:8, height:8, borderRadius:'50%', background:'#2563eb', boxShadow:'0 0 14px rgba(37,99,235,0.80)' }} />
+    </div>
   );
 }
 
-// Handles auth gating + onboarding before mounting the heavy terminal shell.
-// Onboarding status is stored in Supabase user metadata so it persists across
-// all devices — localStorage is only a fast cache to avoid a flicker on reload.
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AlertsProvider>
+          <AppRouter />
+        </AlertsProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
+
 function AppRouter() {
   const { user, loading: authLoading } = useAuth();
 
-  // True if either localStorage (fast) or Supabase user_metadata (cross-device) says done
   const isDone = (u) =>
     localStorage.getItem('ov_onboarding_done') === 'true' ||
     u?.user_metadata?.onboarding_done === true;
 
   const [onboardingDone, setOnboardingDone] = useState(() => isDone(null));
 
-  // When auth loads and we have a user, re-check metadata in case they completed
-  // onboarding on another device (metadata comes in with the session object).
   useEffect(() => {
     if (user && isDone(user)) {
-      localStorage.setItem('ov_onboarding_done', 'true'); // cache it locally too
+      localStorage.setItem('ov_onboarding_done', 'true');
       setOnboardingDone(true);
     }
   }, [user]); // eslint-disable-line
@@ -72,7 +105,13 @@ function AppRouter() {
 
 function AppInner() {
   const { user } = useAuth();
-  const [activePage, setActivePage] = useState("financial");
+  const navigate  = useNavigate();
+  const location  = useLocation();
+
+  // Derive active sidebar key from the current URL
+  const activePage = PATH_TO_KEY[location.pathname] || 'financial';
+  const setActivePage = useCallback((key) => navigate(KEY_TO_PATH[key] || '/'), [navigate]);
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [settings, setSettings] = useState(() => ({ showTickerTape: true, darkMode: false, ...loadSettings() }));
   const [copilotOpen, setCopilotOpen] = useState(false);
@@ -81,22 +120,22 @@ function AppInner() {
 
   const toggleTape = useCallback(() => setSettings(s => { const n = {...s, showTickerTape: !s.showTickerTape}; saveSettings(n); return n; }), []);
   const toggleDark = useCallback(() => setSettings(s => { const n = {...s, darkMode: !s.darkMode}; saveSettings(n); return n; }), []);
+
   const [ticker, setTicker] = useState("AAPL");
-  const [quote, setQuote] = useState(null);
+  const [quote, setQuote]   = useState(null);
   const [metrics, setMetrics] = useState(null);
   const [profile, setProfile] = useState(null);
-  const [news, setNews] = useState(null);
+  const [news, setNews]       = useState(null);
   const [earnings, setEarnings] = useState(null);
-  // Structured financial data for AI copilot context
   const [earningsHistory, setEarningsHistory] = useState([]);
-  const [recommendation,  setRecommendation]  = useState(null);
-  const [priceTarget,     setPriceTarget]     = useState(null);
-  const [peerTickers,     setPeerTickers]     = useState([]);
-  const [peerMetrics,     setPeerMetrics]     = useState({});
-  const [tapeData, setTapeData] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [recommendation, setRecommendation]   = useState(null);
+  const [priceTarget, setPriceTarget]         = useState(null);
+  const [peerTickers, setPeerTickers]         = useState([]);
+  const [peerMetrics, setPeerMetrics]         = useState({});
+  const [tapeData, setTapeData]               = useState([]);
+  const [loading, setLoading]                 = useState(false);
   const [pendingResearchItem, setPendingResearchItem] = useState(null);
-  const [statusTime, setStatusTime] = useState(() => new Date().toLocaleTimeString());
+  const [statusTime, setStatusTime]           = useState(() => new Date().toLocaleTimeString());
   const [watchlistTickers, setWatchlistTickers] = useState(() => dbWatchlist.load());
 
   // Check for ?subscribed=true after Stripe redirect
@@ -110,18 +149,19 @@ function AppInner() {
     }
   }, []); // eslint-disable-line
 
-  // Live clock in status bar
+  // Live clock
   useEffect(() => {
     const iv = setInterval(() => setStatusTime(new Date().toLocaleTimeString()), 1000);
     return () => clearInterval(iv);
   }, []);
 
+  // Fetch main ticker data
   useEffect(() => {
     setLoading(true);
     setQuote(null); setMetrics(null); setProfile(null); setNews(null); setEarnings(null);
     setEarningsHistory([]); setRecommendation(null); setPriceTarget(null); setPeerTickers([]); setPeerMetrics({});
-    const today = new Date().toISOString().split("T")[0];
-    const monthAgo = new Date(Date.now()-30*24*3600*1000).toISOString().split("T")[0];
+    const today     = new Date().toISOString().split("T")[0];
+    const monthAgo  = new Date(Date.now()-30*24*3600*1000).toISOString().split("T")[0];
     const yearAhead = new Date(Date.now()+365*24*3600*1000).toISOString().split("T")[0];
     Promise.all([
       api("/quote?symbol="+ticker),
@@ -137,7 +177,7 @@ function AppInner() {
     }).catch(()=>setLoading(false));
   }, [ticker]);
 
-  // Structured AI-context data: earnings history, analyst consensus, price target, peer multiples.
+  // Fetch AI copilot context data
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
@@ -179,7 +219,7 @@ function AppInner() {
     return () => { cancelled = true; };
   }, [ticker]); // eslint-disable-line
 
-  // Fetch live prices for watchlist — re-runs when tickers change
+  // Watchlist tape prices
   useEffect(() => {
     if (!watchlistTickers.length) { setTapeData([]); return; }
     let cancelled = false;
@@ -199,12 +239,15 @@ function AppInner() {
     return () => { cancelled = true; };
   }, [watchlistTickers]); // eslint-disable-line
 
-  // Re-read watchlist when cloud sync completes
+  // Re-read watchlist after cloud sync
   useEffect(() => {
     const handler = () => setWatchlistTickers(dbWatchlist.load());
     window.addEventListener('ov:data-synced', handler);
     return () => window.removeEventListener('ov:data-synced', handler);
   }, []);
+
+  // Clear page context on navigation
+  useEffect(() => { setPageContext(null); }, [location.pathname]);
 
   const addToWatchlist = useCallback((sym) => {
     const s = sym.trim().toUpperCase();
@@ -220,19 +263,27 @@ function AppInner() {
     dbWatchlist.save(updated, user?.id);
   }, [watchlistTickers, user]);
 
-  // Clear stale page context whenever the user navigates to a different page
-  useEffect(() => { setPageContext(null); }, [activePage]);
+  const openResearch = useCallback((item) => {
+    setPendingResearchItem(item);
+    navigate('/research');
+  }, [navigate]);
 
-  const openResearch = (item) => { setPendingResearchItem(item); setActivePage("research"); };
+  const goToTicker = useCallback((t) => {
+    setTicker(t);
+    navigate('/');
+  }, [navigate]);
+
+  const isFinancialPage = location.pathname === '/';
 
   return (
     <div className={"app-shell" + (sidebarOpen ? " sidebar-open" : "") + (settings.darkMode ? " dark" : "")} style={{ fontFamily:"'Inter','IBM Plex Sans',sans-serif" }}>
+
       {/* ── Global Top Bar ─────────────────────────────────── */}
       <GlobalTopBar
         ticker={ticker}
-        setTicker={t => { setTicker(t); setActivePage("financial"); }}
+        setTicker={goToTicker}
         tapeData={tapeData}
-        quote={activePage==="financial" ? quote : null}
+        quote={isFinancialPage ? quote : null}
         loading={loading}
         settings={settings}
         onToggleTape={toggleTape}
@@ -249,41 +300,40 @@ function AppInner() {
 
       {/* ── Main Content ───────────────────────────────────── */}
       <div className="app-main">
-        {activePage === "financial" && (
-          <AssetView
-            ticker={ticker}
-            quote={quote}
-            metrics={metrics}
-            profile={profile}
-            news={news}
-          />
-        )}
-        {activePage === "commodities"  && <CommoditiesDashboard onContextUpdate={setPageContext} />}
-        {activePage === "crypto"       && <CryptoDashboard onContextUpdate={setPageContext} />}
-        {activePage === "supplychain"  && <SupplyChainDashboard onOpenResearch={openResearch} onContextUpdate={setPageContext} />}
-        {activePage === "fx"           && <FXDashboard onOpenResearch={openResearch} onContextUpdate={setPageContext} />}
-        {activePage === "technical"    && <TechnicalAnalysis ticker={ticker} onContextUpdate={setPageContext} />}
-        {activePage === "eye"          && <EyeOfSauron onOpenResearch={openResearch} onContextUpdate={setPageContext} />}
-        {activePage === "markets"      && <GlobalMarketsModule onOpenResearch={openResearch} onContextUpdate={setPageContext} />}
-        {activePage === "portfolio"    && <PortfolioTracker onContextUpdate={setPageContext} />}
-        {activePage === "screener"     && <StockScreener onSelectTicker={t => { setTicker(t); setActivePage("financial"); }} onContextUpdate={setPageContext} />}
-        {activePage === "research"     && <ResearchBrowser pendingItem={pendingResearchItem} onPendingConsumed={() => setPendingResearchItem(null)} onContextUpdate={setPageContext} />}
-        {activePage === "heatmap"      && <MarketHeatmap onOpenResearch={openResearch} onContextUpdate={setPageContext} />}
-        {activePage === "earnings"     && <EarningsCalendarPage onContextUpdate={setPageContext} />}
-        {activePage === "admin"        && <AdminDashboard />}
-        {activePage === "pro"          && <ProPage />}
-        {activePage === "settings" && (
-          <div style={{ padding:24, maxWidth:480 }}>
-            <div style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:13, color:"var(--text-1)", marginBottom:16 }}>Settings</div>
-            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:12, color:"var(--text-3)" }}>Use the controls in the top bar to manage your preferences.</div>
-          </div>
-        )}
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={
+              <AssetView ticker={ticker} quote={quote} metrics={metrics} profile={profile} news={news} />
+            } />
+            <Route path="/heatmap"      element={<MarketHeatmap onOpenResearch={openResearch} onContextUpdate={setPageContext} />} />
+            <Route path="/commodities"  element={<CommoditiesDashboard onContextUpdate={setPageContext} />} />
+            <Route path="/crypto"       element={<CryptoDashboard onContextUpdate={setPageContext} />} />
+            <Route path="/supply-chain" element={<SupplyChainDashboard onOpenResearch={openResearch} onContextUpdate={setPageContext} />} />
+            <Route path="/technical"    element={<TechnicalAnalysis ticker={ticker} onContextUpdate={setPageContext} />} />
+            <Route path="/eye"          element={<EyeOfSauron onOpenResearch={openResearch} onContextUpdate={setPageContext} />} />
+            <Route path="/fx"           element={<FXDashboard onOpenResearch={openResearch} onContextUpdate={setPageContext} />} />
+            <Route path="/markets"      element={<GlobalMarketsModule onOpenResearch={openResearch} onContextUpdate={setPageContext} />} />
+            <Route path="/portfolio"    element={<PortfolioTracker onContextUpdate={setPageContext} />} />
+            <Route path="/screener"     element={<StockScreener onSelectTicker={goToTicker} onContextUpdate={setPageContext} />} />
+            <Route path="/research"     element={<ResearchBrowser pendingItem={pendingResearchItem} onPendingConsumed={() => setPendingResearchItem(null)} onContextUpdate={setPageContext} />} />
+            <Route path="/earnings"     element={<EarningsCalendarPage onContextUpdate={setPageContext} />} />
+            <Route path="/pro"          element={<ProPage />} />
+            <Route path="/admin"        element={<AdminDashboard />} />
+            <Route path="/settings"     element={
+              <div style={{ padding:24, maxWidth:480 }}>
+                <div style={{ fontFamily:"'Inter',sans-serif", fontWeight:600, fontSize:13, color:"var(--text-1)", marginBottom:16 }}>Settings</div>
+                <div style={{ fontFamily:"'Inter',sans-serif", fontSize:12, color:"var(--text-3)" }}>Use the controls in the top bar to manage your preferences.</div>
+              </div>
+            } />
+            <Route path="*" element={<AssetView ticker={ticker} quote={quote} metrics={metrics} profile={profile} news={news} />} />
+          </Routes>
+        </Suspense>
       </div>
 
       {/* ── Right Panel ────────────────────────────────────── */}
       <RightPanelShell
         tapeData={tapeData}
-        onSelectTicker={t => { setTicker(t); setActivePage("financial"); }}
+        onSelectTicker={goToTicker}
         earnings={earnings}
         activeTicker={ticker}
         onAddToWatchlist={addToWatchlist}
@@ -328,9 +378,9 @@ function AppInner() {
           onClose={() => setCopilotOpen(false)}
         />
       )}
+
       {/* Floating AI Copilot launcher */}
       <div style={{ position:"fixed", bottom:48, right:16, zIndex:9997, display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
-        {/* "Ask AI" label */}
         {!copilotOpen && (
           <div style={{
             background:"linear-gradient(135deg,#7c3aed,#2563eb)",
@@ -343,7 +393,6 @@ function AppInner() {
             ✦ Ask AI
           </div>
         )}
-        {/* Button + pulsing ring */}
         <div style={{ position:"relative", display:"flex", alignItems:"center", justifyContent:"center" }}>
           {!copilotOpen && (
             <div style={{
@@ -370,6 +419,7 @@ function AppInner() {
           </button>
         </div>
       </div>
+
       <style>{`
         @keyframes copilot-pulse {
           0%   { transform: scale(1);   opacity: 0.9; }

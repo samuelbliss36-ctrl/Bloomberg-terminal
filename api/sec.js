@@ -9,9 +9,10 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit, incrementUsage, rateLimitedResponse } from './_rateLimit.js';
+import { setCors } from './_cors.js';
 
 // ── SEC Summary (AI) constants ────────────────────────────────────────────────
-const OWNER_EMAIL      = 'samuelbliss36@gmail.com';
+const OWNER_EMAIL      = process.env.OWNER_EMAIL;
 const OPENAI_KEY_RE    = /^sk-[A-Za-z0-9\-_]{20,}$/;
 const ANTHROPIC_KEY_RE = /^sk-ant-[A-Za-z0-9\-_]{20,}$/;
 const PERPLEXITY_KEY_RE = /^pplx-[A-Za-z0-9]{20,}$/;
@@ -179,7 +180,6 @@ Generate a structured JSON analysis. Return the JSON object directly — no mark
     try { parsed = JSON.parse(clean); }
     catch { const m = clean.match(/\{[\s\S]*\}/); if (!m) throw new Error("AI returned non-JSON response"); parsed = JSON.parse(m[0]); }
 
-    res.setHeader("Access-Control-Allow-Origin", "*");
     res.json(parsed);
   } catch (err) {
     console.error("sec summarize error:", err.message);
@@ -281,7 +281,6 @@ async function handleFilings(ticker, res) {
     }
   }
 
-  res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "s-maxage=3600");
   res.json({ cik, entityName, filings });
 }
@@ -335,7 +334,6 @@ async function handleExtract(cik, accession, doc, res) {
   const fullText = text.slice(0, 5000);
   const truncated = r.status === 206 || html.length >= 510000;
 
-  res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "s-maxage=86400");
   res.json({
     riskFactors,
@@ -348,12 +346,7 @@ async function handleExtract(cik, accession, doc, res) {
 }
 
 export default async function handler(req, res) {
-  if (req.method === "OPTIONS") {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    return res.status(204).end();
-  }
+  if (!setCors(req, res, { allowedMethods: 'GET, POST, OPTIONS' })) return;
 
   const { mode, ticker, cik, accession, doc } = req.query || {};
 

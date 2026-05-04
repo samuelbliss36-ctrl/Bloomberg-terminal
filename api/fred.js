@@ -1,7 +1,11 @@
 // FRED series IDs are all-caps alphanumeric (e.g. FEDFUNDS, CPIAUCSL, T10YIE)
+import { setCors } from './_cors.js';
+
 const SERIES_RE = /^[A-Z0-9]{1,30}$/;
 
 export default async function handler(req, res) {
+  if (!setCors(req, res)) return;
+
   const FRED_KEY = process.env.FRED_KEY;
   if (!FRED_KEY) {
     return res.status(503).json({ error: "FRED_KEY env var not set." });
@@ -21,7 +25,6 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
-    res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=7200");
     res.json(data);
   } catch (err) {

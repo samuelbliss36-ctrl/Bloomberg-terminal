@@ -370,7 +370,7 @@ export default function PortfolioTracker() {
 
   const curveUp = equityHistory.length > 1 ? equityHistory[equityHistory.length-1].value >= equityHistory[0].value : true;
   const curveClr = curveUp ? "#059669" : "#e11d48";
-  const pctChange = equityHistory.length > 1
+  const pctChange = equityHistory.length > 1 && equityHistory[0].value > 0
     ? ((equityHistory[equityHistory.length-1].value - equityHistory[0].value) / equityHistory[0].value * 100).toFixed(2)
     : null;
 

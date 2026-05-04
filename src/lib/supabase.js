@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const url = process.env.REACT_APP_SUPABASE_URL  || "";
-const key = process.env.REACT_APP_SUPABASE_ANON_KEY || "";
+const url = import.meta.env.VITE_SUPABASE_URL  || "";
+const key = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 
 // Custom storage adapter — routes auth tokens to sessionStorage when the user
 // chose "don't remember me", otherwise uses localStorage (default).

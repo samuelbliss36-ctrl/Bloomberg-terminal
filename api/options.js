@@ -5,6 +5,8 @@
 //   2. Pass crumb + cookies in the actual options request
 // Crumb is cached in module memory for 30 min (warm Vercel invocations share it).
 
+import { setCors } from './_cors.js';
+
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
 let _crumb   = null;
@@ -62,6 +64,8 @@ async function getYahooCrumb() {
 }
 
 export default async function handler(req, res) {
+  if (!setCors(req, res)) return;
+
   const { ticker, date } = req.query;
   if (!ticker || typeof ticker !== "string") return res.status(400).json({ error: "ticker required" });
   if (!/^[A-Z0-9.^=-]{1,10}$/i.test(ticker)) return res.status(400).json({ error: "Invalid ticker" });
@@ -96,7 +100,6 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: data.finance.error.description || "Yahoo Finance auth error" });
     }
 
-    res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
     res.json(data);
   } catch (err) {

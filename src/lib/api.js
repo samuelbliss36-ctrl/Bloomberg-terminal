@@ -1,12 +1,12 @@
 // Client-side key used only in local development (npm start).
 // In production all Finnhub calls go through /api/finnhub so the key
 // never appears in the browser JS bundle.
-export const FINNHUB_KEY = process.env.REACT_APP_FINNHUB_KEY;
-export const IS_DEV      = process.env.NODE_ENV === "development";
+export const FINNHUB_KEY = import.meta.env.VITE_FINNHUB_KEY;
+export const IS_DEV      = import.meta.env.DEV;
 
 if (IS_DEV && !FINNHUB_KEY) {
   console.error(
-    "[Bloomberg Terminal] REACT_APP_FINNHUB_KEY is not set.\n" +
+    "[Omnes Videntes] VITE_FINNHUB_KEY is not set.\n" +
     "Add it to your .env file for local development.\n" +
     "Get a free key at https://finnhub.io"
   );

@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-export const OWNER_EMAIL = 'samuelbliss36@gmail.com';
+export const OWNER_EMAIL = import.meta.env.VITE_OWNER_EMAIL;
 
 export function isOwner(user) {
   return user?.email === OWNER_EMAIL;

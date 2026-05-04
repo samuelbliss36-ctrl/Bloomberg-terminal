@@ -4,8 +4,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit, incrementUsage, rateLimitedResponse } from './_rateLimit.js';
+import { setCors } from './_cors.js';
 
-const OWNER_EMAIL      = 'samuelbliss36@gmail.com';
+const OWNER_EMAIL      = process.env.OWNER_EMAIL;
 const OPENAI_KEY_RE    = /^sk-[A-Za-z0-9\-_]{20,}$/;
 const ANTHROPIC_KEY_RE = /^sk-ant-[A-Za-z0-9\-_]{20,}$/;
 const PERPLEXITY_KEY_RE = /^pplx-[A-Za-z0-9]{20,}$/;
@@ -47,12 +48,7 @@ function safeError(err) {
 }
 
 export default async function handler(req, res) {
-  if (req.method === "OPTIONS") {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    return res.status(204).end();
-  }
+  if (!setCors(req, res, { allowedMethods: 'POST, OPTIONS' })) return;
   if (req.method !== "POST") return res.status(405).end();
 
   const { id, context, apiKey: userApiKey } = req.body || {};
@@ -204,7 +200,6 @@ Return a JSON object with keys: whatThisIs, currentNarrative, keyRisks (array of
     }
     if (!Array.isArray(parsed.keyRisks)) parsed.keyRisks = [parsed.keyRisks].filter(Boolean);
 
-    res.setHeader("Access-Control-Allow-Origin", "*");
     res.json(parsed);
   } catch (err) {
     console.error("intel error:", err.message);
