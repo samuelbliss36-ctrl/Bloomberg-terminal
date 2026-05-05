@@ -49,7 +49,7 @@ export function InsightChip({ page, context, style }) {
 
   return (
     <div style={{
-      display:      'inline-flex',
+      display:      'flex',
       alignItems:   expanded ? 'flex-start' : 'center',
       gap:          6,
       background:   'linear-gradient(var(--surface-1,#1e293b), var(--surface-1,#1e293b)) padding-box, linear-gradient(135deg,#7c3aed,#2563eb) border-box',
@@ -59,9 +59,9 @@ export function InsightChip({ page, context, style }) {
       fontFamily:   "'IBM Plex Mono',monospace",
       fontSize:     12,
       color:        'var(--text-1,#e2e8f0)',
-      maxWidth:     expanded ? 680 : 560,
+      width:        '100%',
+      minWidth:     0,
       boxShadow:    '0 0 12px rgba(124,58,237,0.12)',
-      transition:   'max-width 0.2s ease',
       ...style,
     }}>
       {/* Gradient ✦ icon */}
