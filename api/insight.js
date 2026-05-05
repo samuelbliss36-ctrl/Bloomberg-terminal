@@ -19,30 +19,31 @@ function hashStr(s) {
   return (h >>> 0).toString(36);
 }
 
-async function callHaiku(context) {
-  const key = process.env.ANTHROPIC_KEY;
-  if (!key) throw new Error('no_anthropic_key');
+async function callMini(context) {
+  const key = process.env.OPENAI_KEY;
+  if (!key) throw new Error('no_openai_key');
 
-  const r = await withCircuitBreaker('anthropic-insight', () =>
-    fetch('https://api.anthropic.com/v1/messages', {
+  const r = await withCircuitBreaker('openai-insight', () =>
+    fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'x-api-key':         key,
-        'anthropic-version': '2023-06-01',
-        'content-type':      'application/json',
+        'Authorization': 'Bearer ' + key,
+        'Content-Type':  'application/json',
       },
       body: JSON.stringify({
-        model:      'claude-haiku-4-5-20251001',
+        model:      'gpt-4o-mini',
         max_tokens: 80,
-        system:     'You are a financial insight chip. Generate exactly ONE sentence of market insight (max 110 characters). Be specific and data-driven. No markdown, no quotes, no ellipsis.',
-        messages:   [{ role: 'user', content: context }],
+        messages: [
+          { role: 'system', content: 'You are a financial insight chip. Generate exactly ONE sentence of market insight (max 110 characters). Be specific and data-driven. No markdown, no quotes, no ellipsis.' },
+          { role: 'user',   content: context },
+        ],
       }),
     })
   );
 
   const d = await r.json();
-  if (d.error) throw new Error(d.error.message || 'Anthropic error');
-  return (d.content?.[0]?.text || '').trim().slice(0, 120);
+  if (d.error) throw new Error(d.error.message || 'OpenAI error');
+  return (d.choices?.[0]?.message?.content || '').trim().slice(0, 120);
 }
 
 export default async function handler(req, res) {
@@ -76,7 +77,7 @@ export default async function handler(req, res) {
 
   // ── Generate ─────────────────────────────────────────────────────────────────
   try {
-    const insight = await callHaiku(safeCtx);
+    const insight = await callMini(safeCtx);
     if (insight) {
       await kvSet(cacheKey, insight, 900); // 15 min TTL
     }
@@ -85,7 +86,7 @@ export default async function handler(req, res) {
     if (err.circuitOpen) {
       return res.status(503).json({ error: 'upstream_degraded' });
     }
-    if (err.message === 'no_anthropic_key') {
+    if (err.message === 'no_openai_key') {
       return res.status(503).json({ error: 'not_configured' });
     }
     console.error('insight error:', err.message);
