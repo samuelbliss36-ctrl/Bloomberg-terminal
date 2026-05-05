@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { COUNTRY_CONFIG } from "../../data/countryData";
 import CountryDashboard from "./CountryDashboard";
+import { InsightChip } from "../../components/InsightChip";
 
 export default function GlobalMarketsModule({ onOpenResearch, onContextUpdate }) {
   const [selected, setSelected] = useState("CA");
@@ -32,6 +33,7 @@ export default function GlobalMarketsModule({ onOpenResearch, onContextUpdate })
           </button>
         ))}
       </div>
+      <InsightChip page="global-markets" context="Global equity markets: international indices, country ETFs, and macro data." style={{ margin: "8px 16px" }} />
       <CountryDashboard key={selected} country={country} onOpenResearch={onOpenResearch} />
     </div>
   );

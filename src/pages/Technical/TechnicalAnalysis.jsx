@@ -4,6 +4,7 @@ import {
   ReferenceLine, ReferenceArea, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from "recharts";
+import { InsightChip } from "../../components/InsightChip";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Pure math helpers (module scope — no re-allocation on render)
@@ -394,6 +395,7 @@ export default function TechnicalAnalysis({ ticker, onContextUpdate }) {
           <span style={{ ...MONO, fontSize: 12, fontWeight: 700, color: "var(--text-1)" }}>
             {ticker} — Technical Analysis
           </span>
+          <InsightChip page="technical" context={`${ticker} technical analysis: RSI, MACD, Bollinger Bands, volume, and moving averages.`} />
           <div style={{ display: "flex", gap: 4 }}>
             {Object.keys(TF_MAP).map(t => (
               <button key={t} onClick={() => setTf(t)}

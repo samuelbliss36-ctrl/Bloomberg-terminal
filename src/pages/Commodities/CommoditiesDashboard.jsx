@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { fetchChart } from "../../lib/api";
 import { fmt, clr, delay } from "../../lib/fmt";
 import { UniversalChart } from "../../components/charts/UniversalChart";
+import { InsightChip } from "../../components/InsightChip";
 
 export default function CommoditiesDashboard({ onContextUpdate }) {
   const COMMODITIES = [
@@ -64,6 +65,7 @@ export default function CommoditiesDashboard({ onContextUpdate }) {
     <div className="flex-1 p-3 grid gap-3" style={{ gridTemplateColumns: "340px 1fr", gridTemplateRows: "auto 1fr" }}>
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/2", gridRow: "1/3", overflowY: "auto" }}>
         <div className="terminal-header mb-3">🛢 Commodities Futures</div>
+        <InsightChip page="commodities" context="Commodities futures: crude oil, gold, silver, natural gas, wheat, copper." style={{ marginBottom: 8 }} />
         <div className="flex gap-2 mb-3">
           {categories.map(cat => (
             <button key={cat} onClick={() => setCategory(cat)}

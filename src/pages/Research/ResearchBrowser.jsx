@@ -7,6 +7,7 @@ import { db } from "../../lib/db";
 import { useAuth } from "../../context/AuthContext";
 import ResearchPanel        from "./panels/ResearchPanel";
 import ResearchHomeDashboard from "./panels/ResearchHomeDashboard";
+import { InsightChip } from "../../components/InsightChip";
 
 // ── ResearchBrowser (default export) ─────────────────────────────────────────
 export default function ResearchBrowser({ pendingItem, onPendingConsumed }) {
@@ -159,6 +160,7 @@ export default function ResearchBrowser({ pendingItem, onPendingConsumed }) {
           )}
         </div>
       </div>
+      <InsightChip page="research" context="Research browser: equity analysis, SEC filings, earnings transcripts, sector reports." style={{ margin: "8px 16px 0" }} />
 
       {/* ── Panel workspace ── */}
       <div className="flex-1" style={{ overflowY:"auto", padding:12 }}>

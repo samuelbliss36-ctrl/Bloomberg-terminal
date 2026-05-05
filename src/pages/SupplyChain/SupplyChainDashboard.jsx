@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { fetchChart } from "../../lib/api";
 import { clr, delay } from "../../lib/fmt";
 import { UniversalChart } from "../../components/charts/UniversalChart";
+import { InsightChip } from "../../components/InsightChip";
 
 export default function SupplyChainDashboard({ onOpenResearch, onContextUpdate }) {
   const FRED_SERIES = [
@@ -104,6 +105,7 @@ export default function SupplyChainDashboard({ onOpenResearch, onContextUpdate }
 
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/2", gridRow: "1/3", overflowY: "auto" }}>
         <div className="terminal-header mb-1">📊 Macro Indicators</div>
+        <InsightChip page="supplychain" context="Supply chain macro: CPI inflation, unemployment, GDP growth, Fed funds rate, commodity proxies." style={{ marginBottom: 8 }} />
         <div className="text-xs font-mono mb-3" style={{ color: "var(--text-3)" }}>Monthly published figures</div>
         <div className="flex flex-col gap-1">
           {FRED_SERIES.map(s => {

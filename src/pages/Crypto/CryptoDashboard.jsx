@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { fetchChart } from "../../lib/api";
 import { fmt, clr, delay } from "../../lib/fmt";
 import { UniversalChart } from "../../components/charts/UniversalChart";
+import { InsightChip } from "../../components/InsightChip";
 
 export default function CryptoDashboard({ onContextUpdate }) {
   const COINS = [
@@ -60,6 +61,7 @@ export default function CryptoDashboard({ onContextUpdate }) {
     <div className="flex-1 p-3 grid gap-3" style={{ gridTemplateColumns: "280px 1fr", gridTemplateRows: "1fr auto" }}>
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/2", gridRow: "1/3", overflowY: "auto" }}>
         <div className="terminal-header mb-3">₿ Crypto Markets</div>
+        <InsightChip page="crypto" context="Crypto markets: BTC, ETH, SOL, and top altcoin prices and 24h changes." style={{ marginBottom: 8 }} />
         <div className="flex flex-col gap-1">
           {COINS.map(c => {
             const d = prices[c.ticker];

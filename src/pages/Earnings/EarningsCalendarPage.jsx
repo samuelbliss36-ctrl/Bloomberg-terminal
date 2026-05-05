@@ -3,6 +3,7 @@ import { api } from "../../lib/api";
 import { delay } from "../../lib/fmt";
 import { EC_NOTABLE, hourBg, hourClr, hourLabel, SECTOR_CLR } from "../../lib/constants";
 import { SCREENER_UNIVERSE } from "../../screenerData";
+import { InsightChip } from "../../components/InsightChip";
 
 // eslint-disable-next-line no-unused-vars
 function EventsCalendar({ earnings }) {
@@ -130,6 +131,7 @@ export default function EarningsCalendarPage({ onContextUpdate }) {
 
   return (
     <div style={{ display:"flex", height:"calc(100vh - 90px)", overflow:"hidden", gap:10, padding:10 }}>
+      <InsightChip page="earnings" context="Earnings calendar: upcoming quarterly reports, EPS estimates, and surprise history." style={{ marginBottom: 8 }} />
 
       {/* ── LEFT: Month grid ──────────────────────────────────────────── */}
       <div style={{ flex:1, display:"flex", flexDirection:"column", gap:8, minWidth:0 }}>

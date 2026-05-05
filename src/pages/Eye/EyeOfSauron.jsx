@@ -5,6 +5,7 @@ import TankerMap from "./TankerMap";
 import FlightTracker from "./FlightTracker";
 import EnergyGrid from "./EnergyGrid";
 import GeopoliticalEvents from "./GeopoliticalEvents";
+import { InsightChip } from "../../components/InsightChip";
 
 export default function EyeOfSauron({ onOpenResearch, onContextUpdate }) {
   const [active, setActive] = useState(null);
@@ -60,6 +61,7 @@ export default function EyeOfSauron({ onOpenResearch, onContextUpdate }) {
       <div className="mb-4">
         <div className="terminal-header text-lg mb-1">👁 Eye of Sauron</div>
         <div className="text-xs font-mono" style={{ color: "var(--text-3)" }}>Global intelligence feeds — click any module to expand</div>
+        <InsightChip page="eye" context="Global intelligence: geopolitical risk events, macro news sentiment, and cross-asset signals." style={{ marginTop: 8 }} />
       </div>
       <div className="grid gap-3" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
         {MODULES.map(mod => (

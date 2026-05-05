@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { fetchChart } from "../../lib/api";
 import { clr, delay } from "../../lib/fmt";
 import { UniversalChart } from "../../components/charts/UniversalChart";
+import { InsightChip } from "../../components/InsightChip";
 
 export default function FXDashboard({ onOpenResearch, onContextUpdate }) {
   const FX_PAIRS = [
@@ -92,6 +93,7 @@ export default function FXDashboard({ onOpenResearch, onContextUpdate }) {
       {/* Left: FX pairs list */}
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn:"1/2", gridRow:"1/3", overflowY:"auto" }}>
         <div className="terminal-header mb-3">💱 FX Pairs</div>
+        <InsightChip page="fx" context="FX markets: major currency pairs EUR/USD, GBP/USD, USD/JPY, and central bank rates." style={{ marginBottom: 8 }} />
         <div className="flex flex-col gap-1">
           {FX_PAIRS.map(p => {
             const d = prices[p.ticker];
