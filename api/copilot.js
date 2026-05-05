@@ -11,6 +11,13 @@ import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit, incrementUsage, rateLimitedResponse } from './_rateLimit.js';
 import { setCors } from './_cors.js';
 import { withCircuitBreaker } from './_circuitBreaker.js';
+import { kvGet, kvSet } from './_kv.js';
+
+function hashStr(s) {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h, 33) ^ s.charCodeAt(i);
+  return (h >>> 0).toString(36);
+}
 
 const OWNER_EMAIL = process.env.OWNER_EMAIL;
 
@@ -139,7 +146,55 @@ export default async function handler(req, res) {
   if (!setCors(req, res, { allowedMethods: 'POST, OPTIONS' })) return;
   if (req.method !== "POST") return res.status(405).end();
 
-  const { messages, context, apiKey: userApiKey } = req.body || {};
+  const { mode, messages, context, apiKey: userApiKey, page } = req.body || {};
+
+  // ── Insight chip mode (mode: "insight") ──────────────────────────────────────
+  // Requires only a valid Supabase session — not a Pro subscription.
+  // Uses OPENAI_KEY directly with gpt-4o-mini.
+  if (mode === "insight") {
+    if (!context) return res.status(400).json({ error: "context required" });
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) return res.status(401).json({ error: "auth_required" });
+    try {
+      const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY);
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (error || !user) return res.status(401).json({ error: "invalid_token" });
+    } catch { return res.status(401).json({ error: "auth_failed" }); }
+
+    const safeCtx  = context.slice(0, 400);
+    const cacheKey = `insight:${page || ""}:${hashStr(safeCtx)}`;
+    const cached   = await kvGet(cacheKey);
+    if (cached) return res.json({ insight: cached, cached: true });
+
+    const openaiKey = process.env.OPENAI_KEY;
+    if (!openaiKey) return res.status(503).json({ error: "not_configured" });
+
+    try {
+      const r = await withCircuitBreaker('openai-insight', () =>
+        fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + openaiKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini', max_tokens: 80,
+            messages: [
+              { role: 'system', content: 'You are a financial insight chip. Generate exactly ONE sentence of market insight (max 110 characters). Be specific and data-driven. No markdown, no quotes, no ellipsis.' },
+              { role: 'user',   content: safeCtx },
+            ],
+          }),
+        })
+      );
+      const d = await r.json();
+      if (d.error) throw new Error(d.error.message);
+      const insight = (d.choices?.[0]?.message?.content || '').trim().slice(0, 120);
+      if (insight) await kvSet(cacheKey, insight, 900);
+      return res.json({ insight });
+    } catch (err) {
+      if (err.circuitOpen) return res.status(503).json({ error: 'upstream_degraded' });
+      return res.status(500).json({ error: 'generation_failed' });
+    }
+  }
+
+  // ── Standard copilot mode ─────────────────────────────────────────────────────
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: "messages array required" });
   }

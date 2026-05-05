@@ -28,10 +28,10 @@ export function InsightChip({ page, context, style }) {
         const jwt = session?.access_token;
         if (!jwt) return;
 
-        const r = await fetch('/api/insight', {
+        const r = await fetch('/api/copilot', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
-          body:    JSON.stringify({ page, context }),
+          body:    JSON.stringify({ mode: 'insight', page, context }),
         });
         if (!r.ok) return;
         const d = await r.json();
