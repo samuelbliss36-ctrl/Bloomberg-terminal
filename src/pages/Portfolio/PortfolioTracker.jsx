@@ -3,6 +3,7 @@ import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContai
 import { api } from "../../lib/api";
 import { fmt, clr, delay } from "../../lib/fmt";
 import { PF_COLORS, SECTOR_CLR } from "../../lib/constants";
+import { InsightChip } from "../../components/InsightChip";
 import { SCREENER_UNIVERSE } from "../../screenerData";
 import { MdText } from "../../components/ui/MdText";
 import { db } from "../../lib/db";
@@ -376,6 +377,16 @@ export default function PortfolioTracker() {
 
   return (
     <div className="flex flex-col" style={{ height: "calc(100vh - 90px)", overflowY: "auto", gap: 0 }}>
+
+      {/* AI Insight chip */}
+      <div className="px-2 pt-2" style={{ flexShrink: 0 }}>
+        <InsightChip
+          page="portfolio"
+          context={holdings.length > 0
+            ? `Portfolio: $${totalValue.toLocaleString()} total value, ${holdings.length} holdings, today P&L ${dayPnlTotal >= 0 ? "+" : ""}$${Math.abs(dayPnlTotal).toFixed(2)}, total return ${totalCost > 0 ? fmt.pct(totalPnlPct) : "n/a"}.`
+            : "Portfolio tracker: no holdings added yet."}
+        />
+      </div>
 
       {/* ── Row 1 · Summary KPIs ──────────────────────────────────────────── */}
       <div className="p-2 pb-0" style={{ flexShrink: 0 }}>
