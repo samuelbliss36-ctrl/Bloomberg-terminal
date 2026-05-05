@@ -130,11 +130,12 @@ export default function EarningsCalendarPage({ onContextUpdate }) {
   const DAYS_HDR = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
 
   return (
-    <div style={{ display:"flex", height:"calc(100vh - 90px)", overflow:"hidden", gap:10, padding:10 }}>
+    <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 90px)", overflow:"hidden", padding:10, gap:8 }}>
       <InsightChip page="earnings" context={events && events.length > 0
         ? `Upcoming earnings: ${events.slice(0, 6).map(e => `${e.symbol} on ${e.date}${e.epsEstimate != null ? ` (est $${e.epsEstimate})` : ''}`).join(', ')}.`
-        : events && events.length === 0 ? "Earnings calendar: no notable earnings found for this period." : null} style={{ marginBottom: 8 }} />
+        : events && events.length === 0 ? "Earnings calendar: no notable earnings found for this period." : null} />
 
+      <div style={{ display:"flex", flex:1, overflow:"hidden", gap:10 }}>
       {/* ── LEFT: Month grid ──────────────────────────────────────────── */}
       <div style={{ flex:1, display:"flex", flexDirection:"column", gap:8, minWidth:0 }}>
 
@@ -394,6 +395,7 @@ export default function EarningsCalendarPage({ onContextUpdate }) {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
