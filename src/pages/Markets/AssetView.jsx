@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceArea } from "recharts";
 import { api, fetchChart } from "../../lib/api";
 import { fmt, delay, fmtMktCap, fmtX, fmtN, fmtMgn, fmtGr, clrM2 } from "../../lib/fmt";
+import { InsightChip } from "../../components/InsightChip";
 
 function AnalystData({ ticker }) {
   const [data, setData] = useState(null);
@@ -748,6 +749,13 @@ export default function AssetView({ ticker, quote, metrics, profile, news }) {
               )}
             </div>
           </div>
+          {/* AI Insight chip */}
+          <InsightChip
+            page="asset"
+            context={quote && profile ? `${ticker} (${profile.name}): $${quote.c?.toFixed(2)}, ${quote.dp >= 0 ? "+" : ""}${quote.dp?.toFixed(2)}% today. Sector: ${profile.finnhubIndustry || profile.sector || "unknown"}.` : null}
+            style={{ marginTop: 4 }}
+          />
+
           {/* TF range buttons */}
           <div className="tf-btn-group">
             {RANGES.map(r => (

@@ -10,6 +10,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit, incrementUsage, rateLimitedResponse } from './_rateLimit.js';
 import { setCors } from './_cors.js';
+import { withCircuitBreaker } from './_circuitBreaker.js';
 
 const OWNER_EMAIL = process.env.OWNER_EMAIL;
 
@@ -53,18 +54,17 @@ function safeError(err) {
 }
 
 async function callPerplexity(key, systemPrompt, safeMessages) {
-  const r = await fetch("https://api.perplexity.ai/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": "Bearer " + key,
-      "Content-Type":  "application/json",
-    },
-    body: JSON.stringify({
-      model:      "llama-3.1-sonar-large-128k-online",
-      max_tokens: 1024,
-      messages:   [{ role: "system", content: systemPrompt }, ...safeMessages],
-    }),
-  });
+  const r = await withCircuitBreaker('perplexity', () =>
+    fetch("https://api.perplexity.ai/chat/completions", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "llama-3.1-sonar-large-128k-online",
+        max_tokens: 1024,
+        messages: [{ role: "system", content: systemPrompt }, ...safeMessages],
+      }),
+    })
+  );
   const d = await r.json();
   if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
   return {
@@ -75,18 +75,17 @@ async function callPerplexity(key, systemPrompt, safeMessages) {
 }
 
 async function callOpenAI(key, systemPrompt, safeMessages) {
-  const r = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": "Bearer " + key,
-      "Content-Type":  "application/json",
-    },
-    body: JSON.stringify({
-      model:      "gpt-4o-mini",
-      max_tokens: 1024,
-      messages:   [{ role: "system", content: systemPrompt }, ...safeMessages],
-    }),
-  });
+  const r = await withCircuitBreaker('openai', () =>
+    fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        max_tokens: 1024,
+        messages: [{ role: "system", content: systemPrompt }, ...safeMessages],
+      }),
+    })
+  );
   const d = await r.json();
   if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
   return {
@@ -97,20 +96,22 @@ async function callOpenAI(key, systemPrompt, safeMessages) {
 }
 
 async function callAnthropic(key, systemPrompt, safeMessages) {
-  const r = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key":          key,
-      "anthropic-version":  "2023-06-01",
-      "content-type":       "application/json",
-    },
-    body: JSON.stringify({
-      model:      "claude-haiku-4-5-20251001",
-      max_tokens: 1024,
-      system:     systemPrompt,
-      messages:   safeMessages,
-    }),
-  });
+  const r = await withCircuitBreaker('anthropic', () =>
+    fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: safeMessages,
+      }),
+    })
+  );
   const d = await r.json();
   if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
   return {
@@ -118,6 +119,20 @@ async function callAnthropic(key, systemPrompt, safeMessages) {
     provider: "anthropic",
     tokens: (d.usage?.input_tokens || 0) + (d.usage?.output_tokens || 0),
   };
+}
+
+// Try providers in order until one succeeds — server keys only
+async function callWithFallback(systemPrompt, safeMessages) {
+  const providers = [];
+  if (process.env.PERPLEXITY_KEY) providers.push(() => callPerplexity(process.env.PERPLEXITY_KEY, systemPrompt, safeMessages));
+  if (process.env.OPENAI_KEY)     providers.push(() => callOpenAI(process.env.OPENAI_KEY, systemPrompt, safeMessages));
+  if (process.env.ANTHROPIC_KEY)  providers.push(() => callAnthropic(process.env.ANTHROPIC_KEY, systemPrompt, safeMessages));
+
+  let lastErr;
+  for (const call of providers) {
+    try { return await call(); } catch (err) { lastErr = err; }
+  }
+  throw lastErr || new Error("No AI providers available");
 }
 
 export default async function handler(req, res) {
@@ -228,19 +243,19 @@ export default async function handler(req, res) {
   try {
     let result;
 
-    // Determine provider from key
-    const isPerplexity = keySource === "perplexity_server" || PERPLEXITY_KEY_RE.test(rawKey);
-    const isAnthropic  = !isPerplexity && ANTHROPIC_KEY_RE.test(rawKey);
-    const isOpenAI     = !isPerplexity && !isAnthropic && OPENAI_KEY_RE.test(rawKey);
-
-    if (isPerplexity) {
-      result = await callPerplexity(rawKey, systemPrompt, safeMessages);
-    } else if (isAnthropic) {
-      result = await callAnthropic(rawKey, systemPrompt, safeMessages);
-    } else if (isOpenAI) {
-      result = await callOpenAI(rawKey, systemPrompt, safeMessages);
+    if (useServerKey) {
+      // Server key: try all configured providers in order (Perplexity → OpenAI → Anthropic)
+      result = await callWithFallback(systemPrompt, safeMessages);
     } else {
-      return res.status(401).json({ error: "Invalid API key format." });
+      // User-supplied key: determine provider from key format, no fallback
+      const isPerplexity = PERPLEXITY_KEY_RE.test(rawKey);
+      const isAnthropic  = !isPerplexity && ANTHROPIC_KEY_RE.test(rawKey);
+      const isOpenAI     = !isPerplexity && !isAnthropic && OPENAI_KEY_RE.test(rawKey);
+
+      if (isPerplexity)     result = await callPerplexity(rawKey, systemPrompt, safeMessages);
+      else if (isAnthropic) result = await callAnthropic(rawKey, systemPrompt, safeMessages);
+      else if (isOpenAI)    result = await callOpenAI(rawKey, systemPrompt, safeMessages);
+      else return res.status(401).json({ error: "Invalid API key format." });
     }
 
     // Increment usage for server-key subscribers (fire-and-forget)

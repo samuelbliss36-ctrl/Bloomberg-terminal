@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Treemap, ResponsiveContainer } from "recharts";
 import { SP500_STOCKS } from "../../data/sp500Stocks";
+import { InsightChip } from "../../components/InsightChip";
 
 // ── Colour scale ──────────────────────────────────────────────────────────────
 function changePctColor(pct) {
@@ -276,6 +277,15 @@ export default function MarketHeatmap({ onOpenResearch, onContextUpdate }) {
           </div>
         )}
       </div>
+
+      {/* AI Insight chip */}
+      {stats && (
+        <InsightChip
+          page="heatmap"
+          context={`S&P 500: ${stats.advancing} advancing, ${stats.declining} declining, avg ${stats.avg >= 0 ? "+" : ""}${stats.avg.toFixed(2)}% today. Sector filter: ${activeSector}.`}
+          style={{ flexShrink: 0 }}
+        />
+      )}
 
       {/* Colour legend */}
       <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
