@@ -6,11 +6,16 @@ import SignInPage from './pages/Auth/SignInPage';
 import OnboardingWizard from './pages/Onboarding/OnboardingWizard';
 import { watchlist as dbWatchlist } from './lib/db';
 import { api } from './lib/api';
-import { delay, loadSettings, saveSettings } from './lib/fmt';
+import { delay } from './lib/fmt';
 import { CopilotPanel } from './components/copilot/CopilotPanel';
 import { GlobalTopBar } from './layout/GlobalTopBar';
 import { SidebarNav } from './layout/SidebarNav';
 import { RightPanelShell } from './layout/RightPanelShell';
+import { useLayoutStore } from './store/useLayoutStore';
+import { useNavigationStore } from './store/useNavigationStore';
+import { useAIStore } from './store/useAIStore';
+import { useTickerData } from './hooks/useTickerData';
+import { useCopilotData } from './hooks/useCopilotData';
 
 // Eagerly loaded — always in the shell
 import AssetView from './pages/Markets/AssetView';
@@ -22,7 +27,7 @@ const CryptoDashboard      = lazy(() => import('./pages/Crypto/CryptoDashboard')
 const FXDashboard          = lazy(() => import('./pages/FX/FXDashboard'));
 const SupplyChainDashboard = lazy(() => import('./pages/SupplyChain/SupplyChainDashboard'));
 const TechnicalAnalysis    = lazy(() => import('./pages/Technical/TechnicalAnalysis'));
-const EyeOfSauron          = lazy(() => import('./pages/Eye/EyeOfSauron'));       // ~500 KB 3D globe
+const EyeOfSauron          = lazy(() => import('./pages/Eye/EyeOfSauron'));
 const GlobalMarketsModule  = lazy(() => import('./pages/Markets/GlobalMarketsModule'));
 const PortfolioTracker     = lazy(() => import('./pages/Portfolio/PortfolioTracker'));
 const StockScreener        = lazy(() => import('./pages/Screener/StockScreener'));
@@ -108,35 +113,29 @@ function AppInner() {
   const navigate  = useNavigate();
   const location  = useLocation();
 
-  // Derive active sidebar key from the current URL
-  const activePage = PATH_TO_KEY[location.pathname] || 'financial';
+  // ── Zustand stores ────────────────────────────────────────────────────────────
+  const { sidebarOpen, toggleSidebar, showTickerTape, darkMode, toggleTape, toggleDark } = useLayoutStore();
+  const { ticker, setTicker } = useNavigationStore();
+  const { copilotOpen, toggleCopilot, setCopilotOpen } = useAIStore();
+
+  // ── Navigation ────────────────────────────────────────────────────────────────
+  const activePage    = PATH_TO_KEY[location.pathname] || 'financial';
   const setActivePage = useCallback((key) => navigate(KEY_TO_PATH[key] || '/'), [navigate]);
 
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [settings, setSettings] = useState(() => ({ showTickerTape: true, darkMode: false, ...loadSettings() }));
-  const [copilotOpen, setCopilotOpen] = useState(false);
-  const [pageContext, setPageContext] = useState(null);
-  const [subscribedToast, setSubscribedToast] = useState(false);
+  // ── Server state via TanStack Query ──────────────────────────────────────────
+  const { quote, metrics, profile, news, earnings, loading } = useTickerData(ticker);
+  const copilotData = useCopilotData(ticker);
 
-  const toggleTape = useCallback(() => setSettings(s => { const n = {...s, showTickerTape: !s.showTickerTape}; saveSettings(n); return n; }), []);
-  const toggleDark = useCallback(() => setSettings(s => { const n = {...s, darkMode: !s.darkMode}; saveSettings(n); return n; }), []);
-
-  const [ticker, setTicker] = useState("AAPL");
-  const [quote, setQuote]   = useState(null);
-  const [metrics, setMetrics] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [news, setNews]       = useState(null);
-  const [earnings, setEarnings] = useState(null);
-  const [earningsHistory, setEarningsHistory] = useState([]);
-  const [recommendation, setRecommendation]   = useState(null);
-  const [priceTarget, setPriceTarget]         = useState(null);
-  const [peerTickers, setPeerTickers]         = useState([]);
-  const [peerMetrics, setPeerMetrics]         = useState({});
-  const [tapeData, setTapeData]               = useState([]);
-  const [loading, setLoading]                 = useState(false);
+  // ── Local UI state ────────────────────────────────────────────────────────────
+  const [tapeData, setTapeData]                       = useState([]);
   const [pendingResearchItem, setPendingResearchItem] = useState(null);
-  const [statusTime, setStatusTime]           = useState(() => new Date().toLocaleTimeString());
-  const [watchlistTickers, setWatchlistTickers] = useState(() => dbWatchlist.load());
+  const [statusTime, setStatusTime]                   = useState(() => new Date().toLocaleTimeString());
+  const [watchlistTickers, setWatchlistTickers]       = useState(() => dbWatchlist.load());
+  const [subscribedToast, setSubscribedToast]         = useState(false);
+  const [pageContext, setPageContext]                  = useState(null);
+
+  // Settings object for TopBar (sourced from Zustand store)
+  const settings = { darkMode, showTickerTape };
 
   // Check for ?subscribed=true after Stripe redirect
   useEffect(() => {
@@ -155,70 +154,6 @@ function AppInner() {
     return () => clearInterval(iv);
   }, []);
 
-  // Fetch main ticker data
-  useEffect(() => {
-    setLoading(true);
-    setQuote(null); setMetrics(null); setProfile(null); setNews(null); setEarnings(null);
-    setEarningsHistory([]); setRecommendation(null); setPriceTarget(null); setPeerTickers([]); setPeerMetrics({});
-    const today     = new Date().toISOString().split("T")[0];
-    const monthAgo  = new Date(Date.now()-30*24*3600*1000).toISOString().split("T")[0];
-    const yearAhead = new Date(Date.now()+365*24*3600*1000).toISOString().split("T")[0];
-    Promise.all([
-      api("/quote?symbol="+ticker),
-      api("/stock/metric?symbol="+ticker+"&metric=all"),
-      api("/stock/profile2?symbol="+ticker),
-      api("/company-news?symbol="+ticker+"&from="+monthAgo+"&to="+today),
-      api("/calendar/earnings?symbol="+ticker+"&from="+today+"&to="+yearAhead),
-    ]).then(([q,m,p,n,e]) => {
-      setQuote(q); setMetrics(m); setProfile(p);
-      setNews(Array.isArray(n)?n:[]);
-      setEarnings(e?.earningsCalendar||[]);
-      setLoading(false);
-    }).catch(()=>setLoading(false));
-  }, [ticker]);
-
-  // Fetch AI copilot context data
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      const twoYearsAgo = new Date(Date.now() - 730*24*3600*1000).toISOString().split("T")[0];
-      const today       = new Date().toISOString().split("T")[0];
-      try {
-        const [hist, recs, pt] = await Promise.all([
-          api("/calendar/earnings?symbol="+ticker+"&from="+twoYearsAgo+"&to="+today),
-          delay(150).then(() => api("/stock/recommendation?symbol="+ticker)),
-          delay(300).then(() => api("/stock/price-target?symbol="+ticker).catch(() => null)),
-        ]);
-        if (cancelled) return;
-        const histQ = (hist?.earningsCalendar || [])
-          .filter(e => e.epsActual != null)
-          .sort((a, b) => (b.date > a.date ? 1 : -1))
-          .slice(0, 4);
-        setEarningsHistory(histQ);
-        setRecommendation(Array.isArray(recs) ? (recs[0] || null) : null);
-        setPriceTarget(pt?.targetMean ? pt : null);
-      } catch(e) {}
-      try {
-        const list = await delay(400).then(() => api("/stock/peers?symbol="+ticker));
-        if (cancelled) return;
-        const top4 = (list || []).filter(x => x !== ticker).slice(0, 4);
-        setPeerTickers(top4);
-        const mMap = {};
-        for (let i = 0; i < top4.length; i++) {
-          if (cancelled) return;
-          if (i > 0) await delay(220);
-          try {
-            const pm = await api("/stock/metric?symbol="+top4[i]+"&metric=all");
-            mMap[top4[i]] = pm?.metric || {};
-          } catch(e) {}
-        }
-        if (!cancelled) setPeerMetrics({ ...mMap });
-      } catch(e) {}
-    };
-    load();
-    return () => { cancelled = true; };
-  }, [ticker]); // eslint-disable-line
-
   // Watchlist tape prices
   useEffect(() => {
     if (!watchlistTickers.length) { setTapeData([]); return; }
@@ -229,7 +164,7 @@ function AppInner() {
         if (cancelled) return;
         if (i > 0) await delay(150);
         try {
-          const q = await api("/quote?symbol=" + watchlistTickers[i]);
+          const q = await api('/quote?symbol=' + watchlistTickers[i]);
           if (!cancelled) results.push({ symbol: watchlistTickers[i], price: q.c, changePct: q.dp });
         } catch(e) {}
       }
@@ -271,12 +206,12 @@ function AppInner() {
   const goToTicker = useCallback((t) => {
     setTicker(t);
     navigate('/');
-  }, [navigate]);
+  }, [navigate, setTicker]);
 
   const isFinancialPage = location.pathname === '/';
 
   return (
-    <div className={"app-shell" + (sidebarOpen ? " sidebar-open" : "") + (settings.darkMode ? " dark" : "")} style={{ fontFamily:"'Inter','IBM Plex Sans',sans-serif" }}>
+    <div className={"app-shell" + (sidebarOpen ? " sidebar-open" : "") + (darkMode ? " dark" : "")} style={{ fontFamily:"'Inter','IBM Plex Sans',sans-serif" }}>
 
       {/* ── Global Top Bar ─────────────────────────────────── */}
       <GlobalTopBar
@@ -295,7 +230,7 @@ function AppInner() {
         activePage={activePage}
         setActivePage={setActivePage}
         isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(o => !o)}
+        onToggle={toggleSidebar}
       />
 
       {/* ── Main Content ───────────────────────────────────── */}
@@ -374,7 +309,7 @@ function AppInner() {
           profile={profile}
           news={news}
           pageContext={pageContext}
-          structured={{ earningsHistory, recommendation, priceTarget, peerTickers, peerMetrics }}
+          structured={copilotData}
           onClose={() => setCopilotOpen(false)}
         />
       )}
@@ -403,7 +338,7 @@ function AppInner() {
             }} />
           )}
           <button
-            onClick={() => setCopilotOpen(o => !o)}
+            onClick={toggleCopilot}
             title="AI Copilot"
             style={{
               width:44, height:44, borderRadius:"50%", border:"none", cursor:"pointer",
