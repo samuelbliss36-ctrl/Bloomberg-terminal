@@ -61,7 +61,9 @@ export default function CryptoDashboard({ onContextUpdate }) {
     <div className="flex-1 p-3 grid gap-3" style={{ gridTemplateColumns: "280px 1fr", gridTemplateRows: "1fr auto" }}>
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/2", gridRow: "1/3", overflowY: "auto" }}>
         <div className="terminal-header mb-3">₿ Crypto Markets</div>
-        <InsightChip page="crypto" context="Crypto markets: BTC, ETH, SOL, and top altcoin prices and 24h changes." style={{ marginBottom: 8 }} />
+        <InsightChip page="crypto" context={Object.keys(prices).length > 0
+          ? `Crypto live prices: ${COINS.filter(c => prices[c.ticker]?.price).slice(0, 6).map(c => `${c.symbol} $${prices[c.ticker].price < 1 ? prices[c.ticker].price.toFixed(4) : prices[c.ticker].price.toFixed(2)} (${prices[c.ticker].changePct >= 0 ? '+' : ''}${prices[c.ticker].changePct?.toFixed(2)}%)`).join(', ')}.`
+          : null} style={{ marginBottom: 8 }} />
         <div className="flex flex-col gap-1">
           {COINS.map(c => {
             const d = prices[c.ticker];

@@ -395,7 +395,9 @@ export default function TechnicalAnalysis({ ticker, onContextUpdate }) {
           <span style={{ ...MONO, fontSize: 12, fontWeight: 700, color: "var(--text-1)" }}>
             {ticker} — Technical Analysis
           </span>
-          <InsightChip page="technical" context={`${ticker} technical analysis: RSI, MACD, Bollinger Bands, volume, and moving averages.`} />
+          <InsightChip page="technical" context={last?.close
+          ? `${ticker} technical live: price $${last.close?.toFixed(2)}, RSI ${last.rsi?.toFixed(1)}, MACD ${last.macd?.toFixed(2)} signal ${last.signal?.toFixed(2)}, SMA20 $${last.sma20?.toFixed(2)}, SMA50 $${last.sma50?.toFixed(2)}, BB %B ${last.pctB?.toFixed(2)}.`
+          : null} />
           <div style={{ display: "flex", gap: 4 }}>
             {Object.keys(TF_MAP).map(t => (
               <button key={t} onClick={() => setTf(t)}

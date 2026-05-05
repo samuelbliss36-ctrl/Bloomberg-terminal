@@ -93,7 +93,9 @@ export default function FXDashboard({ onOpenResearch, onContextUpdate }) {
       {/* Left: FX pairs list */}
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn:"1/2", gridRow:"1/3", overflowY:"auto" }}>
         <div className="terminal-header mb-3">💱 FX Pairs</div>
-        <InsightChip page="fx" context="FX markets: major currency pairs EUR/USD, GBP/USD, USD/JPY, and central bank rates." style={{ marginBottom: 8 }} />
+        <InsightChip page="fx" context={Object.keys(prices).length > 0
+          ? `FX live: ${FX_PAIRS.filter(p => prices[p.ticker]?.price).slice(0, 5).map(p => `${p.label} ${prices[p.ticker].price.toFixed(p.dec)} (${prices[p.ticker].changePct >= 0 ? '+' : ''}${prices[p.ticker].changePct?.toFixed(2)}%)`).join(', ')}${Object.keys(cbRates).length > 0 ? `. CB rates: ${Object.values(cbRates).filter(r => r.value != null).slice(0, 3).map(r => `${r.label} ${r.value}%`).join(', ')}` : ''}.`
+          : null} style={{ marginBottom: 8 }} />
         <div className="flex flex-col gap-1">
           {FX_PAIRS.map(p => {
             const d = prices[p.ticker];

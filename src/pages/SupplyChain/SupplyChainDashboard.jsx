@@ -105,7 +105,9 @@ export default function SupplyChainDashboard({ onOpenResearch, onContextUpdate }
 
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/2", gridRow: "1/3", overflowY: "auto" }}>
         <div className="terminal-header mb-1">📊 Macro Indicators</div>
-        <InsightChip page="supplychain" context="Supply chain macro: CPI inflation, unemployment, GDP growth, Fed funds rate, commodity proxies." style={{ marginBottom: 8 }} />
+        <InsightChip page="supplychain" context={Object.keys(fredData).length > 0
+          ? `Macro live: ${FRED_SERIES.filter(s => fredData[s.id]?.value != null).slice(0, 5).map(s => `${s.label} ${fredData[s.id].value}${s.suffix}`).join(', ')}${Object.keys(prices).length > 0 ? `. Commodity proxies: ${INDICES.filter(i => prices[i.ticker]?.price).map(i => `${i.symbol} $${prices[i.ticker].price.toFixed(2)} (${prices[i.ticker].changePct >= 0 ? '+' : ''}${prices[i.ticker].changePct?.toFixed(2)}%)`).join(', ')}` : ''}.`
+          : null} style={{ marginBottom: 8 }} />
         <div className="text-xs font-mono mb-3" style={{ color: "var(--text-3)" }}>Monthly published figures</div>
         <div className="flex flex-col gap-1">
           {FRED_SERIES.map(s => {

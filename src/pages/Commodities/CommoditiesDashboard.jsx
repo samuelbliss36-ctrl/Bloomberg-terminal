@@ -65,7 +65,9 @@ export default function CommoditiesDashboard({ onContextUpdate }) {
     <div className="flex-1 p-3 grid gap-3" style={{ gridTemplateColumns: "340px 1fr", gridTemplateRows: "auto 1fr" }}>
       <div className="terminal-panel terminal-glow p-3" style={{ gridColumn: "1/2", gridRow: "1/3", overflowY: "auto" }}>
         <div className="terminal-header mb-3">🛢 Commodities Futures</div>
-        <InsightChip page="commodities" context="Commodities futures: crude oil, gold, silver, natural gas, wheat, copper." style={{ marginBottom: 8 }} />
+        <InsightChip page="commodities" context={Object.keys(prices).length > 0
+          ? `Commodities live: ${COMMODITIES.filter(c => prices[c.ticker]?.price).slice(0, 6).map(c => `${c.label} $${prices[c.ticker].price.toFixed(2)} (${prices[c.ticker].changePct >= 0 ? '+' : ''}${prices[c.ticker].changePct?.toFixed(2)}%)`).join(', ')}.`
+          : null} style={{ marginBottom: 8 }} />
         <div className="flex gap-2 mb-3">
           {categories.map(cat => (
             <button key={cat} onClick={() => setCategory(cat)}
