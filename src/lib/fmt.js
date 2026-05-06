@@ -8,8 +8,8 @@ export const saveSettings = (s) => {
 
 export const fmt = {
   price: (v) => v?.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-  pct: (v) => (v >= 0 ? "+" : "") + v?.toFixed(2) + "%",
-  change: (v) => (v >= 0 ? "+" : "") + v?.toFixed(2),
+  pct: (v) => v == null ? "—" : (v >= 0 ? "+" : "") + v.toFixed(2) + "%",
+  change: (v) => v == null ? "—" : (v >= 0 ? "+" : "") + v.toFixed(2),
   large: (v) => { if (!v) return "N/A"; if (v >= 1e12) return "$" + (v/1e12).toFixed(2) + "T"; if (v >= 1e9) return "$" + (v/1e9).toFixed(2) + "B"; if (v >= 1e6) return "$" + (v/1e6).toFixed(2) + "M"; return "$" + v?.toLocaleString(); },
   volume: (v) => { if (!v) return "N/A"; if (v >= 1e6) return (v/1e6).toFixed(2) + "M"; if (v >= 1e3) return (v/1e3).toFixed(1) + "K"; return v?.toString(); },
 };

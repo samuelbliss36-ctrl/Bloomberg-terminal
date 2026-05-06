@@ -2,11 +2,9 @@
 // Owner + active subscribers use server keys; others need user-supplied key.
 // Response shape: { whatThisIs, currentNarrative, keyRisks[], bullCase, bearCase }
 
-import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit, incrementUsage, rateLimitedResponse } from './_rateLimit.js';
 import { setCors } from './_cors.js';
-
-const OWNER_EMAIL      = process.env.OWNER_EMAIL;
+import { getAuth } from './_auth.js';
 const OPENAI_KEY_RE    = /^sk-[A-Za-z0-9\-_]{20,}$/;
 const ANTHROPIC_KEY_RE = /^sk-ant-[A-Za-z0-9\-_]{20,}$/;
 const PERPLEXITY_KEY_RE = /^pplx-[A-Za-z0-9]{20,}$/;
@@ -54,29 +52,8 @@ export default async function handler(req, res) {
   const { id, context, apiKey: userApiKey } = req.body || {};
   if (!id) return res.status(400).json({ error: "id required" });
 
-  // ── Auth check: identify owner / active subscriber ────────────────────────
-  const token = req.headers.authorization?.replace("Bearer ", "");
-  let serverKeyAllowed = false;
-  let isOwnerUser = false;
-  let authedUser = null;
-
-  if (token) {
-    try {
-      const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY);
-      const { data: { user }, error } = await supabase.auth.getUser(token);
-      if (!error && user) {
-        authedUser = user;
-        if (user.email === OWNER_EMAIL) {
-          serverKeyAllowed = true;
-          isOwnerUser = true;
-        } else {
-          const admin = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-          const { data: sub } = await admin.from('subscriptions').select('status').eq('user_id', user.id).single();
-          if (sub?.status === 'active') serverKeyAllowed = true;
-        }
-      }
-    } catch {}
-  }
+  // ── Auth check ────────────────────────────────────────────────────────────
+  const { user: authedUser, isOwner: isOwnerUser, serverKeyAllowed } = await getAuth(req);
 
   // ── Key resolution ────────────────────────────────────────────────────────
   let rawKey = null;

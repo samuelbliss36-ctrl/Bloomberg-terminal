@@ -12,6 +12,7 @@ import { checkRateLimit, incrementUsage, rateLimitedResponse } from './_rateLimi
 import { setCors } from './_cors.js';
 import { withCircuitBreaker } from './_circuitBreaker.js';
 import { kvGet, kvSet } from './_kv.js';
+import { getAuth } from './_auth.js';
 
 function hashStr(s) {
   let h = 5381;
@@ -19,7 +20,6 @@ function hashStr(s) {
   return (h >>> 0).toString(36);
 }
 
-const OWNER_EMAIL = process.env.OWNER_EMAIL;
 
 const OPENAI_KEY_RE    = /^sk-[A-Za-z0-9\-_]{20,}$/;
 const ANTHROPIC_KEY_RE = /^sk-ant-[A-Za-z0-9\-_]{20,}$/;
@@ -199,44 +199,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "messages array required" });
   }
 
-  // ── Auth & subscription check ──────────────────────────────────────────────
-  const token = req.headers.authorization?.replace("Bearer ", "");
-  let serverKeyAllowed = false;
-  let isOwnerUser = false;
-  let authedUser  = null;
-
-  if (token) {
-    try {
-      const supabase = createClient(
-        process.env.REACT_APP_SUPABASE_URL,
-        process.env.REACT_APP_SUPABASE_ANON_KEY
-      );
-      const { data: { user }, error } = await supabase.auth.getUser(token);
-      if (!error && user) {
-        authedUser = user;
-        if (user.email === OWNER_EMAIL) {
-          serverKeyAllowed = true;
-          isOwnerUser = true;
-        } else {
-          // Check subscription status
-          const supabaseAdmin = createClient(
-            process.env.REACT_APP_SUPABASE_URL,
-            process.env.SUPABASE_SERVICE_ROLE_KEY
-          );
-          const { data: sub } = await supabaseAdmin
-            .from('subscriptions')
-            .select('status')
-            .eq('user_id', user.id)
-            .single();
-          if (sub?.status === 'active') {
-            serverKeyAllowed = true;
-          }
-        }
-      }
-    } catch (e) {
-      // Auth check failed — fall through to user key or 402
-    }
-  }
+  // ── Auth check ────────────────────────────────────────────────────────────
+  const { user: authedUser, isOwner: isOwnerUser, serverKeyAllowed } = await getAuth(req);
 
   // ── Key resolution ────────────────────────────────────────────────────────
   // Server keys are used for owner + active subscribers
@@ -321,7 +285,6 @@ export default async function handler(req, res) {
     res.json({
       message:  result.text,
       provider: result.provider,
-      isOwner:  isOwnerUser,
       tokens_used: result.tokens || 0,
     });
   } catch (err) {
