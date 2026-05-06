@@ -33,6 +33,7 @@ const PortfolioTracker     = lazy(() => import('./pages/Portfolio/PortfolioTrack
 const StockScreener        = lazy(() => import('./pages/Screener/StockScreener'));
 const ResearchBrowser      = lazy(() => import('./pages/Research/ResearchBrowser'));
 const EarningsCalendarPage = lazy(() => import('./pages/Earnings/EarningsCalendarPage'));
+const DayMovers            = lazy(() => import('./pages/Movers/DayMovers'));
 const MarketHeatmap        = lazy(() => import('./pages/Heatmap/MarketHeatmap'));
 const AdminDashboard       = lazy(() => import('./pages/Admin/AdminDashboard'));
 const ProPage              = lazy(() => import('./pages/Subscription/ProPage'));
@@ -51,6 +52,7 @@ const PATH_TO_KEY = {
   '/portfolio':    'portfolio',
   '/screener':     'screener',
   '/research':     'research',
+  '/movers':       'movers',
   '/earnings':     'earnings',
   '/pro':          'pro',
   '/admin':        'admin',
@@ -251,6 +253,7 @@ function AppInner() {
             <Route path="/portfolio"    element={<PortfolioTracker onContextUpdate={setPageContext} />} />
             <Route path="/screener"     element={<StockScreener onSelectTicker={goToTicker} onContextUpdate={setPageContext} />} />
             <Route path="/research"     element={<ResearchBrowser pendingItem={pendingResearchItem} onPendingConsumed={() => setPendingResearchItem(null)} onContextUpdate={setPageContext} />} />
+            <Route path="/movers"       element={<DayMovers onContextUpdate={setPageContext} />} />
             <Route path="/earnings"     element={<EarningsCalendarPage onContextUpdate={setPageContext} />} />
             <Route path="/pro"          element={<ProPage />} />
             <Route path="/admin"        element={<AdminDashboard />} />

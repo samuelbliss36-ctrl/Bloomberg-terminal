@@ -99,6 +99,30 @@ export default async function handler(req, res) {
     }
   }
 
+  // ── Branch: day gainers / losers (FMP) ──
+  if (type === 'gainers' || type === 'losers') {
+    const FMP_KEY = process.env.FMP_KEY;
+    if (!FMP_KEY) return res.status(503).json({ error: 'FMP_KEY not configured' });
+    try {
+      const url = `https://financialmodelingprep.com/api/v3/stock_market/${type}?apikey=${FMP_KEY}`;
+      const r   = await fetch(url);
+      if (!r.ok) return res.status(502).json({ error: `FMP error ${r.status}` });
+      const data = await r.json();
+      const top10 = (Array.isArray(data) ? data : []).slice(0, 10).map(s => ({
+        symbol:    s.symbol,
+        name:      s.name,
+        price:     s.price,
+        change:    s.change,
+        changePct: s.changesPercentage,
+      }));
+      res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=60');
+      return res.json({ data: top10 });
+    } catch (err) {
+      console.error('movers error:', err.message);
+      return res.status(502).json({ error: 'Failed to fetch movers' });
+    }
+  }
+
   // ── Branch: standard chart data ──
   if (!ticker || typeof ticker !== 'string') {
     return res.status(400).json({ error: 'ticker required' });
