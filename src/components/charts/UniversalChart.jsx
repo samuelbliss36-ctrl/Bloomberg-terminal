@@ -1,38 +1,8 @@
 import { useState } from 'react';
 import { Area, BarChart, Bar, Line, Cell, XAxis, YAxis, CartesianGrid, Tooltip,
-         ResponsiveContainer, ComposedChart } from 'recharts';
-import { useXAxisScale, usePlotArea } from 'recharts';
+         ResponsiveContainer, ComposedChart, ReferenceArea } from 'recharts';
 import { CandlestickBar, useOHLC, ChartTypeBtn } from './CandlestickBar';
 import { TIMEFRAMES } from '../../lib/constants';
-
-// Custom drag overlay — uses Recharts v3 hooks to map date strings to pixel positions
-function DragOverlay({ x1, x2, color, fillOpacity = 0.15, strokeOpacity = 0.4 }) {
-  const xScale = useXAxisScale();
-  const plotArea = usePlotArea();
-  if (!x1 || !x2 || !xScale || !plotArea) return null;
-
-  const px1 = xScale.map(x1, { position: 'start' });
-  const px2 = xScale.map(x2, { position: 'end' });
-  if (px1 == null || px2 == null) return null;
-
-  const left  = Math.min(px1, px2);
-  const width = Math.abs(px2 - px1);
-
-  return (
-    <rect
-      x={left}
-      y={plotArea.y}
-      width={width}
-      height={plotArea.height}
-      fill={color}
-      fillOpacity={fillOpacity}
-      stroke={color}
-      strokeOpacity={strokeOpacity}
-      strokeWidth={1}
-      pointerEvents="none"
-    />
-  );
-}
 
 export function UniversalChart({ ticker, height = 220, showVolume = false, colorUp = "#059669", colorDown = "#e11d48", defaultType = "area", defaultTf = "3M", prefix = "$", decimals = 2, label }) {
   const [tf,        setTf]        = useState(defaultTf);
@@ -117,12 +87,18 @@ export function UniversalChart({ ticker, height = 220, showVolume = false, color
     onMouseUp:   onChartMouseUp,
   };
 
-  // Overlay element — rendered inside ComposedChart using v3 hooks
-  const overlay = (refAreaLeft && (refAreaRight || isDragging)) ? (
-    <DragOverlay
+  // ReferenceArea — color reflects positive/negative/neutral in real-time
+  const refArea = (refAreaLeft && (refAreaRight || isDragging)) ? (
+    <ReferenceArea
       x1={refAreaLeft}
       x2={refAreaRight || refAreaLeft}
-      color={measureColor}
+      fill={measureColor}
+      fillOpacity={0.12}
+      stroke={measureColor}
+      strokeOpacity={0.35}
+      strokeWidth={1}
+      ifOverflow="visible"
+      isFront
     />
   ) : null;
 
@@ -149,7 +125,7 @@ export function UniversalChart({ ticker, height = 220, showVolume = false, color
           {data.some(d => d.sma20) && (
             <Line type="monotone" dataKey="sma20" stroke="#b45309" strokeWidth={1} dot={false} isAnimationActive={false} name="SMA 20" connectNulls />
           )}
-          {overlay}
+          {refArea}
         </ComposedChart>
       );
     }
@@ -161,7 +137,7 @@ export function UniversalChart({ ticker, height = 220, showVolume = false, color
           {data.some(d => d.sma20) && (
             <Line type="monotone" dataKey="sma20" stroke="#b45309" strokeWidth={1} dot={false} isAnimationActive={false} name="SMA 20" connectNulls strokeDasharray="4 2" />
           )}
-          {overlay}
+          {refArea}
         </ComposedChart>
       );
     }
@@ -179,7 +155,7 @@ export function UniversalChart({ ticker, height = 220, showVolume = false, color
         {data.some(d => d.sma20) && (
           <Line type="monotone" dataKey="sma20" stroke="#b45309" strokeWidth={1} dot={false} isAnimationActive={false} name="SMA 20" connectNulls strokeDasharray="4 2" />
         )}
-        {overlay}
+        {refArea}
       </ComposedChart>
     );
   };
