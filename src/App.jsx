@@ -253,7 +253,7 @@ function AppInner() {
             <Route path="/portfolio"    element={<PortfolioTracker onContextUpdate={setPageContext} />} />
             <Route path="/screener"     element={<StockScreener onSelectTicker={goToTicker} onContextUpdate={setPageContext} />} />
             <Route path="/research"     element={<ResearchBrowser pendingItem={pendingResearchItem} onPendingConsumed={() => setPendingResearchItem(null)} onContextUpdate={setPageContext} />} />
-            <Route path="/movers"       element={<DayMovers onContextUpdate={setPageContext} />} />
+            <Route path="/movers"       element={<DayMovers onOpenResearch={openResearch} onContextUpdate={setPageContext} />} />
             <Route path="/earnings"     element={<EarningsCalendarPage onContextUpdate={setPageContext} />} />
             <Route path="/pro"          element={<ProPage />} />
             <Route path="/admin"        element={<AdminDashboard />} />
