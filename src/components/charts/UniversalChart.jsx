@@ -98,6 +98,7 @@ export function UniversalChart({ ticker, height = 220, showVolume = false, color
       strokeOpacity={0.35}
       strokeWidth={1}
       ifOverflow="visible"
+      isFront
     />
   ) : null;
 
