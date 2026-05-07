@@ -14,7 +14,8 @@ async function pipeline(commands) {
     });
     const data = await r.json();
     return Array.isArray(data) ? data.map(d => d.result) : commands.map(() => null);
-  } catch {
+  } catch (err) {
+    console.error('KV pipeline error:', err.message);
     return commands.map(() => null);
   }
 }

@@ -1,4 +1,5 @@
 import { setCors } from './_cors.js';
+import { withCircuitBreaker } from './_circuitBreaker.js';
 
 const ALLOWED_MODULES = new Set([
   'defaultKeyStatistics', 'financialData', 'summaryProfile', 'summaryDetail',
@@ -32,12 +33,12 @@ export default async function handler(req, res) {
   try {
     const safeTicker = encodeURIComponent(ticker);
     const url = `https://query1.finance.yahoo.com/v8/finance/quoteSummary/${safeTicker}?modules=${safeModules}`;
-    const response = await fetch(url, {
+    const response = await withCircuitBreaker('yahoo-quote-summary', () => fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0',
         'Accept': 'application/json',
       }
-    });
+    }));
     if (!response.ok) {
       return res.status(response.status).json({ error: `Upstream error: ${response.status}` });
     }
@@ -46,6 +47,7 @@ export default async function handler(req, res) {
     res.json(data);
   } catch (err) {
     console.error('quote-summary error:', err.message);
+    if (err.circuitOpen) return res.status(503).json({ error: 'Yahoo Finance temporarily unavailable — try again shortly' });
     res.status(500).json({ error: 'Quote summary request failed' });
   }
 }

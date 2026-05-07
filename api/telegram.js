@@ -3,6 +3,22 @@
 import { createClient } from '@supabase/supabase-js';
 import { setCors } from './_cors.js';
 
+// In-memory per-user rate limit — 10 messages per minute, resets on cold start
+const RATE_WINDOW = 60_000;
+const RATE_MAX    = 10;
+const rateBuckets = new Map();
+
+function checkTelegramRate(userId) {
+  const now = Date.now();
+  let bucket = rateBuckets.get(userId);
+  if (!bucket || now - bucket.windowStart > RATE_WINDOW) {
+    bucket = { windowStart: now, count: 0 };
+    rateBuckets.set(userId, bucket);
+  }
+  bucket.count++;
+  return bucket.count <= RATE_MAX;
+}
+
 export default async function handler(req, res) {
   if (!setCors(req, res, { allowedMethods: 'POST, OPTIONS' })) return;
   if (req.method !== "POST") return res.status(405).end();
@@ -14,6 +30,11 @@ export default async function handler(req, res) {
   const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY);
   const { data: { user }, error: authErr } = await supabase.auth.getUser(jwt);
   if (authErr || !user) return res.status(401).json({ error: 'Unauthorized' });
+
+  // ── Rate limit ────────────────────────────────────────────────────────────
+  if (!checkTelegramRate(user.id)) {
+    return res.status(429).json({ error: 'Rate limit exceeded — max 10 messages per minute' });
+  }
 
   const { token, chatId, message } = req.body || {};
 

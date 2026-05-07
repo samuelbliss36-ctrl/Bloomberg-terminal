@@ -3,6 +3,7 @@
 // GET /api/chart?type=heatmap                       → S&P 500 batch quotes
 
 import { setCors } from './_cors.js';
+import { withCircuitBreaker } from './_circuitBreaker.js';
 
 const VALID_RANGES    = new Set(["1d","5d","1mo","3mo","6mo","1y","2y","5y","10y","ytd","max"]);
 const VALID_INTERVALS = new Set(["1m","2m","5m","15m","30m","60m","90m","1h","1d","5d","1wk","1mo","3mo"]);
@@ -45,7 +46,7 @@ const YF_HEADERS = { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
 // Use the spark endpoint — v7/quote requires auth now, spark is open
 async function fetchHeatmapBatch(symbols) {
   const url = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(symbols.join(','))}&range=1d&interval=1d`;
-  const r = await fetch(url, { headers: YF_HEADERS });
+  const r = await withCircuitBreaker('yahoo-spark', () => fetch(url, { headers: YF_HEADERS }));
   if (!r.ok) throw new Error(`Yahoo Finance spark ${r.status}`);
   const data = await r.json();
   const results = data?.spark?.result ?? [];
@@ -95,6 +96,7 @@ export default async function handler(req, res) {
       return await handleHeatmap(res);
     } catch (err) {
       console.error('heatmap error:', err.message);
+      if (err.circuitOpen) return res.status(503).json({ error: 'Yahoo Finance temporarily unavailable — try again shortly' });
       return res.status(502).json({ error: 'Failed to fetch market data' });
     }
   }
@@ -133,6 +135,7 @@ export default async function handler(req, res) {
       return res.json({ data: sorted });
     } catch (err) {
       console.error('movers error:', err.message);
+      if (err.circuitOpen) return res.status(503).json({ error: 'Yahoo Finance temporarily unavailable — try again shortly' });
       return res.status(502).json({ error: 'Failed to fetch movers' });
     }
   }
@@ -150,7 +153,7 @@ export default async function handler(req, res) {
 
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=${range}&interval=${interval}`;
-    const response = await fetch(url, { headers: YF_HEADERS });
+    const response = await withCircuitBreaker('yahoo-chart', () => fetch(url, { headers: YF_HEADERS }));
     if (!response.ok) {
       return res.status(response.status).json({ error: 'Upstream chart data unavailable' });
     }
@@ -159,6 +162,7 @@ export default async function handler(req, res) {
     res.json(data);
   } catch (err) {
     console.error('chart error:', err.message);
+    if (err.circuitOpen) return res.status(503).json({ error: 'Yahoo Finance temporarily unavailable — try again shortly' });
     res.status(500).json({ error: 'Chart data request failed' });
   }
 }

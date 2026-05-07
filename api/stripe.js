@@ -10,6 +10,11 @@ import { setCors } from './_cors.js';
 
 const OWNER_EMAIL = process.env.OWNER_EMAIL;
 
+// Idempotency — track processed webhook event IDs within warm invocations.
+// Cold starts re-allow events, but that's safe since all writes are upserts.
+const processedEvents = new Set();
+const MAX_PROCESSED   = 500;
+
 // Webhook requires raw body — parse it manually
 async function getRawBody(req) {
   return new Promise((resolve, reject) => {
@@ -41,6 +46,14 @@ export default async function handler(req, res) {
     } catch (err) {
       return res.status(400).json({ error: `Webhook Error: ${err.message}` });
     }
+
+    // Idempotency check — skip already-processed events
+    if (processedEvents.has(event.id)) {
+      return res.json({ received: true, deduplicated: true });
+    }
+    // Evict oldest entries if set gets too large
+    if (processedEvents.size >= MAX_PROCESSED) processedEvents.clear();
+    processedEvents.add(event.id);
 
     const supabase = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -117,6 +130,7 @@ export default async function handler(req, res) {
 
   // ── CHECKOUT ──────────────────────────────────────────────────────────────
   if (action === 'checkout') {
+    if (!process.env.STRIPE_PRICE_ID) return res.status(503).json({ error: 'STRIPE_PRICE_ID not configured' });
     if (user.email === OWNER_EMAIL) return res.status(400).json({ error: 'Owner has unlimited access' });
 
     // Get or create Stripe customer

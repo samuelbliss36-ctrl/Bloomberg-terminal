@@ -45,7 +45,9 @@ export async function getAuth(req) {
     if (sub?.status === 'active') {
       result.serverKeyAllowed = true;
     }
-  } catch {}
+  } catch (err) {
+    console.error('getAuth error:', err.message);
+  }
 
   return result;
 }

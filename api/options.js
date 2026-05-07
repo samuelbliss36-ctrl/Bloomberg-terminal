@@ -6,6 +6,7 @@
 // Crumb is cached in module memory for 30 min (warm Vercel invocations share it).
 
 import { setCors } from './_cors.js';
+import { withCircuitBreaker } from './_circuitBreaker.js';
 
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
@@ -78,13 +79,13 @@ export default async function handler(req, res) {
     const dateParam = date ? `&date=${encodeURIComponent(date)}` : "";
     const url = `https://query2.finance.yahoo.com/v7/finance/options/${safe}?crumb=${encodeURIComponent(crumb)}${dateParam}`;
 
-    const response = await fetch(url, {
+    const response = await withCircuitBreaker('yahoo-options', () => fetch(url, {
       headers: {
         "User-Agent": UA,
         "Accept":     "application/json",
         "Cookie":     cookies,
       },
-    });
+    }));
 
     if (!response.ok) {
       // Crumb may have expired — bust cache so next request re-fetches it
@@ -105,6 +106,7 @@ export default async function handler(req, res) {
   } catch (err) {
     _crumb = null; // bust cache on any error so next attempt retries auth
     console.error("options proxy error:", err.message);
+    if (err.circuitOpen) return res.status(503).json({ error: 'Yahoo Finance temporarily unavailable — try again shortly' });
     res.status(500).json({ error: "Options data request failed" });
   }
 }
