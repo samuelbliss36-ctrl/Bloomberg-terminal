@@ -99,10 +99,10 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── Branch: day gainers / losers (Yahoo Finance spark) ──
-  if (type === 'gainers' || type === 'losers') {
+  // ── Branch: day gainers / losers / most active (Yahoo Finance spark) ──
+  if (type === 'gainers' || type === 'losers' || type === 'active') {
     try {
-      // Reuse the heatmap universe — fetch all quotes, sort by % change
+      // Reuse the heatmap universe — fetch all quotes, sort by relevant metric
       const BATCH = 20;
       const batches = [];
       for (let i = 0; i < HEATMAP_TICKERS.length; i += BATCH) {
@@ -112,17 +112,20 @@ export default async function handler(req, res) {
       const allQuotes = Object.assign({}, ...results);
 
       const sorted = Object.entries(allQuotes)
-        .filter(([, q]) => q.changePct != null && q.price != null)
+        .filter(([, q]) => q.changePct != null && q.price != null && (type !== 'active' || q.volume != null))
         .map(([symbol, q]) => ({
           symbol,
           name:      q.name,
           price:     q.price,
           change:    q.change,
           changePct: q.changePct,
+          volume:    q.volume,
         }))
         .sort((a, b) => type === 'gainers'
           ? b.changePct - a.changePct
-          : a.changePct - b.changePct
+          : type === 'losers'
+          ? a.changePct - b.changePct
+          : b.volume - a.volume
         )
         .slice(0, 10);
 

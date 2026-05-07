@@ -1,9 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
 import { InsightChip } from "../../components/InsightChip";
 
-const COL_W = { rank: 32, ticker: 72, name: 180, price: 80, pct: 80 };
+const COL_W = { rank: 32, ticker: 72, name: 180, price: 80, last: 80 };
 
-function MoversTable({ title, data, loading, color, bgHeader, onRowClick }) {
+function fmtVolume(v) {
+  if (v == null) return "—";
+  if (v >= 1e9) return (v / 1e9).toFixed(1) + "B";
+  if (v >= 1e6) return (v / 1e6).toFixed(1) + "M";
+  if (v >= 1e3) return (v / 1e3).toFixed(0) + "K";
+  return v.toString();
+}
+
+function MoversTable({ title, data, loading, color, bgHeader, onRowClick, lastCol = "pct", subtitle }) {
+  const lastLabel = lastCol === "vol" ? "Volume" : "Chg %";
   return (
     <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", border: "1px solid var(--border-solid, #334155)", borderRadius: 6, overflow: "hidden", fontFamily: "'IBM Plex Mono', monospace" }}>
 
@@ -11,14 +20,14 @@ function MoversTable({ title, data, loading, color, bgHeader, onRowClick }) {
       <div style={{ background: bgHeader, padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "2px solid var(--border-solid, #334155)" }}>
         <span style={{ fontWeight: 700, fontSize: 12, color, letterSpacing: "0.04em" }}>{title}</span>
         {!loading && data.length > 0 && (
-          <span style={{ fontSize: 10, color: "var(--text-3)" }}>Top 10 by day %</span>
+          <span style={{ fontSize: 10, color: "var(--text-3)" }}>{subtitle || "Top 10 by day %"}</span>
         )}
       </div>
 
       {/* Column headers */}
       <div style={{ display: "flex", background: "var(--surface-1)", borderBottom: "1px solid var(--border-solid, #334155)" }}>
-        {[["#", COL_W.rank], ["Ticker", COL_W.ticker], ["Name", COL_W.name], ["Price", COL_W.price], ["Chg %", COL_W.pct]].map(([label, w]) => (
-          <div key={label} style={{ width: w, flexShrink: 0, padding: "5px 8px", fontSize: 9, color: "var(--text-3)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRight: "1px solid var(--border-solid, #334155)", textAlign: label === "#" ? "center" : label === "Price" || label === "Chg %" ? "right" : "left" }}>
+        {[["#", COL_W.rank], ["Ticker", COL_W.ticker], ["Name", COL_W.name], ["Price", COL_W.price], [lastLabel, COL_W.last]].map(([label, w]) => (
+          <div key={label} style={{ width: w, flexShrink: 0, padding: "5px 8px", fontSize: 9, color: "var(--text-3)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", borderRight: "1px solid var(--border-solid, #334155)", textAlign: label === "#" ? "center" : label === "Price" || label === lastLabel ? "right" : "left" }}>
             {label}
           </div>
         ))}
@@ -29,7 +38,7 @@ function MoversTable({ title, data, loading, color, bgHeader, onRowClick }) {
         {loading ? (
           Array.from({ length: 10 }).map((_, i) => (
             <div key={i} style={{ display: "flex", borderBottom: "1px solid var(--border, #1e293b)", padding: "6px 0" }}>
-              {[COL_W.rank, COL_W.ticker, COL_W.name, COL_W.price, COL_W.pct].map((w, j) => (
+              {[COL_W.rank, COL_W.ticker, COL_W.name, COL_W.price, COL_W.last].map((w, j) => (
                 <div key={j} style={{ width: w, flexShrink: 0, padding: "0 8px" }}>
                   <div style={{ height: 8, borderRadius: 3, background: "var(--surface-2)", width: j === 2 ? "70%" : "60%" }} />
                 </div>
@@ -67,16 +76,20 @@ function MoversTable({ title, data, loading, color, bgHeader, onRowClick }) {
               <div style={{ width: COL_W.price, flexShrink: 0, padding: "7px 8px", fontSize: 11, color: "var(--text-1)", textAlign: "right", borderRight: "1px solid var(--border, #1e293b)" }}>
                 ${row.price?.toFixed(2)}
               </div>
-              {/* Chg % */}
-              <div style={{ width: COL_W.pct, flexShrink: 0, padding: "7px 8px", fontSize: 11, textAlign: "right", fontWeight: 700 }}>
-                <span style={{
-                  background: row.changePct >= 0 ? "rgba(5,150,105,0.15)" : "rgba(225,29,72,0.15)",
-                  color,
-                  borderRadius: 4,
-                  padding: "2px 6px",
-                }}>
-                  {row.changePct >= 0 ? "+" : ""}{row.changePct?.toFixed(2)}%
-                </span>
+              {/* Last column — Chg % or Volume */}
+              <div style={{ width: COL_W.last, flexShrink: 0, padding: "7px 8px", fontSize: 11, textAlign: "right", fontWeight: 700 }}>
+                {lastCol === "vol" ? (
+                  <span style={{ color: "var(--text-1)" }}>{fmtVolume(row.volume)}</span>
+                ) : (
+                  <span style={{
+                    background: row.changePct >= 0 ? "rgba(5,150,105,0.15)" : "rgba(225,29,72,0.15)",
+                    color,
+                    borderRadius: 4,
+                    padding: "2px 6px",
+                  }}>
+                    {row.changePct >= 0 ? "+" : ""}{row.changePct?.toFixed(2)}%
+                  </span>
+                )}
               </div>
             </div>
           ))
@@ -89,19 +102,22 @@ function MoversTable({ title, data, loading, color, bgHeader, onRowClick }) {
 export default function DayMovers({ onOpenResearch, onContextUpdate }) {
   const [gainers, setGainers] = useState([]);
   const [losers,  setLosers]  = useState([]);
+  const [active,  setActive]  = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
   const [error, setError] = useState(null);
 
   const fetchMovers = useCallback(async () => {
     try {
-      const [gRes, lRes] = await Promise.all([
+      const [gRes, lRes, aRes] = await Promise.all([
         fetch("/api/chart?type=gainers"),
         fetch("/api/chart?type=losers"),
+        fetch("/api/chart?type=active"),
       ]);
-      const [gData, lData] = await Promise.all([gRes.json(), lRes.json()]);
+      const [gData, lData, aData] = await Promise.all([gRes.json(), lRes.json(), aRes.json()]);
       setGainers(gData.data || []);
       setLosers(lData.data  || []);
+      setActive(aData.data  || []);
       setLastUpdate(new Date());
       setError(null);
     } catch {
@@ -128,7 +144,7 @@ export default function DayMovers({ onOpenResearch, onContextUpdate }) {
   }, [onOpenResearch]);
 
   const insightCtx = gainers.length > 0 && losers.length > 0
-    ? `Top gainers: ${gainers.slice(0, 3).map(s => `${s.symbol} +${s.changePct?.toFixed(2)}%`).join(', ')}. Top losers: ${losers.slice(0, 3).map(s => `${s.symbol} ${s.changePct?.toFixed(2)}%`).join(', ')}.`
+    ? `Top gainers: ${gainers.slice(0, 3).map(s => `${s.symbol} +${s.changePct?.toFixed(2)}%`).join(', ')}. Top losers: ${losers.slice(0, 3).map(s => `${s.symbol} ${s.changePct?.toFixed(2)}%`).join(', ')}.${active.length > 0 ? ` Most active: ${active.slice(0, 3).map(s => s.symbol).join(', ')}.` : ''}`
     : null;
 
   return (
@@ -138,7 +154,7 @@ export default function DayMovers({ onOpenResearch, onContextUpdate }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <div>
           <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: 700, fontSize: 14, color: "var(--text-1)" }}>
-            Day Gainers &amp; Losers
+            Day Gainers, Losers &amp; Most Active
           </div>
           <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 10, color: "var(--text-3)", marginTop: 2 }}>
             {lastUpdate ? `Updated ${lastUpdate.toLocaleTimeString()}` : "Loading…"} · Top 10 by % change · 5 min refresh
@@ -159,7 +175,7 @@ export default function DayMovers({ onOpenResearch, onContextUpdate }) {
         </div>
       )}
 
-      {/* Tables */}
+      {/* Tables — Gainers & Losers */}
       <div style={{ display: "flex", gap: 12, flex: 1, minHeight: 0 }}>
         <MoversTable
           title="▲ Top Gainers"
@@ -176,6 +192,20 @@ export default function DayMovers({ onOpenResearch, onContextUpdate }) {
           color="#e11d48"
           bgHeader="rgba(225,29,72,0.08)"
           onRowClick={handleRowClick}
+        />
+      </div>
+
+      {/* Most Active */}
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <MoversTable
+          title="⚡ Most Active"
+          data={active}
+          loading={loading}
+          color="#2563eb"
+          bgHeader="rgba(37,99,235,0.08)"
+          onRowClick={handleRowClick}
+          lastCol="vol"
+          subtitle="Top 10 by volume"
         />
       </div>
     </div>
