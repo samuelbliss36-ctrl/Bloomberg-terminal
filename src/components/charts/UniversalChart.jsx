@@ -92,8 +92,10 @@ export function UniversalChart({ ticker, height = 220, showVolume = false, color
     <ReferenceArea
       x1={refAreaLeft}
       x2={refAreaRight || refAreaLeft}
-      fill={measureColor + "18"}
-      stroke={measureColor + "55"}
+      fill={measureColor}
+      fillOpacity={0.12}
+      stroke={measureColor}
+      strokeOpacity={0.35}
       strokeWidth={1}
       ifOverflow="visible"
     />
