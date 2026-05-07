@@ -99,24 +99,35 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── Branch: day gainers / losers (FMP) ──
+  // ── Branch: day gainers / losers (Yahoo Finance spark) ──
   if (type === 'gainers' || type === 'losers') {
-    const FMP_KEY = process.env.FMP_KEY;
-    if (!FMP_KEY) return res.status(503).json({ error: 'FMP_KEY not configured' });
     try {
-      const url = `https://financialmodelingprep.com/api/v3/stock_market/${type}?apikey=${FMP_KEY}`;
-      const r   = await fetch(url);
-      if (!r.ok) return res.status(502).json({ error: `FMP error ${r.status}` });
-      const data = await r.json();
-      const top10 = (Array.isArray(data) ? data : []).slice(0, 10).map(s => ({
-        symbol:    s.symbol,
-        name:      s.name,
-        price:     s.price,
-        change:    s.change,
-        changePct: s.changesPercentage,
-      }));
+      // Reuse the heatmap universe — fetch all quotes, sort by % change
+      const BATCH = 20;
+      const batches = [];
+      for (let i = 0; i < HEATMAP_TICKERS.length; i += BATCH) {
+        batches.push(HEATMAP_TICKERS.slice(i, i + BATCH));
+      }
+      const results = await Promise.all(batches.map(fetchHeatmapBatch));
+      const allQuotes = Object.assign({}, ...results);
+
+      const sorted = Object.entries(allQuotes)
+        .filter(([, q]) => q.changePct != null && q.price != null)
+        .map(([symbol, q]) => ({
+          symbol,
+          name:      q.name,
+          price:     q.price,
+          change:    q.change,
+          changePct: q.changePct,
+        }))
+        .sort((a, b) => type === 'gainers'
+          ? b.changePct - a.changePct
+          : a.changePct - b.changePct
+        )
+        .slice(0, 10);
+
       res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=60');
-      return res.json({ data: top10 });
+      return res.json({ data: sorted });
     } catch (err) {
       console.error('movers error:', err.message);
       return res.status(502).json({ error: 'Failed to fetch movers' });
