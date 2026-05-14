@@ -96,7 +96,7 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
   const [apiKey,     setApiKey]    = useState(() => localStorage.getItem("ov_copilot_key") || "");
   const [showConfig, setShowConfig]= useState(false);
   const [keyDraft,   setKeyDraft]  = useState("");
-  const [provider,    setProvider]   = useState(null); // "openai" | "anthropic" | "perplexity" | "xai"
+  const [provider,    setProvider]   = useState(null); // "openai" | "anthropic" | "perplexity" | "xai" | "groq"
   const [showUpgrade, setShowUpgrade]= useState(false);
   const [subscription, setSubscription] = useState(null);
 
@@ -331,7 +331,7 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
       const data = await res.json();
       let finalMsgs;
       if (data.error === "no_key") {
-        finalMsgs = [...newMsgs, { role:"assistant", content:"⚙️ No API key configured. Click the **settings icon** (⚙) above to enter your OpenAI, Anthropic, Perplexity, or Grok API key." }];
+        finalMsgs = [...newMsgs, { role:"assistant", content:"⚙️ No API key configured. Click the **settings icon** (⚙) above to enter your OpenAI, Anthropic, Perplexity, Grok, or Groq API key." }];
       } else if (data.error) {
         finalMsgs = [...newMsgs, { role:"assistant", content:`Error: ${data.error}` }];
       } else {
@@ -356,6 +356,8 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
     ? { label:"Perplexity · Live",      color:"#0ea5e9" }
     : provider === "xai"
     ? { label:"Grok 2",                 color:"#111827" }
+    : provider === "groq"
+    ? { label:"Groq · Llama 3.3",       color:"#f55036" }
     : null;
 
   const panelStyle = {
@@ -426,9 +428,9 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
       {/* ── API Key Config ──────────────────────────────────────── */}
       {showConfig && (
         <div style={{ padding:"10px 14px", borderBottom:"1px solid var(--border-solid)", background:"var(--surface-2)", flexShrink:0 }}>
-          <div style={{ fontSize:10, fontWeight:600, color:"var(--text-1)", marginBottom:6 }}>API Key (OpenAI, Anthropic, Perplexity, or Grok)</div>
+          <div style={{ fontSize:10, fontWeight:600, color:"var(--text-1)", marginBottom:6 }}>API Key (OpenAI, Anthropic, Perplexity, Grok, or Groq)</div>
           <div style={{ fontSize:9, color:"var(--text-3)", marginBottom:6 }}>
-            OpenAI <code style={{ fontFamily:"monospace" }}>sk-</code> · Anthropic <code style={{ fontFamily:"monospace" }}>sk-ant-</code> · Perplexity <code style={{ fontFamily:"monospace" }}>pplx-</code> · Grok <code style={{ fontFamily:"monospace" }}>xai-</code><br />
+            OpenAI <code style={{ fontFamily:"monospace" }}>sk-</code> · Anthropic <code style={{ fontFamily:"monospace" }}>sk-ant-</code> · Perplexity <code style={{ fontFamily:"monospace" }}>pplx-</code> · Grok <code style={{ fontFamily:"monospace" }}>xai-</code> · Groq <code style={{ fontFamily:"monospace" }}>gsk_</code><br />
             Stored locally in your browser only. Never sent anywhere except the model API.
           </div>
           <div style={{ display:"flex", gap:6 }}>
@@ -437,7 +439,7 @@ export function CopilotPanel({ activePage, ticker, quote, metrics, profile, news
               value={keyDraft}
               onChange={e => setKeyDraft(e.target.value)}
               onKeyDown={e => e.key === "Enter" && saveKey()}
-              placeholder="sk-… / sk-ant-… / pplx-… / xai-…"
+              placeholder="sk-… / sk-ant-… / pplx-… / xai-… / gsk_…"
               style={{ flex:1, fontFamily:"'IBM Plex Mono',monospace", fontSize:10, padding:"4px 8px",
                 background:"var(--surface-0)", border:"1px solid var(--border-solid)", borderRadius:5, color:"var(--text-1)" }} />
             <button onClick={saveKey}

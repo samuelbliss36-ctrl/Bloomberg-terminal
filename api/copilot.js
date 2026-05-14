@@ -1,4 +1,4 @@
-// AI Copilot proxy — Perplexity (live search) / OpenAI / Anthropic / xAI (Grok)
+// AI Copilot proxy — Perplexity (live search) / OpenAI / Anthropic / xAI (Grok) / Groq
 // Auth hierarchy:
 //   1. Owner email → unlimited, uses server key
 //   2. Active subscriber → uses server key
@@ -25,6 +25,7 @@ const OPENAI_KEY_RE    = /^sk-[A-Za-z0-9\-_]{20,}$/;
 const ANTHROPIC_KEY_RE = /^sk-ant-[A-Za-z0-9\-_]{20,}$/;
 const PERPLEXITY_KEY_RE = /^pplx-[A-Za-z0-9]{20,}$/;
 const XAI_KEY_RE        = /^xai-[A-Za-z0-9]{20,}$/;
+const GROQ_KEY_RE       = /^gsk_[A-Za-z0-9]{20,}$/;
 
 // Maximum messages to forward — prevents unbounded token spend
 const MAX_MESSAGES = 20;
@@ -120,6 +121,27 @@ async function callGrok(key, systemPrompt, safeMessages) {
   return {
     text: d.choices?.[0]?.message?.content || "(no response)",
     provider: "xai",
+    tokens: (d.usage?.prompt_tokens || 0) + (d.usage?.completion_tokens || 0),
+  };
+}
+
+async function callGroq(key, systemPrompt, safeMessages) {
+  const r = await withCircuitBreaker('groq', () =>
+    fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        max_tokens: 1024,
+        messages: [{ role: "system", content: systemPrompt }, ...safeMessages],
+      }),
+    })
+  );
+  const d = await r.json();
+  if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
+  return {
+    text: d.choices?.[0]?.message?.content || "(no response)",
+    provider: "groq",
     tokens: (d.usage?.prompt_tokens || 0) + (d.usage?.completion_tokens || 0),
   };
 }
@@ -292,11 +314,13 @@ export default async function handler(req, res) {
       const isPerplexity = PERPLEXITY_KEY_RE.test(rawKey);
       const isAnthropic  = !isPerplexity && ANTHROPIC_KEY_RE.test(rawKey);
       const isGrok       = !isPerplexity && !isAnthropic && XAI_KEY_RE.test(rawKey);
-      const isOpenAI     = !isPerplexity && !isAnthropic && !isGrok && OPENAI_KEY_RE.test(rawKey);
+      const isGroq       = !isPerplexity && !isAnthropic && !isGrok && GROQ_KEY_RE.test(rawKey);
+      const isOpenAI     = !isPerplexity && !isAnthropic && !isGrok && !isGroq && OPENAI_KEY_RE.test(rawKey);
 
       if (isPerplexity)     result = await callPerplexity(rawKey, systemPrompt, safeMessages);
       else if (isAnthropic) result = await callAnthropic(rawKey, systemPrompt, safeMessages);
       else if (isGrok)      result = await callGrok(rawKey, systemPrompt, safeMessages);
+      else if (isGroq)      result = await callGroq(rawKey, systemPrompt, safeMessages);
       else if (isOpenAI)    result = await callOpenAI(rawKey, systemPrompt, safeMessages);
       else return res.status(401).json({ error: "Invalid API key format." });
     }
